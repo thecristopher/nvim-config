@@ -69,7 +69,7 @@ return {
             table.insert(names, client.name)
           end
         end
-        return #names > 0 and ("  " .. table.concat(names, ", ")) or ""
+        return #names > 0 and ("󰒋  " .. table.concat(names, ", ")) or ""
       end
 
       return {
@@ -83,10 +83,10 @@ return {
         sections = {
           lualine_a = { { "mode", fmt = function(s) return s:sub(1, 3) end } },
           lualine_b = {
-            { "branch", icon = "" },
+            { "branch", icon = "󰘬 " },
             {
               "diff",
-              symbols = { added = " ", modified = " ", removed = " " },
+              symbols = { added = "󰐖 ", modified = "󰏫 ", removed = "󰍴 " },
               diff_color = {
                 added    = { fg = "#7DAE68" },
                 modified = { fg = "#C9A84C" },
@@ -106,12 +106,12 @@ return {
             {
               "diagnostics",
               sources = { "nvim_lsp" },
-              symbols = { error = " ", warn = " ", hint = " ", info = " " },
+              symbols = { error = "󰅚 ", warn = "󰊌 ", hint = "󰌶 ", info = "󰋽 " },
             },
             { "filetype", icon_only = false },
           },
           lualine_y = { "progress" },
-          lualine_z = { { "location", fmt = function(s) return " " .. s end } },
+          lualine_z = { { "location", fmt = function(s) return "󰍎 " .. s end } },
         },
         inactive_sections = {
           lualine_a = {},
@@ -158,7 +158,7 @@ return {
           right_trunc_marker = "",
           diagnostics       = "nvim_lsp",
           diagnostics_indicator = function(_, _, diag)
-            local icons = { error = " ", warning = " " }
+            local icons = { error = "󰅚 ", warning = "󰊌 " }
             local s = {}
             for k, n in pairs(diag) do
               if icons[k] then table.insert(s, icons[k] .. n) end
@@ -218,8 +218,8 @@ return {
         view    = "cmdline_popup",
         format  = {
           cmdline  = { pattern = "^:", icon = "", lang = "vim" },
-          search_down = { kind = "search", pattern = "^/", icon = " ", lang = "regex" },
-          search_up   = { kind = "search", pattern = "^%?", icon = " ", lang = "regex" },
+          search_down = { kind = "search", pattern = "^/", icon = "󰍉 ", lang = "regex" },
+          search_up   = { kind = "search", pattern = "^%?", icon = "󰍉 ", lang = "regex" },
           filter   = { pattern = "^:%s*!", icon = "$", lang = "bash" },
           lua      = { pattern = { "^:%s*lua%s+", "^:%s*lua%s*=%s*", "^:%s*=%s*" }, icon = "", lang = "lua" },
           help     = { pattern = "^:%s*he?l?p?%s+", icon = "" },
@@ -312,6 +312,55 @@ return {
         { "]",          group = "next" },
         { "g",          group = "goto" },
       })
+    end,
+  },
+
+  -- ── mini.animate: smooth cursor, window open/close, resize ────────
+  {
+    "echasnovski/mini.animate",
+    version = false,
+    event   = "VeryLazy",
+    config  = function()
+      local animate = require("mini.animate")
+      local timing  = animate.gen_timing.linear({ duration = 90, unit = "total" })
+      animate.setup({
+        cursor = { enable = true,  timing = timing },
+        scroll = { enable = false },  -- snacks.scroll handles this
+        resize = { enable = true,  timing = timing },
+        open   = { enable = true,  timing = timing },
+        close  = { enable = true,  timing = timing },
+      })
+    end,
+  },
+
+  -- ── indent-blankline: rainbow indent guides (Eldentree palette) ────
+  {
+    "lukas-reineke/indent-blankline.nvim",
+    main  = "ibl",
+    event = { "BufReadPost", "BufNewFile" },
+    opts  = {
+      indent = { char = "│", tab_char = "│" },
+      scope  = { enabled = true, char = "│" },
+      exclude = {
+        filetypes = {
+          "help", "alpha", "dashboard", "neo-tree", "Trouble", "trouble",
+          "lazy", "mason", "notify", "toggleterm", "snacks_dashboard",
+        },
+      },
+    },
+    config = function(_, opts)
+      -- Eldentree rainbow palette, one level per colour
+      local palette = { "#C9A84C", "#9B8EC4", "#6BA888", "#68B8C8", "#CC8A40", "#B83838" }
+      local hl_list = {}
+      for i, color in ipairs(palette) do
+        local name = "IBLRainbow" .. i
+        vim.api.nvim_set_hl(0, name, { fg = color })
+        table.insert(hl_list, name)
+      end
+      vim.api.nvim_set_hl(0, "IBLScope", { fg = "#C9A84C", bold = true })
+      opts.indent.highlight = hl_list
+      opts.scope.highlight  = { "IBLScope" }
+      require("ibl").setup(opts)
     end,
   },
 

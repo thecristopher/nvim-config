@@ -17,14 +17,13 @@ local _er_quotes = {
 math.randomseed(os.time())
 local _quote  = _er_quotes[math.random(#_er_quotes)]
 local _img    = vim.fn.stdpath("config") .. "/images/malenia.jpg"
-local _img_fmt = (function()
-  if vim.env.TERM_PROGRAM == "iTerm.app"                          then return "iterm"  end
-  if (vim.env.TERM or ""):find("kitty") or vim.env.KITTY_WINDOW_ID then return "kitty"  end
-  return "sixel"  -- Konsole and other modern Linux terminals
-end)()
 
 
 -- ── Git-aware recent project finder ──────────────────────────────────────────
+-- Only lists actual git repositories (via Snacks.git.get_root, which also
+-- handles worktrees/submodules where `.git` is a file, not a directory).
+-- Loose files opened outside a repo are skipped rather than counted as
+-- "projects", so they can't crowd real repos out of the limited slots.
 local function recent_projects(limit)
   local result, seen = {}, {}
   for _, file in ipairs(vim.v.oldfiles or {}) do
@@ -33,27 +32,14 @@ local function recent_projects(limit)
       and not file:match("COMMIT_EDITMSG")
       and vim.fn.filereadable(file) == 1
     then
-      local dir  = vim.fn.fnamemodify(file, ":h")
-      -- Walk up to git root (max 8 levels)
-      local proj = dir
-      local is_git = false
-      local d = dir
-      for _ = 1, 8 do
-        if vim.fn.isdirectory(d .. "/.git") == 1 then
-          proj, is_git = d, true
-          break
-        end
-        local up = vim.fn.fnamemodify(d, ":h")
-        if up == d then break end
-        d = up
-      end
-      if not seen[proj] then
+      local proj = Snacks.git.get_root(file)
+      if proj and not seen[proj] then
         seen[proj] = true
         local home    = vim.env.HOME or ""
         local display = home ~= "" and proj:gsub("^" .. home, "~") or proj
         result[#result + 1] = {
           key    = tostring(#result + 1),
-          icon   = is_git and "󰊢 " or "󰉋 ",
+          icon   = "󰊢 ",
           desc   = display,
           action = function()
             vim.fn.chdir(proj)
@@ -79,10 +65,10 @@ return {
         preset  = {
           -- Keys shown in right pane (code-oriented, folder-aware)
           keys = {
-            { icon = " ", key = "f", desc = "Find File",    action = ":lua Snacks.dashboard.pick('files')" },
-            { icon = " ", key = "r", desc = "Recent Files", action = ":lua Snacks.dashboard.pick('oldfiles')" },
-            { icon = " ", key = "g", desc = "Live Grep",    action = ":lua Snacks.dashboard.pick('live_grep')" },
-            { icon = " ", key = "n", desc = "New File",     action = ":ene | startinsert" },
+            { icon = "󰍉 ", key = "f", desc = "Find File",    action = ":lua Snacks.dashboard.pick('files')" },
+            { icon = "󰋚 ", key = "r", desc = "Recent Files", action = ":lua Snacks.dashboard.pick('oldfiles')" },
+            { icon = "󰊄 ", key = "g", desc = "Live Grep",    action = ":lua Snacks.dashboard.pick('live_grep')" },
+            { icon = "󰝒 ", key = "n", desc = "New File",     action = ":ene | startinsert" },
             { icon = "󰉋 ", key = "e", desc = "Explorer",    action = ":Neotree toggle" },
             { icon = "󰉋 ", key = "o", desc = "Open Folder", action = function()
                 vim.ui.input(
@@ -95,11 +81,27 @@ return {
                   end
                 )
               end },
-            { icon = " ", key = "c", desc = "Config",       action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})" },
+            { icon = "󰒓 ", key = "c", desc = "Config",       action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})" },
             { icon = "󰒲 ", key = "l", desc = "Lazy",         action = ":Lazy" },
-            { icon = " ", key = "m", desc = "Mason",         action = ":Mason" },
-            { icon = " ", key = "q", desc = "Quit",          action = ":qa" },
+            { icon = "󰏗 ", key = "m", desc = "Mason",         action = ":Mason" },
+            { icon = "󰆔 ", key = "s", desc = "Restore Session", action = function() require("persistence").load() end },
+            { icon = "󰐥 ", key = "q", desc = "Quit",           action = ":qa" },
           },
+        },
+
+        -- Show "parentDir/filename" instead of the default home-relative
+        -- path. The stock formatter shortens long paths by truncating the
+        -- tail of the filename itself, which collapses repeated names like
+        -- Input/index.tsx and Button/index.tsx into indistinguishable text.
+        formats = {
+          file = function(item)
+            local fname  = vim.fn.fnamemodify(item.file, ":t")
+            local parent = vim.fn.fnamemodify(item.file, ":h:t")
+            return parent ~= "" and {
+              { parent .. "/", hl = "dir" },
+              { fname, hl = "file" },
+            } or { { fname, hl = "file" } }
+          end,
         },
 
         -- ── Two-column layout ───────────────────────────────────────
@@ -113,7 +115,7 @@ return {
           {
             pane    = 1,
             section = "terminal",
-            cmd     = "chafa --format=symbols --symbols=braille --size=46x28 --colors=full " .. _img,
+            cmd     = "chafa --format=symbols --symbols=half --size=46x28 --colors=full " .. _img,
             height  = 28,
             width   = 46,
             ttl     = 3600 * 24 * 30,
@@ -121,12 +123,14 @@ return {
             padding = { 1, 0, 0, 0 },
           },
 
-          -- Horizontal rule below art
+          -- Elden Ring title block below art
           {
             pane    = 1,
             padding = { 1, 0, 0, 0 },
             text    = {
-              { "     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n", hl = "SnacksDashboardDesc" },
+              { "  ◈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◈\n", hl = "SnacksDashboardHeader" },
+              { "       E  L  D  E  N     R  I  N  G         \n",   hl = "SnacksDashboardHeader" },
+              { "  ◈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◈\n", hl = "SnacksDashboardHeader" },
             },
           },
 
@@ -174,8 +178,8 @@ return {
             pane    = 2,
             padding = { 2, 0, 1, 0 },
             text    = {
-              { "  ⚔   C O D E   W O R K S P A C E   ⚔\n",  hl = "SnacksDashboardHeader" },
-              { "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n",  hl = "SnacksDashboardDesc" },
+              { "  ◈   C O D E   W O R K S P A C E   ◈\n",   hl = "SnacksDashboardHeader" },
+              { "  ◈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◈\n",   hl = "SnacksDashboardDesc" },
             },
           },
 
@@ -193,7 +197,7 @@ return {
             pane    = 2,
             padding = { 1, 0, 0, 0 },
             text    = {
-              { "  ─── Recent Files ────────────────────\n", hl = "SnacksDashboardDesc" },
+              { "  ◈── Recent Files ─────────────────────◈\n", hl = "SnacksDashboardDesc" },
             },
           },
           {
@@ -210,7 +214,7 @@ return {
             pane    = 2,
             padding = { 1, 0, 0, 0 },
             text    = {
-              { "  ─── Recent Projects ─────────────────\n", hl = "SnacksDashboardDesc" },
+              { "  ◈── Recent Projects ──────────────────◈\n", hl = "SnacksDashboardDesc" },
             },
           },
           {
@@ -239,14 +243,14 @@ return {
         margin  = { top = 0, right = 1, bottom = 0 },
         padding = true,
         sort    = { "level", "added" },
-        icons   = { error = " ", warn = " ", info = " ", debug = " ", trace = "✎ " },
+        icons   = { error = "󰅚 ", warn = "󰊌 ", info = "󰋽 ", debug = "󰒄 ", trace = "✎ " },
         style   = "compact",
         top_down = true,
       },
 
       -- ── Indent guides ──────────────────────────────────────────────
       indent = {
-        enabled    = true,
+        enabled    = false,  -- replaced by indent-blankline.nvim (rainbow palette)
         indent     = { char = "│", hl = "IblIndent" },
         scope      = { enabled = true, char = "│", hl = "IblScope", underline = false },
         chunk      = { enabled = false },
@@ -328,7 +332,6 @@ return {
     keys = {
       { "<leader>gl", function() Snacks.lazygit() end,                  desc = "Lazygit" },
       { "<leader>gB", function() Snacks.gitbrowse() end,                desc = "Git browse" },
-      { "<leader>gf", function() Snacks.lazygit.log_file() end,         desc = "Git log (file)" },
       { "<leader>gL", function() Snacks.lazygit.log() end,              desc = "Git log (root)" },
       { "]]",         function() Snacks.words.jump(vim.v.count1) end,   desc = "Next word ref", mode = { "n", "t" } },
       { "[[",         function() Snacks.words.jump(-vim.v.count1) end,  desc = "Prev word ref", mode = { "n", "t" } },

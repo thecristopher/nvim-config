@@ -127,9 +127,14 @@ return {
           ["@punctuation.bracket"]  = { fg = c.overlay2, style = {} },
           ["@punctuation.delimiter"] = { fg = c.overlay1, style = {} },
           -- ── Editor chrome ─────────────────────────────────────────
-          -- Cursor line: very subtle gold tint
+          -- Cursor line: very subtle gold tint (brightened in insert mode, see autocmds.lua)
           CursorLine   = { bg = "#1A1714" },
           CursorLineNr = { fg = c.yellow, style = { "bold" } },
+          -- Cursor: bright gold block/bar for terminals that honor OSC-12 cursor color
+          Cursor       = { fg = c.base, bg = c.yellow, style = { "bold" } },
+          lCursor      = { fg = c.base, bg = c.yellow, style = { "bold" } },
+          CursorIM     = { fg = c.base, bg = c.yellow, style = { "bold" } },
+          TermCursor   = { fg = c.base, bg = c.yellow, style = { "bold" } },
           -- Line numbers
           LineNr       = { fg = c.overlay0 },
           -- Visual selection: warm dark gold

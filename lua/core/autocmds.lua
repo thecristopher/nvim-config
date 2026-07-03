@@ -70,6 +70,37 @@ au("FileType", {
   end,
 })
 
+-- Disable mini.animate cursor trail while typing (it smears/lags behind
+-- the real cursor on every keystroke, making insert-mode position unclear)
+au({ "InsertEnter" }, {
+  group = aug("no_cursor_animate_insert"),
+  callback = function()
+    vim.b.minianimate_disable = true
+  end,
+})
+au({ "InsertLeave" }, {
+  group = aug("no_cursor_animate_insert"),
+  callback = function()
+    vim.b.minianimate_disable = false
+  end,
+})
+
+-- Brighten the cursor line while typing so your position stays obvious
+-- even when the terminal's caret color/shape is hard to spot (the base
+-- CursorLine tint is deliberately subtle for normal-mode browsing)
+au({ "InsertEnter" }, {
+  group = aug("cursorline_insert"),
+  callback = function()
+    vim.api.nvim_set_hl(0, "CursorLine", { bg = "#332912" })
+  end,
+})
+au({ "InsertLeave" }, {
+  group = aug("cursorline_insert"),
+  callback = function()
+    vim.api.nvim_set_hl(0, "CursorLine", { bg = "#1A1714" })
+  end,
+})
+
 -- Strip trailing whitespace on save (respects filetype exclusions)
 local ws_exclude = { "markdown", "diff" }
 au("BufWritePre", {

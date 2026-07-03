@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/cristopher.cervantes/Documents/GitHub/nvim-config/.claude/nvim-reload.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
