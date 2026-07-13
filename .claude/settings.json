@@ -1,4 +1,21 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(nvim --headless -c 'lua print\\(vim.o.shadafile, vim.o.shada\\)' -c 'qa')",
+      "Read(//Users/cristopher.cervantes/.local/state/nvim/shada/**)",
+      "Bash(nvim --headless -c 'lua for i,f in ipairs\\(vim.v.oldfiles\\) do print\\(i,f\\) end' -c 'qa')",
+      "Bash(nvim --headless -c 'lua for _,f in ipairs\\(vim.v.oldfiles\\) do print\\(f\\) end' -c 'qa')",
+      "Bash(:)",
+      "Bash(luac5.4 -p lua/plugins/snacks.lua)",
+      "Bash(luac -p lua/plugins/snacks.lua)",
+      "Bash(nvim --headless -c \"lua loadfile\\('lua/plugins/snacks.lua'\\)\" -c 'qa')",
+      "Bash(nvim --headless -c \"lua local f, err = loadfile\\('lua/plugins/snacks.lua'\\); if err then print\\('SYNTAX ERROR: '..err\\) else print\\('OK'\\) end\" -c 'qa')",
+      "Bash(rm -f ~/.local/state/nvim/eldentree_recent_projects.json)",
+      "Bash(nvim --headless -c \"lua vim.wait\\(500\\)\" -c \"lua print\\('cwd:', vim.loop.cwd\\(\\)\\)\" -c 'qa')",
+      "Read(//Users/cristopher.cervantes/.local/state/nvim/**)"
+    ],
+    "defaultMode": "acceptEdits"
+  },
   "hooks": {
     "PostToolUse": [
       {

@@ -24,31 +24,73 @@ local _img    = vim.fn.stdpath("config") .. "/images/malenia.jpg"
 -- handles worktrees/submodules where `.git` is a file, not a directory).
 -- Loose files opened outside a repo are skipped rather than counted as
 -- "projects", so they can't crowd real repos out of the limited slots.
+--
+-- `v:oldfiles` alone misses a project you switched into (`cd`, dashboard's
+-- "Open Folder", or `nvim .`) but never opened a specific file buffer in --
+-- it only tracks files that became real buffers, and only that at all if
+-- shada ever wrote them. So directory switches are tracked live to a state
+-- file via DirChanged/VimEnter below, and used as the primary source; oldfiles
+-- is kept as a fallback for history predating this tracker.
+local project_state_file = vim.fn.stdpath("state") .. "/eldentree_recent_projects.json"
+
+local function load_tracked_projects()
+  local ok, lines = pcall(vim.fn.readfile, project_state_file)
+  if not ok then return {} end
+  local ok2, decoded = pcall(vim.json.decode, table.concat(lines, "\n"))
+  return (ok2 and type(decoded) == "table") and decoded or {}
+end
+
+local function record_project(dir)
+  if not (_G.Snacks and Snacks.git) then return end
+  local root = Snacks.git.get_root(dir)
+  if not root then return end
+  local list = load_tracked_projects()
+  for i = #list, 1, -1 do
+    if list[i] == root then table.remove(list, i) end
+  end
+  table.insert(list, 1, root)
+  while #list > 20 do table.remove(list) end
+  pcall(vim.fn.writefile, { vim.json.encode(list) }, project_state_file)
+end
+
+vim.api.nvim_create_autocmd({ "DirChanged", "VimEnter" }, {
+  callback = function() record_project(vim.loop.cwd()) end,
+})
+
 local function recent_projects(limit)
   local result, seen = {}, {}
+
+  local function add(proj)
+    if not proj or seen[proj] or #result >= limit then return end
+    seen[proj] = true
+    local home    = vim.env.HOME or ""
+    local display = home ~= "" and proj:gsub("^" .. home, "~") or proj
+    result[#result + 1] = {
+      key    = tostring(#result + 1),
+      icon   = "󰊢 ",
+      desc   = display,
+      action = function()
+        vim.fn.chdir(proj)
+        vim.cmd("Neotree dir=" .. vim.fn.fnameescape(proj) .. " toggle")
+      end,
+    }
+  end
+
+  for _, proj in ipairs(load_tracked_projects()) do
+    if #result >= limit then break end
+    if vim.fn.isdirectory(proj) == 1 then add(proj) end
+  end
+
   for _, file in ipairs(vim.v.oldfiles or {}) do
     if #result >= limit then break end
     if not file:match("^/tmp")
       and not file:match("COMMIT_EDITMSG")
       and vim.fn.filereadable(file) == 1
     then
-      local proj = Snacks.git.get_root(file)
-      if proj and not seen[proj] then
-        seen[proj] = true
-        local home    = vim.env.HOME or ""
-        local display = home ~= "" and proj:gsub("^" .. home, "~") or proj
-        result[#result + 1] = {
-          key    = tostring(#result + 1),
-          icon   = "󰊢 ",
-          desc   = display,
-          action = function()
-            vim.fn.chdir(proj)
-            vim.cmd("Neotree dir=" .. vim.fn.fnameescape(proj) .. " toggle")
-          end,
-        }
-      end
+      add(Snacks.git.get_root(file))
     end
   end
+
   return result
 end
 
@@ -146,21 +188,19 @@ return {
           },
 
           -- Neovim version at the bottom-left
-          {
-            pane    = 1,
-            padding = { 2, 0, 0, 0 },
-            fn = function()
-              local ok, lazy_mod = pcall(require, "lazy")
-              local plug = ok and lazy_mod.stats().count or 0
-              return {
-                {
-                  text = {
-                    { ("     ⚡ Neovim %s  ·  %d plugins\n"):format(_nvim_v, plug), hl = "SnacksDashboardFooter" },
-                  },
+          function()
+            local ok, lazy_mod = pcall(require, "lazy")
+            local plug = ok and lazy_mod.stats().count or 0
+            return {
+              {
+                pane    = 1,
+                padding = { 2, 0, 0, 0 },
+                text    = {
+                  { ("     ⚡ Neovim %s  ·  %d plugins\n"):format(_nvim_v, plug), hl = "SnacksDashboardFooter" },
                 },
-              }
-            end,
-          },
+              },
+            }
+          end,
 
           -- Startup time (shown in left pane below version)
           {
@@ -217,20 +257,25 @@ return {
               { "  ◈── Recent Projects ──────────────────◈\n", hl = "SnacksDashboardDesc" },
             },
           },
-          {
-            pane    = 2,
-            indent  = 2,
-            padding = { 0, 0, 1, 0 },
-            fn = function()
-              local items = recent_projects(3)
-              if #items == 0 then
-                return {
-                  { text = { { "    No recent projects found\n", hl = "SnacksDashboardFooter" } } },
-                }
-              end
-              return items
-            end,
-          },
+          function()
+            local items = recent_projects(3)
+            if #items == 0 then
+              return {
+                {
+                  pane    = 2,
+                  indent  = 2,
+                  padding = { 0, 0, 1, 0 },
+                  text    = { { "    No recent projects found\n", hl = "SnacksDashboardFooter" } },
+                },
+              }
+            end
+            for _, item in ipairs(items) do
+              item.pane    = 2
+              item.indent  = 2
+            end
+            items[#items].padding = { 0, 0, 1, 0 }
+            return items
+          end,
         },
       },
 
