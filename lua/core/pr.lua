@@ -1,6 +1,10 @@
--- PR helper: drafts a title + description with Claude Code (headless),
--- opens it in an editable buffer, and creates/updates the PR via `gh` on :w.
+-- PR helper: pick a source branch, a destination branch, and preview the
+-- diff (Snacks pickers), then draft a title + description with Claude Code
+-- (headless), open it in an editable buffer, and create/update the PR via
+-- `gh` on :w.
 -- Toggle: <leader>pp
+
+local Snacks = require("snacks")
 
 local M = {}
 
@@ -104,14 +108,102 @@ local function existing_pr(branch)
   return decoded
 end
 
+-- ── Branch/preview pickers (Snacks) ─────────────────────────────────────────
+
+local function local_branches()
+  local out = vim.fn.system({ "git", "for-each-ref", "--format=%(refname:short)%09%(subject)", "refs/heads" })
+  if vim.v.shell_error ~= 0 then return {} end
+  local list = {}
+  for line in vim.gsplit(vim.trim(out), "\n", { plain = true }) do
+    local name, subject = line:match("^(.-)\t(.*)$")
+    if name then list[#list + 1] = { name = name, subject = subject } end
+  end
+  return list
+end
+
+-- Local-branch picker with `default` sorted to the top (so `<CR>` on open
+-- reproduces it). Built from a static item list rather than Snacks'
+-- `git_branches` finder + a prefilled fuzzy `pattern`: that combination races
+-- the async matcher against the list cursor — the cursor stays pinned to
+-- whichever item loaded first instead of following the pattern's top match,
+-- so `<CR>` can silently confirm the wrong branch. A static, pre-sorted list
+-- has no matcher re-sort to race against.
+local function pick_branch(title, default, cb)
+  local branches = local_branches()
+  if #branches == 0 then
+    return notify_err("No local branches found.")
+  end
+  local items = {}
+  local function add(b)
+    items[#items + 1] = {
+      text   = b.subject ~= "" and (b.name .. "  " .. b.subject) or b.name,
+      branch = b.name,
+    }
+  end
+  for _, b in ipairs(branches) do
+    if b.name == default then add(b) end
+  end
+  for _, b in ipairs(branches) do
+    if b.name ~= default then add(b) end
+  end
+
+  Snacks.picker.pick({
+    title   = title,
+    items   = items,
+    format  = "text",
+    confirm = function(picker, item)
+      picker:close()
+      if not item then
+        notify_err("No branch selected.")
+        return
+      end
+      cb(item.branch)
+    end,
+  })
+end
+
+-- Custom base...branch diff, reusing Snacks' diff-picker rendering (file list
+-- with A/M/D/R markers + full diff pane) since the built-in `git_diff` picker
+-- only ever diffs against HEAD, not two arbitrary branches.
+local function preview_diff(base_r, branch, base, cb)
+  local Diff = require("snacks.picker.source.diff")
+  local cwd = vim.loop.cwd()
+  Snacks.picker.pick({
+    finder = function(_, ctx)
+      return Diff.diff({
+        cmd  = "git",
+        args = {
+          "-c", "core.quotepath=false", "--no-pager", "diff", "--no-color",
+          "--no-ext-diff", "--diff-filter=u", base_r .. "..." .. branch,
+        },
+        cwd = cwd,
+      }, ctx)
+    end,
+    format  = "git_status",
+    preview = "diff",
+    title   = ("PR Preview: %s -> %s"):format(branch, base),
+    confirm = function(picker)
+      picker:close()
+      cb()
+    end,
+  })
+end
+
 -- ── Claude draft (async — this is the slow step) ────────────────────────────
 
 local function draft_via_claude(prompt, cb)
-  vim.system(
-    { "claude", "-p", prompt, "--disallowedTools", DISALLOWED_TOOLS },
-    { text = true },
-    function(res) vim.schedule(function() cb(res) end) end
-  )
+  notify_info("Drafting PR description with Claude…")
+  local start = vim.loop.now()
+  local timer = vim.loop.new_timer()
+  timer:start(6000, 6000, vim.schedule_wrap(function()
+    local secs = math.floor((vim.loop.now() - start) / 1000)
+    notify_info(("Drafting PR description with Claude… (%ds elapsed)"):format(secs))
+  end))
+  vim.system({ "claude", "-p", prompt, "--disallowedTools", DISALLOWED_TOOLS }, { text = true }, function(res)
+    timer:stop()
+    timer:close()
+    vim.schedule(function() cb(res) end)
+  end)
 end
 
 local function parse_draft(text)
@@ -182,23 +274,28 @@ function M.submit(buf)
     if vim.fn.confirm(("Branch '%s' has no upstream. Push to origin now?"):format(ctx.branch), "&Yes\n&Cancel", 1) ~= 1 then
       return
     end
+    notify_info(("Pushing '%s' to origin…"):format(ctx.branch))
     if not git_ok({ "push", "-u", "origin", ctx.branch }) then
       notify_err("git push failed.")
       return
     end
+    notify_info("Push complete.")
   else
     local ahead = unpushed_count()
     if ahead > 0 then
       if vim.fn.confirm(("Push %d unpushed commit(s) on '%s' to origin now?"):format(ahead, ctx.branch), "&Yes\n&Cancel", 1) ~= 1 then
         return
       end
+      notify_info(("Pushing %d commit(s) to origin…"):format(ahead))
       if not git_ok({ "push" }) then
         notify_err("git push failed.")
         return
       end
+      notify_info("Push complete.")
     end
   end
 
+  notify_info(ctx.pr and ("Updating PR #%d on GitHub…"):format(ctx.pr.number) or "Creating PR on GitHub…")
   local tmp = vim.fn.tempname()
   vim.fn.writefile(vim.split(body, "\n", { plain = true }), tmp)
 
@@ -226,6 +323,55 @@ function M.submit(buf)
   end)
 end
 
+-- Runs once source + destination are both chosen: recomputes commit log/diff
+-- for that pair, shows the diff preview picker, then drafts via Claude.
+local function proceed(branch, base)
+  local base_r = base_ref(base)
+  notify_info("Preparing diff context…")
+  local log = commit_log(base_r, branch)
+  if log == "" then
+    return notify_err(("No commits ahead of '%s'."):format(base))
+  end
+  local diff = diff_context(base_r, branch)
+  local pr = existing_pr(branch)
+
+  preview_diff(base_r, branch, base, function()
+    local prompt = table.concat({
+      ("Draft a GitHub pull request for merging branch `%s` into `%s`."):format(branch, base),
+      "Use the commit log and diff below for context.",
+      "Write a short, fun, casual description of what changed. Talk like a human, not a form.",
+      "Keep the tone positive and forward-looking. We're building on what came before, not tearing it down. Never be snarky, passive-aggressive, or critical about old code or past decisions. If something was improved or fixed, frame it as progress, not as 'finally someone fixed the mess' or 'the old approach was wrong'.",
+      "Use a short opening sentence or two, then a ## What changed section with a hyphen list of the specific things that were done.",
+      "Hyphens are fine as bullet markers. Headers are fine. What is NOT fine: using hyphens to join words in prose like an AI would (e.g. 'role-validation-system'), and em dashes (—) are never allowed anywhere, not even as sentence dividers.",
+      "No test plans. No trailing period on the title. Keep it concise.",
+      "",
+      "Commits (oldest first):",
+      log,
+      "",
+      "Diff:",
+      diff,
+      "",
+      "Respond with EXACTLY this format and nothing else (no code fences, no preamble):",
+      ("TITLE: [%s] <short description of the work, no trailing period, under 72 chars>"):format(branch),
+      "===",
+      "<1 to 2 casual sentences about what this PR does and why>",
+      "",
+      "## What changed",
+      "- <specific thing that was done>",
+      "- <specific thing that was done>",
+    }, "\n")
+
+    draft_via_claude(prompt, function(res)
+      if res.code ~= 0 or not res.stdout or vim.trim(res.stdout) == "" then
+        notify_err("Claude failed to draft a description: " .. vim.trim(res.stderr or "unknown error"))
+        return
+      end
+      local title, body = parse_draft(res.stdout)
+      open_editor(base, branch, pr, title, body)
+    end)
+  end)
+end
+
 -- ── Entry point ──────────────────────────────────────────────────────────────
 
 function M.open()
@@ -236,59 +382,22 @@ function M.open()
     return notify_err("gh CLI not found. Install with: brew install gh && gh auth login")
   end
 
-  local base = default_branch()
-  if not base then
+  local default_base = default_branch()
+  if not default_base then
     return notify_err("Couldn't determine the base branch (no origin/staging, origin/main, origin/master, or origin/HEAD). Set one with: git config pr-helper.base <branch>")
   end
   local branch = current_branch()
   if not branch or branch == "HEAD" then
     return notify_err("Not on a branch (detached HEAD).")
   end
-  if branch == base then
-    return notify_err(("You're on '%s'; checkout a feature branch first."):format(base))
-  end
 
-  local base_r = base_ref(base)
-  local log = commit_log(base_r, branch)
-  if log == "" then
-    return notify_err(("No commits ahead of '%s'."):format(base))
-  end
-  local diff = diff_context(base_r, branch)
-  local pr = existing_pr(branch)
-
-  notify_info(("Drafting %s with Claude…"):format(pr and ("update for PR #" .. pr.number) or "PR title & description"))
-
-  local prompt = table.concat({
-    ("Draft a GitHub pull request for merging branch `%s` into `%s`."):format(branch, base),
-    "Use the commit log and diff below for context.",
-    "Write a short, fun, casual description of what changed. Talk like a human, not a form.",
-    "Use a short opening sentence or two, then a ## What changed section with a hyphen list of the specific things that were done.",
-    "Hyphens are fine as bullet markers. Headers are fine. What is NOT fine: using hyphens to join words in prose like an AI would (e.g. 'role-validation-system'), and em dashes (—) are never allowed anywhere, not even as sentence dividers.",
-    "No test plans. No trailing period on the title. Keep it concise.",
-    "",
-    "Commits (oldest first):",
-    log,
-    "",
-    "Diff:",
-    diff,
-    "",
-    "Respond with EXACTLY this format and nothing else (no code fences, no preamble):",
-    ("TITLE: [%s] <short description of the work, no trailing period, under 72 chars>"):format(branch),
-    "===",
-    "<1 to 2 casual sentences about what this PR does and why>",
-    "",
-    "## What changed",
-    "- <specific thing that was done>",
-    "- <specific thing that was done>",
-  }, "\n")
-
-  draft_via_claude(prompt, function(res)
-    if res.code ~= 0 or not res.stdout or vim.trim(res.stdout) == "" then
-      notify_err("Claude failed to draft a description: " .. vim.trim(res.stderr or "unknown error"))
-      return
-    end
-    local title, body = parse_draft(res.stdout)
-    open_editor(base, branch, pr, title, body)
+  pick_branch("PR: source branch", branch, function(source)
+    pick_branch("PR: destination branch", default_base, function(destination)
+      if source == destination then
+        return notify_err(("Source and destination can't both be '%s'."):format(source))
+      end
+      proceed(source, destination)
+    end)
   end)
 end
 

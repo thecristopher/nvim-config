@@ -258,7 +258,7 @@ return {
             },
           },
           function()
-            local items = recent_projects(3)
+            local items = recent_projects(6)
             if #items == 0 then
               return {
                 {
