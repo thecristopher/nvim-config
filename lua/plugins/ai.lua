@@ -9,11 +9,32 @@ local function quote_arg(arg)
   return "'" .. arg:gsub("\\", "/") .. "'"
 end
 
+-- nvim on Windows often misses the installer's PATH entry, so check the usual homes directly
+local function find_windows_claude()
+  local on_path = vim.fn.exepath("claude")
+  if on_path ~= "" then return on_path end
+
+  local home = vim.env.USERPROFILE or vim.env.HOME or ""
+  local appdata = vim.env.APPDATA or ""
+  local candidates = {
+    home .. "/.local/bin/claude.exe",
+    home .. "/.claude/local/claude.exe",
+    appdata .. "/npm/claude.cmd",
+  }
+  for _, path in ipairs(candidates) do
+    if vim.fn.filereadable(path) == 1 then return path end
+  end
+  return ""
+end
+
 local function claude_launcher()
   if not is_windows then return "claude" end
 
-  local exe = vim.fn.exepath("claude")
-  if exe == "" then return "claude" end
+  local exe = find_windows_claude()
+  if exe == "" then
+    vim.notify("claude not found on PATH or in the usual install folders", vim.log.levels.WARN)
+    return "claude"
+  end
 
   -- npm installs claude as a .cmd shim, which jobstart can only run through cmd.exe
   if exe:lower():match("%.cmd$") or exe:lower():match("%.bat$") then
