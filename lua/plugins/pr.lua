@@ -15,7 +15,7 @@ return {
     },
     config = function()
       local ok, wk = pcall(require, "which-key")
-      if ok then wk.add({ { "<leader>p", group = "pr" } }) end
+      if ok then wk.add({ { "<leader>p", group = "ai git" } }) end
     end,
   },
 }

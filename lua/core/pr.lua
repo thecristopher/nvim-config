@@ -323,8 +323,54 @@ function M.submit(buf)
   end)
 end
 
--- Runs once source + destination are both chosen: recomputes commit log/diff
--- for that pair, shows the diff preview picker, then drafts via Claude.
+-- Builds the Claude prompt and fires the draft request.
+local function do_draft(branch, base, log, diff, pr, vibe)
+  local vibe_line = vibe ~= ""
+    and ('The user set the vibe: "' .. vibe .. '". Let that color the tone of the opener.')
+    or  "No specific vibe. Keep the tone casual and forward-looking naturally."
+
+  local prompt = table.concat({
+    ("Draft a GitHub pull request for merging branch `%s` into `%s`."):format(branch, base),
+    "Use the commit log and diff below for context.",
+    "Write a short, fun, casual description of what changed. Talk like a human, not a form.",
+    "Keep the tone positive and forward-looking. We're building on what came before, not tearing it down.",
+    "Never be snarky or critical about old code or past decisions. Frame improvements as progress.",
+    "Use a short opening sentence or two, then a ## What changed section with a hyphen list.",
+    "Hyphens as bullet markers are fine. Headers are fine.",
+    "Do NOT use hyphens to join words in prose ('role-validation-system' is AI-speak).",
+    "Em dashes (—) are never allowed anywhere, not even as sentence dividers.",
+    "No test plans. No trailing period on the title. Keep it concise.",
+    "",
+    vibe_line,
+    "",
+    "Commits (oldest first):",
+    log,
+    "",
+    "Diff:",
+    diff,
+    "",
+    "Respond with EXACTLY this format and nothing else (no code fences, no preamble):",
+    ("TITLE: [%s] <short description of the work, no trailing period, under 72 chars>"):format(branch),
+    "===",
+    "<1 to 2 casual sentences about what this PR does and why>",
+    "",
+    "## What changed",
+    "- <specific thing that was done>",
+    "- <specific thing that was done>",
+  }, "\n")
+
+  draft_via_claude(prompt, function(res)
+    if res.code ~= 0 or not res.stdout or vim.trim(res.stdout) == "" then
+      notify_err("Claude failed to draft a description: " .. vim.trim(res.stderr or "unknown error"))
+      return
+    end
+    local title, body = parse_draft(res.stdout)
+    open_editor(base, branch, pr, title, body)
+  end)
+end
+
+-- Runs once source + destination are both chosen: prepares context, shows the
+-- diff preview, asks for an optional vibe, then hands off to do_draft.
 local function proceed(branch, base)
   local base_r = base_ref(base)
   notify_info("Preparing diff context…")
@@ -333,41 +379,12 @@ local function proceed(branch, base)
     return notify_err(("No commits ahead of '%s'."):format(base))
   end
   local diff = diff_context(base_r, branch)
-  local pr = existing_pr(branch)
+  local pr   = existing_pr(branch)
 
   preview_diff(base_r, branch, base, function()
-    local prompt = table.concat({
-      ("Draft a GitHub pull request for merging branch `%s` into `%s`."):format(branch, base),
-      "Use the commit log and diff below for context.",
-      "Write a short, fun, casual description of what changed. Talk like a human, not a form.",
-      "Keep the tone positive and forward-looking. We're building on what came before, not tearing it down. Never be snarky, passive-aggressive, or critical about old code or past decisions. If something was improved or fixed, frame it as progress, not as 'finally someone fixed the mess' or 'the old approach was wrong'.",
-      "Use a short opening sentence or two, then a ## What changed section with a hyphen list of the specific things that were done.",
-      "Hyphens are fine as bullet markers. Headers are fine. What is NOT fine: using hyphens to join words in prose like an AI would (e.g. 'role-validation-system'), and em dashes (—) are never allowed anywhere, not even as sentence dividers.",
-      "No test plans. No trailing period on the title. Keep it concise.",
-      "",
-      "Commits (oldest first):",
-      log,
-      "",
-      "Diff:",
-      diff,
-      "",
-      "Respond with EXACTLY this format and nothing else (no code fences, no preamble):",
-      ("TITLE: [%s] <short description of the work, no trailing period, under 72 chars>"):format(branch),
-      "===",
-      "<1 to 2 casual sentences about what this PR does and why>",
-      "",
-      "## What changed",
-      "- <specific thing that was done>",
-      "- <specific thing that was done>",
-    }, "\n")
-
-    draft_via_claude(prompt, function(res)
-      if res.code ~= 0 or not res.stdout or vim.trim(res.stdout) == "" then
-        notify_err("Claude failed to draft a description: " .. vim.trim(res.stderr or "unknown error"))
-        return
-      end
-      local title, body = parse_draft(res.stdout)
-      open_editor(base, branch, pr, title, body)
+    vim.ui.input({ prompt = "Vibe? (optional, Enter to skip): " }, function(vibe)
+      if vibe == nil then return end
+      do_draft(branch, base, log, diff, pr, vim.trim(vibe))
     end)
   end)
 end

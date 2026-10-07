@@ -11,6 +11,9 @@ return {
       auto_start      = true,
       track_selection = true,   -- sends your cursor/visual selection as context
 
+      -- fullscreen mode lives on the alt screen, which leaves nvim no scrollback to scroll
+      terminal_cmd    = [[claude --settings '{"tui":"default"}']],
+
       terminal = {
         provider    = "snacks",
         auto_insert = true,   -- toggling in drops you straight into Insert mode, ready to type
