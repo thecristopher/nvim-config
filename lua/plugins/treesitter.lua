@@ -15,10 +15,8 @@ return {
       highlight = {
         enable  = true,
         disable = function(_, buf)
-          -- Disable for very large files
-          local max_filesize = 500 * 1024
           local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
-          return ok and stats and stats.size > max_filesize
+          return ok and stats and stats.size > 1024 * 1024
         end,
         additional_vim_regex_highlighting = false,
       },

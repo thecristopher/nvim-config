@@ -11,9 +11,12 @@ return {
       auto_start      = true,
       track_selection = true,   -- sends your cursor/visual selection as context
 
+      -- fullscreen mode lives on the alt screen, which leaves nvim no scrollback to scroll
+      terminal_cmd    = [[claude --settings '{"tui":"default"}']],
+
       terminal = {
         provider    = "snacks",
-        auto_insert = true,
+        auto_insert = true,   -- toggling in drops you straight into Insert mode, ready to type
         snacks_win_opts = {
           position = "right",
           width    = 0.38,
@@ -50,6 +53,20 @@ return {
       if ok then
         wk.add({ { "<leader>a", group = "claude", icon = "󱜸" } })
       end
+
+      -- Window navigation out of the Claude terminal (deliberately no <Esc>/jk
+      -- remap here: Esc interrupts Claude generation, and "jk" is something
+      -- you'll type mid-sentence when chatting with it).
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "snacks_terminal",
+        callback = function(args)
+          local map = vim.keymap.set
+          map("t", "<C-h>", [[<C-\><C-n><C-w>h]], { buffer = args.buf, desc = "Window left" })
+          map("t", "<C-j>", [[<C-\><C-n><C-w>j]], { buffer = args.buf, desc = "Window down" })
+          map("t", "<C-k>", [[<C-\><C-n><C-w>k]], { buffer = args.buf, desc = "Window up" })
+          map("t", "<C-l>", [[<C-\><C-n><C-w>l]], { buffer = args.buf, desc = "Window right" })
+        end,
+      })
     end,
   },
 }
