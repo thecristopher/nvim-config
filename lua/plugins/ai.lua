@@ -2,6 +2,31 @@
 -- No API key needed. Uses your existing Claude.ai login (same as VS Code).
 -- How it works: Neovim starts a WebSocket server; `claude` CLI auto-connects to it.
 
+local is_windows = vim.fn.has("win32") == 1
+
+-- claudecode splits this string itself (no shell), so single quotes keep each piece literal
+local function quote_arg(arg)
+  return "'" .. arg:gsub("\\", "/") .. "'"
+end
+
+local function claude_launcher()
+  if not is_windows then return "claude" end
+
+  local exe = vim.fn.exepath("claude")
+  if exe == "" then return "claude" end
+
+  -- npm installs claude as a .cmd shim, which jobstart can only run through cmd.exe
+  if exe:lower():match("%.cmd$") or exe:lower():match("%.bat$") then
+    return "cmd.exe /c " .. quote_arg(exe)
+  end
+  return quote_arg(exe)
+end
+
+local function claude_terminal_cmd()
+  local settings_file = vim.fn.stdpath("config") .. "/claude-settings.json"
+  return claude_launcher() .. " --settings " .. quote_arg(settings_file)
+end
+
 return {
   {
     "coder/claudecode.nvim",
@@ -12,7 +37,7 @@ return {
       track_selection = true,   -- sends your cursor/visual selection as context
 
       -- default tui keeps nvim scrollback, and a file dodges cmd.exe mangling inline JSON quotes
-      terminal_cmd    = "claude --settings " .. vim.fn.shellescape(vim.fn.stdpath("config") .. "/claude-settings.json"),
+      terminal_cmd    = claude_terminal_cmd(),
 
       terminal = {
         provider    = "snacks",
