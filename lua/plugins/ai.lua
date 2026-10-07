@@ -11,8 +11,8 @@ return {
       auto_start      = true,
       track_selection = true,   -- sends your cursor/visual selection as context
 
-      -- fullscreen mode lives on the alt screen, which leaves nvim no scrollback to scroll
-      terminal_cmd    = [[claude --settings '{"tui":"default"}']],
+      -- default tui keeps nvim scrollback, and a file dodges cmd.exe mangling inline JSON quotes
+      terminal_cmd    = "claude --settings " .. vim.fn.shellescape(vim.fn.stdpath("config") .. "/claude-settings.json"),
 
       terminal = {
         provider    = "snacks",
