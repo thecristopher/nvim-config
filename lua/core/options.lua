@@ -91,3 +91,11 @@ opt.shortmess:append({ W = true, I = true, c = true, C = true })
 -- Disable built-in file browser (neo-tree handles it)
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
+
+-- the Claude native installer drops claude.exe here but often never makes it onto PATH
+if vim.fn.has("win32") == 1 then
+  local claude_bin = (vim.env.USERPROFILE or "") .. "\\.local\\bin"
+  if not vim.env.PATH:lower():find(claude_bin:lower(), 1, true) then
+    vim.env.PATH = claude_bin .. ";" .. vim.env.PATH
+  end
+end
