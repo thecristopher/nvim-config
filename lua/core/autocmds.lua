@@ -9,7 +9,7 @@ end
 au("TextYankPost", {
   group = aug("yank_highlight"),
   callback = function()
-    vim.highlight.on_yank({ timeout = 250 })
+    vim.hl.on_yank({ timeout = 250 })
   end,
 })
 
@@ -67,21 +67,6 @@ au("FileType", {
     vim.opt_local.spell = true
     vim.opt_local.wrap = true
     vim.opt_local.conceallevel = 0
-  end,
-})
-
--- Disable mini.animate cursor trail while typing (it smears/lags behind
--- the real cursor on every keystroke, making insert-mode position unclear)
-au({ "InsertEnter" }, {
-  group = aug("no_cursor_animate_insert"),
-  callback = function()
-    vim.b.minianimate_disable = true
-  end,
-})
-au({ "InsertLeave" }, {
-  group = aug("no_cursor_animate_insert"),
-  callback = function()
-    vim.b.minianimate_disable = false
   end,
 })
 

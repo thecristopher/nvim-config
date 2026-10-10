@@ -315,7 +315,7 @@ return {
     end,
   },
 
-  -- ── mini.animate: smooth cursor, window open/close, resize ────────
+  -- ── mini.animate: window open/close and resize ────────────────────
   {
     "echasnovski/mini.animate",
     version = false,
@@ -324,13 +324,31 @@ return {
       local animate = require("mini.animate")
       local timing  = animate.gen_timing.linear({ duration = 90, unit = "total" })
       animate.setup({
-        cursor = { enable = true,  timing = timing },
+        cursor = { enable = false },  -- smear-cursor draws a trail without delaying the real cursor
         scroll = { enable = false },  -- snacks.scroll handles this
         resize = { enable = true,  timing = timing },
         open   = { enable = true,  timing = timing },
         close  = { enable = true,  timing = timing },
       })
     end,
+  },
+
+  -- ── smear-cursor: a golden trail on every jump ────────────────────
+  {
+    "sphamba/smear-cursor.nvim",
+    event = "VeryLazy",
+    opts  = {
+      cursor_color             = "#C9A84C",
+      stiffness                = 0.8,
+      trailing_stiffness       = 0.55,
+      distance_stop_animating  = 0.5,
+      -- typing already moves one cell at a time, a trail there is just noise
+      smear_insert_mode        = false,
+      smear_between_buffers    = true,
+      smear_between_neighbor_lines = false,
+      scroll_buffer_space      = true,
+      filetypes_disabled       = { "bigfile", "snacks_dashboard", "lazy", "mason" },
+    },
   },
 
   -- ── indent-blankline: rainbow indent guides (Eldentree palette) ────
@@ -344,7 +362,7 @@ return {
       exclude = {
         filetypes = {
           "help", "alpha", "dashboard", "neo-tree", "Trouble", "trouble",
-          "lazy", "mason", "notify", "toggleterm", "snacks_dashboard",
+          "lazy", "mason", "notify", "toggleterm", "snacks_dashboard", "bigfile",
         },
       },
     },

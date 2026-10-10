@@ -12,7 +12,13 @@ active for every session in this repo. No need to invoke /my-style manually.
 - Core config (options, keymaps, autocmds) lives in `lua/core/`
 - Theme: catppuccin-mocha with a custom Elden Ring palette
 - Leader: `<Space>` | Local leader: `\`
-- `~/.config/nvim` is a symlink to this repo — every saved `.lua` file is live immediately
+- `~/.config/nvim` is a symlink to this repo, so every saved `.lua` file is live immediately
+- LSP uses native `vim.lsp.config` plus mason-lspconfig v2 (`automatic_enable`), servers live in `lua/plugins/lsp.lua`
+- `lua/core/dive/`: F12 family (definition, Glance peek, references, F2 rename), bound on LspAttach
+- `lua/core/repos/`: background repo scanner, Sites of Grace picker (`<leader>fp`), auto root, dashboard items
+- `lua/core/vscode/`: when `vim.g.vscode` is set (Cursor/VS Code), only the allow listed editing plugins load
+- Pure logic goes in each module's `actions/init.lua` so it can be unit tested
+- Tests: `./scripts/test.sh` (plenary busted, specs in `tests/`)
 
 ---
 

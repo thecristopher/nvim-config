@@ -54,10 +54,10 @@ end
 
 local function draft_via_claude(prompt, cb)
   notify_info("Drafting commit message with Claude…")
-  local start = vim.loop.now()
-  local timer = vim.loop.new_timer()
+  local start = vim.uv.now()
+  local timer = vim.uv.new_timer()
   timer:start(4000, 4000, vim.schedule_wrap(function()
-    local secs = math.floor((vim.loop.now() - start) / 1000)
+    local secs = math.floor((vim.uv.now() - start) / 1000)
     notify_info(("Drafting… (%ds)"):format(secs))
   end))
   vim.system(

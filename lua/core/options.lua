@@ -55,7 +55,13 @@ opt.redrawtime = 1500
 
 -- Mouse & clipboard
 opt.mouse = "a"
+opt.mousemoveevent = true -- hover highlights in bufferline and breadcrumbs
+opt.mousescroll = "ver:3,hor:6"
+opt.smoothscroll = true -- wrapped lines scroll by screen line instead of jumping
 opt.clipboard = "unnamedplus"
+
+-- Minified bundles have 50k char lines, highlighting past this is wasted effort
+opt.synmaxcol = 300
 
 -- Completion
 opt.completeopt = "menu,menuone,noselect"

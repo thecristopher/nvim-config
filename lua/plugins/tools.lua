@@ -9,7 +9,7 @@ return {
     keys  = {
       {
         "<leader>cf",
-        function() require("conform").format({ async = true, lsp_fallback = true }) end,
+        function() require("conform").format({ async = true, lsp_format = "fallback" }) end,
         mode = { "n", "v" },
         desc = "Format buffer/selection",
       },
@@ -17,7 +17,9 @@ return {
     opts = {
       formatters_by_ft = {
         lua         = { "stylua" },
-        python      = { "isort", "black" },
+        python      = { "ruff_organize_imports", "ruff_format", stop_after_first = false },
+        php         = { "php_cs_fixer" },
+        swift       = { "swiftformat" },
         javascript  = { "prettierd", "prettier" },
         javascriptreact = { "prettierd", "prettier" },
         typescript  = { "prettierd", "prettier" },
@@ -39,20 +41,21 @@ return {
         zsh         = { "shfmt" },
         toml        = { "taplo" },
         rust        = { "rustfmt" },
-        go          = { "goimports", "gofumpt" },
+        go          = { "goimports", "gofumpt", stop_after_first = false },
         fish        = { "fish_indent" },
         terraform   = { "terraform_fmt" },
         ["_"]       = { "trim_whitespace" },
       },
+      -- without this conform runs prettierd and then prettier again on every save
+      default_format_opts = { stop_after_first = true },
       format_on_save = function(bufnr)
-        -- Disable format-on-save for large files and certain paths
-        local disable_filetypes = { c = true, cpp = true }
+        local disable_filetypes = { c = true, cpp = true, bigfile = true }
         if disable_filetypes[vim.bo[bufnr].filetype] then
           return
         end
         return {
           timeout_ms   = 3000,
-          lsp_fallback = true,
+          lsp_format = "fallback",
         }
       end,
       formatters = {
@@ -61,9 +64,6 @@ return {
         },
         shfmt = {
           prepend_args = { "-i", "2", "-ci" },
-        },
-        black = {
-          prepend_args = { "--line-length", "100" },
         },
         prettierd = {
           env = { PRETTIERD_DEFAULT_CONFIG = vim.fn.stdpath("config") .. "/.prettierrc.json" },
@@ -80,13 +80,8 @@ return {
       local lint = require("lint")
 
       lint.linters_by_ft = {
-        python      = { "ruff" },
-        javascript  = { "eslint_d" },
-        javascriptreact = { "eslint_d" },
-        typescript  = { "eslint_d" },
-        typescriptreact = { "eslint_d" },
-        vue         = { "eslint_d" },
-        svelte      = { "eslint_d" },
+        -- ruff and eslint run as language servers, linting here too would double every warning
+        swift       = { "swiftlint" },
         sh          = { "shellcheck" },
         bash        = { "shellcheck" },
         lua         = { "selene" },
@@ -102,7 +97,7 @@ return {
         group = lint_augroup,
         callback = function()
           -- Only lint files (skip special buffers)
-          if vim.opt_local.modifiable:get() then
+          if vim.opt_local.modifiable:get() and vim.bo.filetype ~= "bigfile" then
             lint.try_lint(nil, { ignore_errors = true })
           end
         end,
