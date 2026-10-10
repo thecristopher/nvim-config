@@ -5,20 +5,8 @@ local hour     = tonumber(os.date("%H"))
 local greeting = hour < 5 and "The night is long" or hour < 12 and "Good morning" or hour < 18 and "Good afternoon" or "Good evening"
 local today    = os.date("%A, %B %d  ·  %I:%M %p")
 local nvim_version = tostring(vim.version()):match("^[%d.]+")
-local quotes = {
-  "Guidance of grace shall lead the way.",
-  "Rise, and let grace light your path.",
-  "The strength to overcome is within thee.",
-  "May the Erdtree illuminate your work.",
-  "Thou art yet to lose thy grace.",
-  "Be not consumed by doubt. Press onward.",
-  "Every line of code is a step toward the Elden Ring.",
-  "Try refactoring, but hole.",
-  "Seek the lands between your functions.",
-  "Fear not the stack trace, Tarnished.",
-}
-math.randomseed(os.time())
-local quote     = quotes[math.random(#quotes)]
+-- the hub owns the message so its quill knows which line to write in
+local function message() return require("core.hub").message() end
 local art_image = vim.fn.stdpath("config") .. "/images/malenia.jpg"
 
 -- the art alone is 46x28, so only show it when there is room for both panes
@@ -64,6 +52,7 @@ return {
             { icon = "󰉋 ", key = "e", desc = "Explorer",        action = ":Neotree toggle" },
             { icon = "󰝒 ", key = "n", desc = "New File",        action = ":ene | startinsert" },
             { icon = "󰆔 ", key = "s", desc = "Restore Session", action = function() require("persistence").load() end },
+            { icon = "󰏘 ", key = "t", desc = "Choose Region",   action = function() require("core.themes").pick() end },
             { icon = "󰒓 ", key = "c", desc = "Config",          action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})" },
             { icon = "󰒲 ", key = "l", desc = "Lazy",            action = ":Lazy" },
             { icon = "󰏗 ", key = "m", desc = "Mason",           action = ":Mason" },
@@ -114,7 +103,7 @@ return {
             text    = {
               { greeting .. ", Tarnished\n", hl = "SnacksDashboardTitle" },
               { today .. "\n\n",             hl = "SnacksDashboardFooter" },
-              { '"' .. quote .. '"',         hl = "SnacksDashboardDesc" },
+              { '"' .. message() .. '"',     hl = "SnacksDashboardDesc" },
             },
           },
           function()
@@ -125,8 +114,8 @@ return {
               padding = { 1, 0, 0, 0 },
               align   = "center",
               text    = {
-                { ("⚡ Neovim %s  ·  %d plugins  ·  %.0fms  ·  %d graces found"):format(
-                    nvim_version, stats.count, stats.startuptime, repos),
+                { ("⚡ Neovim %s  ·  %d plugins  ·  %.0fms  ·  %d graces found  ·  %s"):format(
+                    nvim_version, stats.count, stats.startuptime, repos, require("core.themes").current().title),
                   hl = "SnacksDashboardFooter" },
               },
             }

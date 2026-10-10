@@ -13,6 +13,12 @@ if vim.g.vscode then
   require("core.vscode").setup()
 else
   require("core.repos").setup()
+  require("core.motion").setup()
+  require("core.banner").setup()
+  require("core.hub").setup()
+  require("core.trial").setup()
+  require("core.runes").setup()
+  require("core.rest").setup()
 end
 
 -- ── Bootstrap lazy.nvim ──────────────────────────────────────────────────────

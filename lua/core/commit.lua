@@ -125,12 +125,14 @@ function M.submit(buf)
 
   if vim.v.shell_error ~= 0 then
     notify_err("git commit failed:\n" .. out)
+    require("core.banner").show("died", { subtitle = "git commit failed" })
     return
   end
 
   vim.bo[buf].modified = false
   pending[buf] = nil
   notify_info("Committed: " .. (msg:match("^([^\n]+)") or ""))
+  require("core.banner").show("felled", { subtitle = msg:match("^([^\n]+)") })
 
   vim.schedule(function()
     pcall(vim.api.nvim_win_close, 0, true)

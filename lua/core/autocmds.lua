@@ -70,20 +70,19 @@ au("FileType", {
   end,
 })
 
--- Brighten the cursor line while typing so your position stays obvious
--- even when the terminal's caret color/shape is hard to spot (the base
--- CursorLine tint is deliberately subtle for normal-mode browsing)
-au({ "InsertEnter" }, {
-  group = aug("cursorline_insert"),
-  callback = function()
-    vim.api.nvim_set_hl(0, "CursorLine", { bg = "#332912" })
-  end,
-})
-au({ "InsertLeave" }, {
-  group = aug("cursorline_insert"),
-  callback = function()
-    vim.api.nvim_set_hl(0, "CursorLine", { bg = "#1A1714" })
-  end,
+-- The cursor line warms up while typing and the line number takes the mode's color,
+-- both fading over instead of snapping so the switch feels like breath, not a blink
+local function paint_mode(mode)
+  local themes = require("core.themes.actions")
+  local p = require("core.themes").palette()
+  local look = themes.mode_look(p, themes.derive(p), mode)
+  local motion = require("core.motion")
+  motion.fade_hl("CursorLine",   { bg = look.cursorline }, { duration = 180 })
+  motion.fade_hl("CursorLineNr", { fg = look.number, bold = true }, { duration = 180 })
+end
+au("ModeChanged", {
+  group = aug("mode_paint"),
+  callback = function() paint_mode(vim.v.event.new_mode) end,
 })
 
 -- Strip trailing whitespace on save (respects filetype exclusions)

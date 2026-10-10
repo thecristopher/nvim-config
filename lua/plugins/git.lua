@@ -82,9 +82,10 @@ return {
     event  = { "BufReadPre", "BufNewFile" },
     config = function(_, opts)
       require("gitsigns").setup(opts)
-      -- Blame virtual text: warm parchment so it's clearly readable but secondary
+      -- Blame virtual text: readable but clearly secondary, tinted to the region
       local function set_blame_hl()
-        vim.api.nvim_set_hl(0, "GitSignsCurrentLineBlame", { fg = "#5E5248", italic = true })
+        local tints = require("core.themes.actions").derive(require("core.themes").palette())
+        vim.api.nvim_set_hl(0, "GitSignsCurrentLineBlame", { fg = tints.blame, italic = true })
       end
       set_blame_hl()
       vim.api.nvim_create_autocmd("ColorScheme", { callback = set_blame_hl })

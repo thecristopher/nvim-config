@@ -310,12 +310,14 @@ function M.submit(buf)
 
   if not ok then
     notify_err(("gh pr %s failed:\n%s"):format(ctx.pr and "edit" or "create", out))
+    require("core.banner").show("died", { subtitle = "the pull request did not survive" })
     return
   end
 
   vim.bo[buf].modified = false
   local url = ctx.pr and ctx.pr.url or vim.trim(out)
   notify_info(ctx.pr and ("Updated PR #%d: %s"):format(ctx.pr.number, url) or ("Created PR: %s"):format(url))
+  require("core.banner").show("great", { subtitle = title })
 
   vim.schedule(function()
     pcall(vim.api.nvim_win_close, 0, true)

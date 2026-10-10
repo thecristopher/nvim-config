@@ -84,4 +84,10 @@ map("n", "<leader>uR", function()
   vim.notify("Auto root " .. (vim.g.eldentree_autoroot and "on" or "off"))
 end, { desc = "Toggle auto root" })
 
+-- ── Regions (themes) ─────────────────────────────────────────────────────────
+map("n", "<leader>ut", function() require("core.themes").pick() end, { desc = "Choose region theme" })
+map("n", "<leader>uT", function() require("core.themes").cycle() end, { desc = "Next region theme" })
+map("n", "<leader>um", function() require("core.motion").toggle() end, { desc = "Toggle animations" })
+map("n", "<leader>cT", function() require("core.trial").run() end, { desc = "Run tests (Trial)" })
+
 -- ── LSP (F12 and friends bind per buffer in core/dive) ───────────────────────
