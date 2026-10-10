@@ -1,97 +1,35 @@
 -- snacks.nvim — folke's all-in-one quality-of-life suite
 
--- ── Dashboard greeting data (evaluated once at startup) ──────────────────────
-local _hour    = tonumber(os.date("%H"))
-local _greet   = _hour < 12 and "Good morning" or _hour < 18 and "Good afternoon" or "Good evening"
-local _date    = os.date("  %A, %B %d  •  %I:%M %p")
-local _nvim_v  = (function() local v = vim.version(); return ("v%d.%d.%d"):format(v.major, v.minor, v.patch) end)()
-local _er_quotes = {
-  "Guidance of grace shall lead the way.",
-  "Rise, and let grace light your path.",
-  "The strength to overcome is within thee.",
-  "May the Erdtree illuminate your work.",
-  "Thou art yet to lose thy grace.",
-  "Be not consumed by doubt. Press onward.",
-  "Every line of code — a step toward the Elden Ring.",
-}
-math.randomseed(os.time())
-local _quote  = _er_quotes[math.random(#_er_quotes)]
-local _img    = vim.fn.stdpath("config") .. "/images/malenia.jpg"
+-- ── Dashboard flavour (evaluated once at startup) ────────────────────────────
+local hour     = tonumber(os.date("%H"))
+local greeting = hour < 5 and "The night is long" or hour < 12 and "Good morning" or hour < 18 and "Good afternoon" or "Good evening"
+local today    = os.date("%A, %B %d  ·  %I:%M %p")
+local nvim_version = tostring(vim.version()):match("^[%d.]+")
+-- the hub owns the message so its quill knows which line to write in
+local function message() return require("core.hub").message() end
+local art_image = vim.fn.stdpath("config") .. "/images/malenia.jpg"
 
-
--- ── Git-aware recent project finder ──────────────────────────────────────────
--- Only lists actual git repositories (via Snacks.git.get_root, which also
--- handles worktrees/submodules where `.git` is a file, not a directory).
--- Loose files opened outside a repo are skipped rather than counted as
--- "projects", so they can't crowd real repos out of the limited slots.
---
--- `v:oldfiles` alone misses a project you switched into (`cd`, dashboard's
--- "Open Folder", or `nvim .`) but never opened a specific file buffer in --
--- it only tracks files that became real buffers, and only that at all if
--- shada ever wrote them. So directory switches are tracked live to a state
--- file via DirChanged/VimEnter below, and used as the primary source; oldfiles
--- is kept as a fallback for history predating this tracker.
-local project_state_file = vim.fn.stdpath("state") .. "/eldentree_recent_projects.json"
-
-local function load_tracked_projects()
-  local ok, lines = pcall(vim.fn.readfile, project_state_file)
-  if not ok then return {} end
-  local ok2, decoded = pcall(vim.json.decode, table.concat(lines, "\n"))
-  return (ok2 and type(decoded) == "table") and decoded or {}
+-- the art alone is 46x28, so only show it when there is room for both panes
+local function room_for_art()
+  return vim.o.columns >= 128 and vim.o.lines >= 42 and vim.fn.executable("chafa") == 1
 end
 
-local function record_project(dir)
-  if not (_G.Snacks and Snacks.git) then return end
-  local root = Snacks.git.get_root(dir)
-  if not root then return end
-  local list = load_tracked_projects()
-  for i = #list, 1, -1 do
-    if list[i] == root then table.remove(list, i) end
-  end
-  table.insert(list, 1, root)
-  while #list > 20 do table.remove(list) end
-  pcall(vim.fn.writefile, { vim.json.encode(list) }, project_state_file)
+local function rule(label)
+  local line = ("◈── %s "):format(label)
+  return line .. ("─"):rep(math.max(4, 44 - vim.api.nvim_strwidth(line))) .. "◈"
 end
 
-vim.api.nvim_create_autocmd({ "DirChanged", "VimEnter" }, {
-  callback = function() record_project(vim.loop.cwd()) end,
-})
+local function heading(label, pane)
+  return {
+    pane    = pane,
+    padding = { 1, 0, 0, 0 },
+    indent  = 2,
+    text    = { { rule(label), hl = "SnacksDashboardDesc" } },
+  }
+end
 
-local function recent_projects(limit)
-  local result, seen = {}, {}
-
-  local function add(proj)
-    if not proj or seen[proj] or #result >= limit then return end
-    seen[proj] = true
-    local home    = vim.env.HOME or ""
-    local display = home ~= "" and proj:gsub("^" .. home, "~") or proj
-    result[#result + 1] = {
-      key    = tostring(#result + 1),
-      icon   = "󰊢 ",
-      desc   = display,
-      action = function()
-        vim.fn.chdir(proj)
-        vim.cmd("Neotree dir=" .. vim.fn.fnameescape(proj) .. " toggle")
-      end,
-    }
-  end
-
-  for _, proj in ipairs(load_tracked_projects()) do
-    if #result >= limit then break end
-    if vim.fn.isdirectory(proj) == 1 then add(proj) end
-  end
-
-  for _, file in ipairs(vim.v.oldfiles or {}) do
-    if #result >= limit then break end
-    if not file:match("^/tmp")
-      and not file:match("COMMIT_EDITMSG")
-      and vim.fn.filereadable(file) == 1
-    then
-      add(Snacks.git.get_root(file))
-    end
-  end
-
-  return result
+local function in_git_repo()
+  return Snacks.git.get_root() ~= nil
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -101,40 +39,28 @@ return {
     priority = 900,
     lazy     = false,
     opts = {
-      -- ── Dashboard ───────────────────────────────────────────────────
+      -- ── Dashboard: the Roundtable Hold ─────────────────────────────
       dashboard = {
         enabled = true,
+        width   = 60,
         preset  = {
-          -- Keys shown in right pane (code-oriented, folder-aware)
           keys = {
-            { icon = "󰍉 ", key = "f", desc = "Find File",    action = ":lua Snacks.dashboard.pick('files')" },
-            { icon = "󰋚 ", key = "r", desc = "Recent Files", action = ":lua Snacks.dashboard.pick('oldfiles')" },
-            { icon = "󰊄 ", key = "g", desc = "Live Grep",    action = ":lua Snacks.dashboard.pick('live_grep')" },
-            { icon = "󰝒 ", key = "n", desc = "New File",     action = ":ene | startinsert" },
-            { icon = "󰉋 ", key = "e", desc = "Explorer",    action = ":Neotree toggle" },
-            { icon = "󰉋 ", key = "o", desc = "Open Folder", action = function()
-                vim.ui.input(
-                  { prompt = "  Open folder: ", default = vim.fn.getcwd(), completion = "dir" },
-                  function(dir)
-                    if dir and dir ~= "" and vim.fn.isdirectory(dir) == 1 then
-                      vim.fn.chdir(dir)
-                      vim.cmd("Neotree dir=" .. vim.fn.fnameescape(dir) .. " toggle")
-                    end
-                  end
-                )
-              end },
-            { icon = "󰒓 ", key = "c", desc = "Config",       action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})" },
-            { icon = "󰒲 ", key = "l", desc = "Lazy",         action = ":Lazy" },
-            { icon = "󰏗 ", key = "m", desc = "Mason",         action = ":Mason" },
+            { icon = "󰍉 ", key = "f", desc = "Find File",       action = ":lua Snacks.dashboard.pick('files')" },
+            { icon = "󰊄 ", key = "g", desc = "Live Grep",       action = ":lua Snacks.dashboard.pick('live_grep')" },
+            { icon = "󰋚 ", key = "r", desc = "Recent Files",    action = ":lua Snacks.dashboard.pick('oldfiles')" },
+            { icon = "󰊢 ", key = "p", desc = "Sites of Grace",  action = function() require("core.repos").pick() end },
+            { icon = "󰉋 ", key = "e", desc = "Explorer",        action = ":Neotree toggle" },
+            { icon = "󰝒 ", key = "n", desc = "New File",        action = ":ene | startinsert" },
             { icon = "󰆔 ", key = "s", desc = "Restore Session", action = function() require("persistence").load() end },
-            { icon = "󰐥 ", key = "q", desc = "Quit",           action = ":qa" },
+            { icon = "󰏘 ", key = "t", desc = "Choose Region",   action = function() require("core.themes").pick() end },
+            { icon = "󰒓 ", key = "c", desc = "Config",          action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})" },
+            { icon = "󰒲 ", key = "l", desc = "Lazy",            action = ":Lazy" },
+            { icon = "󰏗 ", key = "m", desc = "Mason",           action = ":Mason" },
+            { icon = "󰐥 ", key = "q", desc = "Quit",            action = ":qa" },
           },
         },
 
-        -- Show "parentDir/filename" instead of the default home-relative
-        -- path. The stock formatter shortens long paths by truncating the
-        -- tail of the filename itself, which collapses repeated names like
-        -- Input/index.tsx and Button/index.tsx into indistinguishable text.
+        -- Show "parentDir/filename" so Input/index.tsx and Button/index.tsx stay distinguishable
         formats = {
           file = function(item)
             local fname  = vim.fn.fnamemodify(item.file, ":t")
@@ -144,137 +70,94 @@ return {
               { fname, hl = "file" },
             } or { { fname, hl = "file" } }
           end,
+          title = { "%s", hl = "SnacksDashboardTitle" },
         },
 
-        -- ── Two-column layout ───────────────────────────────────────
         sections = {
-
-          -- ════════════════════════════════════════
-          -- LEFT PANE  (pane = 1): Art + Identity
-          -- ════════════════════════════════════════
-
-          -- Malenia artwork rendered with chafa
+          -- ════ LEFT PANE: the Erdtree ═════════════════════════════
           {
             pane    = 1,
             section = "terminal",
-            cmd     = "chafa --format=symbols --symbols=half --size=46x28 --colors=full " .. _img,
+            enabled = room_for_art,
+            cmd     = "chafa --format=symbols --symbols=half --size=46x28 --colors=full " .. art_image,
             height  = 28,
             width   = 46,
             ttl     = 3600 * 24 * 30,
-            indent  = 2,
+            indent  = 7,
             padding = { 1, 0, 0, 0 },
           },
-
-          -- Elden Ring title block below art
           {
             pane    = 1,
             padding = { 1, 0, 0, 0 },
+            align   = "center",
             text    = {
-              { "  ◈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◈\n", hl = "SnacksDashboardHeader" },
-              { "       E  L  D  E  N     R  I  N  G         \n",   hl = "SnacksDashboardHeader" },
-              { "  ◈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◈\n", hl = "SnacksDashboardHeader" },
+              { "◈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◈\n", hl = "SnacksDashboardHeader" },
+              { "E  L  D  E  N  T  R  E  E\n",                       hl = "SnacksDashboardHeader" },
+              { "◈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◈",   hl = "SnacksDashboardHeader" },
             },
           },
-
-          -- Greeting, date, quote
           {
             pane    = 1,
             padding = { 1, 0, 0, 0 },
+            align   = "center",
             text    = {
-              { "     " .. _greet .. ", Tarnished\n",      hl = "SnacksDashboardHeader" },
-              { "     " .. _date  .. "\n\n",               hl = "SnacksDashboardFooter" },
-              { '     "' .. _quote .. '"\n',               hl = "SnacksDashboardDesc" },
+              { greeting .. ", Tarnished\n", hl = "SnacksDashboardTitle" },
+              { today .. "\n\n",             hl = "SnacksDashboardFooter" },
+              { '"' .. message() .. '"',     hl = "SnacksDashboardDesc" },
             },
           },
-
-          -- Neovim version at the bottom-left
           function()
-            local ok, lazy_mod = pcall(require, "lazy")
-            local plug = ok and lazy_mod.stats().count or 0
+            local stats = require("lazy").stats()
+            local repos = #require("core.repos").list()
             return {
-              {
-                pane    = 1,
-                padding = { 2, 0, 0, 0 },
-                text    = {
-                  { ("     ⚡ Neovim %s  ·  %d plugins\n"):format(_nvim_v, plug), hl = "SnacksDashboardFooter" },
-                },
+              pane    = 1,
+              padding = { 1, 0, 0, 0 },
+              align   = "center",
+              text    = {
+                { ("⚡ Neovim %s  ·  %d plugins  ·  %.0fms  ·  %d graces found  ·  %s"):format(
+                    nvim_version, stats.count, stats.startuptime, repos, require("core.themes").current().title),
+                  hl = "SnacksDashboardFooter" },
               },
             }
           end,
 
-          -- Startup time (shown in left pane below version)
-          {
-            pane    = 1,
-            section = "startup",
-            padding = { 0, 0, 0, 0 },
-          },
-
-          -- ════════════════════════════════════════
-          -- RIGHT PANE (pane = 2): Workspace
-          -- ════════════════════════════════════════
-
-          -- Right-pane title
+          -- ════ RIGHT PANE: the Roundtable Hold ════════════════════
           {
             pane    = 2,
             padding = { 2, 0, 1, 0 },
-            text    = {
-              { "  ◈   C O D E   W O R K S P A C E   ◈\n",   hl = "SnacksDashboardHeader" },
-              { "  ◈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◈\n",   hl = "SnacksDashboardDesc" },
-            },
+            align   = "center",
+            text    = { { "◈   R O U N D T A B L E   H O L D   ◈", hl = "SnacksDashboardHeader" } },
           },
+          { pane = 2, section = "keys", indent = 2, padding = { 0, 0, 0, 0 } },
 
-          -- Action keys
-          {
-            pane    = 2,
-            section = "keys",
-            gap     = 1,
-            padding = { 0, 0, 1, 0 },
-            indent  = 2,
-          },
-
-          -- ── Recent Files ──────────────────────────
-          {
-            pane    = 2,
-            padding = { 1, 0, 0, 0 },
-            text    = {
-              { "  ◈── Recent Files ─────────────────────◈\n", hl = "SnacksDashboardDesc" },
-            },
-          },
-          {
-            pane    = 2,
-            section = "recent_files",
-            cwd     = false,
-            limit   = 4,
-            indent  = 2,
-            padding = { 0, 0, 1, 0 },
-          },
-
-          -- ── Recent Projects ───────────────────────
-          {
-            pane    = 2,
-            padding = { 1, 0, 0, 0 },
-            text    = {
-              { "  ◈── Recent Projects ──────────────────◈\n", hl = "SnacksDashboardDesc" },
-            },
-          },
+          heading("Sites of Grace", 2),
           function()
-            local items = recent_projects(6)
+            local items = require("core.repos").dashboard_items(6)
             if #items == 0 then
-              return {
-                {
-                  pane    = 2,
-                  indent  = 2,
-                  padding = { 0, 0, 1, 0 },
-                  text    = { { "    No recent projects found\n", hl = "SnacksDashboardFooter" } },
-                },
-              }
+              return { pane = 2, indent = 4, text = { { "No graces yet. Scanning your realms…", hl = "SnacksDashboardFooter" } } }
             end
             for _, item in ipairs(items) do
-              item.pane    = 2
-              item.indent  = 2
+              item.pane, item.indent = 2, 2
             end
-            items[#items].padding = { 0, 0, 1, 0 }
             return items
+          end,
+
+          heading("Recent Files", 2),
+          { pane = 2, section = "recent_files", cwd = false, limit = 4, indent = 2 },
+
+          function()
+            if not in_git_repo() then return {} end
+            return {
+              heading("Current Quest  " .. (require("core.repos").branch(Snacks.git.get_root()) or ""), 2),
+              {
+                pane    = 2,
+                section = "terminal",
+                cmd     = "git --no-pager diff --stat -B -M -C | tail -n 6",
+                height  = 6,
+                indent  = 4,
+                ttl     = 0,
+              },
+            }
           end,
         },
       },
@@ -355,13 +238,19 @@ return {
         enabled = true,
         notify  = true,
         size    = 1.5 * 1024 * 1024,
+        -- also catches minified bundles: average line over 1000 chars
+        line_length = 1000,
         setup   = function(ctx)
           vim.cmd("syntax clear")
           vim.opt_local.spell      = false
           vim.opt_local.undofile   = false
           vim.opt_local.list       = false
           vim.opt_local.foldmethod = "manual"
-          Snacks.util.wo(ctx.win, { conceallevel = 0 })
+          vim.b[ctx.buf].minianimate_disable = true
+          vim.b[ctx.buf].snacks_scroll       = false
+          vim.b[ctx.buf].snacks_indent       = false
+          vim.b[ctx.buf].completion          = false
+          Snacks.util.wo(ctx.win, { conceallevel = 0, cursorline = false, statuscolumn = "" })
         end,
       },
       git        = { enabled = true },

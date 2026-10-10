@@ -67,8 +67,8 @@ map("n", "<Esc>", "<cmd>nohlsearch<cr>", { silent = true })
 map("n", "Q", "<nop>")
 
 -- ── Diagnostics ──────────────────────────────────────────────────────────────
-map("n", "[d", function() vim.diagnostic.goto_prev({ float = true }) end, { desc = "Prev diagnostic" })
-map("n", "]d", function() vim.diagnostic.goto_next({ float = true }) end, { desc = "Next diagnostic" })
+map("n", "[d", function() vim.diagnostic.jump({ count = -1, float = true }) end, { desc = "Prev diagnostic" })
+map("n", "]d", function() vim.diagnostic.jump({ count = 1, float = true }) end, { desc = "Next diagnostic" })
 map("n", "<leader>e", vim.diagnostic.open_float, { desc = "Diagnostic float" })
 
 -- ── UI toggles ───────────────────────────────────────────────────────────────
@@ -77,4 +77,17 @@ map("n", "<leader>uN", function() Snacks.notifier.show_history() end, { desc = "
 map("n", "<leader>uz", function() Snacks.zen() end, { desc = "Zen mode" })
 map("n", "<leader>uZ", function() Snacks.zen.zoom() end, { desc = "Zoom window" })
 
--- ── LSP (populated in lsp.lua via on_attach) ─────────────────────────────────
+-- ── Repos ────────────────────────────────────────────────────────────────────
+map("n", "<leader>fp", function() require("core.repos").pick() end, { desc = "Find repository" })
+map("n", "<leader>uR", function()
+  vim.g.eldentree_autoroot = vim.g.eldentree_autoroot == false
+  vim.notify("Auto root " .. (vim.g.eldentree_autoroot and "on" or "off"))
+end, { desc = "Toggle auto root" })
+
+-- ── Regions (themes) ─────────────────────────────────────────────────────────
+map("n", "<leader>ut", function() require("core.themes").pick() end, { desc = "Choose region theme" })
+map("n", "<leader>uT", function() require("core.themes").cycle() end, { desc = "Next region theme" })
+map("n", "<leader>um", function() require("core.motion").toggle() end, { desc = "Toggle animations" })
+map("n", "<leader>cT", function() require("core.trial").run() end, { desc = "Run tests (Trial)" })
+
+-- ── LSP (F12 and friends bind per buffer in core/dive) ───────────────────────

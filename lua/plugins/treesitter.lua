@@ -13,9 +13,10 @@ return {
     cmd  = { "TSUpdateSync", "TSUpdate", "TSInstall" },
     opts = {
       highlight = {
-        enable  = true,
+        enable  = not vim.g.vscode, -- Cursor and VS Code highlight on their own
         disable = function(_, buf)
-          local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
+          if vim.bo[buf].filetype == "bigfile" then return true end
+          local ok, stats = pcall(vim.uv.fs_stat, vim.api.nvim_buf_get_name(buf))
           return ok and stats and stats.size > 1024 * 1024
         end,
         additional_vim_regex_highlighting = false,
@@ -80,12 +81,24 @@ return {
         "markdown_inline", "python", "query", "regex", "ron", "rust",
         "scss", "sql", "svelte", "terraform", "toml", "tsx",
         "typescript", "vim", "vimdoc", "vue", "xml", "yaml",
-        "zig",
+        "zig", "php", "phpdoc", "prisma", "styled",
       },
     },
     config = function(_, opts)
+      -- the swift grammar is generated at install time, which needs the tree-sitter CLI
+      -- (brew install tree-sitter-cli). Until then sourcekit and vim syntax cover Swift.
+      if vim.fn.executable("tree-sitter") == 1 then
+        table.insert(opts.ensure_installed, "swift")
+      end
       require("nvim-treesitter.configs").setup(opts)
     end,
+  },
+
+  -- Auto close and rename JSX/HTML tags as you type
+  {
+    "windwp/nvim-ts-autotag",
+    event = { "BufReadPre", "BufNewFile" },
+    opts  = {},
   },
 
   -- Treesitter context: shows current scope at top

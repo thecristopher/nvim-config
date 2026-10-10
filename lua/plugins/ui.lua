@@ -1,57 +1,6 @@
 -- UI layer: statusline, bufferline, command UI, keybinding hints
 
--- Elden Ring lualine theme — mode-driven color shifts
-local function eldentree_lualine_theme()
-  local gold    = "#C9A84C"
-  local grace   = "#7DAE68"
-  local arcane  = "#9B8EC4"
-  local crimson = "#B83838"
-  local moon    = "#CC8A40"
-  local sky     = "#68B8C8"
-  local bg      = "#0D0B09"
-  local bg1     = "#1C1815"
-  local bg2     = "#252019"
-  local fg      = "#E0CDA8"
-  local fg_dim  = "#A89278"
-
-  return {
-    normal = {
-      a = { fg = bg, bg = gold,   gui = "bold" },
-      b = { fg = fg, bg = bg2 },
-      c = { fg = fg_dim, bg = bg1 },
-    },
-    insert = {
-      a = { fg = bg, bg = grace,  gui = "bold" },
-      b = { fg = fg, bg = bg2 },
-      c = { fg = fg_dim, bg = bg1 },
-    },
-    visual = {
-      a = { fg = bg, bg = arcane, gui = "bold" },
-      b = { fg = fg, bg = bg2 },
-      c = { fg = fg_dim, bg = bg1 },
-    },
-    replace = {
-      a = { fg = bg, bg = crimson, gui = "bold" },
-      b = { fg = fg, bg = bg2 },
-      c = { fg = fg_dim, bg = bg1 },
-    },
-    command = {
-      a = { fg = bg, bg = moon,   gui = "bold" },
-      b = { fg = fg, bg = bg2 },
-      c = { fg = fg_dim, bg = bg1 },
-    },
-    terminal = {
-      a = { fg = bg, bg = sky,    gui = "bold" },
-      b = { fg = fg, bg = bg2 },
-      c = { fg = fg_dim, bg = bg1 },
-    },
-    inactive = {
-      a = { fg = fg_dim, bg = bg },
-      b = { fg = fg_dim, bg = bg },
-      c = { fg = fg_dim, bg = bg },
-    },
-  }
-end
+local function palette() return require("core.themes").palette() end
 
 return {
   -- ── Statusline ─────────────────────────────────────────────────────
@@ -74,7 +23,7 @@ return {
 
       return {
         options = {
-          theme                = eldentree_lualine_theme(),
+          theme                = "eldentree",
           component_separators = { left = "", right = "" },
           section_separators   = { left = "", right = "" },
           globalstatus         = true,
@@ -88,9 +37,9 @@ return {
               "diff",
               symbols = { added = "󰐖 ", modified = "󰏫 ", removed = "󰍴 " },
               diff_color = {
-                added    = { fg = "#7DAE68" },
-                modified = { fg = "#C9A84C" },
-                removed  = { fg = "#B83838" },
+                added    = "GitSignsAdd",
+                modified = "GitSignsChange",
+                removed  = "GitSignsDelete",
               },
             },
           },
@@ -102,7 +51,8 @@ return {
             },
           },
           lualine_x = {
-            { lsp_info, color = { fg = "#C9A84C" } },
+            { function() return require("core.runes").grace() end, color = "EldenGraceGlow" },
+            { lsp_info, color = function() return { fg = palette().yellow } end },
             {
               "diagnostics",
               sources = { "nvim_lsp" },
@@ -110,7 +60,11 @@ return {
             },
             { "filetype", icon_only = false },
           },
-          lualine_y = { "progress" },
+          lualine_y = {
+            { function() return require("core.runes").gain() end, color = function() return { fg = palette().yellow, gui = "bold" } end },
+            { function() return require("core.runes").held() end },
+            "progress",
+          },
           lualine_z = { { "location", fmt = function(s) return "󰍎 " .. s end } },
         },
         inactive_sections = {
@@ -138,12 +92,6 @@ return {
       { "]b",         "<cmd>BufferLineCycleNext<cr>",            desc = "Next buffer" },
     },
     opts = function()
-      local gold   = "#C9A84C"
-      local bg     = "#0D0B09"
-      local bg1    = "#1C1815"
-      local fg     = "#E0CDA8"
-      local fg_dim = "#6B5E54"
-
       return {
         options = {
           mode              = "buffers",
@@ -176,33 +124,10 @@ return {
           always_show_bufferline = false,
           hover = { enabled = true, delay = 150, reveal = { "close" } },
         },
-        highlights = {
-          fill                = { bg = bg },
-          background          = { fg = fg_dim, bg = bg1 },
-          buffer_visible      = { fg = fg_dim, bg = bg1 },
-          buffer_selected     = { fg = fg, bg = bg, bold = true },
-          indicator_selected  = { fg = gold, bg = bg },
-          separator           = { fg = bg, bg = bg1 },
-          separator_visible   = { fg = bg, bg = bg1 },
-          separator_selected  = { fg = bg, bg = bg },
-          modified            = { fg = gold, bg = bg1 },
-          modified_selected   = { fg = gold, bg = bg },
-          close_button        = { fg = fg_dim, bg = bg1 },
-          close_button_selected = { fg = fg_dim, bg = bg },
-          numbers             = { fg = fg_dim, bg = bg1 },
-          numbers_selected    = { fg = gold, bg = bg, bold = true },
-          diagnostic          = { fg = fg_dim, bg = bg1 },
-          diagnostic_selected = { fg = fg, bg = bg },
-          error               = { fg = "#B83838", bg = bg1 },
-          error_selected      = { fg = "#B83838", bg = bg, bold = true },
-          warning             = { fg = "#CC8A40", bg = bg1 },
-          warning_selected    = { fg = "#CC8A40", bg = bg, bold = true },
-          hint                = { fg = "#6BA888", bg = bg1 },
-          hint_selected       = { fg = "#6BA888", bg = bg },
-          tab                 = { fg = fg_dim, bg = bg1 },
-          tab_selected        = { fg = gold, bg = bg, bold = true },
-          tab_close           = { fg = fg_dim, bg = bg },
-        },
+        -- a function so bufferline rebuilds it on every ColorScheme
+        highlights = function()
+          return require("core.themes.actions").bufferline_highlights(palette())
+        end,
       }
     end,
   },
@@ -315,7 +240,7 @@ return {
     end,
   },
 
-  -- ── mini.animate: smooth cursor, window open/close, resize ────────
+  -- ── mini.animate: window open/close and resize ────────────────────
   {
     "echasnovski/mini.animate",
     version = false,
@@ -324,7 +249,7 @@ return {
       local animate = require("mini.animate")
       local timing  = animate.gen_timing.linear({ duration = 90, unit = "total" })
       animate.setup({
-        cursor = { enable = true,  timing = timing },
+        cursor = { enable = false },  -- smear-cursor draws a trail without delaying the real cursor
         scroll = { enable = false },  -- snacks.scroll handles this
         resize = { enable = true,  timing = timing },
         open   = { enable = true,  timing = timing },
@@ -333,7 +258,26 @@ return {
     end,
   },
 
-  -- ── indent-blankline: rainbow indent guides (Eldentree palette) ────
+  -- ── smear-cursor: an accent colored trail on every jump ───────────
+  {
+    "sphamba/smear-cursor.nvim",
+    event = "VeryLazy",
+    opts  = {
+      -- read from the Cursor highlight so the trail follows the region
+      cursor_color             = "Cursor",
+      stiffness                = 0.8,
+      trailing_stiffness       = 0.55,
+      distance_stop_animating  = 0.5,
+      -- typing already moves one cell at a time, a trail there is just noise
+      smear_insert_mode        = false,
+      smear_between_buffers    = true,
+      smear_between_neighbor_lines = false,
+      scroll_buffer_space      = true,
+      filetypes_disabled       = { "bigfile", "snacks_dashboard", "lazy", "mason" },
+    },
+  },
+
+  -- ── indent-blankline: rainbow indent guides in region colors ───────
   {
     "lukas-reineke/indent-blankline.nvim",
     main  = "ibl",
@@ -344,24 +288,58 @@ return {
       exclude = {
         filetypes = {
           "help", "alpha", "dashboard", "neo-tree", "Trouble", "trouble",
-          "lazy", "mason", "notify", "toggleterm", "snacks_dashboard",
+          "lazy", "mason", "notify", "toggleterm", "snacks_dashboard", "bigfile",
         },
       },
     },
     config = function(_, opts)
-      -- Eldentree rainbow palette, one level per colour
-      local palette = { "#C9A84C", "#9B8EC4", "#6BA888", "#68B8C8", "#CC8A40", "#B83838" }
-      local hl_list = {}
-      for i, color in ipairs(palette) do
-        local name = "IBLRainbow" .. i
-        vim.api.nvim_set_hl(0, name, { fg = color })
-        table.insert(hl_list, name)
-      end
-      vim.api.nvim_set_hl(0, "IBLScope", { fg = "#C9A84C", bold = true })
-      opts.indent.highlight = hl_list
+      local hooks = require("ibl.hooks")
+      local names = {}
+      for level = 1, 6 do table.insert(names, "IBLRainbow" .. level) end
+      -- ibl reruns this on every ColorScheme, which keeps the rainbow on the current region
+      hooks.register(hooks.type.HIGHLIGHT_SETUP, function()
+        local p = palette()
+        for level, color in ipairs(require("core.themes.actions").rainbow(p)) do
+          vim.api.nvim_set_hl(0, names[level], { fg = color })
+        end
+        vim.api.nvim_set_hl(0, "IBLScope", { fg = p.yellow, bold = true })
+      end)
+      opts.indent.highlight = names
       opts.scope.highlight  = { "IBLScope" }
       require("ibl").setup(opts)
     end,
+  },
+
+  -- ── rainbow-delimiters: nested brackets in the region's rainbow ────
+  {
+    "HiPhish/rainbow-delimiters.nvim",
+    submodules = false,  -- the only submodule is its own test harness
+    event = { "BufReadPost", "BufNewFile" },
+    main  = "rainbow-delimiters.setup",
+    opts  = {
+      -- groups live in the colorscheme so they repaint with every region
+      highlight = { "EldenRainbow1", "EldenRainbow2", "EldenRainbow3", "EldenRainbow4", "EldenRainbow5", "EldenRainbow6" },
+      blacklist = { "bigfile" },
+    },
+  },
+
+  -- ── satellite: a slim scrollbar with git, search and diagnostic marks ──
+  {
+    "lewis6991/satellite.nvim",
+    event = { "BufReadPost", "BufNewFile" },
+    opts  = {
+      current_only = true,
+      winblend     = 20,
+      excluded_filetypes = { "neo-tree", "snacks_dashboard", "lazy", "mason", "Trouble", "trouble", "toggleterm", "bigfile" },
+      handlers = {
+        cursor      = { enable = true, symbols = { "⎺", "⎻", "⎼", "⎽" } },
+        search      = { enable = true },
+        diagnostic  = { enable = true, min_severity = vim.diagnostic.severity.WARN },
+        gitsigns    = { enable = true, signs = { add = "│", change = "│", delete = "-" } },
+        marks       = { enable = true, show_builtins = false },
+        quickfix    = { enable = false },
+      },
+    },
   },
 
   -- ── Icons ─────────────────────────────────────────────────────────

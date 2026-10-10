@@ -89,15 +89,22 @@ return {
   {
     "numToStr/Comment.nvim",
     event = "VeryLazy",
-    opts  = {
-      padding    = true,
-      sticky     = true,
-      ignore     = "^$",
-      toggler    = { line = "gcc", block = "gbc" },
-      opleader   = { line = "gc", block = "gb" },
-      extra      = { above = "gcO", below = "gco", eol = "gcA" },
-      mappings   = { basic = true, extra = true },
+    dependencies = {
+      -- JSX needs {/* */} not //, this works out which one from the treesitter node
+      { "JoosepAlviste/nvim-ts-context-commentstring", opts = { enable_autocmd = false } },
     },
+    opts  = function()
+      return {
+        pre_hook   = require("ts_context_commentstring.integrations.comment_nvim").create_pre_hook(),
+        padding    = true,
+        sticky     = true,
+        ignore     = "^$",
+        toggler    = { line = "gcc", block = "gbc" },
+        opleader   = { line = "gc", block = "gb" },
+        extra      = { above = "gcO", below = "gco", eol = "gcA" },
+        mappings   = { basic = true, extra = true },
+      }
+    end,
   },
 
   -- ── Mini text objects ──────────────────────────────────────────────
@@ -244,11 +251,8 @@ return {
   -- ── inc-rename: live rename preview ──────────────────────────────
   {
     "smjonas/inc-rename.nvim",
+    -- F2 and <leader>cr are bound per buffer in core/dive once an LSP attaches
     cmd  = "IncRename",
-    keys = {
-      { "<leader>cr", function() return ":IncRename " .. vim.fn.expand("<cword>") end,
-        expr = true, desc = "Rename (live preview)" },
-    },
-    opts = { input_buffer_type = "dressing" },
+    opts = {},
   },
 }

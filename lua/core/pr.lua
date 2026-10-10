@@ -167,7 +167,7 @@ end
 -- only ever diffs against HEAD, not two arbitrary branches.
 local function preview_diff(base_r, branch, base, cb)
   local Diff = require("snacks.picker.source.diff")
-  local cwd = vim.loop.cwd()
+  local cwd = vim.uv.cwd()
   Snacks.picker.pick({
     finder = function(_, ctx)
       return Diff.diff({
@@ -193,10 +193,10 @@ end
 
 local function draft_via_claude(prompt, cb)
   notify_info("Drafting PR description with Claude…")
-  local start = vim.loop.now()
-  local timer = vim.loop.new_timer()
+  local start = vim.uv.now()
+  local timer = vim.uv.new_timer()
   timer:start(6000, 6000, vim.schedule_wrap(function()
-    local secs = math.floor((vim.loop.now() - start) / 1000)
+    local secs = math.floor((vim.uv.now() - start) / 1000)
     notify_info(("Drafting PR description with Claude… (%ds elapsed)"):format(secs))
   end))
   vim.system({ "claude", "-p", prompt, "--disallowedTools", DISALLOWED_TOOLS }, { text = true }, function(res)
@@ -310,12 +310,14 @@ function M.submit(buf)
 
   if not ok then
     notify_err(("gh pr %s failed:\n%s"):format(ctx.pr and "edit" or "create", out))
+    require("core.banner").show("died", { subtitle = "the pull request did not survive" })
     return
   end
 
   vim.bo[buf].modified = false
   local url = ctx.pr and ctx.pr.url or vim.trim(out)
   notify_info(ctx.pr and ("Updated PR #%d: %s"):format(ctx.pr.number, url) or ("Created PR: %s"):format(url))
+  require("core.banner").show("great", { subtitle = title })
 
   vim.schedule(function()
     pcall(vim.api.nvim_win_close, 0, true)

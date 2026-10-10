@@ -54,10 +54,10 @@ end
 
 local function draft_via_claude(prompt, cb)
   notify_info("Drafting commit message with Claude…")
-  local start = vim.loop.now()
-  local timer = vim.loop.new_timer()
+  local start = vim.uv.now()
+  local timer = vim.uv.new_timer()
   timer:start(4000, 4000, vim.schedule_wrap(function()
-    local secs = math.floor((vim.loop.now() - start) / 1000)
+    local secs = math.floor((vim.uv.now() - start) / 1000)
     notify_info(("Drafting… (%ds)"):format(secs))
   end))
   vim.system(
@@ -125,12 +125,14 @@ function M.submit(buf)
 
   if vim.v.shell_error ~= 0 then
     notify_err("git commit failed:\n" .. out)
+    require("core.banner").show("died", { subtitle = "git commit failed" })
     return
   end
 
   vim.bo[buf].modified = false
   pending[buf] = nil
   notify_info("Committed: " .. (msg:match("^([^\n]+)") or ""))
+  require("core.banner").show("felled", { subtitle = msg:match("^([^\n]+)") })
 
   vim.schedule(function()
     pcall(vim.api.nvim_win_close, 0, true)

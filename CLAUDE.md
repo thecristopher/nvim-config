@@ -10,9 +10,21 @@ active for every session in this repo. No need to invoke /my-style manually.
 - Plugin manager: lazy.nvim (stable branch)
 - All plugin configs live in `lua/plugins/` (one file per concern), returning lazy.nvim spec tables
 - Core config (options, keymaps, autocmds) lives in `lua/core/`
-- Theme: catppuccin-mocha with a custom Elden Ring palette
+- Theme: catppuccin mocha recolored per Elden Ring region. Palettes and color math live in `lua/core/themes/actions/`, switch with `<leader>ut` or `:Region`. Never hard code hex colors in plugin specs, read `require("core.themes").palette()` so they follow the region
 - Leader: `<Space>` | Local leader: `\`
-- `~/.config/nvim` is a symlink to this repo — every saved `.lua` file is live immediately
+- `~/.config/nvim` is a symlink to this repo, so every saved `.lua` file is live immediately
+- LSP uses native `vim.lsp.config` plus mason-lspconfig v2 (`automatic_enable`), servers live in `lua/plugins/lsp.lua`
+- `lua/core/dive/`: F12 family (definition, Glance peek, references, F2 rename), bound on LspAttach
+- `lua/core/repos/`: background repo scanner, Sites of Grace picker (`<leader>fp`), auto root, dashboard items
+- `lua/core/motion/`: shared animation engine (tween, ambient loop, highlight fades). `<leader>um` or `:Motion` stills everything, ambient loops pause while unfocused
+- `lua/core/banner/`: Elden Ring style banners (`:Banner felled|great|died|grace|cleansed`) fired by commits, PRs, `:Trial`, new Sites of Grace, region changes and long fights with errors
+- `lua/core/hub/`: living dashboard, shimmering gold headers, rising embers and a typed player message
+- `lua/core/trial/`: `:Trial` / `<leader>cT` runs the project's tests in the background and announces the verdict
+- `lua/core/runes/`: statusline rune tally (saves and banners pay out, YOU DIED leaves a bloodstain) plus the breathing grace glyph
+- `lua/core/rest/`: after 5 idle minutes in normal mode the editor rests at a Site of Grace (`:Rest`, `vim.g.eldentree_rest_after`), any key wakes it and is swallowed
+- `lua/core/vscode/`: when `vim.g.vscode` is set (Cursor/VS Code), only the allow listed editing plugins load
+- Pure logic goes in each module's `actions/init.lua` so it can be unit tested
+- Tests: `./scripts/test.sh` (plenary busted, specs in `tests/`)
 
 ---
 
