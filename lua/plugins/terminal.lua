@@ -9,7 +9,7 @@ return {
       { "<leader>tt",  "<cmd>ToggleTerm direction=float<cr>",      desc = "Float terminal" },
       { "<leader>th",  "<cmd>ToggleTerm direction=horizontal<cr>", desc = "Horizontal terminal" },
       { "<leader>tv",  "<cmd>ToggleTerm direction=vertical<cr>",   desc = "Vertical terminal" },
-      { "<C-\\>",      "<cmd>ToggleTerm<cr>",                      desc = "Toggle terminal", mode = { "n", "t" } },
+      { "<C-\\>",      "<cmd>ToggleTerm<cr>",                      desc = "Toggle terminal" },
     },
     opts = {
       size = function(term)
@@ -26,7 +26,8 @@ return {
       shading_factor        = 2,
       start_in_insert       = true,
       insert_mappings       = true,
-      terminal_mappings     = true,
+      -- <C-\> in terminal mode would swallow <C-\><C-n>, the only way out of every terminal
+      terminal_mappings     = false,
       persist_size          = true,
       persist_mode          = true,
       direction             = "float",
@@ -50,23 +51,20 @@ return {
       },
     },
     config = function(_, opts)
-      require("toggleterm").setup(opts)
-
-      -- Terminal mode mappings
-      local function set_terminal_keymaps()
+      local function set_terminal_keymaps(term)
         local map = vim.keymap.set
-        map("t", "<Esc>",   [[<C-\><C-n>]],    { buffer = 0, desc = "Exit terminal mode" })
-        map("t", "jk",      [[<C-\><C-n>]],    { buffer = 0, desc = "Exit terminal mode" })
-        map("t", "<C-h>",   [[<C-\><C-n><C-W>h]], { buffer = 0, desc = "Window left" })
-        map("t", "<C-j>",   [[<C-\><C-n><C-W>j]], { buffer = 0, desc = "Window down" })
-        map("t", "<C-k>",   [[<C-\><C-n><C-W>k]], { buffer = 0, desc = "Window up" })
-        map("t", "<C-l>",   [[<C-\><C-n><C-W>l]], { buffer = 0, desc = "Window right" })
+        local buf = term.bufnr
+        map("t", "<Esc>",   [[<C-\><C-n>]],    { buffer = buf, desc = "Exit terminal mode" })
+        map("t", "jk",      [[<C-\><C-n>]],    { buffer = buf, desc = "Exit terminal mode" })
+        map("t", "<C-h>",   [[<C-\><C-n><C-W>h]], { buffer = buf, desc = "Window left" })
+        map("t", "<C-j>",   [[<C-\><C-n><C-W>j]], { buffer = buf, desc = "Window down" })
+        map("t", "<C-k>",   [[<C-\><C-n><C-W>k]], { buffer = buf, desc = "Window up" })
+        map("t", "<C-l>",   [[<C-\><C-n><C-W>l]], { buffer = buf, desc = "Window right" })
       end
 
-      vim.api.nvim_create_autocmd("TermOpen", {
-        pattern = "term://*toggleterm#*",
-        callback = set_terminal_keymaps,
-      })
+      -- a TermOpen name pattern misses on Windows, where the buffer is named cmd.exe&::toggleterm::1
+      opts.on_open = set_terminal_keymaps
+      require("toggleterm").setup(opts)
 
       -- Named terminal instances
       local Terminal = require("toggleterm.terminal").Terminal
@@ -80,7 +78,6 @@ return {
           vim.cmd("startinsert!")
           vim.keymap.set("n", "q", "<cmd>close<CR>", { noremap = true, silent = true, buffer = term.bufnr })
         end,
-        on_close = function(_) vim.cmd("startinsert!") end,
       })
 
       vim.keymap.set("n", "<leader>tg", function() lazygit:toggle() end, { desc = "Lazygit (toggleterm)" })

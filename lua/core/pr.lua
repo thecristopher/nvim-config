@@ -9,7 +9,6 @@ local Snacks = require("snacks")
 local M = {}
 
 local MAX_DIFF = 8000
-local DISALLOWED_TOOLS = "Bash Edit Write NotebookEdit Read Grep Glob Task WebFetch WebSearch Agent Artifact"
 
 -- bufnr -> { base = "main", branch = "feature/x", pr = { number, url } or nil }
 local drafts = {}
@@ -199,10 +198,10 @@ local function draft_via_claude(prompt, cb)
     local secs = math.floor((vim.uv.now() - start) / 1000)
     notify_info(("Drafting PR description with Claude… (%ds elapsed)"):format(secs))
   end))
-  vim.system({ "claude", "-p", prompt, "--disallowedTools", DISALLOWED_TOOLS }, { text = true }, function(res)
+  require("core.claude").run(prompt, function(res)
     timer:stop()
     timer:close()
-    vim.schedule(function() cb(res) end)
+    cb(res)
   end)
 end
 

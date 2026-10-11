@@ -275,8 +275,8 @@ return {
       { "<leader>gl", function() Snacks.lazygit() end,                  desc = "Lazygit" },
       { "<leader>gB", function() Snacks.gitbrowse() end,                desc = "Git browse" },
       { "<leader>gL", function() Snacks.lazygit.log() end,              desc = "Git log (root)" },
-      { "]]",         function() Snacks.words.jump(vim.v.count1) end,   desc = "Next word ref", mode = { "n", "t" } },
-      { "[[",         function() Snacks.words.jump(-vim.v.count1) end,  desc = "Prev word ref", mode = { "n", "t" } },
+      { "]]",         function() Snacks.words.jump(vim.v.count1) end,   desc = "Next word ref" },
+      { "[[",         function() Snacks.words.jump(-vim.v.count1) end,  desc = "Prev word ref" },
       { "<leader>N",  function() Snacks.notifier.show_history() end,    desc = "Notification history" },
     },
 

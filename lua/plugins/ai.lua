@@ -79,7 +79,7 @@ return {
 
     keys = {
       -- Toggle / navigation
-      { "<leader>ac", "<cmd>ClaudeCode<cr>",            desc = "Toggle Claude",          mode = { "n", "t" } },
+      { "<leader>ac", "<cmd>ClaudeCode<cr>",            desc = "Toggle Claude" },
       { "<leader>af", "<cmd>ClaudeCodeFocus<cr>",       desc = "Focus Claude" },
       { "<leader>am", "<cmd>ClaudeCodeSelectModel<cr>", desc = "Select model" },
       -- Context
