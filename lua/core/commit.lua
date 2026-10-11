@@ -5,7 +5,6 @@
 local M = {}
 
 local MAX_DIFF = 6000
-local DISALLOWED_TOOLS = "Bash Edit Write NotebookEdit Read Grep Glob Task WebFetch WebSearch Agent Artifact"
 
 -- bufnr -> true while an uncommitted draft is open
 local pending = {}
@@ -60,15 +59,11 @@ local function draft_via_claude(prompt, cb)
     local secs = math.floor((vim.uv.now() - start) / 1000)
     notify_info(("Drafting… (%ds)"):format(secs))
   end))
-  vim.system(
-    { "claude", "-p", prompt, "--disallowedTools", DISALLOWED_TOOLS },
-    { text = true },
-    function(res)
-      timer:stop()
-      timer:close()
-      vim.schedule(function() cb(res) end)
-    end
-  )
+  require("core.claude").run(prompt, function(res)
+    timer:stop()
+    timer:close()
+    cb(res)
+  end)
 end
 
 local function open_editor(msg)
