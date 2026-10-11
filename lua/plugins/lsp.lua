@@ -54,7 +54,7 @@ local servers = {
       Lua = {
         workspace   = { checkThirdParty = false },
         completion  = { callSnippet = "Replace" },
-        diagnostics = { globals = { "vim", "Snacks" }, disable = { "missing-fields" } },
+        diagnostics = { globals = { "vim", "Snacks", "describe", "it", "before_each", "after_each" }, disable = { "missing-fields" } },
         hint        = { enable = true, setType = false, paramType = true, paramName = "Disable", semicolon = "Disable", arrayIndex = "Disable" },
       },
     },

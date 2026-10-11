@@ -8,6 +8,8 @@ M.DEFAULT = "leyndell"
 M.REGIONS = {
   {
     name = "leyndell",
+    character = "Marika",
+    portrait = "marika.jpg",
     title = "Leyndell",
     tagline = "gold on ash stone",
     palette = {
@@ -23,6 +25,8 @@ M.REGIONS = {
   },
   {
     name = "haligtree",
+    character = "Malenia",
+    portrait = "malenia.jpg",
     title = "Haligtree",
     tagline = "Malenia's scarlet rot and bronze",
     palette = {
@@ -38,6 +42,8 @@ M.REGIONS = {
   },
   {
     name = "raya_lucaria",
+    character = "Ranni",
+    portrait = "ranni.jpg",
     title = "Raya Lucaria",
     tagline = "Rennala's glintstone and full moon",
     palette = {
@@ -53,6 +59,8 @@ M.REGIONS = {
   },
   {
     name = "caelid",
+    character = "Radahn",
+    portrait = "radahn.jpg",
     title = "Caelid",
     tagline = "crimson sky over Radahn's battlefield",
     palette = {
@@ -68,6 +76,8 @@ M.REGIONS = {
   },
   {
     name = "mohgwyn",
+    character = "Mohg",
+    portrait = "mohgwyn.jpg",
     title = "Mohgwyn",
     tagline = "bloodflame and the dynasty's gold",
     palette = {
@@ -84,6 +94,8 @@ M.REGIONS = {
   },
   {
     name = "ordina",
+    character = "Latenna",
+    portrait = "latenna.jpg",
     title = "Ordina",
     tagline = "frost on the Consecrated Snowfield",
     palette = {
@@ -113,6 +125,12 @@ end
 -- a stale or typo'd saved name should land you somewhere pretty, not on an error
 function M.resolve(name)
   return M.find(name) or M.find(M.DEFAULT)
+end
+
+-- any region but the last one, so two terminals opened back to back never look alike
+function M.random_name(previous, rand)
+  local choices = vim.tbl_filter(function(name) return name ~= previous end, M.names())
+  return choices[rand(#choices)]
 end
 
 -- the region after this one, wrapping around, for quick cycling

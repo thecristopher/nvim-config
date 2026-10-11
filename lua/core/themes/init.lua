@@ -116,9 +116,16 @@ function M.pick()
   })
 end
 
+-- a fresh roll every launch tells terminals apart, setting vim.g.eldentree_region pins one
+local function starting_region()
+  if vim.g.eldentree_region then return vim.g.eldentree_region end
+  math.randomseed(vim.uv.hrtime() % 2 ^ 31)
+  return actions.random_name(read_saved(), math.random)
+end
+
 function M.setup(base_opts)
   M.base_opts = base_opts
-  M.apply(M.current().name, { save = false })
+  M.apply(starting_region())
 
   vim.api.nvim_create_user_command("Region", function(cmd)
     if cmd.args == "" then return M.pick() end

@@ -7,7 +7,10 @@ local today    = os.date("%A, %B %d  ·  %I:%M %p")
 local nvim_version = tostring(vim.version()):match("^[%d.]+")
 -- the hub owns the message so its quill knows which line to write in
 local function message() return require("core.hub").message() end
-local art_image = vim.fn.stdpath("config") .. "/images/malenia.jpg"
+-- portraits are pre-cropped and contrast lifted so the character survives 46 columns of half blocks
+local function portrait()
+  return vim.fn.stdpath("config") .. "/images/portraits/" .. require("core.themes").current().portrait
+end
 
 -- the art alone is 46x28, so only show it when there is room for both panes
 local function room_for_art()
@@ -74,28 +77,33 @@ return {
         },
 
         sections = {
-          -- ════ LEFT PANE: the Erdtree ═════════════════════════════
-          {
-            pane    = 1,
-            section = "terminal",
-            enabled = room_for_art,
-            cmd     = "chafa --format=symbols --symbols=half --size=46x28 --colors=full " .. art_image,
-            height  = 28,
-            width   = 46,
-            ttl     = 3600 * 24 * 30,
-            indent  = 7,
-            padding = { 1, 0, 0, 0 },
-          },
-          {
-            pane    = 1,
-            padding = { 1, 0, 0, 0 },
-            align   = "center",
-            text    = {
-              { "◈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◈\n", hl = "SnacksDashboardHeader" },
-              { "E  L  D  E  N  T  R  E  E\n",                       hl = "SnacksDashboardHeader" },
-              { "◈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◈",   hl = "SnacksDashboardHeader" },
-            },
-          },
+          -- ════ LEFT PANE: the region's champion ═══════════════════
+          function()
+            return {
+              pane    = 1,
+              section = "terminal",
+              enabled = room_for_art,
+              cmd     = "chafa --format=symbols --symbols=half --size=46x28 --colors=full --work=9 " .. portrait(),
+              height  = 28,
+              width   = 46,
+              ttl     = 3600 * 24 * 30,
+              indent  = 7,
+              padding = { 1, 0, 0, 0 },
+            }
+          end,
+          function()
+            local name = require("core.hub.actions").spaced(require("core.themes").current().character)
+            return {
+              pane    = 1,
+              padding = { 1, 0, 0, 0 },
+              align   = "center",
+              text    = {
+                { "◈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◈\n", hl = "SnacksDashboardHeader" },
+                { name .. "\n",                                       hl = "SnacksDashboardHeader" },
+                { "◈━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◈",   hl = "SnacksDashboardHeader" },
+              },
+            }
+          end,
           {
             pane    = 1,
             padding = { 1, 0, 0, 0 },

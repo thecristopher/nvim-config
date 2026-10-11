@@ -91,6 +91,20 @@ return {
         yaml        = { "yamllint" },
       }
 
+      local function runnable_linters(names)
+        local function is_installed(name)
+          local linter = lint.linters[name]
+          if type(linter) == "function" then linter = linter() end
+          local cmd = type(linter) == "table" and linter.cmd or name
+          if type(cmd) == "function" then cmd = cmd() end
+          return vim.fn.executable(cmd) == 1
+        end
+        local function has_config(files)
+          return vim.fs.find(files, { upward = true, path = vim.fn.expand("%:p:h") })[1] ~= nil
+        end
+        return require("core.lint.actions").runnable(names, is_installed, has_config)
+      end
+
       -- Run lint on save and buffer enter
       local lint_augroup = vim.api.nvim_create_augroup("lint", { clear = true })
       vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
@@ -98,7 +112,8 @@ return {
         callback = function()
           -- Only lint files (skip special buffers)
           if vim.opt_local.modifiable:get() and vim.bo.filetype ~= "bigfile" then
-            lint.try_lint(nil, { ignore_errors = true })
+            local names = lint.linters_by_ft[vim.bo.filetype] or {}
+            lint.try_lint(runnable_linters(names), { ignore_errors = true })
           end
         end,
       })

@@ -30,6 +30,13 @@ function M.pick_message(rand)
   return M.MESSAGES[math.floor(rand() * #M.MESSAGES) + 1]
 end
 
+-- "Malenia" becomes "M  A  L  E  N  I  A", the same carved look the old title had
+function M.spaced(name)
+  local letters = {}
+  for letter in name:upper():gmatch(".") do table.insert(letters, letter) end
+  return table.concat(letters, "  ")
+end
+
 M.SHIMMER_LEVELS = 6
 M.SHIMMER = { period = 5200, sweep = 1800, band = 9, skew = 2 }
 

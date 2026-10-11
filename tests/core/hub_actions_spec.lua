@@ -12,6 +12,16 @@ describe("pick_message", function()
   end)
 end)
 
+describe("spaced", function()
+  it("carves Malenia into wide capitals", function()
+    assert.equal("M  A  L  E  N  I  A", actions.spaced("Malenia"))
+  end)
+
+  it("leaves a short name like Mohg readable", function()
+    assert.equal("M  O  H  G", actions.spaced("mohg"))
+  end)
+end)
+
 describe("shimmer_level", function()
   it("lights up where the band is passing", function()
     local mid_sweep = actions.SHIMMER.sweep / 2

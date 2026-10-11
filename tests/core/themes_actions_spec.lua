@@ -116,3 +116,37 @@ describe("mode_look", function()
     assert.equal(malenia.yellow, actions.mode_look(malenia, tints, "n").number)
   end)
 end)
+
+describe("random_name", function()
+  local function first() return 1 end
+  local function last(count) return count end
+
+  it("never rolls the region Radahn just left", function()
+    for roll = 1, #actions.REGIONS - 1 do
+      assert.are_not.equal("caelid", actions.random_name("caelid", function() return roll end))
+    end
+  end)
+
+  it("can land on any of the others", function()
+    assert.equal("haligtree", actions.random_name("leyndell", first))
+    assert.equal("ordina", actions.random_name("leyndell", last))
+  end)
+
+  it("uses every region when nothing was saved yet", function()
+    assert.equal("ordina", actions.random_name(nil, last))
+  end)
+end)
+
+describe("characters", function()
+  it("gives every region a champion and a portrait on disk", function()
+    local root = vim.fn.getcwd() .. "/images/portraits/"
+    for _, region in ipairs(actions.REGIONS) do
+      assert.is_truthy(region.character, region.name)
+      assert.equal(1, vim.fn.filereadable(root .. region.portrait), region.portrait)
+    end
+  end)
+
+  it("crowns Malenia in the Haligtree", function()
+    assert.equal("Malenia", actions.find("haligtree").character)
+  end)
+end)

@@ -9,8 +9,10 @@ local M = {}
 local ns = vim.api.nvim_create_namespace("eldentree_hub")
 local FRAME_MS = 40
 
--- the rows worth gilding, matched by the ornaments the dashboard draws around them
-local GILDED = { "◈", "E  L  D  E  N", "R O U N D" }
+-- the rows worth gilding, matched by the ornaments and the character name the dashboard draws
+local function gilded_marks()
+  return { "◈", "R O U N D", actions.spaced(require("core.themes").current().character) }
+end
 
 local session
 
@@ -43,6 +45,7 @@ end
 local function index_buffer(buf)
   local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
   local rows = {}
+  local marks = gilded_marks()
   for row, line in ipairs(lines) do
     local cells, chars, col = {}, {}, 0
     local starts = vim.str_utf_pos(line)
@@ -55,7 +58,7 @@ local function index_buffer(buf)
       col = col + width
     end
     local gilded = false
-    for _, mark in ipairs(GILDED) do
+    for _, mark in ipairs(marks) do
       if line:find(mark, 1, true) then gilded = true end
     end
     rows[row] = { line = line, chars = chars, taken = actions.occupied(cells), gilded = gilded }
