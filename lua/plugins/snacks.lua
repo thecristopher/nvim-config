@@ -53,6 +53,7 @@ return {
             { icon = "󰋚 ", key = "r", desc = "Recent Files",    action = ":lua Snacks.dashboard.pick('oldfiles')" },
             { icon = "󰊢 ", key = "p", desc = "Sites of Grace",  action = function() require("core.repos").pick() end },
             { icon = "󰉋 ", key = "e", desc = "Explorer",        action = ":Neotree toggle" },
+            { icon = "󰝰 ", key = "o", desc = "Open Folder",     action = function() require("core.repos").open_folder() end },
             { icon = "󰝒 ", key = "n", desc = "New File",        action = ":ene | startinsert" },
             { icon = "󰆔 ", key = "s", desc = "Restore Session", action = function() require("persistence").load() end },
             { icon = "󰏘 ", key = "t", desc = "Choose Region",   action = function() require("core.themes").pick() end },

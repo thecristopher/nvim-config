@@ -141,3 +141,17 @@ describe("should_change_root", function()
     assert.is_true(actions.should_change_root("/repo-two/a.lua", "/repo", "/repo-two"))
   end)
 end)
+
+describe("folder_from_input", function()
+  it("returns nothing when Melina leaves the prompt empty", function()
+    assert.is_nil(actions.folder_from_input("   "))
+  end)
+
+  it("returns nothing when the prompt is cancelled", function()
+    assert.is_nil(actions.folder_from_input(nil))
+  end)
+
+  it("trims spaces and the trailing slash", function()
+    assert.equal(STORMVEIL, actions.folder_from_input("  " .. STORMVEIL .. "/  "))
+  end)
+end)

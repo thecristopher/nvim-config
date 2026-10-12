@@ -98,12 +98,31 @@ function M.scan(on_done)
   end))
 end
 
+-- the lua api skips the command parser, so Windows paths with spaces survive
+local function show_tree(dir, focus)
+  require("neo-tree.command").execute({ action = focus and "focus" or "show", source = "filesystem", dir = dir })
+end
+
 function M.open(repo)
   local first_visit = not vim.tbl_contains(read_json_list(visits_file), repo)
   vim.fn.chdir(repo)
   M.record_visit(repo)
   if first_visit then require("core.banner").show("grace", { subtitle = vim.fs.basename(repo) }) end
+  show_tree(repo)
   Snacks.picker.files({ cwd = repo })
+end
+
+function M.open_folder()
+  vim.ui.input({ prompt = "  Open folder: ", default = vim.uv.cwd(), completion = "dir" }, function(input)
+    local dir = actions.folder_from_input(input)
+    if not dir then return end
+    if vim.fn.isdirectory(dir) == 0 then
+      vim.notify("No such folder: " .. dir, vim.log.levels.WARN)
+      return
+    end
+    vim.fn.chdir(dir)
+    show_tree(dir, true)
+  end)
 end
 
 function M.pick()
@@ -180,6 +199,7 @@ function M.setup()
   })
 
   vim.api.nvim_create_user_command("Repos", M.pick, { desc = "Pick a repository" })
+  vim.api.nvim_create_user_command("OpenFolder", M.open_folder, { desc = "Open a folder with the tree" })
   vim.api.nvim_create_user_command("ReposRescan", function()
     M.scan(function(repos) vim.notify(("Found %d repositories"):format(#repos), vim.log.levels.INFO) end)
   end, { desc = "Rescan repository folders" })

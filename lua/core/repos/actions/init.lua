@@ -121,6 +121,13 @@ function M.remember(list, path, max)
   return updated
 end
 
+-- typed paths arrive with stray spaces, tildes and trailing slashes
+function M.folder_from_input(input)
+  local trimmed = vim.trim(input or "")
+  if trimmed == "" then return nil end
+  return vim.fs.normalize(vim.fn.expand(trimmed))
+end
+
 function M.is_inside(path, dir)
   if not path or not dir then return false end
   return path == dir or path:sub(1, #dir + 1) == dir .. "/"
