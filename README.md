@@ -1,0 +1,83 @@
+# Eldentree
+
+A Neovim config forged in the Lands Between. Catppuccin Mocha, recolored for whichever Elden Ring region you wake up in, with banners, runes and a Site of Grace that lets you rest when you step away.
+
+Runs on macOS, Linux and Windows, and also inside Cursor and VS Code.
+
+![Malenia](images/portraits/malenia.jpg)
+
+## Requirements
+
+- Neovim 0.11 or newer (0.12 recommended)
+- git
+- A [Nerd Font](https://www.nerdfonts.com/) in your terminal
+- The `tree-sitter` CLI, which builds the parsers
+- Optional: `ripgrep` and `fd` for faster pickers, and `gh` for PR drafts
+
+## Install
+
+Back up any existing config first, then clone this repo where Neovim looks for its config.
+
+```sh
+# macOS and Linux
+git clone https://github.com/thecristopher/nvim-config ~/.config/nvim
+```
+
+```powershell
+# Windows
+git clone https://github.com/thecristopher/nvim-config $env:LOCALAPPDATA\nvim
+```
+
+Launch `nvim` and lazy.nvim bootstraps itself and installs every plugin on the first run. Mason installs the language servers.
+
+## What is inside
+
+| Module | What it does |
+| --- | --- |
+| `core/themes` | Region palettes. Each launch rolls a random region, never the previous one. Pin one with `vim.g.eldentree_region` |
+| `core/hub` | Living dashboard with shimmering gold headers, rising embers and a typed player message |
+| `core/banner` | Elden Ring style banners fired by commits, PRs, test runs, new projects and region changes |
+| `core/runes` | Statusline rune tally. Saves and banners pay out, YOU DIED leaves a bloodstain |
+| `core/rest` | After 5 idle minutes in normal mode the editor rests at a Site of Grace. Any key wakes it |
+| `core/repos` | Background repo scanner, the Sites of Grace project picker and automatic project root |
+| `core/dive` | F12 family: go to definition, Glance peek, references and F2 rename |
+| `core/trial` | Runs the project's tests in the background and announces the verdict |
+| `core/motion` | Shared animation engine. Ambient loops pause while Neovim is unfocused |
+| `core/vscode` | Inside Cursor or VS Code, only the allow listed editing plugins load |
+
+Plugin specs live in `lua/plugins/`, one file per concern.
+
+## Keys
+
+Leader is `<Space>`, local leader is `\`.
+
+| Key | Action |
+| --- | --- |
+| `<leader>fp` | Find a project (Sites of Grace) |
+| `<leader>ut` | Choose a region theme |
+| `<leader>uT` | Next region theme |
+| `<leader>um` | Toggle animations |
+| `<leader>cT` | Run tests (Trial) |
+| `<leader>uz` | Zen mode |
+| `F12` | Go to definition |
+| `F2` | Rename symbol |
+
+## Commands
+
+| Command | Action |
+| --- | --- |
+| `:Region` | Switch region theme |
+| `:Banner felled\|great\|died\|grace\|cleansed` | Fire a banner |
+| `:Trial` | Run the project's tests |
+| `:Rest` | Rest at a Site of Grace now |
+| `:Motion` | Toggle animations |
+| `:OpenFolder` | Open the file tree at a folder you pick |
+| `:Repos` / `:ReposRescan` | Browse or rescan known repositories |
+
+## Tests
+
+Specs live in `tests/` and run with plenary busted in a headless Neovim.
+
+```sh
+./scripts/test.sh
+```
