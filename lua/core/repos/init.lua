@@ -103,13 +103,34 @@ local function show_tree(dir, focus)
   require("neo-tree.command").execute({ action = focus and "focus" or "show", source = "filesystem", dir = dir })
 end
 
+-- the picker closes when another window grabs focus, so wait for the tree to finish drawing
+local function open_files_after_tree(dir)
+  local events = require("neo-tree.events")
+  local opened = false
+  local subscription = { event = events.AFTER_RENDER, id = "eldentree_files_after_tree" }
+
+  local function open_files()
+    if opened then return end
+    opened = true
+    events.unsubscribe(subscription)
+    vim.schedule(function() Snacks.picker.files({ cwd = dir }) end)
+  end
+
+  subscription.handler = function(state)
+    if state.name == "filesystem" then open_files() end
+  end
+  events.subscribe(subscription)
+  -- in case the tree skips a redraw, the picker still shows up
+  vim.defer_fn(open_files, 800)
+end
+
 function M.open(repo)
   local first_visit = not vim.tbl_contains(read_json_list(visits_file), repo)
   vim.fn.chdir(repo)
   M.record_visit(repo)
   if first_visit then require("core.banner").show("grace", { subtitle = vim.fs.basename(repo) }) end
+  open_files_after_tree(repo)
   show_tree(repo)
-  Snacks.picker.files({ cwd = repo })
 end
 
 function M.open_folder()
