@@ -67,6 +67,10 @@ return {
           position = "right",
           width    = 0.38,
           border   = "rounded",
+          -- same floor as the tree, focused or not, so Claude always reads as a side panel
+          wo = {
+            winhighlight = "Normal:EldenPanel,NormalNC:EldenPanel,EndOfBuffer:EldenPanel,WinSeparator:WinSeparator,StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC",
+          },
         },
       },
 

@@ -156,7 +156,8 @@ local function pick_branch(title, default, cb)
         notify_err("No branch selected.")
         return
       end
-      cb(item.branch)
+      -- the closing picker drops insert mode on its way out, so open the next prompt after it is gone
+      vim.schedule(function() cb(item.branch) end)
     end,
   })
 end
@@ -183,7 +184,7 @@ local function preview_diff(base_r, branch, base, cb)
     title   = ("PR Preview: %s -> %s"):format(branch, base),
     confirm = function(picker)
       picker:close()
-      cb()
+      vim.schedule(cb)
     end,
   })
 end

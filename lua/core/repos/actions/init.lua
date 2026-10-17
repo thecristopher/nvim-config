@@ -133,6 +133,15 @@ function M.is_inside(path, dir)
   return path == dir or path:sub(1, #dir + 1) == dir .. "/"
 end
 
+-- start typing from the dev folder you are in, or the first one that exists
+function M.browse_start(roots, cwd, home)
+  for _, root in ipairs(roots or {}) do
+    if M.is_inside(cwd, root) then return M.display_path(root, home) .. "/" end
+  end
+  local fallback = (roots or {})[1] or cwd or ""
+  return M.display_path(fallback, home) .. "/"
+end
+
 -- jumping into a plugin or dependency source should not drag the cwd along
 function M.is_ignored(file, ignored_dirs)
   if file:find("/node_modules/", 1, true) then return true end

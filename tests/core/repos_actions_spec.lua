@@ -155,3 +155,19 @@ describe("folder_from_input", function()
     assert.equal(STORMVEIL, actions.folder_from_input("  " .. STORMVEIL .. "/  "))
   end)
 end)
+
+describe("browse_start", function()
+  local roots = { "/Users/ada/Documents/GitHub", "/Users/ada/work" }
+
+  it("starts in the dev folder Ada is already standing in", function()
+    assert.equals("~/work/", actions.browse_start(roots, "/Users/ada/work/umbrella", "/Users/ada"))
+  end)
+
+  it("falls back to the first dev folder when cwd is elsewhere", function()
+    assert.equals("~/Documents/GitHub/", actions.browse_start(roots, "/Users/ada", "/Users/ada"))
+  end)
+
+  it("uses cwd when there are no dev folders at all", function()
+    assert.equals("/tmp/raccoon/", actions.browse_start({}, "/tmp/raccoon", "/Users/ada"))
+  end)
+end)

@@ -133,20 +133,25 @@ function M.open(repo)
   show_tree(repo)
 end
 
-function M.open_folder()
-  vim.ui.input({ prompt = "  Open folder: ", default = vim.uv.cwd(), completion = "dir" }, function(input)
+local function open_dir(dir)
+  vim.fn.chdir(dir)
+  show_tree(dir, true)
+end
+
+local function ask_for_folder()
+  local start = actions.browse_start(M.roots(), vim.uv.cwd())
+  vim.ui.input({ prompt = "  Open folder: ", default = start, completion = "dir" }, function(input)
     local dir = actions.folder_from_input(input)
     if not dir then return end
     if vim.fn.isdirectory(dir) == 0 then
       vim.notify("No such folder: " .. dir, vim.log.levels.WARN)
       return
     end
-    vim.fn.chdir(dir)
-    show_tree(dir, true)
+    open_dir(dir)
   end)
 end
 
-function M.pick()
+local function repo_items()
   local items = {}
   for index, repo in ipairs(M.list()) do
     table.insert(items, {
@@ -154,24 +159,62 @@ function M.pick()
       text = repo,
       file = repo,
       dir = true,
+      icon = "󰊢 ",
       name = vim.fs.basename(repo),
       branch = M.branch(repo) or "",
       where = actions.display_path(vim.fs.dirname(repo)),
     })
   end
+  return items
+end
+
+local function format_item(item)
+  return {
+    { item.icon, "SnacksPickerIcon" },
+    { item.name, "SnacksPickerFile" },
+    { "  " .. item.branch, "SnacksPickerGitBranch" },
+    { "  " .. item.where, "SnacksPickerDir" },
+  }
+end
+
+-- known repos first so most opens are a few letters and Enter, typing a path is the escape hatch
+function M.open_folder()
+  local items = repo_items()
+  if #items == 0 then return ask_for_folder() end
+
+  local start = actions.browse_start(M.roots(), vim.uv.cwd())
+  table.insert(items, {
+    idx = #items + 1,
+    text = "browse another folder",
+    file = vim.fs.normalize(vim.fn.expand(start)),
+    dir = true,
+    browse = true,
+    icon = "󰝰 ",
+    name = "Browse another folder…",
+    branch = "",
+    where = start,
+  })
 
   Snacks.picker({
-    title = "Sites of Grace",
+    title = "Open Folder",
     items = items,
     preview = "directory",
-    format = function(item)
-      return {
-        { "󰊢 ", "SnacksPickerIcon" },
-        { item.name, "SnacksPickerFile" },
-        { "  " .. item.branch, "SnacksPickerGitBranch" },
-        { "  " .. item.where, "SnacksPickerDir" },
-      }
+    format = format_item,
+    confirm = function(picker, item)
+      picker:close()
+      if not item then return end
+      if item.browse then return ask_for_folder() end
+      open_dir(item.file)
     end,
+  })
+end
+
+function M.pick()
+  Snacks.picker({
+    title = "Sites of Grace",
+    items = repo_items(),
+    preview = "directory",
+    format = format_item,
     confirm = function(picker, item)
       picker:close()
       if item then M.open(item.file) end
