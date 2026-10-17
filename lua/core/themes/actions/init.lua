@@ -30,14 +30,14 @@ M.REGIONS = {
     title = "Haligtree",
     tagline = "Malenia's scarlet rot and bronze",
     palette = {
-      base = "#0E0A0B", mantle = "#0A0708", crust = "#060405",
-      surface0 = "#1D1517", surface1 = "#271C1F", surface2 = "#33252A",
-      overlay0 = "#4E4045", overlay1 = "#6E5A60", overlay2 = "#8E767C",
-      subtext0 = "#B0959A", subtext1 = "#CDB2B5", text = "#EBD7D4",
-      yellow = "#E07A5F", peach = "#E0A050", green = "#9DB87A", teal = "#7FB5A6",
+      base = "#0E0A0D", mantle = "#0A0709", crust = "#060406",
+      surface0 = "#1D141B", surface1 = "#271B24", surface2 = "#332430",
+      overlay0 = "#4E3F4A", overlay1 = "#6E5969", overlay2 = "#8E7487",
+      subtext0 = "#AF93A8", subtext1 = "#CCB0C5", text = "#EAD5E4",
+      yellow = "#E47FAD", peach = "#E0A050", green = "#9DB87A", teal = "#7FB5A6",
       lavender = "#B394C8", mauve = "#C9A0DC", red = "#C42B3B", maroon = "#D9485A",
-      rosewater = "#D8B48A", flamingo = "#E39A8E", blue = "#7FA6C4", sapphire = "#6E98B8",
-      sky = "#9CCFD8", pink = "#E68AA8",
+      rosewater = "#D8B48A", flamingo = "#DF9E93", blue = "#7FA6C4", sapphire = "#6E98B8",
+      sky = "#9CCFD8", pink = "#DC8B8B",
     },
   },
   {
@@ -47,13 +47,13 @@ M.REGIONS = {
     title = "Raya Lucaria",
     tagline = "Rennala's glintstone and full moon",
     palette = {
-      base = "#0A0C12", mantle = "#07090E", crust = "#04060A",
-      surface0 = "#151A26", surface1 = "#1C2231", surface2 = "#252D3F",
-      overlay0 = "#3F4860", overlay1 = "#5C6784", overlay2 = "#7D88A6",
-      subtext0 = "#9EA8C4", subtext1 = "#BCC5DD", text = "#DDE3F2",
-      yellow = "#7FB2F0", peach = "#E0A86A", green = "#8CC7A4", teal = "#6FC2C2",
-      lavender = "#A99AE8", mauve = "#C29BF0", red = "#E05C6B", maroon = "#E87482",
-      rosewater = "#C8D4F0", flamingo = "#E2A9C0", blue = "#D8B86A", sapphire = "#5F8FD0",
+      base = "#0C0B13", mantle = "#09080F", crust = "#06050B",
+      surface0 = "#191828", surface1 = "#211F33", surface2 = "#2C2A42",
+      overlay0 = "#474464", overlay1 = "#666289", overlay2 = "#8683AB",
+      subtext0 = "#A6A4C9", subtext1 = "#C3C2E1", text = "#E2E1F5",
+      yellow = "#A499F7", peach = "#E0A86A", green = "#8CC7A4", teal = "#6FC2C2",
+      lavender = "#7FB2F0", mauve = "#D09ADD", red = "#E05C6B", maroon = "#E87482",
+      rosewater = "#D0CDED", flamingo = "#E2A9C0", blue = "#D8B86A", sapphire = "#5F8FD0",
       sky = "#8FD6E8", pink = "#D99ACB",
     },
   },
@@ -99,11 +99,11 @@ M.REGIONS = {
     title = "Ordina",
     tagline = "frost on the Consecrated Snowfield",
     palette = {
-      base = "#0A0D0F", mantle = "#070A0B", crust = "#040607",
-      surface0 = "#141A1E", surface1 = "#1B2328", surface2 = "#232E34",
-      overlay0 = "#3E4C55", overlay1 = "#5A6B75", overlay2 = "#7A8C96",
-      subtext0 = "#9BADB6", subtext1 = "#BACBD2", text = "#E2EDF0",
-      yellow = "#8ED6E0", peach = "#E8B47A", green = "#9CCFA8", teal = "#7CC4B4",
+      base = "#090D0E", mantle = "#070A0B", crust = "#040607",
+      surface0 = "#121B1C", surface1 = "#192425", surface2 = "#202F31",
+      overlay0 = "#3A4E50", overlay1 = "#556D70", overlay2 = "#768E91",
+      subtext0 = "#97AFB2", subtext1 = "#B7CCCF", text = "#E1EEEF",
+      yellow = "#84DCE0", peach = "#E8B47A", green = "#9CCFA8", teal = "#7CC4B4",
       lavender = "#A8B4E8", mauve = "#C0A8E0", red = "#E06C75", maroon = "#E8848C",
       rosewater = "#D7E6EA", flamingo = "#E0B0B0", blue = "#E6C27A", sapphire = "#6FA8C8",
       sky = "#B4E4F0", pink = "#D8A4C8",
@@ -155,6 +155,32 @@ function M.blend(fg, bg, alpha)
   return ("#%02X%02X%02X"):format(mix(fr, br), mix(fgreen, bgreen), mix(fb, bb))
 end
 
+local function channel_luminance(value)
+  local c = value / 255
+  return c <= 0.03928 and c / 12.92 or ((c + 0.055) / 1.055) ^ 2.4
+end
+
+local function luminance(hex)
+  local r, g, b = to_rgb(hex)
+  return 0.2126 * channel_luminance(r) + 0.7152 * channel_luminance(g) + 0.0722 * channel_luminance(b)
+end
+
+-- WCAG contrast ratio, 1 means identical and 21 is black on white
+function M.contrast(a, b)
+  local light, dark = luminance(a), luminance(b)
+  if light < dark then light, dark = dark, light end
+  return (light + 0.05) / (dark + 0.05)
+end
+
+-- accents differ wildly in brightness, so mix until the result reads the same in every region
+function M.tint_to_contrast(fg, bg, target)
+  for step = 1, 100 do
+    local mixed = M.blend(fg, bg, step / 100)
+    if M.contrast(mixed, bg) >= target then return mixed end
+  end
+  return fg
+end
+
 -- tinted backgrounds are derived, so a new region only needs its 26 base colors
 function M.derive(p)
   local tint = function(color, alpha) return M.blend(color, p.base, alpha) end
@@ -175,6 +201,9 @@ function M.derive(p)
     glance_preview    = tint(p.surface0, 0.45),
     glance_cursorline = tint(p.yellow, 0.08),
     blame             = tint(p.overlay1, 0.85),
+    -- a whisper of the accent keeps side panels warm with the character instead of plain gray
+    panel             = M.tint_to_contrast(M.blend(p.yellow, p.surface0, 0.12), p.base, 1.07),
+    separator         = M.tint_to_contrast(p.yellow, p.base, 2.0),
   }
 end
 

@@ -32,18 +32,18 @@ Launch `nvim` and lazy.nvim bootstraps itself and installs every plugin on the f
 
 ## What is inside
 
-| Module | What it does |
-| --- | --- |
+| Module        | What it does                                                                                                      |
+| ------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `core/themes` | Region palettes. Each launch rolls a random region, never the previous one. Pin one with `vim.g.eldentree_region` |
-| `core/hub` | Living dashboard with shimmering gold headers, rising embers and a typed player message |
-| `core/banner` | Elden Ring style banners fired by commits, PRs, test runs, new projects and region changes |
-| `core/runes` | Statusline rune tally. Saves and banners pay out, YOU DIED leaves a bloodstain |
-| `core/rest` | After 5 idle minutes in normal mode the editor rests at a Site of Grace. Any key wakes it |
-| `core/repos` | Background repo scanner, the Sites of Grace project picker and automatic project root |
-| `core/dive` | F12 family: go to definition, Glance peek, references and F2 rename |
-| `core/trial` | Runs the project's tests in the background and announces the verdict |
-| `core/motion` | Shared animation engine. Ambient loops pause while Neovim is unfocused |
-| `core/vscode` | Inside Cursor or VS Code, only the allow listed editing plugins load |
+| `core/hub`    | Living dashboard with shimmering gold headers, rising embers and a typed player message                           |
+| `core/banner` | Elden Ring style banners fired by commits, PRs, test runs, new projects and region changes                        |
+| `core/runes`  | Statusline rune tally. Saves and banners pay out, YOU DIED leaves a bloodstain                                    |
+| `core/rest`   | After 5 idle minutes in normal mode the editor rests at a Site of Grace. Any key wakes it                         |
+| `core/repos`  | Background repo scanner, the Sites of Grace project picker and automatic project root                             |
+| `core/dive`   | F12 family: go to definition, Glance peek, references and F2 rename                                               |
+| `core/trial`  | Runs the project's tests in the background and announces the verdict                                              |
+| `core/motion` | Shared animation engine. Ambient loops pause while Neovim is unfocused                                            |
+| `core/vscode` | Inside Cursor or VS Code, only the allow listed editing plugins load                                              |
 
 Plugin specs live in `lua/plugins/`, one file per concern.
 
@@ -51,28 +51,28 @@ Plugin specs live in `lua/plugins/`, one file per concern.
 
 Leader is `<Space>`, local leader is `\`.
 
-| Key | Action |
-| --- | --- |
+| Key          | Action                          |
+| ------------ | ------------------------------- |
 | `<leader>fp` | Find a project (Sites of Grace) |
-| `<leader>ut` | Choose a region theme |
-| `<leader>uT` | Next region theme |
-| `<leader>um` | Toggle animations |
-| `<leader>cT` | Run tests (Trial) |
-| `<leader>uz` | Zen mode |
-| `F12` | Go to definition |
-| `F2` | Rename symbol |
+| `<leader>ut` | Choose a region theme           |
+| `<leader>uT` | Next region theme               |
+| `<leader>um` | Toggle animations               |
+| `<leader>cT` | Run tests (Trial)               |
+| `<leader>uz` | Zen mode                        |
+| `F12`        | Go to definition                |
+| `F2`         | Rename symbol                   |
 
 ## Commands
 
-| Command | Action |
-| --- | --- |
-| `:Region` | Switch region theme |
-| `:Banner felled\|great\|died\|grace\|cleansed` | Fire a banner |
-| `:Trial` | Run the project's tests |
-| `:Rest` | Rest at a Site of Grace now |
-| `:Motion` | Toggle animations |
-| `:OpenFolder` | Open the file tree at a folder you pick |
-| `:Repos` / `:ReposRescan` | Browse or rescan known repositories |
+| Command                                        | Action                                  |
+| ---------------------------------------------- | --------------------------------------- |
+| `:Region`                                      | Switch region theme                     |
+| `:Banner felled\|great\|died\|grace\|cleansed` | Fire a banner                           |
+| `:Trial`                                       | Run the project's tests                 |
+| `:Rest`                                        | Rest at a Site of Grace now             |
+| `:Motion`                                      | Toggle animations                       |
+| `:OpenFolder`                                  | Open the file tree at a folder you pick |
+| `:Repos` / `:ReposRescan`                      | Browse or rescan known repositories     |
 
 ## Tests
 

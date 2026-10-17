@@ -81,6 +81,61 @@ describe("derive", function()
   it("tints Leyndell's cursorline a faint gold", function()
     assert.equal("#18140D", actions.derive(actions.find("leyndell").palette).cursorline)
   end)
+
+  it("lifts the side panel floor above Malenia's base", function()
+    assert.is_true(brightness(actions.derive(malenia).panel) > brightness(malenia.base))
+  end)
+
+  it("keeps the panel darker than surface0 so it stays a background", function()
+    assert.is_true(brightness(actions.derive(malenia).panel) < brightness(malenia.surface0))
+  end)
+
+  it("tints the separator with the region accent", function()
+    assert.equal("#514421", actions.derive(actions.find("leyndell").palette).separator)
+  end)
+
+  it("warms Mohg's panel with blood instead of plain gray", function()
+    local panel = actions.derive(actions.find("mohgwyn").palette).panel
+    local r, g = panel:match("^#(%x%x)(%x%x)")
+    assert.is_true(tonumber(r, 16) > tonumber(g, 16) * 2)
+  end)
+
+  for _, region in ipairs(actions.REGIONS) do
+    it(("draws a separator in %s that reads as clearly as everywhere else"):format(region.title), function()
+      local separator = actions.derive(region.palette).separator
+      assert.is_true(actions.contrast(separator, region.palette.base) >= 2.0)
+    end)
+
+    it(("lifts %s's panels enough to see but not enough to glare"):format(region.title), function()
+      local ratio = actions.contrast(actions.derive(region.palette).panel, region.palette.base)
+      assert.is_true(ratio >= 1.07 and ratio < 1.15)
+    end)
+  end
+end)
+
+describe("contrast", function()
+  it("is 21 for black on white", function()
+    assert.equal(21, actions.contrast("#000000", "#FFFFFF"))
+  end)
+
+  it("is 1 for the same color", function()
+    assert.equal(1, actions.contrast("#C9A84C", "#C9A84C"))
+  end)
+end)
+
+describe("tint_to_contrast", function()
+  it("mixes just enough of the accent to hit the target", function()
+    local mixed = actions.tint_to_contrast("#C9A84C", "#0D0B09", 2.0)
+    assert.is_true(actions.contrast(mixed, "#0D0B09") >= 2.0)
+  end)
+
+  it("stops before reaching the full accent when it does not need it", function()
+    assert.are_not.equal("#C9A84C", actions.tint_to_contrast("#C9A84C", "#0D0B09", 2.0))
+  end)
+
+  it("gives back the accent itself when no mix is bright enough", function()
+    assert.equal("#111111", actions.tint_to_contrast("#111111", "#101010", 5))
+  end)
 end)
 
 describe("ui builders", function()

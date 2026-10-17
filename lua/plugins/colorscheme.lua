@@ -111,6 +111,14 @@ return {
           PmenuSel     = { fg = c.base, bg = c.yellow },
           PmenuSbar    = { bg = c.surface1 },
           PmenuThumb   = { bg = c.yellow },
+          -- Panels: side windows get their own floor and a region tinted wall, so each zone reads apart
+          WinSeparator        = { fg = t.separator, bg = c.base },
+          EldenPanel          = { fg = c.text, bg = t.panel },
+          NeoTreeNormal       = { fg = c.text, bg = t.panel },
+          NeoTreeNormalNC     = { fg = c.text, bg = t.panel },
+          NeoTreeEndOfBuffer  = { fg = t.panel, bg = t.panel },
+          NeoTreeWinSeparator = { fg = t.separator, bg = c.base },
+          SnacksWinSeparator  = { fg = t.separator, bg = c.base },
           -- Fold
           Folded       = { fg = c.overlay1, bg = c.surface0, style = { "italic" } },
           FoldColumn   = { fg = c.overlay0, bg = c.base },
