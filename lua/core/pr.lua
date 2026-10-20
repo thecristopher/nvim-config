@@ -1,7 +1,7 @@
 -- PR helper: pick a source branch, a destination branch, and preview the
 -- diff (Snacks pickers), then draft a title + description with Claude Code
--- (headless), open it in an editable buffer, and create/update the PR via
--- `gh` on :w.
+-- (headless) following the repo's my-style guide, open it in an editable
+-- buffer, and create/update the PR via `gh` on :w.
 -- Toggle: <leader>pp
 
 local Snacks = require("snacks")
@@ -329,19 +329,15 @@ end
 local function do_draft(branch, base, log, diff, pr, vibe)
   local vibe_line = vibe ~= ""
     and ('The user set the vibe: "' .. vibe .. '". Let that color the tone of the opener.')
-    or  "No specific vibe. Keep the tone casual and forward-looking naturally."
+    or  "No specific vibe. Follow the style guide naturally."
 
-  local prompt = table.concat({
+  local lines = {
     ("Draft a GitHub pull request for merging branch `%s` into `%s`."):format(branch, base),
     "Use the commit log and diff below for context.",
-    "Write a short, fun, casual description of what changed. Talk like a human, not a form.",
-    "Keep the tone positive and forward-looking. We're building on what came before, not tearing it down.",
-    "Never be snarky or critical about old code or past decisions. Frame improvements as progress.",
-    "Use a short opening sentence or two, then a ## What changed section with a hyphen list.",
-    "Hyphens as bullet markers are fine. Headers are fine.",
-    "Do NOT use hyphens to join words in prose ('role-validation-system' is AI-speak).",
-    "Em dashes (—) are never allowed anywhere, not even as sentence dividers.",
-    "No test plans. No trailing period on the title. Keep it concise.",
+    "",
+  }
+  vim.list_extend(lines, require("core.style").prompt_lines())
+  vim.list_extend(lines, {
     "",
     vibe_line,
     "",
@@ -359,7 +355,8 @@ local function do_draft(branch, base, log, diff, pr, vibe)
     "## What changed",
     "- <specific thing that was done>",
     "- <specific thing that was done>",
-  }, "\n")
+  })
+  local prompt = table.concat(lines, "\n")
 
   draft_via_claude(prompt, function(res)
     if res.code ~= 0 or not res.stdout or vim.trim(res.stdout) == "" then

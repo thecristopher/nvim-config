@@ -1,5 +1,5 @@
 -- Claude-assisted commit: stage if needed, ask for an optional vibe,
--- draft a my-style-compliant message, edit in buffer, commit on :w.
+-- draft a message from the repo's my-style guide, edit in buffer, commit on :w.
 -- Mapped to <leader>pc from lua/plugins/commit.lua.
 
 local M = {}
@@ -173,23 +173,9 @@ function M.open()
       and ('The user set the vibe: "' .. vibe .. '". Let that flavor the personality of the message.')
       or  "No specific vibe set. Follow the style guide naturally."
 
-    local prompt = table.concat({
-      "Write a git commit message for the staged diff below.",
-      "",
-      "Style rules (non-negotiable):",
-      "- Fun, human, and specific. Write like a person, not a changelog.",
-      "  Good: 'Add permission check to API handler (finally)'",
-      "  Bad: 'fix stuff', 'update code', 'refactor authentication logic'",
-      "- One short subject line under 72 chars. Optionally one blank line then a",
-      "  short body if the change is genuinely complex.",
-      "- NEVER use em dashes (—) anywhere. Not even once.",
-      "- No hyphenated compound words in prose.",
-      "- Never add 'Co-Authored-By: Claude Code' or any AI attribution.",
-      "- End with a dry, original Leon S. Kennedy one-liner aimed at this exact change.",
-      "  Deadpan wit about what just happened. Specific to the diff, not generic.",
-      "  Separate it from the body with a blank line and '--' on a new line.",
-      "  Example: '-- turns out nil is not a valid user id. took us a minute.'",
-      "  If nothing clever lands, leave it out. A weak line is worse than none.",
+    local lines = { "Write a git commit message for the staged diff below.", "" }
+    vim.list_extend(lines, require("core.style").prompt_lines())
+    vim.list_extend(lines, {
       "",
       vibe_line,
       "",
@@ -201,7 +187,8 @@ function M.open()
       diff,
       "",
       "Output ONLY the commit message. No explanation, no code fences, no preamble.",
-    }, "\n")
+    })
+    local prompt = table.concat(lines, "\n")
 
     draft_via_claude(prompt, function(res)
       if res.code ~= 0 or not res.stdout or vim.trim(res.stdout) == "" then

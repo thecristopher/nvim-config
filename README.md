@@ -30,6 +30,16 @@ git clone https://github.com/thecristopher/nvim-config $env:LOCALAPPDATA\nvim
 
 Launch `nvim` and lazy.nvim bootstraps itself and installs every plugin on the first run. Mason installs the language servers.
 
+## Your own style guide
+
+Claude follows one style guide in this config: `.claude/commands/my-style.md`. It is loaded into every Claude Code session opened here, it backs `/my-style`, and `<leader>pc` / `<leader>pp` send it to Claude when drafting commits and PRs.
+
+It is Cristopher's guide, so replace that file with yours and everything follows it. To use it outside this repo too, link it as a global command:
+
+```sh
+ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.md
+```
+
 ## What is inside
 
 | Module        | What it does                                                                                                      |
