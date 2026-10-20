@@ -31,6 +31,16 @@
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'The /my-style skill is loaded for this session, follow it with no exceptions:'; cat \"$CLAUDE_PROJECT_DIR/.claude/commands/my-style.md\""
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
