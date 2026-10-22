@@ -52,6 +52,7 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 | `core/repos`  | Background repo scanner, the Sites of Grace project picker and automatic project root                             |
 | `core/dive`   | F12 family: go to definition, Glance peek, references and F2 rename                                               |
 | `core/trial`  | Runs the project's tests in the background and announces the verdict                                              |
+| `core/git`    | Quick branch, pull, push, sync, stash and undo shortcuts, plus the related change staging `<leader>pc` uses       |
 | `core/motion` | Shared animation engine. Ambient loops pause while Neovim is unfocused                                            |
 | `core/vscode` | Inside Cursor or VS Code, only the allow listed editing plugins load                                              |
 
@@ -69,6 +70,16 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>um` | Toggle animations               |
 | `<leader>cT` | Run tests (Trial)               |
 | `<leader>uz` | Zen mode                        |
+| `<leader>pc` | Stage related changes and draft the commit with Claude |
+| `<leader>gN` | New branch (pick a prefix, type a name) |
+| `<leader>gj` | Pull                            |
+| `<leader>gk` | Push (sets upstream the first time, never forces) |
+| `<leader>gm` | Merge the base branch into this one |
+| `<leader>gM` | Switch to the base branch and pull |
+| `<leader>ga` | Stage related changes (skips .env, logs, swap files) |
+| `<leader>gz` | Stash everything, untracked included |
+| `<leader>gZ` | Pop the latest stash            |
+| `<leader>gu` | Undo the last unpushed commit, keep its changes staged |
 | `F12`        | Go to definition                |
 | `F2`         | Rename symbol                   |
 

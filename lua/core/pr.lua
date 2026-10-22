@@ -34,36 +34,6 @@ local function current_branch()
   return vim.trim(out)
 end
 
--- Per-repo override: `git config pr-helper.base <branch>` wins over everything.
-local function configured_base()
-  local out = vim.fn.system({ "git", "config", "--get", "pr-helper.base" })
-  if vim.v.shell_error ~= 0 then return nil end
-  local v = vim.trim(out)
-  return v ~= "" and v or nil
-end
-
--- `staging` is checked before the repo's actual GitHub default branch since
--- most of these repos merge feature work into staging first, promoting to
--- main/master separately later.
-local BASE_CANDIDATES = { "staging", "main", "master" }
-
-local function default_branch()
-  local cfg = configured_base()
-  if cfg then return cfg end
-
-  for _, name in ipairs(BASE_CANDIDATES) do
-    if git_ok({ "show-ref", "--verify", "--quiet", "refs/remotes/origin/" .. name }) then
-      return name
-    end
-  end
-
-  local out = vim.fn.system({ "git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD" })
-  if vim.v.shell_error == 0 then
-    return vim.trim(out):gsub("^origin/", "")
-  end
-  return nil
-end
-
 -- Prefer origin/<base> for comparisons; fall back to the local branch.
 local function base_ref(base)
   if git_ok({ "show-ref", "--verify", "--quiet", "refs/remotes/origin/" .. base }) then
@@ -398,7 +368,7 @@ function M.open()
     return notify_err("gh CLI not found. Install with: brew install gh && gh auth login")
   end
 
-  local default_base = default_branch()
+  local default_base = require("core.git").default_branch()
   if not default_base then
     return notify_err("Couldn't determine the base branch (no origin/staging, origin/main, origin/master, or origin/HEAD). Set one with: git config pr-helper.base <branch>")
   end

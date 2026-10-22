@@ -1,4 +1,4 @@
--- Claude-assisted commit: stage if needed, ask for an optional vibe,
+-- Claude-assisted commit: stage the related changes, ask for an optional vibe,
 -- draft a message from the repo's my-style guide, edit in buffer, commit on :w.
 -- Mapped to <leader>pc from lua/plugins/commit.lua.
 
@@ -25,15 +25,6 @@ end
 local function has_staged()
   vim.fn.system({ "git", "diff", "--cached", "--quiet" })
   return vim.v.shell_error ~= 0
-end
-
-local function has_unstaged()
-  vim.fn.system({ "git", "diff", "--quiet" })
-  return vim.v.shell_error ~= 0
-end
-
-local function has_untracked()
-  return vim.trim(vim.fn.system({ "git", "ls-files", "--others", "--exclude-standard" })) ~= ""
 end
 
 local function staged_diff()
@@ -140,19 +131,12 @@ function M.open()
     return notify_err("Not inside a git repository.")
   end
 
-  local staged = has_staged()
-
-  if not staged then
-    if not has_unstaged() and not has_untracked() then
-      return notify_info("Nothing to commit.")
-    end
-    local choice = vim.fn.confirm("Nothing staged. Stage all changes?", "&Yes\n&Cancel", 1)
-    if choice ~= 1 then return end
-    if not git_ok({ "add", "-A" }) then
-      return notify_err("git add -A failed.")
-    end
-    notify_info("Staged all changes.")
+  local staged, skipped = require("core.git").stage_related()
+  if not staged then return notify_err("git add failed.") end
+  if #skipped > 0 then
+    vim.notify("Left out of the commit: " .. table.concat(skipped, ", "), vim.log.levels.WARN, { title = "Commit" })
   end
+  if not has_staged() then return notify_info("Nothing to commit.") end
 
   local diff = staged_diff()
   if diff == "" then return notify_err("No staged diff to commit.") end

@@ -1,5 +1,5 @@
 -- Commit helper — Claude-drafted commit messages from inside nvim.
--- <leader>pc: stage if needed, pick a vibe, get a message, edit, commit on :w.
+-- <leader>pc: stage related changes, pick a vibe, get a message, edit, commit on :w.
 
 return {
   {
