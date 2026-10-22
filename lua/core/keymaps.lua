@@ -84,6 +84,18 @@ map("n", "<leader>uR", function()
   vim.notify("Auto root " .. (vim.g.eldentree_autoroot and "on" or "off"))
 end, { desc = "Toggle auto root" })
 
+-- ── Git quick actions ────────────────────────────────────────────────────────
+local function git(fn) return function() require("core.git")[fn]() end end
+map("n", "<leader>gN", git("new_branch"),  { desc = "New branch" })
+map("n", "<leader>gj", git("pull"),        { desc = "Pull" })
+map("n", "<leader>gk", git("push"),        { desc = "Push" })
+map("n", "<leader>gm", git("sync"),        { desc = "Merge base branch in" })
+map("n", "<leader>gM", git("home"),        { desc = "Switch to base branch and pull" })
+map("n", "<leader>ga", git("stage"),       { desc = "Stage related changes" })
+map("n", "<leader>gz", git("stash"),       { desc = "Stash changes" })
+map("n", "<leader>gZ", git("stash_pop"),   { desc = "Pop stash" })
+map("n", "<leader>gu", git("undo_commit"), { desc = "Undo last commit (keep changes)" })
+
 -- ── Regions (themes) ─────────────────────────────────────────────────────────
 map("n", "<leader>ut", function() require("core.themes").pick() end, { desc = "Choose region theme" })
 map("n", "<leader>uT", function() require("core.themes").cycle() end, { desc = "Next region theme" })
