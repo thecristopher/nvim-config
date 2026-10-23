@@ -1,5 +1,6 @@
--- Brings the Roundtable Hold dashboard to life: shimmering gold headers, rising embers and a
--- player message written in by an invisible quill. Everything is extmarks on top of snacks' render.
+-- Brings the Roundtable Hold dashboard to life: shimmering gold headers, the region's weather
+-- drifting through the empty space (embers, rot petals, glintstone, snow) and a player message
+-- written in by an invisible quill. Everything is extmarks on top of snacks' render.
 local actions = require("core.hub.actions")
 local motion  = require("core.motion")
 local color   = require("core.motion.actions")
@@ -15,6 +16,10 @@ local function gilded_marks()
 end
 
 local session
+
+local function current_weather()
+  return actions.weather(require("core.themes").current().name)
+end
 
 function M.message()
   if not M.current_message then
@@ -32,7 +37,8 @@ local function define_highlights()
     local t = level / actions.SHIMMER_LEVELS
     vim.api.nvim_set_hl(0, "EldenShimmer" .. level, { fg = color.mix(gold, white, t), bold = true })
   end
-  local base, ember, flare = color.to_int(p.base), color.to_int(p.peach), color.to_int(p.yellow)
+  local weather = current_weather()
+  local base, ember, flare = color.to_int(p.base), color.to_int(p[weather.from]), color.to_int(p[weather.to])
   for level = 1, actions.EMBER_LEVELS do
     local t = level / actions.EMBER_LEVELS
     local hue = color.mix(ember, flare, t)
@@ -97,13 +103,14 @@ end
 
 local function draw_embers(s, dt)
   local height = math.min(#s.rows, vim.api.nvim_win_get_height(s.win))
+  local weather = current_weather()
   local alive = {}
   for _, ember in ipairs(s.embers) do
     actions.step_ember(ember, dt)
     if actions.ember_alive(ember) then table.insert(alive, ember) end
   end
   while #alive < actions.ember_budget(s.width, height) and math.random() < 0.35 do
-    table.insert(alive, actions.spawn_ember(math.random, s.width, height))
+    table.insert(alive, actions.spawn_ember(math.random, s.width, height, weather))
   end
   s.embers = alive
 
@@ -112,7 +119,7 @@ local function draw_embers(s, dt)
     local info = s.rows[row + 1]
     -- embers drift behind the text instead of scribbling over it
     if info and col >= 0 and col < s.width and not info.taken[col] and not under_quill(s, row, col) then
-      local glyph, level = actions.ember_look(ember)
+      local glyph, level = actions.ember_look(ember, weather)
       vim.api.nvim_buf_set_extmark(s.buf, ns, row, 0, {
         virt_text = { { glyph, "EldenEmber" .. level } },
         virt_text_win_col = col,

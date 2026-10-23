@@ -235,6 +235,7 @@ return {
         { "<leader>gz", icon = { icon = "󰆓", color = "yellow" } },
         { "<leader>gZ", icon = { icon = "󰆓", color = "yellow" } },
         { "<leader>gu", icon = { icon = "󰕌", color = "red" } },
+        { "<leader>m",  group = "messages", icon = { icon = "✎", color = "orange" } },
         { "<leader>s",  group = "split" },
         { "<leader>t",  group = "terminal" },
         { "<leader>u",  group = "ui" },
@@ -346,6 +347,31 @@ return {
         quickfix    = { enable = false },
       },
     },
+  },
+
+  -- ── tiny-inline-diagnostic: diagnostics as soft bubbles after the code ──
+  {
+    "rachartier/tiny-inline-diagnostic.nvim",
+    event    = "LspAttach",
+    priority = 1000,
+    opts = {
+      preset = "modern",
+      options = {
+        show_source = { enabled = true, if_many = true },
+        multilines  = { enabled = true },
+        use_icons_from_diagnostic = true,
+      },
+    },
+  },
+
+  -- ── mini.hipatterns: hex colors painted with their own color ──────
+  {
+    "echasnovski/mini.hipatterns",
+    event = { "BufReadPost", "BufNewFile" },
+    opts = function()
+      local hipatterns = require("mini.hipatterns")
+      return { highlighters = { hex_color = hipatterns.gen_highlighter.hex_color() } }
+    end,
   },
 
   -- ── Icons ─────────────────────────────────────────────────────────

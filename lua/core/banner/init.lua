@@ -146,6 +146,7 @@ function M.show(name, opts)
     width     = width,
     height    = actions.HEIGHT,
     style     = "minimal",
+    border    = "none",
     focusable = false,
     zindex    = 250,
     noautocmd = true,

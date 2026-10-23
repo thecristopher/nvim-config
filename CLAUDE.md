@@ -18,7 +18,10 @@ every session in this repo (see the style section below).
 - `lua/core/repos/`: background repo scanner, Sites of Grace picker (`<leader>fp`), auto root, dashboard items
 - `lua/core/motion/`: shared animation engine (tween, ambient loop, highlight fades). `<leader>um` or `:Motion` stills everything, ambient loops pause while unfocused
 - `lua/core/banner/`: Elden Ring style banners (`:Banner felled|great|died|grace|cleansed`) fired by commits, PRs, `:Trial`, new Sites of Grace, region changes and long fights with errors
-- `lua/core/hub/`: living dashboard, shimmering gold headers, rising embers and a typed player message
+- `lua/core/hub/`: living dashboard, shimmering gold headers, a typed player message and per region weather (`WEATHER` in its actions: embers, rot petals, glintstone, blood, snow)
+- `lua/core/fog/`: fog wall that rolls over the editor when you travel to a Site of Grace (`:Fog`, `<leader>uF` or `vim.g.eldentree_fog = false`)
+- `lua/core/messages/`: Elden Ring style messages left on lines of code, stored per repo in state (`<leader>mw` write, `md` erase, `ml` list, `:Inscribe`, `:Inscriptions`)
+- `lua/core/folds/`: the closed fold text nvim-ufo shows (first line plus a hidden line tally)
 - `lua/core/review/`: `:Review [number|url]` / `<leader>pr` has Claude (headless, subscription) analyze a PR's diff into a float, `d` opens the diff per file
 - `lua/core/git/`: quick git keys under `<leader>g` (`N` new branch, `j` pull, `k` push, `m`/`M` base branch, `z`/`Z` stash, `u` undo commit) and the related change staging `<leader>pc` runs first. `QUICK_KEYS` in its actions is the one list behind the keymaps and the toggleterm winbar hint. Keep `<leader>g` maps at two keys so none waits on a timeout
 - `lua/core/trial/`: `:Trial` / `<leader>cT` runs the project's tests in the background and announces the verdict

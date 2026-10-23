@@ -55,16 +55,50 @@ end
 M.EMBER_LEVELS = 5
 M.EMBER_GLYPHS = { "·", "∙", "•" }
 
-function M.spawn_ember(rand, width, height)
+-- each region has its own sky: drift says where particles travel, speed is rows per second,
+-- from and to are the palette slots a particle glows between as it heats up
+M.WEATHER = {
+  leyndell     = { glyphs = M.EMBER_GLYPHS,      drift = "rise",  speed = { 1.6, 4.0 }, from = "peach",    to = "yellow" },
+  haligtree    = { glyphs = { "·", "✿", "❀" },   drift = "fall",  speed = { 0.8, 2.0 }, from = "red",      to = "yellow" },
+  raya_lucaria = { glyphs = { "·", "✧", "✦" },   drift = "float", speed = { 0.2, 0.6 }, from = "lavender", to = "yellow" },
+  caelid       = { glyphs = { "·", "∙", "•" },   drift = "rise",  speed = { 3.0, 6.0 }, from = "red",      to = "peach" },
+  mohgwyn      = { glyphs = { "·", "•", "●" },   drift = "fall",  speed = { 2.5, 5.0 }, from = "maroon",   to = "yellow" },
+  ordina       = { glyphs = { "·", "∗", "❄" },   drift = "fall",  speed = { 0.6, 1.6 }, from = "overlay2", to = "text" },
+}
+
+--- Returns the weather for a region, the golden embers of Leyndell when it has none.
+---@param name string|nil region name
+---@return table weather
+function M.weather(name)
+  return M.WEATHER[name] or M.WEATHER.leyndell
+end
+
+-- where a particle is born for each kind of drift, as a fraction of the height from the top
+local function birth_row(drift, rand, height)
+  if drift == "fall" then return rand() * height * 0.25 end
+  if drift == "float" then return rand() * (height - 1) end
+  return height - 1 - rand() * height * 0.25
+end
+
+-- rows per second toward the top, so falling weather is negative
+local function climb(weather, rand)
+  local low, high = weather.speed[1], weather.speed[2]
+  local speed = low + rand() * (high - low)
+  return weather.drift == "fall" and -speed or speed
+end
+
+function M.spawn_ember(rand, width, height, weather)
+  weather = weather or M.WEATHER.leyndell
   local life = 2600 + rand() * 3400
   return {
     x       = rand() * width,
-    y       = height - 1 - rand() * height * 0.25,
-    rise    = 1.6 + rand() * 2.4,  -- rows per second
+    y       = birth_row(weather.drift, rand, height),
+    rise    = climb(weather, rand),
     phase   = rand() * math.pi * 2,
     sway    = 0.4 + rand() * 1.1,
     age     = 0,
     life    = life,
+    floor   = height,
   }
 end
 
@@ -76,15 +110,17 @@ function M.step_ember(ember, dt)
 end
 
 function M.ember_alive(ember)
-  return ember.y >= 0 and ember.age < ember.life
+  local on_screen = ember.y >= 0 and (not ember.floor or ember.y < ember.floor)
+  return on_screen and ember.age < ember.life
 end
 
 -- embers flare up as they leave the ground and cool to ash before they vanish
-function M.ember_look(ember)
+function M.ember_look(ember, weather)
+  local glyphs = (weather or M.WEATHER.leyndell).glyphs
   local t = ember.age / ember.life
   local heat = t < 0.15 and t / 0.15 or 1 - (t - 0.15) / 0.85
   local level = math.max(1, math.min(M.EMBER_LEVELS, math.ceil(heat * M.EMBER_LEVELS)))
-  local glyph = M.EMBER_GLYPHS[math.max(1, math.min(#M.EMBER_GLYPHS, math.ceil(heat * #M.EMBER_GLYPHS)))]
+  local glyph = glyphs[math.max(1, math.min(#glyphs, math.ceil(heat * #glyphs)))]
   return glyph, level
 end
 

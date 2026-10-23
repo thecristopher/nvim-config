@@ -3,7 +3,8 @@
 local function setup_diagnostics()
   local severity = vim.diagnostic.severity
   vim.diagnostic.config({
-    virtual_text = { spacing = 4, prefix = "●", source = "if_many" },
+    -- tiny-inline-diagnostic draws them instead
+    virtual_text = false,
     signs = {
       text = {
         [severity.ERROR] = " ",

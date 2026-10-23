@@ -30,6 +30,24 @@ return {
     end,
   },
 
+  -- ── Oil: edit a folder like a buffer, neo-tree stays the file explorer ──
+  {
+    "stevearc/oil.nvim",
+    cmd          = "Oil",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    keys = {
+      { "-",         "<cmd>Oil<cr>",                              desc = "Open parent folder (Oil)" },
+      { "<leader>-", function() require("oil").toggle_float() end, desc = "Oil float" },
+    },
+    opts = {
+      default_file_explorer        = false,
+      columns                      = { "icon" },
+      skip_confirm_for_simple_edits = true,
+      view_options                 = { show_hidden = true },
+      float                        = { padding = 4, border = "rounded" },
+    },
+  },
+
   -- ── Persistence: session save / restore per project ─────────────────
   {
     "folke/persistence.nvim",
