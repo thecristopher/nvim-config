@@ -63,6 +63,41 @@ describe("embers", function()
   end)
 end)
 
+describe("weather", function()
+  local snow = actions.weather("ordina")
+
+  it("gives every region its own sky", function()
+    for _, region in ipairs(require("core.themes.actions").REGIONS) do
+      assert.equal(actions.WEATHER[region.name], actions.weather(region.name))
+    end
+  end)
+
+  it("falls back to Leyndell's embers for a region it does not know", function()
+    assert.equal(actions.WEATHER.leyndell, actions.weather("stormveil"))
+  end)
+
+  it("lets Malenia's rot petals drift down from the top", function()
+    local petal = actions.spawn_ember(always(0.5), 100, 40, actions.weather("haligtree"))
+    local start = petal.y
+    actions.step_ember(petal, 500)
+    assert.is_true(start < 40 * 0.25)
+    assert.is_true(petal.y > start)
+  end)
+
+  it("melts snow once it reaches the floor of the window", function()
+    local flake = actions.spawn_ember(always(0.5), 100, 40, snow)
+    flake.y = 40
+    assert.is_false(actions.ember_alive(flake))
+  end)
+
+  it("draws snowflakes with Ordina's glyphs", function()
+    local flake = actions.spawn_ember(always(0.5), 100, 40, snow)
+    actions.step_ember(flake, flake.life * 0.15)
+    local glyph = actions.ember_look(flake, snow)
+    assert.equal("❄", glyph)
+  end)
+end)
+
 describe("quill", function()
   it("writes nothing before it starts", function()
     assert.equal(0, actions.typed(20, 0))

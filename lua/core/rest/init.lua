@@ -93,7 +93,7 @@ function M.rest()
 
   s.win = vim.api.nvim_open_win(s.buf, false, {
     relative = "editor", row = 0, col = 0, width = width, height = height,
-    style = "minimal", focusable = false, zindex = 200, noautocmd = true,
+    style = "minimal", border = "none", focusable = false, zindex = 200, noautocmd = true,
   })
   vim.wo[s.win].winblend = 1
   vim.wo[s.win].winhighlight = "Normal:EldenRestVeil"

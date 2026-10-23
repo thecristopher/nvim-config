@@ -126,6 +126,7 @@ end
 
 function M.open(repo)
   local first_visit = not vim.tbl_contains(read_json_list(visits_file), repo)
+  require("core.fog").roll()
   vim.fn.chdir(repo)
   M.record_visit(repo)
   if first_visit then require("core.banner").show("grace", { subtitle = vim.fs.basename(repo) }) end

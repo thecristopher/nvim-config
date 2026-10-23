@@ -16,6 +16,8 @@ else
   require("core.motion").setup()
   require("core.banner").setup()
   require("core.hub").setup()
+  require("core.fog").setup()
+  require("core.messages").setup()
   require("core.trial").setup()
   require("core.runes").setup()
   require("core.rest").setup()
@@ -58,7 +60,8 @@ require("lazy").setup({
   },
   ui = {
     border  = "rounded",
-    backdrop = 60,
+    -- lazy opens its backdrop without a border, so winborder would frame the whole screen
+    backdrop = 100,
   },
   performance = {
     cache = { enabled = true },

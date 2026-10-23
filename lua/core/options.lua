@@ -13,8 +13,13 @@ opt.cmdheight = 1
 opt.laststatus = 3
 opt.pumheight = 10
 opt.pumblend = 10
+-- 'pumborder' arrived in 0.12, the config still runs on 0.11
+if vim.fn.exists("+pumborder") == 1 then opt.pumborder = "rounded" end
+-- every float without its own border gets this one, full screen layers opt out with border = "none"
+opt.winborder = "rounded"
 opt.winblend = 5
 opt.wrap = false
+opt.breakindent = true -- wrapped lines keep their indent in prose buffers
 opt.scrolloff = 8
 opt.sidescrolloff = 8
 opt.conceallevel = 2
@@ -44,6 +49,8 @@ opt.ignorecase = true
 opt.smartcase = true
 opt.hlsearch = false
 opt.incsearch = true
+opt.inccommand = "split" -- :s previews every match live, offscreen ones in a split
+opt.jumpoptions = "view" -- <C-o> lands with the same scroll you left
 opt.grepformat = "%f:%l:%c:%m"
 opt.grepprg = "rg --vimgrep"
 

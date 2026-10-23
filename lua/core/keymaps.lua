@@ -94,5 +94,17 @@ map("n", "<leader>ut", function() require("core.themes").pick() end, { desc = "C
 map("n", "<leader>uT", function() require("core.themes").cycle() end, { desc = "Next region theme" })
 map("n", "<leader>um", function() require("core.motion").toggle() end, { desc = "Toggle animations" })
 map("n", "<leader>cT", function() require("core.trial").run() end, { desc = "Run tests (Trial)" })
+map("n", "<leader>uF", function()
+  vim.g.eldentree_fog = vim.g.eldentree_fog == false
+  vim.notify("Fog walls " .. (vim.g.eldentree_fog and "on" or "off"))
+end, { desc = "Toggle fog walls" })
+
+-- ── Messages on the ground ───────────────────────────────────────────────────
+map("n", "<leader>mw", function() require("core.messages").write() end, { desc = "Write message" })
+map("n", "<leader>md", function() require("core.messages").erase() end, { desc = "Erase message" })
+map("n", "<leader>ml", function() require("core.messages").pick() end,  { desc = "List messages" })
+
+-- ── Undo history ─────────────────────────────────────────────────────────────
+map("n", "<leader>fu", function() Snacks.picker.undo() end, { desc = "Undo history" })
 
 -- ── LSP (F12 and friends bind per buffer in core/dive) ───────────────────────
