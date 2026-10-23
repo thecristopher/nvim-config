@@ -80,6 +80,17 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>gz` | Stash everything, untracked included |
 | `<leader>gZ` | Pop the latest stash            |
 | `<leader>gu` | Undo the last unpushed commit, keep its changes staged |
+| `<leader>gn` | Neogit status                   |
+| `<leader>gc` | Neogit commit                   |
+| `<leader>gp` / `<leader>gP` | Neogit pull / push popups |
+| `<leader>gv` | Neogit log                      |
+| `<leader>gr` | Neogit branch popup             |
+| `<leader>gC` | Search commits (Telescope)      |
+
+Inside a toggleterm terminal, the bar at the top lists the quick git keys. Press `<Esc>` and then `<Space>g` to use them.
+
+| Key          | Action                          |
+| ------------ | ------------------------------- |
 | `F12`        | Go to definition                |
 | `F2`         | Rename symbol                   |
 

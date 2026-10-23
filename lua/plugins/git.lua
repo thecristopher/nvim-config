@@ -7,12 +7,13 @@ return {
     dependencies = { "nvim-lua/plenary.nvim", "sindrets/diffview.nvim" },
     cmd  = { "Neogit" },
     keys = {
-      { "<leader>gn",  "<cmd>Neogit<cr>",                                          desc = "Neogit status" },
-      { "<leader>gc",  "<cmd>Neogit commit<cr>",                                   desc = "Neogit commit" },
-      { "<leader>gP",  "<cmd>Neogit push<cr>",                                     desc = "Neogit push" },
-      { "<leader>gpl", "<cmd>Neogit pull<cr>",                                     desc = "Neogit pull" },
-      { "<leader>glg", function() require("neogit").open({ "log" }) end,           desc = "Neogit log" },
-      { "<leader>gbr", function() require("neogit").open({ "branch" }) end,        desc = "Neogit branches" },
+      -- two key maps only: a three key map like gbr makes gb wait for the timeout
+      { "<leader>gn", "<cmd>Neogit<cr>",                                desc = "Neogit status" },
+      { "<leader>gc", "<cmd>Neogit commit<cr>",                         desc = "Neogit commit" },
+      { "<leader>gP", "<cmd>Neogit push<cr>",                           desc = "Neogit push popup" },
+      { "<leader>gp", "<cmd>Neogit pull<cr>",                           desc = "Neogit pull popup" },
+      { "<leader>gv", function() require("neogit").open({ "log" }) end, desc = "Neogit log" },
+      { "<leader>gr", function() require("neogit").open({ "branch" }) end, desc = "Neogit branch popup" },
     },
     opts = {
       -- Use diffview.nvim for diff/history windows
