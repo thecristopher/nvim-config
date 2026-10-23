@@ -29,7 +29,7 @@ return {
           require("telescope.builtin").find_files({ cwd = vim.fn.stdpath("config") })
         end, desc = "Neovim config" },
       -- Git
-      { "<leader>gc", "<cmd>Telescope git_commits<cr>",   desc = "Git commits" },
+      { "<leader>gC", "<cmd>Telescope git_commits<cr>",   desc = "Git commits" },
       { "<leader>gs", "<cmd>Telescope git_status<cr>",    desc = "Git status" },
       { "<leader>gS", "<cmd>Telescope git_stash<cr>",     desc = "Git stash" },
       { "<leader>gb", "<cmd>Telescope git_branches<cr>",  desc = "Git branches" },

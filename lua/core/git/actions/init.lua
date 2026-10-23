@@ -102,4 +102,36 @@ function M.push_args(has_upstream)
   return { "push", "-u", "origin", "HEAD" }
 end
 
+---@class GitQuickKey
+---@field key string pressed after <leader>g
+---@field fn string function name in core.git
+---@field desc string which-key description
+---@field short string word shown in the terminal hint
+
+-- one list feeds the keymaps, which-key and the terminal hint so they never drift apart
+---@type GitQuickKey[]
+M.QUICK_KEYS = {
+  { key = "N", fn = "new_branch",  desc = "New branch",                      short = "branch" },
+  { key = "j", fn = "pull",        desc = "Pull",                            short = "pull" },
+  { key = "k", fn = "push",        desc = "Push",                            short = "push" },
+  { key = "m", fn = "sync",        desc = "Merge base branch in",            short = "merge" },
+  { key = "M", fn = "home",        desc = "Switch to base branch and pull",  short = "base" },
+  { key = "a", fn = "stage",       desc = "Stage related changes",           short = "stage" },
+  { key = "z", fn = "stash",       desc = "Stash changes",                   short = "stash" },
+  { key = "Z", fn = "stash_pop",   desc = "Pop stash",                       short = "pop" },
+  { key = "u", fn = "undo_commit", desc = "Undo last commit (keep changes)", short = "undo" },
+}
+
+---Winbar text listing the quick git keys, for terminals where <leader> only works after <Esc>.
+---@param keys GitQuickKey[]
+---@return string winbar statusline formatted, % escaped
+function M.terminal_hint(keys)
+  local parts = {}
+  for _, entry in ipairs(keys) do
+    parts[#parts + 1] = ("%%#Special#%s%%* %s"):format(entry.key, entry.short)
+  end
+  -- the trailing %< trims the last keys on narrow windows instead of the instructions
+  return " %#Title# git%* %#Comment#<Esc> then <Space>g%*  " .. table.concat(parts, "  ") .. "%<"
+end
+
 return M

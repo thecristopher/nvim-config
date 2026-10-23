@@ -77,3 +77,39 @@ describe("push_args", function()
     assert.same({ "push", "-u", "origin", "HEAD" }, actions.push_args(false))
   end)
 end)
+
+describe("QUICK_KEYS", function()
+  it("never gives two actions the same key", function()
+    local seen = {}
+    for _, entry in ipairs(actions.QUICK_KEYS) do
+      assert.is_nil(seen[entry.key], "duplicate key " .. entry.key)
+      seen[entry.key] = true
+    end
+  end)
+
+  it("points every key at a function core.git really has", function()
+    package.loaded["core.git"] = nil
+    local git = require("core.git")
+    for _, entry in ipairs(actions.QUICK_KEYS) do
+      assert.is_function(git[entry.fn], entry.fn)
+    end
+  end)
+end)
+
+describe("terminal_hint", function()
+  local keys = {
+    { key = "j", short = "pull" },
+    { key = "k", short = "push" },
+  }
+
+  it("tells Claire to leave terminal mode first", function()
+    assert.truthy(actions.terminal_hint(keys):find("<Esc> then <Space>g", 1, true))
+  end)
+
+  it("lists each key next to its short name, in order", function()
+    local hint = actions.terminal_hint(keys)
+    local pull = hint:find("j%* pull", 1, true)
+    local push = hint:find("k%* push", 1, true)
+    assert.truthy(pull and push and pull < push)
+  end)
+end)

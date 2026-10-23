@@ -20,7 +20,7 @@ every session in this repo (see the style section below).
 - `lua/core/banner/`: Elden Ring style banners (`:Banner felled|great|died|grace|cleansed`) fired by commits, PRs, `:Trial`, new Sites of Grace, region changes and long fights with errors
 - `lua/core/hub/`: living dashboard, shimmering gold headers, rising embers and a typed player message
 - `lua/core/review/`: `:Review [number|url]` / `<leader>pr` has Claude (headless, subscription) analyze a PR's diff into a float, `d` opens the diff per file
-- `lua/core/git/`: quick git keys under `<leader>g` (`N` new branch, `j` pull, `k` push, `m`/`M` base branch, `z`/`Z` stash, `u` undo commit) and the related change staging `<leader>pc` runs first
+- `lua/core/git/`: quick git keys under `<leader>g` (`N` new branch, `j` pull, `k` push, `m`/`M` base branch, `z`/`Z` stash, `u` undo commit) and the related change staging `<leader>pc` runs first. `QUICK_KEYS` in its actions is the one list behind the keymaps and the toggleterm winbar hint. Keep `<leader>g` maps at two keys so none waits on a timeout
 - `lua/core/trial/`: `:Trial` / `<leader>cT` runs the project's tests in the background and announces the verdict
 - `lua/core/runes/`: statusline rune tally (saves and banners pay out, YOU DIED leaves a bloodstain) plus the breathing grace glyph
 - `lua/core/rest/`: after 5 idle minutes in normal mode the editor rests at a Site of Grace (`:Rest`, `vim.g.eldentree_rest_after`), any key wakes it and is swallowed

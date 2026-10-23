@@ -60,6 +60,8 @@ return {
         map("t", "<C-j>",   [[<C-\><C-n><C-W>j]], { buffer = buf, desc = "Window down" })
         map("t", "<C-k>",   [[<C-\><C-n><C-W>k]], { buffer = buf, desc = "Window up" })
         map("t", "<C-l>",   [[<C-\><C-n><C-W>l]], { buffer = buf, desc = "Window right" })
+        local git_actions = require("core.git.actions")
+        vim.wo[term.window].winbar = git_actions.terminal_hint(git_actions.QUICK_KEYS)
       end
 
       -- a TermOpen name pattern misses on Windows, where the buffer is named cmd.exe&::toggleterm::1
