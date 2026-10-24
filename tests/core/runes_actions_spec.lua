@@ -73,3 +73,20 @@ describe("breath", function()
     assert.near(1, actions.breath(actions.GLOW_PERIOD / 2), 0.0001)
   end)
 end)
+
+describe("glow_level", function()
+  it("rests on the dimmest glow while the grace exhales", function()
+    assert.equal(1, actions.glow_level(0))
+  end)
+
+  it("reaches the brightest glow halfway through the breath", function()
+    assert.equal(actions.GLOW_LEVELS, actions.glow_level(actions.GLOW_PERIOD / 2))
+  end)
+
+  it("never leaves the precomputed groups during a whole breath", function()
+    for elapsed = 0, actions.GLOW_PERIOD, 50 do
+      local level = actions.glow_level(elapsed)
+      assert.is_true(level >= 1 and level <= actions.GLOW_LEVELS)
+    end
+  end)
+end)

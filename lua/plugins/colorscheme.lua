@@ -39,23 +39,33 @@ return {
       custom_highlights = function(c)
         local t = require("core.themes.actions").derive(c)
         local rainbow = require("core.themes.actions").rainbow(c)
+        local function mode_color(mode) return require("core.themes.actions").mode_look(c, t, mode).number end
         return {
-          -- Keywords: full Elden Ring gold, bold
-          ["@keyword"]              = { fg = c.yellow, style = { "bold" } },
+          -- Base vim groups first: treesitter captures and LSP semantic tokens link back to these,
+          -- so painting them here keeps every language and every highlighter on the same colors
+          Keyword                   = { fg = c.yellow, style = { "bold" } },
+          Statement                 = { fg = c.yellow, style = { "bold" } },
+          Conditional               = { fg = c.yellow, style = { "bold" } },
+          Repeat                    = { fg = c.yellow, style = { "bold" } },
+          Exception                 = { fg = c.yellow, style = { "bold" } },
+          Include                   = { fg = c.yellow, style = {} },
+          Function                  = { fg = c.rosewater, style = {} },
+          Type                      = { fg = c.lavender, style = {} },
+          StorageClass              = { fg = c.lavender, style = {} },
+          Structure                 = { fg = c.lavender, style = {} },
+          Number                    = { fg = c.blue, style = {} },
+          Float                     = { fg = c.blue, style = {} },
+          Boolean                   = { fg = c.sky, style = { "bold" } },
+          Operator                  = { fg = c.subtext1, style = {} },
+          Delimiter                 = { fg = c.overlay1, style = {} },
+          -- Keywords catppuccin paints directly instead of linking to the base groups above
           ["@keyword.function"]     = { fg = c.yellow, style = { "bold" } },
           ["@keyword.operator"]     = { fg = c.yellow, style = {} },
           ["@keyword.return"]       = { fg = c.yellow, style = { "bold" } },
-          ["@keyword.import"]       = { fg = c.yellow, style = {} },
-          ["@conditional"]          = { fg = c.yellow, style = { "bold" } },
-          ["@repeat"]               = { fg = c.yellow, style = { "bold" } },
-          -- Functions: warm rosewater-gold
-          ["@function"]             = { fg = c.rosewater, style = {} },
+          ["@keyword.export"]       = { fg = c.yellow, style = { "bold" } },
+          -- Functions: warm rosewater-gold, builtins in italic
           ["@function.builtin"]     = { fg = c.rosewater, style = { "italic" } },
-          ["@function.call"]        = { fg = c.rosewater, style = {} },
-          ["@method"]               = { fg = c.rosewater, style = {} },
-          ["@method.call"]          = { fg = c.rosewater, style = {} },
           -- Types: arcane purple
-          ["@type"]                 = { fg = c.lavender, style = {} },
           ["@type.builtin"]         = { fg = c.lavender, style = { "italic" } },
           ["@constructor"]          = { fg = c.mauve, style = {} },
           -- Strings: Sites of Grace green
@@ -65,24 +75,15 @@ return {
           -- Comments: mist and fog, italic
           ["@comment"]              = { fg = c.overlay0, style = { "italic" } },
           Comment                   = { fg = c.overlay0, style = { "italic" } },
-          -- Numbers & booleans: steel blue
-          ["@number"]               = { fg = c.blue, style = {} },
-          ["@boolean"]              = { fg = c.sky, style = { "bold" } },
-          ["@float"]                = { fg = c.blue, style = {} },
-          -- Operators: warm text
-          ["@operator"]             = { fg = c.subtext1, style = {} },
           -- Variables: parchment (no special color)
           ["@variable"]             = { fg = c.text, style = {} },
           ["@variable.builtin"]     = { fg = c.peach, style = { "italic" } },
-          -- Parameters: dim parchment
-          ["@parameter"]            = { fg = c.subtext0, style = {} },
           ["@variable.parameter"]   = { fg = c.subtext0, style = {} },
           -- Properties/fields: slightly dimmer gold
           ["@property"]             = { fg = c.rosewater, style = {} },
           ["@variable.member"]      = { fg = c.rosewater, style = {} },
           -- Punctuation: dim, unobtrusive
           ["@punctuation.bracket"]  = { fg = c.overlay2, style = {} },
-          ["@punctuation.delimiter"] = { fg = c.overlay1, style = {} },
           -- ── Editor chrome ─────────────────────────────────────────
           -- Cursor line: very subtle accent tint (brightened in insert mode, see autocmds.lua)
           CursorLine   = { bg = t.cursorline },
@@ -92,6 +93,11 @@ return {
           lCursor      = { fg = c.base, bg = c.yellow, style = { "bold" } },
           CursorIM     = { fg = c.base, bg = c.yellow, style = { "bold" } },
           TermCursor   = { fg = c.base, bg = c.yellow, style = { "bold" } },
+          -- each mode tints the cursor like its line number, see guicursor in options.lua
+          EldenCursorInsert  = { fg = c.base, bg = mode_color("i") },
+          EldenCursorVisual  = { fg = c.base, bg = mode_color("v") },
+          EldenCursorReplace = { fg = c.base, bg = mode_color("R") },
+          EldenCursorCommand = { fg = c.base, bg = mode_color("c") },
           -- Line numbers
           LineNr       = { fg = c.overlay0 },
           -- Visual selection: warm dark gold
@@ -231,6 +237,33 @@ return {
           TodoBgHACK   = { fg = c.base, bg = c.peach,   style = { "bold" } },
           TodoBgNOTE   = { fg = c.base, bg = c.teal,    style = { "bold" } },
           TodoFgNOTE   = { fg = c.teal },
+          -- Debugger: breakpoints in blood, the line you stopped on lit like a grace
+          DapBreakpoint          = { fg = c.red },
+          DapBreakpointCondition = { fg = c.peach },
+          DapLogPoint            = { fg = c.teal },
+          DapBreakpointRejected  = { fg = c.overlay1 },
+          DapStopped             = { fg = c.yellow, style = { "bold" } },
+          DapStoppedLine         = { bg = t.stopped_line },
+          -- Neotest: the region accent marks what is running, folders follow the explorer
+          NeotestRunning         = { fg = c.yellow },
+          NeotestNamespace       = { fg = c.lavender },
+          NeotestFile            = { fg = c.rosewater },
+          NeotestDir             = { fg = c.subtext0 },
+          NeotestAdapterName     = { fg = c.yellow, style = { "bold" } },
+          NeotestWinSelect       = { fg = c.yellow, style = { "bold" } },
+          -- Multicursor: extra cursors wear the accent like the main one
+          MultiCursorCursor         = { fg = c.base, bg = c.yellow },
+          MultiCursorVisual         = { bg = t.visual },
+          MultiCursorSign           = { fg = c.yellow },
+          MultiCursorMatchPreview   = { bg = t.visual, style = { "underline" } },
+          MultiCursorDisabledCursor = { fg = c.base, bg = c.overlay1 },
+          MultiCursorDisabledVisual = { bg = c.surface1 },
+          MultiCursorDisabledSign   = { fg = c.overlay1 },
+          -- Hover: the docs read like an item description, name in gold and the category below
+          EldenTome       = { fg = c.text, bg = c.mantle },
+          EldenTomeBorder = { fg = c.yellow, bg = c.mantle },
+          EldenTomeTitle  = { fg = c.yellow, bg = c.mantle, style = { "bold" } },
+          EldenTomeFooter = { fg = c.overlay2, bg = c.mantle, style = { "italic" } },
           -- Illuminate
           IlluminatedWordText  = { bg = t.visual, style = { "underline" } },
           IlluminatedWordRead  = { bg = t.visual },
@@ -242,9 +275,11 @@ return {
         blink_cmp          = true,
         bufferline         = true,
         dashboard          = true,
+        dap                = true,
         dropbar            = { enabled = true, color_mode = true },
         flash              = true,
         gitsigns           = true,
+        grug_far           = true,
         illuminate         = { enabled = false },  -- handled by snacks.words
         indent_blankline   = { enabled = true, scope_color = "yellow", colored_indent_levels = false },
         lsp_trouble        = true,
@@ -266,6 +301,7 @@ return {
           },
           inlay_hints = { background = true },
         },
+        neotest            = true,
         neotree            = true,
         noice              = true,
         notify             = true,

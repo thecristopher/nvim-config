@@ -3,6 +3,34 @@ local actions = require("core.dive.actions")
 
 local M = {}
 
+-- hover floats are dressed like an item description, the category is read when K is pressed
+local tome = { category = "Item" }
+
+local function dress_hover(win)
+  vim.wo[win].winhighlight = "Normal:EldenTome,FloatBorder:EldenTomeBorder,FloatTitle:EldenTomeTitle,FloatFooter:EldenTomeFooter"
+  pcall(vim.api.nvim_win_set_config, win, { footer = { { " " .. tome.category .. " ", "EldenTomeFooter" } }, footer_pos = "right" })
+end
+
+-- only floats opened for hover are touched, every other preview keeps its own look
+local function install_tome()
+  if tome.installed then return end
+  tome.installed = true
+  local open = vim.lsp.util.open_floating_preview
+  vim.lsp.util.open_floating_preview = function(contents, syntax, opts)
+    local buf, win = open(contents, syntax, opts)
+    if opts and opts.focus_id == "textDocument/hover" and win and vim.api.nvim_win_is_valid(win) then dress_hover(win) end
+    return buf, win
+  end
+end
+
+local function hover()
+  install_tome()
+  local ok, captures = pcall(vim.treesitter.get_captures_at_cursor, 0)
+  tome.category = actions.item_category(ok and captures or {})
+  local title = " ◈ " .. vim.fn.expand("<cword>") .. " "
+  vim.lsp.buf.hover({ border = "rounded", max_width = 90, title = { { title, "EldenTomeTitle" } }, title_pos = "left" })
+end
+
 local handlers = {
   definition           = function() Snacks.picker.lsp_definitions() end,
   references           = function() Snacks.picker.lsp_references() end,
@@ -12,7 +40,7 @@ local handlers = {
   peek_definition      = function() vim.cmd("Glance definitions") end,
   peek_references      = function() vim.cmd("Glance references") end,
   peek_implementations = function() vim.cmd("Glance implementations") end,
-  hover                = function() vim.lsp.buf.hover({ border = "rounded", max_width = 90 }) end,
+  hover                = hover,
   code_action          = function() vim.lsp.buf.code_action() end,
 
   -- typed out like IncRename wants so the live preview kicks in

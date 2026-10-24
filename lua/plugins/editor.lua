@@ -203,50 +203,108 @@ return {
       { "<leader>xT", "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>", desc = "Todo/Fix/Fixme" },
       { "<leader>ft", "<cmd>TodoTelescope<cr>",                            desc = "Find todos" },
     },
-    opts = {
-      signs      = true,
-      sign_priority = 8,
-      keywords = {
-        FIX  = { icon = " ", color = "error",   alt = { "FIXME", "BUG", "FIXIT", "ISSUE" } },
-        TODO = { icon = " ", color = "info" },
-        HACK = { icon = " ", color = "warning" },
-        WARN = { icon = " ", color = "warning", alt = { "WARNING", "XXX" } },
-        PERF = { icon = " ", alt = { "OPTIM", "PERFORMANCE", "OPTIMIZE" } },
-        NOTE = { icon = " ", color = "hint",    alt = { "INFO" } },
-        TEST = { icon = "⏱ ", color = "test",   alt = { "TESTING", "PASSED", "FAILED" } },
-      },
-      gui_style = { fg = "NONE", bg = "BOLD" },
-      merge_keywords  = true,
-      highlight       = {
-        multiline            = true,
-        multiline_pattern    = "^.",
-        multiline_context    = 10,
-        before               = "",
-        keyword              = "wide",
-        after                = "fg",
-        pattern              = [[.*<(KEYWORDS)\s*:]],
-        comments_only        = true,
-        max_line_len         = 400,
-        exclude              = {},
-      },
-      colors = {
-        error   = { "DiagnosticError",   "ErrorMsg",   "#C03030" },
-        warning = { "DiagnosticWarn",    "WarningMsg", "#CC8A40" },
-        info    = { "DiagnosticInfo",    "#C9A84C" },
-        hint    = { "DiagnosticHint",    "#6BA888" },
-        default = { "Identifier",        "#9B8EC4" },
-        test    = { "Identifier",        "#68B8C8" },
-      },
-      search = {
-        command   = "rg",
-        args      = { "--color=never", "--no-heading", "--with-filename", "--line-number", "--column" },
-        pattern   = [[\b(KEYWORDS):]],
-      },
-    },
+    opts = function()
+      local p = require("core.themes").palette()
+      return {
+        signs      = true,
+        sign_priority = 8,
+        keywords = {
+          FIX  = { icon = " ", color = "error",   alt = { "FIXME", "BUG", "FIXIT", "ISSUE" } },
+          TODO = { icon = " ", color = "info" },
+          HACK = { icon = " ", color = "warning" },
+          WARN = { icon = " ", color = "warning", alt = { "WARNING", "XXX" } },
+          PERF = { icon = " ", alt = { "OPTIM", "PERFORMANCE", "OPTIMIZE" } },
+          NOTE = { icon = " ", color = "hint",    alt = { "INFO" } },
+          TEST = { icon = "⏱ ", color = "test",   alt = { "TESTING", "PASSED", "FAILED" } },
+        },
+        gui_style = { fg = "NONE", bg = "BOLD" },
+        merge_keywords  = true,
+        highlight       = {
+          multiline            = true,
+          multiline_pattern    = "^.",
+          multiline_context    = 10,
+          before               = "",
+          keyword              = "wide",
+          after                = "fg",
+          pattern              = [[.*<(KEYWORDS)\s*:]],
+          comments_only        = true,
+          max_line_len         = 400,
+          exclude              = {},
+        },
+        -- the hex at the end of each list is only a fallback, taken from the region it loaded in
+        colors = {
+          error   = { "DiagnosticError",   "ErrorMsg",   p.red },
+          warning = { "DiagnosticWarn",    "WarningMsg", p.peach },
+          info    = { "DiagnosticInfo",    p.yellow },
+          hint    = { "DiagnosticHint",    p.teal },
+          default = { "Identifier",        p.lavender },
+          test    = { "Identifier",        p.sky },
+        },
+        search = {
+          command   = "rg",
+          args      = { "--color=never", "--no-heading", "--with-filename", "--line-number", "--column" },
+          pattern   = [[\b(KEYWORDS):]],
+        },
+      }
+    end,
   },
 
   -- Word reference highlighting handled by snacks.words (see snacks.lua).
   -- ]] / [[ for jumping between refs is bound globally there.
+
+  -- ── grug-far: search and replace across the project with a live preview ──
+  {
+    "MagicDuck/grug-far.nvim",
+    cmd  = "GrugFar",
+    keys = {
+      {
+        "<leader>fR",
+        function() require("grug-far").open({ prefills = { search = vim.fn.expand("<cword>") } }) end,
+        desc = "Find and replace in project",
+      },
+      { "<leader>fR", function() require("grug-far").with_visual_selection() end, mode = "x", desc = "Find and replace selection" },
+      {
+        "<leader>fF",
+        function() require("grug-far").open({ prefills = { paths = vim.fn.expand("%") } }) end,
+        desc = "Find and replace in file",
+      },
+    },
+    opts = { headerMaxWidth = 80, transient = true },
+  },
+
+  -- ── multicursor: real cursors, each with its own undo and registers ──
+  {
+    "jake-stewart/multicursor.nvim",
+    branch = "1.0",
+    keys = {
+      { "<C-n>",      function() require("multicursor-nvim").matchAddCursor(1) end,  mode = { "n", "x" }, desc = "Cursor on next match" },
+      { "<A-Down>",   function() require("multicursor-nvim").lineAddCursor(1) end,   mode = { "n", "x" }, desc = "Cursor below" },
+      { "<A-Up>",     function() require("multicursor-nvim").lineAddCursor(-1) end,  mode = { "n", "x" }, desc = "Cursor above" },
+      { "<leader>Ma", function() require("multicursor-nvim").matchAllAddCursors() end, mode = { "n", "x" }, desc = "Cursor on every match" },
+      { "<leader>Mt", function() require("multicursor-nvim").toggleCursor() end,     mode = { "n", "x" }, desc = "Pause cursors here" },
+      { "<leader>Mr", function() require("multicursor-nvim").restoreCursors() end,   desc = "Bring back cleared cursors" },
+      { "<leader>Ml", function() require("multicursor-nvim").alignCursors() end,     desc = "Align cursors" },
+      { "<leader>Md", function() require("multicursor-nvim").diagnosticMatchCursors() end, mode = { "n", "x" }, desc = "Cursor on each diagnostic" },
+    },
+    config = function()
+      local mc = require("multicursor-nvim")
+      mc.setup()
+      -- these keys only exist while there is more than one cursor, so they never shadow the usual ones
+      mc.addKeymapLayer(function(layer)
+        layer({ "n", "x" }, "n", function() mc.matchAddCursor(1) end)
+        layer({ "n", "x" }, "N", function() mc.matchAddCursor(-1) end)
+        layer({ "n", "x" }, "q", function() mc.matchSkipCursor(1) end)
+        layer({ "n", "x" }, "Q", function() mc.matchSkipCursor(-1) end)
+        layer({ "n", "x" }, "<Left>", mc.prevCursor)
+        layer({ "n", "x" }, "<Right>", mc.nextCursor)
+        layer({ "n", "x" }, "<leader>Mx", mc.deleteCursor)
+        layer("n", "<Esc>", function()
+          if not mc.cursorsEnabled() then return mc.enableCursors() end
+          mc.clearCursors()
+        end)
+      end)
+    end,
+  },
 
   -- ── inc-rename: live rename preview ──────────────────────────────
   {

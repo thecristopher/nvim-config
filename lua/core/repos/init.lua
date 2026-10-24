@@ -23,11 +23,6 @@ local function write_json_list(path, list)
   pcall(vim.fn.writefile, { vim.json.encode(list) }, path)
 end
 
-local function git_root(path)
-  if not path or path == "" then return nil end
-  local marker = vim.fs.find(".git", { path = path, upward = true })[1]
-  return marker and vim.fs.dirname(marker) or nil
-end
 
 local function last_activity(repo)
   -- the index is rewritten on every stage, checkout and commit
@@ -50,6 +45,26 @@ function M.branch(repo)
   return actions.branch_from_head(first_line(git_path .. "/HEAD"))
 end
 
+--- Tells whether a folder is a real git repo, one whose .git leads to a readable HEAD.
+---@param dir string
+---@return boolean
+function M.is_repo(dir)
+  return M.branch(dir) ~= nil
+end
+
+local function git_root(path)
+  if not path or path == "" then return nil end
+  local markers = vim.fs.find(".git", { path = path, upward = true, limit = math.huge })
+  return actions.pick_root(markers, M.is_repo)
+end
+
+--- Returns the git repo a path lives in, nil outside of one.
+---@param path string|nil defaults to the working directory
+---@return string|nil
+function M.root(path)
+  return git_root(path or vim.uv.cwd())
+end
+
 function M.record_visit(dir)
   local root = git_root(dir)
   if not root then return end
@@ -57,7 +72,7 @@ function M.record_visit(dir)
 end
 
 function M.list(limit)
-  local still_there = function(path) return vim.fn.isdirectory(path) == 1 end
+  local still_there = function(path) return vim.fn.isdirectory(path) == 1 and M.is_repo(path) end
   local visited = vim.tbl_filter(still_there, read_json_list(visits_file))
   local scanned = vim.tbl_filter(still_there, read_json_list(scan_file))
 
@@ -124,12 +139,62 @@ local function open_files_after_tree(dir)
   vim.defer_fn(open_files, 800)
 end
 
+local function buffer_infos()
+  return vim.tbl_map(function(buf)
+    return {
+      id       = buf,
+      name     = vim.api.nvim_buf_get_name(buf),
+      listed   = vim.bo[buf].buflisted,
+      modified = vim.bo[buf].modified,
+      buftype  = vim.bo[buf].buftype,
+    }
+  end, vim.api.nvim_list_bufs())
+end
+
+local function has_session()
+  local persistence = require("persistence")
+  return vim.fn.filereadable(persistence.current()) == 1
+    or vim.fn.filereadable(persistence.current({ branch = false })) == 1
+end
+
+-- the tree window would come back as an empty husk, so it never goes into a session
+local function save_session()
+  pcall(vim.cmd, "Neotree close")
+  require("persistence").save()
+end
+
+local function close_project_buffers(infos)
+  for _, buf in ipairs(actions.buffers_to_close(infos)) do
+    pcall(Snacks.bufdelete, { buf = buf, force = false })
+  end
+end
+
+-- keeps the session of the repo you are leaving and clears its files, unsaved work stays open
+local function leave_project()
+  if not M.root() then return end
+  local infos = buffer_infos()
+  if not actions.worth_saving(infos) then return end
+  save_session()
+  close_project_buffers(infos)
+end
+
+--- Travels to a repo: the fog rolls in, the old project's session is kept, and the new one comes back
+--- with the files you had open there, or a file picker on a first visit.
+---@param repo string
 function M.open(repo)
   local first_visit = not vim.tbl_contains(read_json_list(visits_file), repo)
+  local sessions = vim.g.eldentree_project_sessions ~= false and M.root() ~= repo
   require("core.fog").roll()
+  if sessions then leave_project() end
+
   vim.fn.chdir(repo)
   M.record_visit(repo)
   if first_visit then require("core.banner").show("grace", { subtitle = vim.fs.basename(repo) }) end
+
+  if sessions and has_session() then
+    require("persistence").load()
+    return show_tree(repo)
+  end
   open_files_after_tree(repo)
   show_tree(repo)
 end

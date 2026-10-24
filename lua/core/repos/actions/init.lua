@@ -88,6 +88,43 @@ function M.gitdir_from_file(contents, repo)
   return repo .. "/" .. gitdir
 end
 
+--- Returns the folder of the first .git marker that belongs to a real repo, walking upward.
+--- Tools like GitKraken leave bare .git folders behind, those have no HEAD and are skipped.
+---@param markers string[] .git paths, nearest first
+---@param is_repo fun(dir: string): boolean
+---@return string|nil
+function M.pick_root(markers, is_repo)
+  for _, marker in ipairs(markers or {}) do
+    local dir = vim.fs.dirname(marker)
+    if is_repo(dir) then return dir end
+  end
+  return nil
+end
+
+--- Picks the buffers to close when leaving a project: listed files with nothing unsaved.
+--- Unsaved work and special buffers like terminals always stay open.
+---@param buffers { id: integer, name: string, listed: boolean, modified: boolean, buftype: string }[]
+---@return integer[] buffer ids
+function M.buffers_to_close(buffers)
+  local closing = {}
+  for _, buf in ipairs(buffers or {}) do
+    if buf.listed and buf.buftype == "" and buf.name ~= "" and not buf.modified then
+      table.insert(closing, buf.id)
+    end
+  end
+  return closing
+end
+
+--- Tells whether the project you are leaving has any file open, so its session is worth keeping.
+---@param buffers { name: string, listed: boolean, buftype: string }[]
+---@return boolean
+function M.worth_saving(buffers)
+  for _, buf in ipairs(buffers or {}) do
+    if buf.listed and buf.buftype == "" and buf.name ~= "" then return true end
+  end
+  return false
+end
+
 -- recently visited repos first, then everything else by last git activity
 function M.rank(tracked, scanned, activity, limit)
   local ranked, seen = {}, {}

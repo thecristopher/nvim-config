@@ -53,3 +53,29 @@ describe("dive bindings", function()
     end
   end)
 end)
+
+describe("item_category", function()
+  it("calls a method a sorcery", function()
+    assert.equal("Sorcery", actions.item_category({ "function.method.call" }))
+  end)
+
+  it("calls a plain function an incantation", function()
+    assert.equal("Incantation", actions.item_category({ "function.call" }))
+  end)
+
+  it("files a type away as a talisman", function()
+    assert.equal("Talisman", actions.item_category({ "type.builtin" }))
+  end)
+
+  it("reads the innermost capture first, like Claire's name inside a love letter", function()
+    assert.equal("Ash of War", actions.item_category({ "variable", "variable.parameter" }))
+  end)
+
+  it("does not confuse a prefix with a different capture", function()
+    assert.equal("Item", actions.item_category({ "typedefinitely_not_a_type" }))
+  end)
+
+  it("falls back to a plain item with nothing under the cursor", function()
+    assert.equal("Item", actions.item_category({}))
+  end)
+end)

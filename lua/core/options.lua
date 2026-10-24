@@ -5,11 +5,15 @@ opt.termguicolors = true
 opt.number = true
 opt.relativenumber = true
 opt.cursorline = true
+-- the cursor changes color with the mode, terminals that ignore cursor colors just keep the shapes
+opt.guicursor = require("core.themes.actions").guicursor()
 opt.signcolumn = "yes"
 opt.colorcolumn = "100"
 opt.showmode = false
 opt.ruler = false
-opt.cmdheight = 1
+-- noice draws the command line in a popup and sets this to 0 once it loads. Starting at 0 keeps the
+-- dashboard from centering against one height and redrawing against another a moment later
+opt.cmdheight = vim.g.vscode and 1 or 0
 opt.laststatus = 3
 opt.pumheight = 10
 opt.pumblend = 10
