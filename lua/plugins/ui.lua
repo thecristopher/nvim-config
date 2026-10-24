@@ -27,7 +27,6 @@ return {
           component_separators = { left = "", right = "" },
           section_separators   = { left = "", right = "" },
           globalstatus         = true,
-          disabled_filetypes   = { statusline = { "dashboard", "alpha", "starter" } },
         },
         sections = {
           lualine_a = { { "mode", fmt = function(s) return s:sub(1, 3) end } },
@@ -51,7 +50,8 @@ return {
             },
           },
           lualine_x = {
-            { function() return require("core.runes").grace() end, color = "EldenGraceGlow" },
+            -- the glyph carries its own glow group, picked from the breath each frame
+            { function() return require("core.runes").grace() end },
             { lsp_info, color = function() return { fg = palette().yellow } end },
             {
               "diagnostics",
@@ -159,7 +159,6 @@ return {
         override = {
           ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
           ["vim.lsp.util.stylize_markdown"] = true,
-          ["cmp.entry.get_documentation"]   = true,
         },
         hover     = { enabled = false },  -- use native LSP hover
         signature = { enabled = false },  -- use native LSP signature
@@ -235,7 +234,11 @@ return {
         { "<leader>gz", icon = { icon = "󰆓", color = "yellow" } },
         { "<leader>gZ", icon = { icon = "󰆓", color = "yellow" } },
         { "<leader>gu", icon = { icon = "󰕌", color = "red" } },
+        { "<leader>gw", icon = { icon = "󰊠", color = "blue" } },
         { "<leader>m",  group = "messages", icon = { icon = "✎", color = "orange" } },
+        { "<leader>D",  group = "debug", icon = { icon = "", color = "red" } },
+        { "<leader>M",  group = "multicursor", icon = { icon = "󰇀", color = "yellow" } },
+        { "<leader>T",  group = "tests", icon = { icon = "󰙨", color = "green" } },
         { "<leader>s",  group = "split" },
         { "<leader>t",  group = "terminal" },
         { "<leader>u",  group = "ui" },
@@ -270,7 +273,7 @@ return {
     "sphamba/smear-cursor.nvim",
     event = "VeryLazy",
     opts  = {
-      -- read from the Cursor highlight so the trail follows the region
+      -- read from the cursor highlight of the current mode so the trail follows mode and region
       cursor_color             = "Cursor",
       stiffness                = 0.8,
       trailing_stiffness       = 0.55,
@@ -282,6 +285,24 @@ return {
       scroll_buffer_space      = true,
       filetypes_disabled       = { "bigfile", "snacks_dashboard", "lazy", "mason" },
     },
+    config = function(_, opts)
+      local smear = require("smear_cursor")
+      smear.setup(opts)
+      -- assigning the color also flushes smear's color cache, so the trail repaints
+      local function follow(mode)
+        smear.cursor_color = require("core.themes.actions").cursor_group(mode)
+      end
+      local group = vim.api.nvim_create_augroup("eldentree_smear", { clear = true })
+      vim.api.nvim_create_autocmd("ModeChanged", {
+        group = group,
+        callback = function() follow(vim.v.event.new_mode) end,
+      })
+      vim.api.nvim_create_autocmd("User", {
+        group = group,
+        pattern = "EldentreeRegionSettled",
+        callback = function() follow(vim.api.nvim_get_mode().mode) end,
+      })
+    end,
   },
 
   -- ── indent-blankline: rainbow indent guides in region colors ───────
@@ -306,7 +327,7 @@ return {
       -- ibl reruns this on every ColorScheme, which keeps the rainbow on the current region
       hooks.register(hooks.type.HIGHLIGHT_SETUP, function()
         local p = palette()
-        for level, color in ipairs(require("core.themes.actions").rainbow(p)) do
+        for level, color in ipairs(require("core.themes.actions").indent_guides(p)) do
           vim.api.nvim_set_hl(0, names[level], { fg = color })
         end
         vim.api.nvim_set_hl(0, "IBLScope", { fg = p.yellow, bold = true })

@@ -89,6 +89,8 @@ for _, entry in ipairs(require("core.git.actions").QUICK_KEYS) do
   map("n", "<leader>g" .. entry.key, function() require("core.git")[entry.fn]() end, { desc = entry.desc })
 end
 
+map("n", "<leader>gw", function() require("core.phantom").show() end, { desc = "Who wrote this (phantom)" })
+
 -- ── Regions (themes) ─────────────────────────────────────────────────────────
 map("n", "<leader>ut", function() require("core.themes").pick() end, { desc = "Choose region theme" })
 map("n", "<leader>uT", function() require("core.themes").cycle() end, { desc = "Next region theme" })
@@ -98,11 +100,16 @@ map("n", "<leader>uF", function()
   vim.g.eldentree_fog = vim.g.eldentree_fog == false
   vim.notify("Fog walls " .. (vim.g.eldentree_fog and "on" or "off"))
 end, { desc = "Toggle fog walls" })
+map("n", "<leader>uB", function() require("core.boss").toggle() end, { desc = "Toggle boss fights" })
 
 -- ── Messages on the ground ───────────────────────────────────────────────────
 map("n", "<leader>mw", function() require("core.messages").write() end, { desc = "Write message" })
 map("n", "<leader>md", function() require("core.messages").erase() end, { desc = "Erase message" })
 map("n", "<leader>ml", function() require("core.messages").pick() end,  { desc = "List messages" })
+
+-- ── Snapshots ────────────────────────────────────────────────────────────────
+map("n", "<leader>cp", "<cmd>Snapshot<cr>", { desc = "Snapshot the buffer as a PNG" })
+map("x", "<leader>cp", ":Snapshot<cr>", { desc = "Snapshot the selection as a PNG", silent = true })
 
 -- ── Undo history ─────────────────────────────────────────────────────────────
 map("n", "<leader>fu", function() Snacks.picker.undo() end, { desc = "Undo history" })

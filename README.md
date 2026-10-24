@@ -44,9 +44,13 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 
 | Module        | What it does                                                                                                      |
 | ------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `core/themes` | Region palettes. Each launch rolls a random region, never the previous one. Pin one with `vim.g.eldentree_region` |
+| `core/themes` | Eleven region palettes. Each repo keeps its own region (the one you picked there, or one derived from its name), outside a repo each launch rolls a new one. Pin one with `vim.g.eldentree_region` |
+| `core/phantom` | `<leader>gw` shows who last wrote the line as a phantom: blue for others, gold for your past self |
+| `core/zones`  | The first time you walk into a folder each session, it is announced like a new area of the Lands Between |
+| `core/snapshot` | `<leader>cp` / `:Snapshot` saves the buffer or selection as a framed PNG in the region's colors and copies it |
 | `core/hub`    | Living dashboard with shimmering gold headers, rising embers and a typed player message                           |
 | `core/banner` | Elden Ring style banners fired by commits, PRs, test runs, new projects and region changes                        |
+| `core/boss`   | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it |
 | `core/runes`  | Statusline rune tally. Saves and banners pay out, YOU DIED leaves a bloodstain                                    |
 | `core/rest`   | After 5 idle minutes in normal mode the editor rests at a Site of Grace. Any key wakes it                         |
 | `core/repos`  | Background repo scanner, the Sites of Grace project picker and automatic project root                             |
@@ -57,6 +61,10 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 | `core/vscode` | Inside Cursor or VS Code, only the allow listed editing plugins load                                              |
 
 Plugin specs live in `lua/plugins/`, one file per concern.
+
+Traveling to a Site of Grace keeps the session of the repo you leave and restores the one you arrive at. Files with unsaved changes are never closed. Turn it off with `vim.g.eldentree_project_sessions = false`, and per project regions with `vim.g.eldentree_region_per_project = false`.
+
+Portraits in `images/portraits/` are 276x336 crops of the originals in `images/`, with contrast, color and sharpness lifted so they survive half block rendering. A region whose portrait is missing simply shows the hub without art.
 
 ## Keys
 
@@ -70,6 +78,15 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>um` | Toggle animations               |
 | `<leader>cT` | Run tests (Trial)               |
 | `<leader>uz` | Zen mode                        |
+| `<leader>uB` | Toggle boss fights              |
+| `<leader>gw` | Who wrote this line (phantom)   |
+| `<leader>cp` | Snapshot the buffer or selection as a PNG |
+| `K`          | Hover docs, dressed as an item description |
+| `<leader>fR` | Find and replace in the project (grug-far), works on a selection too |
+| `<leader>fF` | Find and replace in this file   |
+| `<C-n>`      | Add a cursor on the next match (multicursor) |
+| `<A-Up>` / `<A-Down>` | Add a cursor above or below |
+| `<leader>Ma` | Add a cursor on every match     |
 | `<leader>pc` | Stage related changes and draft the commit with Claude |
 | `<leader>gN` | New branch (pick a prefix, type a name) |
 | `<leader>gj` | Pull                            |
@@ -89,6 +106,28 @@ Leader is `<Space>`, local leader is `\`.
 
 Inside a toggleterm terminal, the bar at the top lists the quick git keys. Press `<Esc>` and then `<Space>g` to use them.
 
+While several cursors are active, `n` / `N` add the next or previous match, `q` / `Q` skip one, `<Left>` / `<Right>` switch the main cursor and `<Esc>` clears them.
+
+| Key          | Action                          |
+| ------------ | ------------------------------- |
+| `<leader>Tt` | Run the nearest test (neotest)  |
+| `<leader>Tf` | Run every test in this file     |
+| `<leader>Td` | Debug the nearest test          |
+| `<leader>Ts` | Test summary                    |
+| `<leader>To` | Output of the test under the cursor |
+| `<leader>Tw` | Rerun this file on every save   |
+| `]T` / `[T`  | Next or previous failed test    |
+| `F5`         | Start or continue debugging     |
+| `Shift F5`   | Stop debugging                  |
+| `F9`         | Toggle breakpoint               |
+| `F10` / `F11` / `Shift F11` | Step over, into, out |
+| `<leader>DB` | Conditional breakpoint          |
+| `<leader>Dp` | Log point                       |
+| `<leader>Dv` | Toggle the debug view           |
+| `<leader>Dw` | Watch the expression under the cursor |
+
+On macOS, F11 shows the desktop unless "Use F1, F2, etc. keys as standard function keys" is on. `<leader>Di` steps into without it.
+
 | Key          | Action                          |
 | ------------ | ------------------------------- |
 | `F12`        | Go to definition                |
@@ -103,6 +142,10 @@ Inside a toggleterm terminal, the bar at the top lists the quick git keys. Press
 | `:Trial`                                       | Run the project's tests                 |
 | `:Rest`                                        | Rest at a Site of Grace now             |
 | `:Motion`                                      | Toggle animations                       |
+| `:Boss`                                        | Toggle boss fights                      |
+| `:Phantom`                                     | Who wrote the line under the cursor     |
+| `:Snapshot`                                    | Save a framed PNG of the buffer or range |
+| `:GrugFar`                                     | Find and replace across the project     |
 | `:OpenFolder`                                  | Open the file tree at a folder you pick |
 | `:Repos` / `:ReposRescan`                      | Browse or rescan known repositories     |
 

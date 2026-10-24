@@ -12,9 +12,11 @@ local function portrait()
   return vim.fn.stdpath("config") .. "/images/portraits/" .. require("core.themes").current().portrait
 end
 
--- the art alone is 46x28, so only show it when there is room for both panes
+-- the art alone is 46x28, so only show it when there is room for both panes,
+-- and a region whose portrait was not dropped into images/portraits yet simply goes without
 local function room_for_art()
   return vim.o.columns >= 128 and vim.o.lines >= 42 and vim.fn.executable("chafa") == 1
+    and vim.fn.filereadable(portrait()) == 1
 end
 
 local function rule(label)
@@ -31,8 +33,9 @@ local function heading(label, pane)
   }
 end
 
-local function in_git_repo()
-  return Snacks.git.get_root() ~= nil
+-- snacks calls any folder holding a .git a repo, the repo scanner also checks it has a HEAD
+local function quest_root()
+  return require("core.repos").root()
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -155,13 +158,15 @@ return {
           { pane = 2, section = "recent_files", cwd = false, limit = 4, indent = 2 },
 
           function()
-            if not in_git_repo() then return {} end
+            local root = quest_root()
+            if not root then return {} end
             return {
-              heading("Current Quest  " .. (require("core.repos").branch(Snacks.git.get_root()) or ""), 2),
+              heading("Current Quest  " .. (require("core.repos").branch(root) or ""), 2),
               {
                 pane    = 2,
                 section = "terminal",
-                cmd     = "git --no-pager diff --stat -B -M -C | tail -n 6",
+                -- a stderr line taller than the section would push the whole hub down
+                cmd     = ("git -C %s --no-pager diff --stat -B -M -C 2>/dev/null | tail -n 6"):format(vim.fn.shellescape(root)),
                 height  = 6,
                 indent  = 4,
                 ttl     = 0,
@@ -228,6 +233,9 @@ return {
         git     = { patterns = { "GitSign", "MiniDiffSign" } },
         refresh = 50,
       },
+
+      -- ── Images: real pixels on kitty, Ghostty and WezTerm, an info page elsewhere ──
+      image = { enabled = true },
 
       -- ── Input / Picker / Zen / Lazygit ────────────────────────────
       input      = { enabled = true },

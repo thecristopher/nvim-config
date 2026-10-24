@@ -168,6 +168,12 @@ function M.show(name, opts)
   })
 end
 
+--- Tells whether a banner is on screen, so quieter ones can wait their turn.
+---@return boolean
+function M.busy()
+  return current ~= nil
+end
+
 function M.region(region)
   M.show("region", { kind = { text = region.title }, subtitle = region.tagline, reward = false })
 end
@@ -183,6 +189,11 @@ local function watch_diagnostics()
       local now = vim.uv.now()
       if errors > 0 then
         fights[ev.buf] = fights[ev.buf] or now
+        return
+      end
+      -- a boss fight in this buffer ends with its own banner
+      if require("core.boss").engaged(ev.buf) then
+        fights[ev.buf] = nil
         return
       end
       if actions.should_cleanse({ errors = errors, errors_since = fights[ev.buf], now = now, last_shown = last_shown }) then

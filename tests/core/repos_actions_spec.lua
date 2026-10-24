@@ -171,3 +171,60 @@ describe("browse_start", function()
     assert.equals("/tmp/raccoon/", actions.browse_start({}, "/tmp/raccoon", "/Users/ada"))
   end)
 end)
+
+describe("pick_root", function()
+  local real = { ["/realms/haligtree"] = true, ["/realms"] = false, ["/realms/haligtree/rot"] = false }
+  local function is_repo(dir) return real[dir] == true end
+
+  it("finds Malenia's repo from its own .git", function()
+    assert.equal("/realms/haligtree", actions.pick_root({ "/realms/haligtree/.git" }, is_repo))
+  end)
+
+  it("skips a bare .git that tools left in the parent folder", function()
+    assert.is_nil(actions.pick_root({ "/realms/.git" }, is_repo))
+  end)
+
+  it("walks past a stray marker to the real repo above it", function()
+    local markers = { "/realms/haligtree/rot/.git", "/realms/haligtree/.git" }
+    assert.equal("/realms/haligtree", actions.pick_root(markers, is_repo))
+  end)
+
+  it("finds nothing outside of any repo", function()
+    assert.is_nil(actions.pick_root({}, is_repo))
+  end)
+end)
+
+describe("buffers_to_close", function()
+  local function buffer(id, extra)
+    return vim.tbl_extend("force", { id = id, name = "/haligtree/love_letter.lua", listed = true, modified = false, buftype = "" }, extra or {})
+  end
+
+  it("clears the files Malenia left saved", function()
+    assert.same({ 1 }, actions.buffers_to_close({ buffer(1) }))
+  end)
+
+  it("never closes a love letter Inde has not saved yet", function()
+    assert.same({}, actions.buffers_to_close({ buffer(2, { modified = true }) }))
+  end)
+
+  it("leaves terminals and other special buffers alone", function()
+    assert.same({}, actions.buffers_to_close({ buffer(3, { buftype = "terminal" }) }))
+  end)
+
+  it("skips unlisted and unnamed buffers", function()
+    assert.same({}, actions.buffers_to_close({ buffer(4, { listed = false }), buffer(5, { name = "" }) }))
+  end)
+end)
+
+describe("worth_saving", function()
+  it("keeps a session when Claire has a file open", function()
+    assert.is_true(actions.worth_saving({ { name = "/terrasave/plan.md", listed = true, buftype = "" } }))
+  end)
+
+  it("skips a project with only the dashboard and terminals", function()
+    assert.is_false(actions.worth_saving({
+      { name = "", listed = true, buftype = "nofile" },
+      { name = "term://zsh", listed = true, buftype = "terminal" },
+    }))
+  end)
+end)

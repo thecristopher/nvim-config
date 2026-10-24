@@ -73,7 +73,7 @@ describe("weather", function()
   end)
 
   it("falls back to Leyndell's embers for a region it does not know", function()
-    assert.equal(actions.WEATHER.leyndell, actions.weather("stormveil"))
+    assert.equal(actions.WEATHER.leyndell, actions.weather("raccoon_city"))
   end)
 
   it("lets Malenia's rot petals drift down from the top", function()

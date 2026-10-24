@@ -64,6 +64,11 @@ M.WEATHER = {
   caelid       = { glyphs = { "·", "∙", "•" },   drift = "rise",  speed = { 3.0, 6.0 }, from = "red",      to = "peach" },
   mohgwyn      = { glyphs = { "·", "•", "●" },   drift = "fall",  speed = { 2.5, 5.0 }, from = "maroon",   to = "yellow" },
   ordina       = { glyphs = { "·", "∗", "❄" },   drift = "fall",  speed = { 0.6, 1.6 }, from = "overlay2", to = "text" },
+  limgrave     = { glyphs = { "·", "∙", "❦" },   drift = "fall",  speed = { 0.8, 2.2 }, from = "peach",    to = "yellow" },
+  stormveil    = { glyphs = { "·", "╎", "│" },   drift = "fall",  speed = { 9.0, 15.0 }, from = "overlay2", to = "sky" },
+  volcano_manor = { glyphs = { "·", "•", "●" },  drift = "rise",  speed = { 2.5, 5.5 }, from = "red",      to = "yellow" },
+  nokron       = { glyphs = { "·", "✧", "✦" },   drift = "float", speed = { 0.1, 0.4 }, from = "overlay2", to = "yellow" },
+  farum_azula  = { glyphs = { "·", "✧", "ϟ" },   drift = "float", speed = { 0.3, 0.9 }, from = "lavender", to = "yellow" },
 }
 
 --- Returns the weather for a region, the golden embers of Leyndell when it has none.

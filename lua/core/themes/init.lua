@@ -17,6 +17,29 @@ local function save(name)
   pcall(vim.fn.writefile, { name }, state_file)
 end
 
+local projects_file = vim.fn.stdpath("state") .. "/eldentree_project_regions.json"
+
+local function read_projects()
+  local ok, lines = pcall(vim.fn.readfile, projects_file)
+  if not ok then return {} end
+  local decoded_ok, decoded = pcall(vim.json.decode, table.concat(lines, "\n"))
+  return (decoded_ok and type(decoded) == "table") and decoded or {}
+end
+
+-- the repo you are standing in, nil outside of one or with vim.g.eldentree_region_per_project = false
+local function project_root()
+  if vim.g.eldentree_region_per_project == false then return nil end
+  return require("core.repos").root()
+end
+
+local function remember_for_project(name)
+  local root = project_root()
+  if not root then return end
+  local chosen = read_projects()
+  chosen[root] = name
+  pcall(vim.fn.writefile, { vim.json.encode(chosen) }, projects_file)
+end
+
 function M.current()
   return actions.resolve(vim.g.eldentree_region or read_saved())
 end
@@ -29,10 +52,14 @@ end
 function M.catppuccin_opts(base_opts, region)
   local opts = vim.deepcopy(base_opts)
   opts.color_overrides = { mocha = region.palette }
+  -- one cache per region, so previewing regions loads compiled colors instead of recompiling
+  opts.compile_path = vim.fn.stdpath("cache") .. "/catppuccin/" .. region.name
   return opts
 end
 
 local function load_colorscheme(region)
+  -- the compiler caches the options it first saw, so it would keep writing to the first region's path
+  package.loaded["catppuccin.lib.compiler"] = nil
   require("catppuccin").setup(M.catppuccin_opts(M.base_opts or {}, region))
   vim.cmd.colorscheme("catppuccin")
 end
@@ -55,15 +82,21 @@ local function fade_into(region, duration)
         vim.api.nvim_set_hl(0, name, blend.mix_hl(before[name], after[name], t))
       end
     end,
+    -- plugins that cache colors read them at ColorScheme, which fired before the fade began
+    on_done = function()
+      vim.api.nvim_exec_autocmds("User", { pattern = "EldentreeRegionSettled", modeline = false })
+    end,
   })
 end
 
--- opts.save = false previews without remembering, opts.announce shows the region banner
+-- opts.save = false previews without remembering, opts.remember also ties the region to this project,
+-- opts.announce shows the region banner
 function M.apply(name, opts)
   opts = opts or {}
   local region = actions.resolve(name)
   vim.g.eldentree_region = region.name
   if opts.save ~= false then save(region.name) end
+  if opts.remember then remember_for_project(region.name) end
 
   if not M.painted then
     M.painted = true
@@ -77,7 +110,7 @@ function M.apply(name, opts)
 end
 
 function M.cycle()
-  M.apply(actions.next_name(M.current().name), { announce = true })
+  M.apply(actions.next_name(M.current().name), { announce = true, remember = true })
 end
 
 function M.pick()
@@ -97,7 +130,7 @@ function M.pick()
       local marker = item.region.name == original and "󰄳 " or "  "
       return {
         { marker, "SnacksPickerIcon" },
-        { ("%-14s"):format(item.region.title), "SnacksPickerFile" },
+        { ("%-23s"):format(item.region.title), "SnacksPickerFile" },
         { item.region.tagline, "SnacksPickerComment" },
       }
     end,
@@ -108,7 +141,7 @@ function M.pick()
     confirm = function(picker, item)
       confirmed = true
       picker:close()
-      if item then M.apply(item.region.name, { announce = item.region.name ~= original }) end
+      if item then M.apply(item.region.name, { announce = item.region.name ~= original, remember = true }) end
     end,
     on_close = function()
       if not confirmed then vim.schedule(function() M.apply(original, { duration = 220 }) end) end
@@ -116,20 +149,40 @@ function M.pick()
   })
 end
 
--- a fresh roll every launch tells terminals apart, setting vim.g.eldentree_region pins one
+-- a repo always wears its own region, anywhere else a fresh roll every launch tells terminals apart,
+-- and setting vim.g.eldentree_region pins one everywhere
 local function starting_region()
   if vim.g.eldentree_region then return vim.g.eldentree_region end
+  local root = project_root()
+  if root then return actions.project_region(root, read_projects()) end
   math.randomseed(vim.uv.hrtime() % 2 ^ 31)
   return actions.random_name(read_saved(), math.random)
 end
 
+-- traveling to another repo, by picker, auto root or :cd, crossfades into that repo's region
+local function follow_projects()
+  vim.api.nvim_create_autocmd("DirChanged", {
+    group = vim.api.nvim_create_augroup("eldentree_project_region", { clear = true }),
+    pattern = "global",
+    callback = function()
+      if M.pinned then return end
+      local root = project_root()
+      if not root then return end
+      local name = actions.project_region(root, read_projects())
+      if name ~= M.current().name then M.apply(name, { save = false }) end
+    end,
+  })
+end
+
 function M.setup(base_opts)
   M.base_opts = base_opts
+  M.pinned = vim.g.eldentree_region ~= nil
   M.apply(starting_region())
+  follow_projects()
 
   vim.api.nvim_create_user_command("Region", function(cmd)
     if cmd.args == "" then return M.pick() end
-    M.apply(cmd.args, { announce = true })
+    M.apply(cmd.args, { announce = true, remember = true })
   end, {
     nargs = "?",
     complete = function() return actions.names() end,

@@ -109,6 +109,92 @@ M.REGIONS = {
       sky = "#B4E4F0", pink = "#D8A4C8",
     },
   },
+  {
+    name = "limgrave",
+    character = "Melina",
+    portrait = "melina.jpg",
+    title = "Limgrave",
+    tagline = "green fields under the Erdtree's light",
+    palette = {
+      base = "#0A0D09", mantle = "#070906", crust = "#040503",
+      surface0 = "#161C14", surface1 = "#1E261B", surface2 = "#283224",
+      overlay0 = "#41503C", overlay1 = "#5E7057", overlay2 = "#7F9277",
+      subtext0 = "#A3B097", subtext1 = "#C2CCB4", text = "#E4E6D2",
+      -- the Erdtree burns brighter here than over Leyndell's ash
+      yellow = "#E8C547", peach = "#E0A45A", green = "#8CC57A", teal = "#6FB8A0",
+      lavender = "#A7A6DA", mauve = "#C29AD6", red = "#D0503F", maroon = "#E06A55",
+      rosewater = "#E6D5A0", flamingo = "#DDA486", blue = "#78A8CF", sapphire = "#5F92BE",
+      sky = "#92D0DE", pink = "#D894B0",
+    },
+  },
+  {
+    name = "stormveil",
+    character = "Godrick",
+    portrait = "godrick.jpg",
+    title = "Stormveil Castle",
+    tagline = "storm over Godrick's grafted halls",
+    palette = {
+      base = "#0A0C0F", mantle = "#07090B", crust = "#040507",
+      surface0 = "#151A20", surface1 = "#1C232B", surface2 = "#262E38",
+      overlay0 = "#3E4956", overlay1 = "#5A6878", overlay2 = "#7B8A9A",
+      subtext0 = "#9DAAB8", subtext1 = "#BCC7D2", text = "#DCE3EA",
+      yellow = "#7FB0E8", peach = "#E0A060", green = "#93C08A", teal = "#6FBDB0",
+      lavender = "#B0A2E0", mauve = "#C79AD8", red = "#E0605A", maroon = "#E8786E",
+      rosewater = "#D9C9A8", flamingo = "#E0A898", blue = "#D8B870", sapphire = "#6A98C8",
+      sky = "#9FD3E6", pink = "#D99CC0",
+    },
+  },
+  {
+    name = "volcano_manor",
+    character = "Rykard",
+    portrait = "rykard.jpg",
+    title = "Volcano Manor",
+    tagline = "magma and Rykard's blasphemy",
+    palette = {
+      base = "#100806", mantle = "#0B0504", crust = "#060202",
+      surface0 = "#1E110D", surface1 = "#291611", surface2 = "#351D16",
+      overlay0 = "#553831", overlay1 = "#78524A", overlay2 = "#9A7066",
+      subtext0 = "#C09484", subtext1 = "#D9B2A0", text = "#F0D6C2",
+      yellow = "#F5B83D", peach = "#F08A3C", green = "#B5B864", teal = "#8FB08C",
+      lavender = "#C391C9", mauve = "#B572B0", red = "#F04A3A", maroon = "#FF6A55",
+      rosewater = "#F2C19A", flamingo = "#EE9A80", blue = "#9AAFD0", sapphire = "#7F96C0",
+      sky = "#B0CBD8", pink = "#E8829A",
+    },
+  },
+  {
+    name = "nokron",
+    character = "Mimic Tear",
+    portrait = "mimic_tear.jpg",
+    title = "Nokron",
+    tagline = "the Eternal City under a false night sky",
+    palette = {
+      base = "#080B10", mantle = "#05080C", crust = "#030508",
+      surface0 = "#111823", surface1 = "#17202E", surface2 = "#1F2A3B",
+      overlay0 = "#36455C", overlay1 = "#51637E", overlay2 = "#7183A0",
+      subtext0 = "#93A4C0", subtext1 = "#B3C2DA", text = "#DDE6F4",
+      yellow = "#7FE6C4", peach = "#EAB07C", green = "#A6D49A", teal = "#74C8D8",
+      lavender = "#A9B2F2", mauve = "#C8A8EE", red = "#E8687A", maroon = "#F08090",
+      rosewater = "#D8E2F0", flamingo = "#E6B4C0", blue = "#E8CC80", sapphire = "#6E9AD8",
+      sky = "#A8DCF4", pink = "#DCA8DA",
+    },
+  },
+  {
+    name = "farum_azula",
+    character = "Maliketh",
+    portrait = "maliketh.jpg",
+    title = "Crumbling Farum Azula",
+    tagline = "dusk storms over the dragon temple",
+    palette = {
+      base = "#0C0A11", mantle = "#08070C", crust = "#050408",
+      surface0 = "#18141F", surface1 = "#201A29", surface2 = "#2A2235",
+      overlay0 = "#463B55", overlay1 = "#645677", overlay2 = "#857699",
+      subtext0 = "#A898BB", subtext1 = "#C6B8D6", text = "#E6DCF0",
+      yellow = "#C08AF0", peach = "#E8A870", green = "#9CC68E", teal = "#79C2B8",
+      lavender = "#8FB0F0", mauve = "#E0A0D8", red = "#E8586A", maroon = "#F07080",
+      rosewater = "#E6CFA8", flamingo = "#E4A8A0", blue = "#E2C27A", sapphire = "#7898D8",
+      sky = "#A0D8EA", pink = "#E29AC4",
+    },
+  },
 }
 
 function M.names()
@@ -140,6 +226,18 @@ function M.next_name(name)
     if candidate == name then return names[index % #names + 1] end
   end
   return names[1]
+end
+
+--- Returns the region a project wears: the one chosen there before, or one derived from its folder name.
+---@param root string project root
+---@param chosen table<string, string>|nil regions picked per project root
+---@return string region name
+function M.project_region(root, chosen)
+  local picked = chosen and chosen[root]
+  if picked and M.find(picked) then return picked end
+  local names = M.names()
+  -- the hash is stable across machines, so a project keeps its region everywhere
+  return names[require("core.utils").hash(vim.fs.basename(root)) % #names + 1]
 end
 
 local function to_rgb(hex)
@@ -201,6 +299,7 @@ function M.derive(p)
     glance_preview    = tint(p.surface0, 0.45),
     glance_cursorline = tint(p.yellow, 0.08),
     blame             = tint(p.overlay1, 0.85),
+    stopped_line      = tint(p.yellow, 0.14),
     -- a whisper of the accent keeps side panels warm with the character instead of plain gray
     panel             = M.tint_to_contrast(M.blend(p.yellow, p.surface0, 0.12), p.base, 1.07),
     separator         = M.tint_to_contrast(p.yellow, p.base, 2.0),
@@ -210,6 +309,15 @@ end
 -- one indent level per color, accent first so the outermost block reads as the region
 function M.rainbow(p)
   return { p.yellow, p.lavender, p.teal, p.sky, p.peach, p.red }
+end
+
+M.GUIDE_ALPHA = 0.4
+
+--- Returns the rainbow faded toward the background, so the full strength scope is the only loud guide.
+---@param p table region palette
+---@return string[] one hex color per indent level
+function M.indent_guides(p)
+  return vim.tbl_map(function(color) return M.blend(color, p.base, M.GUIDE_ALPHA) end, M.rainbow(p))
 end
 
 -- what the cursor line and its number look like in each mode, matching the statusline colors
@@ -225,6 +333,37 @@ function M.mode_look(p, tints, mode)
     t = { cursorline = tints.cursorline, number = p.sky },
   }
   return looks[first] or { cursorline = tints.cursorline, number = p.yellow }
+end
+
+-- the cursor wears the same mode colors as the line number, normal mode keeps the plain Cursor
+M.CURSOR_GROUPS = {
+  i = "EldenCursorInsert",
+  v = "EldenCursorVisual",
+  V = "EldenCursorVisual",
+  ["\22"] = "EldenCursorVisual",
+  R = "EldenCursorReplace",
+  c = "EldenCursorCommand",
+}
+
+--- Returns the highlight group the cursor uses in a mode.
+---@param mode string|nil mode as nvim_get_mode or ModeChanged reports it
+---@return string group name
+function M.cursor_group(mode)
+  return M.CURSOR_GROUPS[(mode or "n"):sub(1, 1)] or "Cursor"
+end
+
+--- Returns the guicursor value that paints each mode with its cursor group.
+---@return string
+function M.guicursor()
+  return table.concat({
+    "n-sm:block-Cursor",
+    "o:hor50-Cursor",
+    "v:block-" .. M.CURSOR_GROUPS.v,
+    "i-ci-ve:ver25-" .. M.CURSOR_GROUPS.i,
+    "r-cr:hor20-" .. M.CURSOR_GROUPS.R,
+    "c:ver25-" .. M.CURSOR_GROUPS.c,
+    "t:block-blinkon500-blinkoff500-TermCursor",
+  }, ",")
 end
 
 function M.lualine_theme(p)

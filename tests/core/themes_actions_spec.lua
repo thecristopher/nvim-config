@@ -15,8 +15,11 @@ local function brightness(hex)
 end
 
 describe("regions", function()
-  it("lists all six in picker order", function()
-    assert.same({ "leyndell", "haligtree", "raya_lucaria", "caelid", "mohgwyn", "ordina" }, actions.names())
+  it("lists all eleven in picker order", function()
+    assert.same({
+      "leyndell", "haligtree", "raya_lucaria", "caelid", "mohgwyn", "ordina",
+      "limgrave", "stormveil", "volcano_manor", "nokron", "farum_azula",
+    }, actions.names())
   end)
 
   it("fills every catppuccin slot with a hex color in every region", function()
@@ -53,8 +56,12 @@ describe("next_name", function()
     assert.equal("haligtree", actions.next_name("leyndell"))
   end)
 
-  it("wraps from Ordina back to Leyndell", function()
-    assert.equal("leyndell", actions.next_name("ordina"))
+  it("moves from Ordina down to Limgrave", function()
+    assert.equal("limgrave", actions.next_name("ordina"))
+  end)
+
+  it("wraps from Farum Azula back to Leyndell", function()
+    assert.equal("leyndell", actions.next_name("farum_azula"))
   end)
 end)
 
@@ -154,6 +161,18 @@ describe("ui builders", function()
   it("leads the indent rainbow with the accent", function()
     assert.equal(malenia.yellow, actions.rainbow(malenia)[1])
   end)
+
+  it("gives indent guides one color per rainbow level", function()
+    assert.equal(#actions.rainbow(malenia), #actions.indent_guides(malenia))
+  end)
+
+  for _, region in ipairs(actions.REGIONS) do
+    it(("keeps %s's scope louder than the outermost guide it shares a color with"):format(region.title), function()
+      local p = region.palette
+      local guide = actions.indent_guides(p)[1]
+      assert.is_true(actions.contrast(p.yellow, p.base) > actions.contrast(guide, p.base))
+    end)
+  end
 end)
 
 describe("mode_look", function()
@@ -184,24 +203,101 @@ describe("random_name", function()
 
   it("can land on any of the others", function()
     assert.equal("haligtree", actions.random_name("leyndell", first))
-    assert.equal("ordina", actions.random_name("leyndell", last))
+    assert.equal("farum_azula", actions.random_name("leyndell", last))
   end)
 
   it("uses every region when nothing was saved yet", function()
-    assert.equal("ordina", actions.random_name(nil, last))
+    assert.equal("farum_azula", actions.random_name(nil, last))
   end)
 end)
 
 describe("characters", function()
-  it("gives every region a champion and a portrait on disk", function()
-    local root = vim.fn.getcwd() .. "/images/portraits/"
+  it("gives every region a champion and names its portrait file", function()
     for _, region in ipairs(actions.REGIONS) do
       assert.is_truthy(region.character, region.name)
+      assert.is_truthy(region.portrait:match("%.jpg$"), region.portrait)
+    end
+  end)
+
+  it("keeps every region's portrait on disk", function()
+    local root = vim.fn.getcwd() .. "/images/portraits/"
+    for _, region in ipairs(actions.REGIONS) do
       assert.equal(1, vim.fn.filereadable(root .. region.portrait), region.portrait)
+    end
+  end)
+
+  it("never lets two regions share an accent", function()
+    local seen = {}
+    for _, region in ipairs(actions.REGIONS) do
+      assert.is_nil(seen[region.palette.yellow], region.name)
+      seen[region.palette.yellow] = true
     end
   end)
 
   it("crowns Malenia in the Haligtree", function()
     assert.equal("Malenia", actions.find("haligtree").character)
+  end)
+end)
+
+describe("cursor_group", function()
+  it("gives Claire's insert mode the grace green cursor", function()
+    assert.equal("EldenCursorInsert", actions.cursor_group("i"))
+  end)
+
+  it("paints every visual flavor with the same cursor, blockwise included", function()
+    assert.equal("EldenCursorVisual", actions.cursor_group("v"))
+    assert.equal("EldenCursorVisual", actions.cursor_group("V"))
+    assert.equal("EldenCursorVisual", actions.cursor_group("\22"))
+  end)
+
+  it("keeps the plain Cursor for normal and operator pending modes", function()
+    assert.equal("Cursor", actions.cursor_group("n"))
+    assert.equal("Cursor", actions.cursor_group("no"))
+  end)
+
+  it("falls back to the plain Cursor before any mode is known", function()
+    assert.equal("Cursor", actions.cursor_group(nil))
+  end)
+end)
+
+describe("guicursor", function()
+  it("hands every mode group to the terminal cursor", function()
+    local value = actions.guicursor()
+    for _, group in pairs(actions.CURSOR_GROUPS) do
+      assert.is_truthy(value:find(group, 1, true), group)
+    end
+  end)
+
+  it("keeps the insert cursor a thin bar so Malenia's love letters stay readable", function()
+    assert.is_truthy(actions.guicursor():find("i-ci-ve:ver25-EldenCursorInsert", 1, true))
+  end)
+end)
+
+describe("project_region", function()
+  it("keeps the region Claire chose for her project", function()
+    local chosen = { ["/raccoon/terrasave"] = "haligtree" }
+    assert.equal("haligtree", actions.project_region("/raccoon/terrasave", chosen))
+  end)
+
+  it("derives the same region every time for a project nobody chose for", function()
+    local first = actions.project_region("/love/inde-and-malenia", {})
+    assert.equal(first, actions.project_region("/love/inde-and-malenia", nil))
+  end)
+
+  it("follows the folder name, so a fresh clone looks the same", function()
+    assert.equal(actions.project_region("/home/claire/anniversary"), actions.project_region("/tmp/anniversary"))
+  end)
+
+  it("ignores a saved region that no longer exists", function()
+    local chosen = { ["/raccoon/terrasave"] = "raccoon_city" }
+    assert.is_truthy(actions.find(actions.project_region("/raccoon/terrasave", chosen)))
+  end)
+
+  it("spreads projects across more than one region", function()
+    local seen = {}
+    for _, name in ipairs({ "leon", "ada", "jill", "chris", "rebecca", "carlos", "ashley", "hunk" }) do
+      seen[actions.project_region("/re/" .. name)] = true
+    end
+    assert.is_true(vim.tbl_count(seen) > 2)
   end)
 end)

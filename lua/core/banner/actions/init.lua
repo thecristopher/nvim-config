@@ -32,6 +32,11 @@ M.KINDS = {
     text = "SCARLET ROT CLEANSED", color = "green",
     duration = 2600, fade_in = 350, fade_out = 800, stagger = 25, letter_ms = 300, band = 0.85,
   },
+  -- walking into a new part of a project, quieter still so it never interrupts the work
+  zone = {
+    text = "", color = "subtext1",
+    duration = 2200, fade_in = 450, fade_out = 800, stagger = 30, letter_ms = 380, band = 0.42, rule = true,
+  },
   -- area names hang lightly over the world instead of blotting it out
   region = {
     text = "", color = "text",

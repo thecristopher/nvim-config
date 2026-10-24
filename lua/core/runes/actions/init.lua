@@ -61,4 +61,13 @@ function M.breath(elapsed)
   return (1 - math.cos(2 * math.pi * (elapsed % M.GLOW_PERIOD) / M.GLOW_PERIOD)) / 2
 end
 
+M.GLOW_LEVELS = 8
+
+--- Returns which precomputed glow group the breath sits on, so only the statusline repaints.
+---@param elapsed number milliseconds since the breathing began
+---@return integer level from 1 (dimmest) to GLOW_LEVELS (brightest)
+function M.glow_level(elapsed)
+  return math.floor(M.breath(elapsed) * (M.GLOW_LEVELS - 1) + 0.5) + 1
+end
+
 return M

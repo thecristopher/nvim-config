@@ -67,19 +67,33 @@ function M.gain()
   return "+" .. actions.format(gain.amount)
 end
 
+local glow_level = 1
+
 function M.grace()
-  return "✦ " .. require("core.themes").current().title
+  return ("%%#EldenGraceGlow%d#✦ %s"):format(glow_level, require("core.themes").current().title)
 end
 
-local function paint_glow(elapsed)
+-- every step of the breath gets its own group once, so breathing never redefines a highlight
+local function define_glow()
   local p = require("core.themes").palette()
-  local glow = color.mix(color.to_int(p.overlay2), color.to_int(p.yellow), actions.breath(elapsed or 0))
-  vim.api.nvim_set_hl(0, "EldenGraceGlow", { fg = glow, bg = p.surface0, bold = true })
+  local dim, bright = color.to_int(p.overlay2), color.to_int(p.yellow)
+  for level = 1, actions.GLOW_LEVELS do
+    local glow = color.mix(dim, bright, (level - 1) / (actions.GLOW_LEVELS - 1))
+    vim.api.nvim_set_hl(0, "EldenGraceGlow" .. level, { fg = glow, bg = p.surface0, bold = true })
+  end
+end
+
+-- changing a highlight repaints every window, switching groups only repaints the statusline
+local function breathe(elapsed)
+  local level = actions.glow_level(elapsed)
+  if level == glow_level then return end
+  glow_level = level
+  refresh_statusline()
 end
 
 function M.setup()
   load()
-  paint_glow(0)
+  define_glow()
   local group = vim.api.nvim_create_augroup("eldentree_runes", { clear = true })
   vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
     group = group,
@@ -92,9 +106,9 @@ function M.setup()
       edits[ev.buf] = 0
     end,
   })
-  vim.api.nvim_create_autocmd("ColorScheme", { group = group, callback = function() paint_glow(0) end })
+  vim.api.nvim_create_autocmd("ColorScheme", { group = group, callback = define_glow })
   -- the grace breathes slowly, ten frames a second is plenty for something this gentle
-  M.glow = motion.loop({ interval = 100, on_tick = paint_glow })
+  M.glow = motion.loop({ interval = 100, on_tick = breathe })
 end
 
 return M
