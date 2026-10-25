@@ -1,10 +1,34 @@
 # Eldentree
 
+[![CI](https://github.com/thecristopher/nvim-config/actions/workflows/ci.yml/badge.svg)](https://github.com/thecristopher/nvim-config/actions/workflows/ci.yml)
+
 A Neovim config forged in the Lands Between, or in Raccoon City depending on the day. Catppuccin Mocha, recolored for whichever region or location you wake up in, with banners, runes and a Site of Grace that lets you rest when you step away.
 
 Runs on macOS, Linux and Windows, and also inside Cursor and VS Code.
 
 ![Malenia](images/portraits/malenia.jpg)
+
+## A look around
+
+The title screen, once a day per franchise and on every switch.
+
+![Elden Ring title screen](images/demo/title.gif)
+
+The start screen is an inventory. Elden Ring opens the Roundtable Hold with its tabs, the item grid and your Sites of Grace.
+
+![Elden Ring HUD](images/demo/hud.gif)
+
+On Resident Evil days it is the STATUS screen, with Claire, the CONDITION monitor and the COMMAND menu.
+
+![Resident Evil inventory](images/demo/hud_re.gif)
+
+Banners land on commits, PRs, test runs and felled bosses.
+
+![Banners](images/demo/banner.gif)
+
+And whatever Music.app or Cider is playing sits in the statusline, with the cover a keypress away.
+
+![Now playing panel](images/demo/music.gif)
 
 ## Requirements
 
@@ -13,6 +37,7 @@ Runs on macOS, Linux and Windows, and also inside Cursor and VS Code.
 - A [Nerd Font](https://www.nerdfonts.com/) in your terminal
 - The `tree-sitter` CLI, which builds the parsers
 - Optional: `ripgrep` and `fd` for faster pickers, and `gh` for PR drafts
+- Optional: a GitHub Copilot account for inline suggestions. Run `:Copilot auth` once, the first use downloads Copilot's language server
 
 ## Install
 
@@ -52,6 +77,7 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 | `core/sound` | Plays your own sounds from `sounds/<franchise>/` for titles, doors, deaths and the merchant |
 | `core/themes` | Region palettes from the franchise in use (eleven in Elden Ring, seven in Resident Evil). Launching inside a repo starts in its region (the one you picked there, or one derived from its name), outside a repo each launch rolls a new one. The region stays for the whole session, traveling between repos never changes it. Pin one with `vim.g.eldentree_region` |
 | `core/phantom` | `<leader>gw` shows who last wrote the line as a phantom: blue for others, gold for your past self |
+| `core/music`  | The song playing in Cider (macOS, Windows, Linux) or Music.app (macOS) sits in the statusline. `<leader>o` or a click on it opens a now playing panel with the album cover, `p` plays or pauses, `n` and `b` skip. Cider needs its API on in Settings > Connectivity, and `vim.g.eldentree_cider_token` when it asks for a token. `vim.g.eldentree_music = false` turns it off |
 | `core/zones`  | The first time you walk into a folder each session, it is announced like a new area of the Lands Between |
 | `core/snapshot` | `<leader>cp` / `:Snapshot` saves the buffer or selection as a framed PNG in the region's colors and copies it |
 | `core/hub`    | The HUD's ambient life: shimmering gold, the region's weather and a typed player message |
@@ -71,6 +97,8 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 | `core/vscode` | Inside Cursor or VS Code, only the allow listed editing plugins load                                              |
 
 Plugin specs live in `lua/plugins/`, one file per concern.
+
+Copilot suggestions come through blink as one more source, and the top item previews inline as ghost text. The quickfix list is editable with quicker.nvim (change a line, `:w` writes it back to the file), yanky.nvim keeps a yank history, and spell checks English and Spanish in markdown, commits and text.
 
 Traveling to a Site of Grace keeps the session of the repo you leave and restores the one you arrive at. Files with unsaved changes are never closed. Turn it off with `vim.g.eldentree_project_sessions = false`, and per project regions with `vim.g.eldentree_region_per_project = false`.
 
@@ -133,6 +161,10 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>uB` | Toggle boss fights              |
 | `<leader>gw` | Who wrote this line (phantom)   |
 | `<leader>cp` | Snapshot the buffer or selection as a PNG |
+| `<leader>o`  | Now playing panel with the album cover |
+| `<leader>xQ` | Toggle the quickfix list, editable (quicker) |
+| `[y` / `]y`  | Right after a paste, swap it for the older or newer yank |
+| `<leader>fy` | Yank history                    |
 | `K`          | Hover docs, dressed as an item description |
 | `<leader>fR` | Find and replace in the project (grug-far), works on a selection too |
 | `<leader>fF` | Find and replace in this file   |
@@ -204,6 +236,8 @@ On macOS, F11 shows the desktop unless "Use F1, F2, etc. keys as standard functi
 | `:Boss`                                        | Toggle boss fights                      |
 | `:Phantom`                                     | Who wrote the line under the cursor     |
 | `:Snapshot`                                    | Save a framed PNG of the buffer or range |
+| `:Music [playpause\|next\|previous]`          | Control Cider or Music without the panel |
+| `:Copilot auth`                                | Sign in to GitHub Copilot once          |
 | `:GrugFar`                                     | Find and replace across the project     |
 | `:OpenFolder`                                  | Open the file tree at a folder you pick |
 | `:Repos` / `:ReposRescan`                      | Browse or rescan known repositories     |
@@ -215,3 +249,16 @@ Specs live in `tests/` and run with plenary busted in a headless Neovim.
 ```sh
 ./scripts/test.sh
 ```
+
+CI runs them on Linux and macOS for every PR, and checks the format with `stylua --check lua tests init.lua`. Run `stylua lua tests init.lua` before pushing (mason installs stylua).
+
+## Demos
+
+The GIFs above are recorded with [vhs](https://github.com/charmbracelet/vhs) from the tapes in `docs/tapes/`. The script builds a sandbox of made up repos so no real project shows up, then records every tape, or only the ones you name.
+
+```sh
+./scripts/record.sh
+./scripts/record.sh music hud
+```
+
+The music tape needs a song playing in Music.app or Cider while it records.

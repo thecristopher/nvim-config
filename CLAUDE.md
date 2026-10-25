@@ -53,6 +53,9 @@ every session in this repo (see the style section below).
 - `lua/core/style/`: reads the my-style guide so `<leader>pc` and `<leader>pp` draft with the same rules
 - Pure logic goes in each module's `actions/init.lua` so it can be unit tested
 - Tests: `./scripts/test.sh` (plenary busted, specs in `tests/`)
+- CI (`.github/workflows/ci.yml`) runs the specs on Linux and macOS and `stylua --check lua tests init.lua`, so run `stylua lua tests init.lua` after editing Lua
+- `.luarc.json` gives lua_ls outside nvim the same globals as `lua/plugins/lsp.lua`, keep both lists in sync
+- README GIFs: `./scripts/record.sh [tape...]` records `docs/tapes/*.tape` with vhs into `images/demo/`, inside a sandbox of made up repos (`docs/tapes/demo.lua` pins the franchise and silences sound). Never record with real repos, the repo is public
 
 ---
 

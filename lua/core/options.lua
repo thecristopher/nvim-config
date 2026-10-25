@@ -100,7 +100,8 @@ opt.fillchars = {
 }
 
 -- Spell
-opt.spelllang = { "en_us" }
+-- notes and messages come in both languages, nvim downloads the Spanish file the first time
+opt.spelllang = { "en_us", "es" }
 opt.spelloptions = "camel"
 
 -- Misc

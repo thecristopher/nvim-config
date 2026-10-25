@@ -487,4 +487,52 @@ return {
     cmd = "IncRename",
     opts = {},
   },
+
+  -- ── quicker: edit the quickfix list like a buffer, :w writes the changes back ──
+  {
+    "stevearc/quicker.nvim",
+    ft = "qf",
+    opts = {
+      keys = {
+        {
+          ">",
+          function()
+            require("quicker").expand({ before = 2, after = 2, add_to_existing = true })
+          end,
+          desc = "Show context around each match",
+        },
+        {
+          "<",
+          function()
+            require("quicker").collapse()
+          end,
+          desc = "Hide the context",
+        },
+      },
+    },
+    keys = {
+      {
+        "<leader>xQ",
+        function()
+          require("quicker").toggle()
+        end,
+        desc = "Toggle quickfix (editable)",
+      },
+    },
+  },
+
+  -- ── yanky: yank history, cycle through it right after a paste ──────
+  {
+    "gbprod/yanky.nvim",
+    event = "VeryLazy",
+    -- the TextYankPost autocmd in core/autocmds already flashes yanks
+    opts = { highlight = { on_put = false, on_yank = false } },
+    keys = {
+      { "p", "<Plug>(YankyPutAfter)", mode = { "n", "x" }, desc = "Put after" },
+      { "P", "<Plug>(YankyPutBefore)", mode = { "n", "x" }, desc = "Put before" },
+      { "[y", "<Plug>(YankyCycleForward)", desc = "Paste the older yank instead" },
+      { "]y", "<Plug>(YankyCycleBackward)", desc = "Paste the newer yank instead" },
+      { "<leader>fy", "<cmd>YankyRingHistory<cr>", mode = { "n", "x" }, desc = "Yank history" },
+    },
+  },
 }

@@ -1,11 +1,22 @@
--- blink.cmp: fast completion with built-in snippet engine
+-- blink.cmp: fast completion with built-in snippet engine, Copilot riding along as one more source
 
 return {
+  {
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    event = "InsertEnter",
+    opts = {
+      -- blink shows the suggestions, so copilot.lua only fetches them
+      suggestion = { enabled = false },
+      panel = { enabled = false },
+      filetypes = { markdown = true, help = true },
+    },
+  },
   {
     "saghen/blink.cmp",
     version = "v0.*",
     event = { "InsertEnter", "CmdlineEnter" },
-    dependencies = { "rafamadriz/friendly-snippets" },
+    dependencies = { "rafamadriz/friendly-snippets", "fang2hou/blink-copilot" },
     opts = {
       -- ── Keymap ──────────────────────────────────────────────────────
       keymap = {
@@ -54,8 +65,14 @@ return {
       },
       -- ── Sources ─────────────────────────────────────────────────────
       sources = {
-        default = { "lazydev", "lsp", "path", "snippets", "buffer" },
+        default = { "lazydev", "copilot", "lsp", "path", "snippets", "buffer" },
         providers = {
+          copilot = {
+            name = "copilot",
+            module = "blink-copilot",
+            score_offset = 100,
+            async = true,
+          },
           lazydev = {
             name = "LazyDev",
             module = "lazydev.integrations.blink",
@@ -85,7 +102,8 @@ return {
             winhighlight = "Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder",
           },
         },
-        ghost_text = { enabled = false },
+        -- the top item, usually Copilot's, previews inline before you accept it
+        ghost_text = { enabled = true },
       },
       -- ── Signature help ───────────────────────────────────────────────
       signature = {
