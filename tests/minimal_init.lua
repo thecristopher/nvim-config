@@ -17,4 +17,6 @@ end
 vim.opt.rtp:prepend(repo_root)
 vim.opt.rtp:prepend(find_plenary())
 vim.opt.swapfile = false
+-- specs speak Elden Ring unless they switch franchise on purpose, so the day never changes a result
+vim.g.eldentree_franchise = "elden_ring"
 vim.cmd("runtime plugin/plenary.vim")

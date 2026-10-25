@@ -17,10 +17,15 @@ local function save(name)
   pcall(vim.fn.writefile, { name }, state_file)
 end
 
-local projects_file = vim.fn.stdpath("state") .. "/eldentree_project_regions.json"
+-- each franchise remembers its own picks, Elden Ring keeps the file it always had
+local function projects_file()
+  local name = require("core.franchise").name()
+  local suffix = name == "elden_ring" and "" or "_" .. name
+  return vim.fn.stdpath("state") .. "/eldentree_project_regions" .. suffix .. ".json"
+end
 
 local function read_projects()
-  local ok, lines = pcall(vim.fn.readfile, projects_file)
+  local ok, lines = pcall(vim.fn.readfile, projects_file())
   if not ok then return {} end
   local decoded_ok, decoded = pcall(vim.json.decode, table.concat(lines, "\n"))
   return (decoded_ok and type(decoded) == "table") and decoded or {}
@@ -37,7 +42,7 @@ local function remember_for_project(name)
   if not root then return end
   local chosen = read_projects()
   chosen[root] = name
-  pcall(vim.fn.writefile, { vim.json.encode(chosen) }, projects_file)
+  pcall(vim.fn.writefile, { vim.json.encode(chosen) }, projects_file())
 end
 
 function M.current()
@@ -118,12 +123,12 @@ function M.pick()
   local confirmed = false
 
   local items = {}
-  for index, region in ipairs(actions.REGIONS) do
+  for index, region in ipairs(actions.regions()) do
     table.insert(items, { idx = index, text = region.title .. " " .. region.tagline, region = region })
   end
 
   Snacks.picker({
-    title = "Choose your region",
+    title = require("core.franchise").current().words.region_prompt,
     items = items,
     layout = { preset = "select" },
     format = function(item)
@@ -152,7 +157,7 @@ end
 -- a repo always wears its own region, anywhere else a fresh roll every launch tells terminals apart,
 -- and setting vim.g.eldentree_region pins one everywhere
 local function starting_region()
-  if vim.g.eldentree_region then return vim.g.eldentree_region end
+  if M.pinned then return vim.g.eldentree_region end
   local root = project_root()
   if root then return actions.project_region(root, read_projects()) end
   math.randomseed(vim.uv.hrtime() % 2 ^ 31)
@@ -174,6 +179,11 @@ local function follow_projects()
   })
 end
 
+--- Moves into the new franchise's world after :Franchise, announcing where you landed.
+function M.follow_franchise()
+  M.apply(starting_region(), { announce = true })
+end
+
 function M.setup(base_opts)
   M.base_opts = base_opts
   M.pinned = vim.g.eldentree_region ~= nil
@@ -186,7 +196,7 @@ function M.setup(base_opts)
   end, {
     nargs = "?",
     complete = function() return actions.names() end,
-    desc = "Switch Elden Ring region theme",
+    desc = "Switch region theme",
   })
 end
 

@@ -91,7 +91,8 @@ end
 function M.toggle()
   vim.g.eldentree_motion = vim.g.eldentree_motion == false
   vim.api.nvim_exec_autocmds("User", { pattern = "EldentreeMotion", modeline = false })
-  vim.notify(vim.g.eldentree_motion and "The Lands Between stir once more" or "The world stands still",
+  local words = require("core.franchise").current().words
+  vim.notify(vim.g.eldentree_motion and words.motion_on or words.motion_off,
     vim.log.levels.INFO, { title = "Eldentree" })
 end
 

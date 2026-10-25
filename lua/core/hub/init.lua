@@ -12,7 +12,8 @@ local FRAME_MS = 40
 
 -- the rows worth gilding, matched by the ornaments and the character name the dashboard draws
 local function gilded_marks()
-  return { "◈", "R O U N D", actions.spaced(require("core.themes").current().character) }
+  local hub = require("core.banner.actions").spaced(require("core.franchise").current().words.hub)
+  return { "◈", hub, actions.spaced(require("core.themes").current().character) }
 end
 
 local session

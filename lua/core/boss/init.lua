@@ -1,5 +1,6 @@
 -- A boss health bar for buffers that stay full of errors. The region's boss shows up after the
 -- errors linger, every fix lands as a hit with a gold chip of damage, and the last fix fells it.
+-- Worlds where the boss is a stalker draw a hall instead, with the boss walking toward you.
 local actions = require("core.boss.actions")
 local motion  = require("core.motion")
 
@@ -9,6 +10,7 @@ local ns = vim.api.nvim_create_namespace("eldentree_boss")
 local fights = {}
 local view
 local animation
+local hunt
 
 local function palette() return require("core.themes").palette() end
 
@@ -22,6 +24,10 @@ local function define_highlights()
   vim.api.nvim_set_hl(0, "EldenBossFill",   vim.tbl_extend("force", clear, { fg = p.red }))
   vim.api.nvim_set_hl(0, "EldenBossChip",   vim.tbl_extend("force", clear, { fg = p.yellow }))
   vim.api.nvim_set_hl(0, "EldenBossEmpty",  vim.tbl_extend("force", clear, { fg = p.surface2 }))
+end
+
+local function stalker_mode()
+  return require("core.franchise").mechanic("boss") == "stalker"
 end
 
 local function enabled()
@@ -57,7 +63,8 @@ end
 -- stops the animation too, or its next frame would draw the bar again over another buffer
 local function hide()
   if animation then animation:stop() end
-  animation = nil
+  if hunt then hunt:stop() end
+  animation, hunt = nil, nil
   close_view()
 end
 
@@ -102,20 +109,54 @@ local function bar_line(segments)
   return text, marks
 end
 
-local function render(fight)
-  if not view or not vim.api.nvim_win_is_valid(view.win) then open_view() end
-  local frame = actions.frame(fight, now())
-  local header = actions.header(fight.name, frame.damage, view.width)
-  local bar, marks = bar_line(actions.segments(view.width, frame.fill, frame.chip))
+local function hall_line(hall)
+  local runs = {
+    { "●", "EldenBossChip" },
+    { ("┈"):rep(hall.near), "EldenBossFill" },
+    { "◆", "EldenBossFill" },
+    { ("┈"):rep(hall.far), "EldenBossEmpty" },
+  }
+  local text, marks = "", {}
+  for _, run in ipairs(runs) do
+    table.insert(marks, { #text, #text + #run[1], run[2] })
+    text = text .. run[1]
+  end
+  return text, marks
+end
 
-  vim.api.nvim_buf_set_lines(view.buf, 0, -1, false, { header, bar })
+local function paint(header, name_end, line, marks)
+  vim.api.nvim_buf_set_lines(view.buf, 0, -1, false, { header, line })
   vim.api.nvim_buf_clear_namespace(view.buf, ns, 0, -1)
-  local name_end = #fight.name
   vim.api.nvim_buf_set_extmark(view.buf, ns, 0, 0, { end_col = name_end, hl_group = "EldenBossName" })
   vim.api.nvim_buf_set_extmark(view.buf, ns, 0, name_end, { end_col = #header, hl_group = "EldenBossDamage" })
   for _, mark in ipairs(marks) do
     vim.api.nvim_buf_set_extmark(view.buf, ns, 1, mark[1], { end_col = mark[2], hl_group = mark[3] })
   end
+end
+
+-- the stalker keeps walking between fixes, so the hall redraws on its own while the hunt is on
+local function render_stalker(fight)
+  local closeness = actions.closeness(fight.errors, fight.peak, now() - fight.entered_at)
+  local line, marks = hall_line(actions.hall(view.width, closeness))
+  paint(actions.stalker_header(fight.name, closeness, view.width), #fight.name, line, marks)
+  if hunt and hunt:running() then return end
+  hunt = motion.loop({
+    interval = 250,
+    on_tick = function()
+      if not view or animation and animation:running() then return end
+      local current = fights[vim.api.nvim_get_current_buf()]
+      if current then render_stalker(current) end
+    end,
+  })
+end
+
+local function render(fight)
+  if not view or not vim.api.nvim_win_is_valid(view.win) then open_view() end
+  if stalker_mode() then return render_stalker(fight) end
+  local frame = actions.frame(fight, now())
+  local header = actions.header(fight.name, frame.damage, view.width)
+  local bar, marks = bar_line(actions.segments(view.width, frame.fill, frame.chip))
+  paint(header, #fight.name, bar, marks)
 end
 
 local function animate(fight, duration, on_done)
@@ -131,7 +172,7 @@ end
 
 local function felled(buf, fight)
   fights[buf] = nil
-  close_view()
+  hide()
   require("core.banner").show("felled", { subtitle = fight.name })
 end
 

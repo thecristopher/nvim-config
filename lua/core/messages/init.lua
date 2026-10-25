@@ -91,7 +91,7 @@ function M.write()
   end
   local line = vim.api.nvim_win_get_cursor(0)[1]
 
-  vim.ui.select(actions.TEMPLATES, {
+  vim.ui.select(actions.templates(), {
     prompt = "Choose a template",
     format_item = function(template) return template:format("****") end,
   }, function(template)

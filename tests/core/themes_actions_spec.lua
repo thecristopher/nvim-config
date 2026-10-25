@@ -23,7 +23,7 @@ describe("regions", function()
   end)
 
   it("fills every catppuccin slot with a hex color in every region", function()
-    for _, region in ipairs(actions.REGIONS) do
+    for _, region in ipairs(actions.regions()) do
       for _, slot in ipairs(SLOTS) do
         assert.is_truthy((region.palette[slot] or ""):match("^#%x%x%x%x%x%x$"), region.name .. "." .. slot)
       end
@@ -31,7 +31,7 @@ describe("regions", function()
   end)
 
   it("keeps errors and the accent apart in every region", function()
-    for _, region in ipairs(actions.REGIONS) do
+    for _, region in ipairs(actions.regions()) do
       assert.are_not.equal(region.palette.yellow, region.palette.red, region.name)
     end
   end)
@@ -107,7 +107,7 @@ describe("derive", function()
     assert.is_true(tonumber(r, 16) > tonumber(g, 16) * 2)
   end)
 
-  for _, region in ipairs(actions.REGIONS) do
+  for _, region in ipairs(actions.regions()) do
     it(("draws a separator in %s that reads as clearly as everywhere else"):format(region.title), function()
       local separator = actions.derive(region.palette).separator
       assert.is_true(actions.contrast(separator, region.palette.base) >= 2.0)
@@ -166,7 +166,7 @@ describe("ui builders", function()
     assert.equal(#actions.rainbow(malenia), #actions.indent_guides(malenia))
   end)
 
-  for _, region in ipairs(actions.REGIONS) do
+  for _, region in ipairs(actions.regions()) do
     it(("keeps %s's scope louder than the outermost guide it shares a color with"):format(region.title), function()
       local p = region.palette
       local guide = actions.indent_guides(p)[1]
@@ -196,7 +196,7 @@ describe("random_name", function()
   local function last(count) return count end
 
   it("never rolls the region Radahn just left", function()
-    for roll = 1, #actions.REGIONS - 1 do
+    for roll = 1, #actions.regions() - 1 do
       assert.are_not.equal("caelid", actions.random_name("caelid", function() return roll end))
     end
   end)
@@ -213,7 +213,7 @@ end)
 
 describe("characters", function()
   it("gives every region a champion and names its portrait file", function()
-    for _, region in ipairs(actions.REGIONS) do
+    for _, region in ipairs(actions.regions()) do
       assert.is_truthy(region.character, region.name)
       assert.is_truthy(region.portrait:match("%.jpg$"), region.portrait)
     end
@@ -221,14 +221,14 @@ describe("characters", function()
 
   it("keeps every region's portrait on disk", function()
     local root = vim.fn.getcwd() .. "/images/portraits/"
-    for _, region in ipairs(actions.REGIONS) do
+    for _, region in ipairs(actions.regions()) do
       assert.equal(1, vim.fn.filereadable(root .. region.portrait), region.portrait)
     end
   end)
 
   it("never lets two regions share an accent", function()
     local seen = {}
-    for _, region in ipairs(actions.REGIONS) do
+    for _, region in ipairs(actions.regions()) do
       assert.is_nil(seen[region.palette.yellow], region.name)
       seen[region.palette.yellow] = true
     end

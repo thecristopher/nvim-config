@@ -35,11 +35,27 @@ local function paint_groups(elapsed)
   end
 end
 
+-- typed lines grow letter by letter with a blinking key cursor, the rest are written in full
+local function line_text(line, elapsed)
+  if not line.typed then return line.text end
+  local written, done = actions.typed(line.text, elapsed)
+  local cursor = (not done or math.floor(elapsed / 530) % 2 == 0) and "▌" or " "
+  return written .. cursor
+end
+
 local function draw(s, elapsed)
   if not vim.api.nvim_win_is_valid(s.win) then return false end
   paint_groups(elapsed)
   local dt = elapsed - (s.last or elapsed)
   s.last = elapsed
+
+  vim.api.nvim_buf_clear_namespace(s.buf, ns, 0, -1)
+  for _, line in ipairs(s.text) do
+    vim.api.nvim_buf_set_extmark(s.buf, ns, line.row, 0, {
+      virt_text = { { line_text(line, elapsed), line.group } }, virt_text_win_col = line.col, priority = 200,
+    })
+  end
+  if s.style == "typewriter" then return end
 
   local alive = {}
   for _, ember in ipairs(s.embers) do
@@ -51,12 +67,6 @@ local function draw(s, elapsed)
   end
   s.embers = alive
 
-  vim.api.nvim_buf_clear_namespace(s.buf, ns, 0, -1)
-  for _, line in ipairs(s.text) do
-    vim.api.nvim_buf_set_extmark(s.buf, ns, line.row, 0, {
-      virt_text = { { line.text, line.group } }, virt_text_win_col = line.col, priority = 200,
-    })
-  end
   for _, ember in ipairs(alive) do
     local row, col = math.floor(ember.y), math.floor(ember.x)
     if row >= 0 and row < s.height and col >= 0 and col < s.width and not s.text_rows[row] then
@@ -80,7 +90,10 @@ function M.rest()
   if scene then return end
   local width, height = vim.o.columns, vim.o.lines
   local s = { width = width, height = height, embers = {}, text_rows = {} }
-  s.text = actions.layout(width, height, require("core.themes").current().title)
+  s.style = require("core.franchise").mechanic("rest")
+  s.text = actions.layout(width, height, require("core.themes").current().title, {
+    style = s.style, ribbons = require("core.results").current().saves,
+  })
   for _, line in ipairs(s.text) do s.text_rows[line.row] = true end
 
   paint_groups(0)
@@ -130,7 +143,7 @@ function M.setup()
     group = vim.api.nvim_create_augroup("eldentree_rest", { clear = true }),
     callback = M.wake,
   })
-  vim.api.nvim_create_user_command("Rest", M.rest, { desc = "Rest at a Site of Grace" })
+  vim.api.nvim_create_user_command("Rest", M.rest, { desc = "Rest at a Site of Grace or Safe Room" })
 end
 
 return M

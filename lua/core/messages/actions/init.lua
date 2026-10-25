@@ -2,22 +2,14 @@
 -- { [repo] = { [relative_file] = { { line = 12, text = "Be wary of null" }, ... } } }
 local M = {}
 
-M.TEMPLATES = {
-  "Try %s",
-  "Be wary of %s",
-  "%s ahead",
-  "Praise the %s!",
-  "Could this be a %s?",
-  "If only I had a %s...",
-  "Visions of %s...",
-  "Time for %s",
-  "Behold, %s!",
-  "Seek %s",
-  "Didn't expect %s...",
-}
+--- Returns the blanks the franchise offers for a message.
+---@return string[]
+function M.templates()
+  return require("core.franchise").current().message_templates
+end
 
 --- Fills a template with a word, the way the game builds its messages.
----@param template string a M.TEMPLATES entry
+---@param template string a M.templates() entry
 ---@param word string|nil what fills the blank
 ---@return string|nil message # nil when the word is blank
 function M.compose(template, word)

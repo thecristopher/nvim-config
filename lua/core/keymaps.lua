@@ -94,6 +94,8 @@ map("n", "<leader>gw", function() require("core.phantom").show() end, { desc = "
 -- ── Regions (themes) ─────────────────────────────────────────────────────────
 map("n", "<leader>ut", function() require("core.themes").pick() end, { desc = "Choose region theme" })
 map("n", "<leader>uT", function() require("core.themes").cycle() end, { desc = "Next region theme" })
+map("n", "<leader>uf", function() require("core.franchise").pick() end, { desc = "Choose today's franchise" })
+map("n", "<leader>fM", function() require("core.map").open() end, { desc = "Project map" })
 map("n", "<leader>um", function() require("core.motion").toggle() end, { desc = "Toggle animations" })
 map("n", "<leader>cT", function() require("core.trial").run() end, { desc = "Run tests (Trial)" })
 map("n", "<leader>uF", function()

@@ -5,11 +5,22 @@ local hour     = tonumber(os.date("%H"))
 local greeting = hour < 5 and "The night is long" or hour < 12 and "Good morning" or hour < 18 and "Good afternoon" or "Good evening"
 local today    = os.date("%A, %B %d  ·  %I:%M %p")
 local nvim_version = tostring(vim.version()):match("^[%d.]+")
+-- the franchise of the day names the traveler, the hub and the safe havens
+local function words() return require("core.franchise").current().words end
 -- the hub owns the message so its quill knows which line to write in
 local function message() return require("core.hub").message() end
 -- portraits are pre-cropped and contrast lifted so the character survives 46 columns of half blocks
 local function portrait()
   return vim.fn.stdpath("config") .. "/images/portraits/" .. require("core.themes").current().portrait
+end
+
+-- snacks caches terminal output by its command, so the file's mtime rides along and a new portrait
+-- dropped in under the same name shows up at once instead of after the 30 day cache
+local function portrait_cmd()
+  local stat = vim.uv.fs_stat(portrait())
+  local version = stat and stat.mtime.sec or 0
+  return ("PORTRAIT_VERSION=%d chafa --format=symbols --symbols=half --size=46x28 --colors=full --work=9 %s")
+    :format(version, vim.fn.shellescape(portrait()))
 end
 
 -- the art alone is 46x28, so only show it when there is room for both panes,
@@ -54,12 +65,12 @@ return {
             { icon = "󰍉 ", key = "f", desc = "Find File",       action = ":lua Snacks.dashboard.pick('files')" },
             { icon = "󰊄 ", key = "g", desc = "Live Grep",       action = ":lua Snacks.dashboard.pick('live_grep')" },
             { icon = "󰋚 ", key = "r", desc = "Recent Files",    action = ":lua Snacks.dashboard.pick('oldfiles')" },
-            { icon = "󰊢 ", key = "p", desc = "Sites of Grace",  action = function() require("core.repos").pick() end },
+            { icon = "󰊢 ", key = "p", desc = words().sites,     action = function() require("core.repos").pick() end },
             { icon = "󰉋 ", key = "e", desc = "Explorer",        action = ":Neotree toggle" },
             { icon = "󰝰 ", key = "o", desc = "Open Folder",     action = function() require("core.repos").open_folder() end },
             { icon = "󰝒 ", key = "n", desc = "New File",        action = ":ene | startinsert" },
             { icon = "󰆔 ", key = "s", desc = "Restore Session", action = function() require("persistence").load() end },
-            { icon = "󰏘 ", key = "t", desc = "Choose Region",   action = function() require("core.themes").pick() end },
+            { icon = "󰏘 ", key = "t", desc = words().choose_region, action = function() require("core.themes").pick() end },
             { icon = "󰒓 ", key = "c", desc = "Config",          action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})" },
             { icon = "󰒲 ", key = "l", desc = "Lazy",            action = ":Lazy" },
             { icon = "󰏗 ", key = "m", desc = "Mason",           action = ":Mason" },
@@ -87,7 +98,7 @@ return {
               pane    = 1,
               section = "terminal",
               enabled = room_for_art,
-              cmd     = "chafa --format=symbols --symbols=half --size=46x28 --colors=full --work=9 " .. portrait(),
+              cmd     = portrait_cmd(),
               height  = 28,
               width   = 46,
               ttl     = 3600 * 24 * 30,
@@ -108,16 +119,18 @@ return {
               },
             }
           end,
-          {
-            pane    = 1,
-            padding = { 1, 0, 0, 0 },
-            align   = "center",
-            text    = {
-              { greeting .. ", Tarnished\n", hl = "SnacksDashboardTitle" },
-              { today .. "\n\n",             hl = "SnacksDashboardFooter" },
-              { '"' .. message() .. '"',     hl = "SnacksDashboardDesc" },
-            },
-          },
+          function()
+            return {
+              pane    = 1,
+              padding = { 1, 0, 0, 0 },
+              align   = "center",
+              text    = {
+                { greeting .. ", " .. words().traveler .. "\n", hl = "SnacksDashboardTitle" },
+                { today .. "\n\n",                             hl = "SnacksDashboardFooter" },
+                { '"' .. message() .. '"',                     hl = "SnacksDashboardDesc" },
+              },
+            }
+          end,
           function()
             local stats = require("lazy").stats()
             local repos = #require("core.repos").list()
@@ -126,27 +139,37 @@ return {
               padding = { 1, 0, 0, 0 },
               align   = "center",
               text    = {
-                { ("⚡ Neovim %s  ·  %d plugins  ·  %.0fms  ·  %d graces found  ·  %s"):format(
-                    nvim_version, stats.count, stats.startuptime, repos, require("core.themes").current().title),
+                { ("⚡ Neovim %s  ·  %d plugins  ·  %.0fms  ·  %d %s  ·  %s"):format(
+                    nvim_version, stats.count, stats.startuptime, repos, words().sites_found, require("core.themes").current().title),
                   hl = "SnacksDashboardFooter" },
               },
             }
           end,
 
-          -- ════ RIGHT PANE: the Roundtable Hold ════════════════════
-          {
-            pane    = 2,
-            padding = { 2, 0, 1, 0 },
-            align   = "center",
-            text    = { { "◈   R O U N D T A B L E   H O L D   ◈", hl = "SnacksDashboardHeader" } },
-          },
+          -- the results screen of the last run, only in worlds that rank you
+          function()
+            local summary = require("core.results").summary()
+            if not summary then return {} end
+            return { pane = 1, padding = { 1, 0, 0, 0 }, align = "center", text = { { summary, hl = "SnacksDashboardHeader" } } }
+          end,
+
+          -- ════ RIGHT PANE: the Roundtable Hold or the Safe Room ════
+          function()
+            local title = require("core.banner.actions").spaced(words().hub)
+            return {
+              pane    = 2,
+              padding = { 2, 0, 1, 0 },
+              align   = "center",
+              text    = { { "◈   " .. title .. "   ◈", hl = "SnacksDashboardHeader" } },
+            }
+          end,
           { pane = 2, section = "keys", indent = 2, padding = { 0, 0, 0, 0 } },
 
-          heading("Sites of Grace", 2),
+          function() return heading(words().sites, 2) end,
           function()
             local items = require("core.repos").dashboard_items(6)
             if #items == 0 then
-              return { pane = 2, indent = 4, text = { { "No graces yet. Scanning your realms…", hl = "SnacksDashboardFooter" } } }
+              return { pane = 2, indent = 4, text = { { words().no_sites, hl = "SnacksDashboardFooter" } } }
             end
             for _, item in ipairs(items) do
               item.pane, item.indent = 2, 2

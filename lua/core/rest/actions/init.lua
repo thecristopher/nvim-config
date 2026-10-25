@@ -25,21 +25,54 @@ function M.text_alpha(elapsed)
   return ease.ease("out_cubic", ease.progress(elapsed - M.FADE_MS * 0.5, M.FADE_MS))
 end
 
--- where each line of text goes, centered as a block a little above the middle
-function M.layout(width, height, region_title)
-  local title = banner.spaced("Site of Grace")
-  local lines = {
+M.TYPE_MS = 85
+
+--- Returns how much of a line the typewriter has written so far, and whether it is done.
+---@param text string
+---@param elapsed number milliseconds since the rest began
+---@return string written, boolean done
+function M.typed(text, elapsed)
+  local length = vim.fn.strchars(text)
+  local chars = math.max(0, math.min(length, math.floor((elapsed - M.FADE_MS * 0.5) / M.TYPE_MS)))
+  return vim.fn.strcharpart(text, 0, chars), chars >= length
+end
+
+local function grace_lines(words, region_title)
+  return {
     { text = "✦", group = "EldenRestTitle", gap = 0 },
-    { text = title, group = "EldenRestTitle", gap = 1 },
+    { text = banner.spaced(words.site), group = "EldenRestTitle", gap = 1 },
     { text = region_title, group = "EldenRestSub", gap = 1 },
-    { text = "press any key to rise", group = "EldenRestHint", gap = 3 },
+    { text = words.rise, group = "EldenRestHint", gap = 3 },
   }
+end
+
+-- the safe room asks before it saves, and counts the ribbons you have used this run
+local function typewriter_lines(words, region_title, ribbons)
+  return {
+    { text = "▣", group = "EldenRestTitle", gap = 0 },
+    { text = banner.spaced(words.site), group = "EldenRestTitle", gap = 1 },
+    { text = region_title, group = "EldenRestSub", gap = 1 },
+    { text = words.typewriter, group = "EldenRestTitle", gap = 2, typed = true },
+    { text = ("%s ×%d"):format(words.ink_ribbons, ribbons or 0), group = "EldenRestSub", gap = 1 },
+    { text = words.rise, group = "EldenRestHint", gap = 3 },
+  }
+end
+
+-- where each line of text goes, centered as a block a little above the middle
+---@param opts { style: string|nil, ribbons: integer|nil }|nil style "typewriter" writes the save prompt
+function M.layout(width, height, region_title, opts)
+  opts = opts or {}
+  local words = require("core.franchise").current().words
+  local lines = opts.style == "typewriter" and typewriter_lines(words, region_title, opts.ribbons)
+    or grace_lines(words, region_title)
   local row = math.floor(height * 0.4)
   local placed = {}
   for _, line in ipairs(lines) do
     row = row + line.gap
     local width_of = vim.fn.strdisplaywidth(line.text)
-    table.insert(placed, { row = row, col = banner.center_col(width, width_of), text = line.text, group = line.group })
+    table.insert(placed, {
+      row = row, col = banner.center_col(width, width_of), text = line.text, group = line.group, typed = line.typed,
+    })
     row = row + 1
   end
   return placed

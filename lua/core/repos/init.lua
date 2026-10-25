@@ -277,7 +277,7 @@ end
 
 function M.pick()
   Snacks.picker({
-    title = "Sites of Grace",
+    title = require("core.franchise").current().words.sites,
     items = repo_items(),
     preview = "directory",
     format = format_item,

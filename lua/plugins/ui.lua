@@ -50,8 +50,13 @@ return {
             },
           },
           lualine_x = {
-            -- the glyph carries its own glow group, picked from the breath each frame
-            { function() return require("core.runes").grace() end },
+            -- the breathing grace or the health ECG, each carries its own highlight group
+            {
+              function()
+                if require("core.franchise").mechanic("status") == "ecg" then return require("core.ecg").statusline() end
+                return require("core.runes").grace()
+              end,
+            },
             { lsp_info, color = function() return { fg = palette().yellow } end },
             {
               "diagnostics",

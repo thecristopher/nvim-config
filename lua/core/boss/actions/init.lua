@@ -1,4 +1,4 @@
--- Boss fights against your own errors: who guards each region, when a fight begins, and how the
+-- Boss fights against your own errors: who guards each region (from the franchise), when a fight begins, and how the
 -- health bar looks at any moment, gold chip of fresh damage included. Times are milliseconds.
 local ease = require("core.motion.actions")
 
@@ -13,25 +13,13 @@ M.DAMAGE_LINGER_MS = 900
 M.HEIGHT          = 2
 M.MAX_WIDTH       = 80
 
-M.BOSSES = {
-  leyndell     = "Morgott, the Omen King",
-  haligtree    = "Malenia, Blade of Miquella",
-  raya_lucaria = "Rennala, Queen of the Full Moon",
-  caelid       = "Starscourge Radahn",
-  mohgwyn      = "Mohg, Lord of Blood",
-  ordina       = "Commander Niall",
-  limgrave     = "Margit, the Fell Omen",
-  stormveil    = "Godrick the Grafted",
-  volcano_manor = "Rykard, Lord of Blasphemy",
-  nokron       = "Mimic Tear",
-  farum_azula  = "Maliketh, the Black Blade",
-}
 
---- Returns the boss guarding a region, Morgott when the region has none.
+--- Returns the boss guarding a region, the first region's boss when it has none.
 ---@param region string|nil region name
 ---@return string
 function M.boss_for(region)
-  return M.BOSSES[region] or M.BOSSES.leyndell
+  local lore = require("core.franchise").current()
+  return lore.bosses[region] or lore.bosses[lore.regions[1].name]
 end
 
 --- Decides whether errors have stuck around long enough to call it a fight.
@@ -105,15 +93,69 @@ function M.hit_duration()
   return M.CHIP_HOLD_MS + M.CHIP_MS + M.DAMAGE_LINGER_MS
 end
 
+local function spread(left, right, width)
+  local gap = math.max(1, width - vim.api.nvim_strwidth(left) - vim.api.nvim_strwidth(right))
+  return left .. (" "):rep(gap) .. right
+end
+
 --- Builds the line above the bar: the boss name on the left, fresh damage on the right.
 ---@param name string
 ---@param damage integer|nil
 ---@param width integer
 ---@return string
 function M.header(name, damage, width)
-  local right = (damage and damage > 0) and tostring(damage) or ""
-  local gap = math.max(1, width - vim.api.nvim_strwidth(name) - #right)
-  return name .. (" "):rep(gap) .. right
+  return spread(name, (damage and damage > 0) and tostring(damage) or "", width)
+end
+
+-- the stalker -----------------------------------------------------------------------------
+-- In worlds where the boss hunts you, it walks closer the longer the errors stay, and every
+-- fix pushes it back down the hall.
+
+M.APPROACH_MS = 45000
+
+M.FOOTSTEPS = {
+  { below = 0.34, text = "distant footsteps" },
+  { below = 0.67, text = "footsteps..." },
+  { below = math.huge, text = "right behind you" },
+}
+
+--- Returns how close the stalker is: the errors left decide how far it can come, time brings it there.
+---@param errors integer errors right now
+---@param peak integer most errors seen during the hunt
+---@param hunting_ms number milliseconds since it started the hunt
+---@return number from 0 (far away) to 1 (on top of you)
+function M.closeness(errors, peak, hunting_ms)
+  local pace = 0.35 + 0.65 * ease.progress(hunting_ms, M.APPROACH_MS)
+  return M.health(errors, peak) * pace
+end
+
+--- Returns what you hear at a given closeness.
+---@param closeness number from M.closeness
+---@return string
+function M.footsteps(closeness)
+  for _, step in ipairs(M.FOOTSTEPS) do
+    if closeness < step.below then return step.text end
+  end
+  return M.FOOTSTEPS[#M.FOOTSTEPS].text
+end
+
+--- Builds the line above the hall: the stalker's name on the left, its footsteps on the right.
+---@param name string
+---@param closeness number
+---@param width integer
+---@return string
+function M.stalker_header(name, closeness, width)
+  return spread(name, M.footsteps(closeness), width)
+end
+
+--- Splits the hall between you on the left edge and the stalker walking in from the right.
+---@param width integer hall width in cells, you and the stalker included
+---@param closeness number from 0 to 1
+---@return { near: integer, far: integer } cells between you and it, and behind it
+function M.hall(width, closeness)
+  local walk = width - 2
+  local near = math.floor((1 - math.max(0, math.min(1, closeness))) * walk + 0.5)
+  return { near = near, far = walk - near }
 end
 
 --- Picks the editor row for the bar: just above the statusline, or the top while the cursor is down there.

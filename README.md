@@ -1,6 +1,6 @@
 # Eldentree
 
-A Neovim config forged in the Lands Between. Catppuccin Mocha, recolored for whichever Elden Ring region you wake up in, with banners, runes and a Site of Grace that lets you rest when you step away.
+A Neovim config forged in the Lands Between, or in Raccoon City depending on the day. Catppuccin Mocha, recolored for whichever region or location you wake up in, with banners, runes and a Site of Grace that lets you rest when you step away.
 
 Runs on macOS, Linux and Windows, and also inside Cursor and VS Code.
 
@@ -44,15 +44,20 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 
 | Module        | What it does                                                                                                      |
 | ------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `core/themes` | Eleven region palettes. Each repo keeps its own region (the one you picked there, or one derived from its name), outside a repo each launch rolls a new one. Pin one with `vim.g.eldentree_region` |
+| `core/franchise` | Picks the world for the day, rotating between Elden Ring and Resident Evil. Its lore folders hold the palettes, bosses, weather, banners and words. `:Franchise` switches until midnight, `vim.g.eldentree_franchise` pins one. Each lore also picks its `mechanics`, so Resident Evil travels through doors, gets stalked instead of dueling, shows a health ECG, rests at a typewriter and ranks every run |
+| `core/themes` | Region palettes from the franchise in use (eleven in Elden Ring, seven in Resident Evil). Each repo keeps its own region (the one you picked there, or one derived from its name), outside a repo each launch rolls a new one. Pin one with `vim.g.eldentree_region` |
 | `core/phantom` | `<leader>gw` shows who last wrote the line as a phantom: blue for others, gold for your past self |
 | `core/zones`  | The first time you walk into a folder each session, it is announced like a new area of the Lands Between |
 | `core/snapshot` | `<leader>cp` / `:Snapshot` saves the buffer or selection as a framed PNG in the region's colors and copies it |
 | `core/hub`    | Living dashboard with shimmering gold headers, rising embers and a typed player message                           |
 | `core/banner` | Elden Ring style banners fired by commits, PRs, test runs, new projects and region changes                        |
-| `core/boss`   | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it |
-| `core/runes`  | Statusline rune tally. Saves and banners pay out, YOU DIED leaves a bloodstain                                    |
-| `core/rest`   | After 5 idle minutes in normal mode the editor rests at a Site of Grace. Any key wakes it                         |
+| `core/boss`   | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it. In Resident Evil the boss is a stalker that walks closer while errors stay and backs off with every fix |
+| `core/door`   | Resident Evil's travel: the screen goes dark and a door creaks open, where Elden Ring rolls the fog wall |
+| `core/ecg`    | Resident Evil's statusline ECG: Fine, Caution or Danger from the buffer's diagnostics |
+| `core/map`    | `:Map` / `<leader>fM` shows every folder as a room, red while errors or TODOs are left in it, blue once cleared |
+| `core/results` | Ranks each run from S to D by fixes and saves, and the Resident Evil hub shows the last one |
+| `core/runes`  | Statusline rune tally (pesetas in Resident Evil, where the Merchant greets every 10,000). Saves and banners pay out, dying leaves a bloodstain |
+| `core/rest`   | After 5 idle minutes in normal mode the editor rests at a Site of Grace, or at a Safe Room typewriter in Resident Evil. Any key wakes it |
 | `core/repos`  | Background repo scanner, the Sites of Grace project picker and automatic project root                             |
 | `core/dive`   | F12 family: go to definition, Glance peek, references and F2 rename                                               |
 | `core/trial`  | Runs the project's tests in the background and announces the verdict                                              |
@@ -66,6 +71,20 @@ Traveling to a Site of Grace keeps the session of the repo you leave and restore
 
 Portraits in `images/portraits/` are 276x336 crops of the originals in `images/`, with contrast, color and sharpness lifted so they survive half block rendering. A region whose portrait is missing simply shows the hub without art.
 
+### Portrait credits
+
+The Resident Evil portraits are fan art and photography by their own authors, used here with love and full credit to them.
+
+| Portrait | Region            | Author                       |
+| -------- | ----------------- | ---------------------------- |
+| Claire   | Raccoon City      | Artist pending               |
+| Leon     | RPD               | Artist pending               |
+| Jill     | Spencer Mansion   | Like Detectives              |
+| Wesker   | Umbrella Lab      | Artist pending               |
+| Ashley   | Salazar Castle    | Artist pending               |
+| Ada      | Saddler's Island  | Artist pending               |
+| Chris    | The Village       | Artist pending               |
+
 ## Keys
 
 Leader is `<Space>`, local leader is `\`.
@@ -75,6 +94,8 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>fp` | Find a project (Sites of Grace) |
 | `<leader>ut` | Choose a region theme           |
 | `<leader>uT` | Next region theme               |
+| `<leader>uf` | Choose today's franchise        |
+| `<leader>fM` | Project map                     |
 | `<leader>um` | Toggle animations               |
 | `<leader>cT` | Run tests (Trial)               |
 | `<leader>uz` | Zen mode                        |
@@ -138,6 +159,8 @@ On macOS, F11 shows the desktop unless "Use F1, F2, etc. keys as standard functi
 | Command                                        | Action                                  |
 | ---------------------------------------------- | --------------------------------------- |
 | `:Region`                                      | Switch region theme                     |
+| `:Map`                                         | Open the project map                    |
+| `:Franchise [elden_ring\|resident_evil]`       | Switch today's franchise                |
 | `:Banner felled\|great\|died\|grace\|cleansed` | Fire a banner                           |
 | `:Trial`                                       | Run the project's tests                 |
 | `:Rest`                                        | Rest at a Site of Grace now             |

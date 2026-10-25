@@ -44,6 +44,15 @@ local function layout(kind, subtitle, width)
     end
   end
 
+  if kind.drip then
+    for _, drip in ipairs(actions.drips(letters)) do
+      for depth = 1, drip.length do
+        local glyph = depth == drip.length and "▾" or "│"
+        rows[actions.TEXT_ROW + depth + 1][drip.col + 1] = { glyph, "EldenBannerDrip" .. depth }
+      end
+    end
+  end
+
   if kind.rule then
     local length = math.min(width, #text + 16)
     local rule_start = actions.center_col(width, length)
@@ -112,6 +121,12 @@ local function update_groups(state, elapsed)
     vim.api.nvim_set_hl(0, "EldenBannerL" .. index, {
       fg = color.mix(band_int, target, actions.letter_alpha(index, elapsed, kind)),
       bg = band, blend = text_blend, bold = true,
+    })
+  end
+
+  for depth = 1, kind.drip and actions.DRIP_DEPTH or 0 do
+    vim.api.nvim_set_hl(0, "EldenBannerDrip" .. depth, {
+      fg = color.mix(band_int, target, actions.drip_alpha(depth, elapsed, kind)), bg = band, blend = text_blend,
     })
   end
 
@@ -209,7 +224,7 @@ function M.setup()
   watch_diagnostics()
   vim.api.nvim_create_user_command("Banner", function(cmd)
     -- a rehearsal, so no runes are won or lost
-    M.show(cmd.args ~= "" and cmd.args or "felled", { subtitle = "The Lands Between salute you", reward = false })
+    M.show(cmd.args ~= "" and cmd.args or "felled", { subtitle = require("core.franchise").current().words.salute, reward = false })
   end, {
     nargs = "?",
     complete = function() return vim.tbl_keys(actions.KINDS) end,
