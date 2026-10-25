@@ -108,6 +108,9 @@ map("n", "<leader>mw", function() require("core.messages").write() end, { desc =
 map("n", "<leader>md", function() require("core.messages").erase() end, { desc = "Erase message" })
 map("n", "<leader>ml", function() require("core.messages").pick() end,  { desc = "List messages" })
 
+-- ── Music ───────────────────────────────────────────────────────────────────
+map("n", "<leader>o", function() require("core.music").open() end, { desc = "Now playing" })
+
 -- ── Snapshots ────────────────────────────────────────────────────────────────
 map("n", "<leader>cp", "<cmd>Snapshot<cr>", { desc = "Snapshot the buffer as a PNG" })
 map("x", "<leader>cp", ":Snapshot<cr>", { desc = "Snapshot the selection as a PNG", silent = true })

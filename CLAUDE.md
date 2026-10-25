@@ -41,6 +41,7 @@ every session in this repo (see the style section below).
 - `lua/core/snapshot/`: `<leader>cp` / `:Snapshot` builds an SVG card from the on screen highlights and renders it with `rsvg-convert` to `~/Pictures/Eldentree`
 - `lua/core/utils/`: project wide helpers (the stable `hash`)
 - `lua/core/trace/`: `:InsertTrace` logs every exit from insert mode with the keys right before it (typed, mapped or sent by a plugin) to `eldentree_insert_trace.log` in state, off until toggled
+- `lua/core/music/`: what Cider (REST API on `localhost:10767`, any OS) or Music.app (osascript, macOS) is playing, in the statusline. `<leader>o` or a click on it opens the now playing panel (`core/music/panel.lua`) with the album cover drawn by the HUD portrait, `p` play/pause, `n` next, `b` previous. Covers are cached per album in `stdpath("cache")/eldentree/music`. `:Music [playpause|next|previous]`. Cider is asked first, polling stops while nvim is unfocused. `vim.g.eldentree_cider_token` when Cider's auth is on, `vim.g.eldentree_music = false` turns it off
 - `lua/core/runes/`: statusline rune tally (saves and banners pay out, YOU DIED leaves a bloodstain) plus the breathing grace glyph
 - `lua/core/rest/`: after 5 idle minutes in normal mode the editor rests at a Site of Grace (`:Rest`, `vim.g.eldentree_rest_after`), any key wakes it and is swallowed
 - `lua/plugins/debug.lua`: nvim-dap with dap-view, F5/F9/F10/F11 plus `<leader>D`, js-debug and debugpy come from mason
