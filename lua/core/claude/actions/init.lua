@@ -1,7 +1,8 @@
 -- Finds the claude binary and builds its argv, kept pure so the Windows quirks can be tested anywhere.
 local M = {}
 
-M.DISALLOWED_TOOLS = "Bash Edit Write NotebookEdit Read Grep Glob Task WebFetch WebSearch Agent Artifact"
+M.DISALLOWED_TOOLS =
+  "Bash Edit Write NotebookEdit Read Grep Glob Task WebFetch WebSearch Agent Artifact"
 
 -- installers drop claude in these spots even when PATH never learned about them
 function M.fallback_paths(home, appdata, is_windows)
@@ -19,10 +20,16 @@ function M.fallback_paths(home, appdata, is_windows)
 end
 
 function M.resolve(override, on_path, fallbacks, is_executable)
-  if override and override ~= "" then return override end
-  if on_path and on_path ~= "" then return on_path end
+  if override and override ~= "" then
+    return override
+  end
+  if on_path and on_path ~= "" then
+    return on_path
+  end
   for _, path in ipairs(fallbacks) do
-    if is_executable(path) then return path end
+    if is_executable(path) then
+      return path
+    end
   end
   return nil
 end

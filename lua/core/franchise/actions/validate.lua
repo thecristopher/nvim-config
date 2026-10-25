@@ -5,10 +5,32 @@ local themes = require("core.themes.actions")
 local M = {}
 
 M.SLOTS = {
-  "base", "mantle", "crust", "surface0", "surface1", "surface2",
-  "overlay0", "overlay1", "overlay2", "subtext0", "subtext1", "text",
-  "yellow", "peach", "green", "teal", "lavender", "mauve", "red", "maroon",
-  "rosewater", "flamingo", "blue", "sapphire", "sky", "pink",
+  "base",
+  "mantle",
+  "crust",
+  "surface0",
+  "surface1",
+  "surface2",
+  "overlay0",
+  "overlay1",
+  "overlay2",
+  "subtext0",
+  "subtext1",
+  "text",
+  "yellow",
+  "peach",
+  "green",
+  "teal",
+  "lavender",
+  "mauve",
+  "red",
+  "maroon",
+  "rosewater",
+  "flamingo",
+  "blue",
+  "sapphire",
+  "sky",
+  "pink",
 }
 
 M.BANNERS = { "felled", "great", "died", "grace", "cleansed" }
@@ -17,8 +39,21 @@ M.SKIN = { "border", "ornament", "statusline", "tabs", "signs", "dashboard", "ti
 M.LISTS = { "hub_messages", "message_templates", "places", "item_categories" }
 
 M.WORDS = {
-  "traveler", "hub", "sites", "site", "sites_found", "no_sites", "rise", "choose_region",
-  "region_prompt", "phantom", "past_self", "salute", "motion_on", "motion_off", "map",
+  "traveler",
+  "hub",
+  "sites",
+  "site",
+  "sites_found",
+  "no_sites",
+  "rise",
+  "choose_region",
+  "region_prompt",
+  "phantom",
+  "past_self",
+  "salute",
+  "motion_on",
+  "motion_off",
+  "map",
 }
 
 -- words only some mechanics read, so a franchise pays for what it plays
@@ -29,7 +64,9 @@ M.MECHANIC_WORDS = {
 
 local function missing_keys(tbl, keys, label, problems)
   for _, key in ipairs(keys) do
-    if tbl == nil or tbl[key] == nil then table.insert(problems, ("%s.%s is missing"):format(label, key)) end
+    if tbl == nil or tbl[key] == nil then
+      table.insert(problems, ("%s.%s is missing"):format(label, key))
+    end
   end
 end
 
@@ -50,23 +87,42 @@ local function check_palette(region, problems)
       return
     end
   end
-  if p.yellow == p.red then table.insert(problems, region.name .. " uses its accent as the error color") end
+  if p.yellow == p.red then
+    table.insert(problems, region.name .. " uses its accent as the error color")
+  end
   if themes.contrast(themes.derive(p).separator, p.base) < 2.0 then
     table.insert(problems, region.name .. " separators are too faint on its base")
   end
   local panel = themes.contrast(themes.derive(p).panel, p.base)
   if panel < 1.07 or panel >= 1.15 then
-    table.insert(problems, ("%s panels contrast %.2f, keep it between 1.07 and 1.15"):format(region.name, panel))
+    table.insert(
+      problems,
+      ("%s panels contrast %.2f, keep it between 1.07 and 1.15"):format(region.name, panel)
+    )
   end
 end
 
 local function check_region(lore, region, portrait_exists, problems)
-  missing_keys(region, { "name", "title", "tagline", "character", "portrait", "palette" }, "region", problems)
-  if not region.name then return end
-  if not (lore.bosses or {})[region.name] then table.insert(problems, region.name .. " has no boss") end
-  if not (lore.weather or {})[region.name] then table.insert(problems, region.name .. " has no weather") end
+  missing_keys(
+    region,
+    { "name", "title", "tagline", "character", "portrait", "palette" },
+    "region",
+    problems
+  )
+  if not region.name then
+    return
+  end
+  if not (lore.bosses or {})[region.name] then
+    table.insert(problems, region.name .. " has no boss")
+  end
+  if not (lore.weather or {})[region.name] then
+    table.insert(problems, region.name .. " has no weather")
+  end
   if region.portrait and portrait_exists and not portrait_exists(region.portrait) then
-    table.insert(problems, ("%s portrait %s is not in images/portraits"):format(region.name, region.portrait))
+    table.insert(
+      problems,
+      ("%s portrait %s is not in images/portraits"):format(region.name, region.portrait)
+    )
   end
   check_palette(region, problems)
 end
@@ -83,7 +139,9 @@ local function check_regions(lore, portrait_exists, problems)
     if accent and accents[accent] then
       table.insert(problems, ("%s shares its accent with %s"):format(region.name, accents[accent]))
     end
-    if accent then accents[accent] = region.name end
+    if accent then
+      accents[accent] = region.name
+    end
   end
 end
 
@@ -93,7 +151,7 @@ end
 ---@return string[] problems
 function M.problems(lore, portrait_exists)
   local problems = {}
-  missing_keys(lore, { "name", "title", "currency" }, "lore", problems)
+  missing_keys(lore, { "name", "title", "currency", "claude" }, "lore", problems)
   missing_keys(lore.banners, M.BANNERS, "banners", problems)
   missing_keys(lore.mechanics, M.MECHANICS, "mechanics", problems)
   missing_keys(lore.skin, M.SKIN, "skin", problems)

@@ -12,23 +12,33 @@ local group
 local function floats()
   local count = 0
   for _, win in ipairs(vim.api.nvim_list_wins()) do
-    if vim.api.nvim_win_get_config(win).relative ~= "" then count = count + 1 end
+    if vim.api.nvim_win_get_config(win).relative ~= "" then
+      count = count + 1
+    end
   end
   return count
 end
 
 local function record()
   local event = vim.v.event
-  if not actions.left_insert(event.old_mode, event.new_mode) then return end
+  if not actions.left_insert(event.old_mode, event.new_mode) then
+    return
+  end
   local line = actions.entry(os.date("%H:%M:%S"), vim.deepcopy(memory), {
-    file = vim.fn.expand("%:~:."), filetype = vim.bo.filetype, floats = floats(), mode = event.new_mode,
+    file = vim.fn.expand("%:~:."),
+    filetype = vim.bo.filetype,
+    floats = floats(),
+    mode = event.new_mode,
   })
   pcall(vim.fn.writefile, { line }, log_file, "a")
 end
 
 local function start()
   vim.on_key(function(key, typed)
-    actions.remember(memory, actions.describe_key(vim.fn.keytrans(key), vim.fn.keytrans(typed or "")))
+    actions.remember(
+      memory,
+      actions.describe_key(vim.fn.keytrans(key), vim.fn.keytrans(typed or ""))
+    )
   end, ns)
   group = vim.api.nvim_create_augroup("eldentree_trace", { clear = true })
   vim.api.nvim_create_autocmd("ModeChanged", { group = group, callback = record })
@@ -36,7 +46,9 @@ end
 
 local function stop()
   vim.on_key(nil, ns)
-  if group then vim.api.nvim_del_augroup_by_id(group) end
+  if group then
+    vim.api.nvim_del_augroup_by_id(group)
+  end
   group, memory = nil, {}
 end
 
@@ -44,10 +56,18 @@ end
 function M.toggle()
   if group then
     stop()
-    return vim.notify("Insert trace off, the log stays in " .. log_file, vim.log.levels.INFO, { title = "Eldentree" })
+    return vim.notify(
+      "Insert trace off, the log stays in " .. log_file,
+      vim.log.levels.INFO,
+      { title = "Eldentree" }
+    )
   end
   start()
-  vim.notify("Insert trace on, writing to " .. log_file, vim.log.levels.INFO, { title = "Eldentree" })
+  vim.notify(
+    "Insert trace on, writing to " .. log_file,
+    vim.log.levels.INFO,
+    { title = "Eldentree" }
+  )
 end
 
 function M.setup()

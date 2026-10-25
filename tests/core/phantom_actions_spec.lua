@@ -21,7 +21,10 @@ describe("parse_porcelain", function()
   end)
 
   it("marks a line Claire has not committed yet as unwritten", function()
-    local info = actions.parse_porcelain({ "0000000000000000000000000000000000000000 3 3 1", "author Not Committed Yet" })
+    local info = actions.parse_porcelain({
+      "0000000000000000000000000000000000000000 3 3 1",
+      "author Not Committed Yet",
+    })
     assert.is_true(info.unwritten)
   end)
 
@@ -53,7 +56,10 @@ describe("kind", function()
   local leon = actions.parse_porcelain(LEON_BLAME)
 
   it("calls another author's line a phantom", function()
-    assert.equal("other", actions.kind(leon, { name = "Claire Redfield", mail = "claire.redfield@terrasave.org" }))
+    assert.equal(
+      "other",
+      actions.kind(leon, { name = "Claire Redfield", mail = "claire.redfield@terrasave.org" })
+    )
   end)
 
   it("recognizes your own bloodstain by email", function()
@@ -65,7 +71,13 @@ describe("kind", function()
   end)
 
   it("treats uncommitted lines as unwritten before anything else", function()
-    assert.equal("unwritten", actions.kind({ unwritten = true, author = "Inde Navarrete", mail = "" }, { name = "Inde Navarrete" }))
+    assert.equal(
+      "unwritten",
+      actions.kind(
+        { unwritten = true, author = "Inde Navarrete", mail = "" },
+        { name = "Inde Navarrete" }
+      )
+    )
   end)
 end)
 
@@ -73,11 +85,17 @@ describe("describe", function()
   local leon = actions.parse_porcelain(LEON_BLAME)
 
   it("names the phantom in the title", function()
-    assert.equal(" ◈ Phantom of Leon Kennedy ", actions.describe(leon, "other", 1700000000 + 3600).title)
+    assert.equal(
+      " ◈ Phantom of Leon Kennedy ",
+      actions.describe(leon, "other", 1700000000 + 3600).title
+    )
   end)
 
   it("tells when and which commit on the first line", function()
-    assert.equal("1 hour ago · 4f9c2a1", actions.describe(leon, "other", 1700000000 + 3600).lines[1])
+    assert.equal(
+      "1 hour ago · 4f9c2a1",
+      actions.describe(leon, "other", 1700000000 + 3600).lines[1]
+    )
   end)
 
   it("carries the commit message on the second line", function()
@@ -85,7 +103,10 @@ describe("describe", function()
   end)
 
   it("speaks of your past self for your own lines", function()
-    assert.equal(" ◈ Bloodstain of your past self ", actions.describe(leon, "self", 1700000000).title)
+    assert.equal(
+      " ◈ Bloodstain of your past self ",
+      actions.describe(leon, "self", 1700000000).title
+    )
   end)
 end)
 
@@ -95,7 +116,9 @@ describe("untracked", function()
   end)
 
   it("does not mistake a folder outside any repo for an untracked file", function()
-    assert.is_false(actions.untracked("fatal: not a git repository (or any of the parent directories): .git"))
+    assert.is_false(
+      actions.untracked("fatal: not a git repository (or any of the parent directories): .git")
+    )
   end)
 
   it("treats a missing message as nothing to report", function()

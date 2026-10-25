@@ -17,13 +17,19 @@ end
 --- Tells whether portraits can be drawn as real images instead of chafa's half blocks.
 ---@return boolean
 function M.supports_images()
-  local ok, supported = pcall(function() return Snacks.image.supports_terminal() end)
-  if ok then return supported == true end
+  local ok, supported = pcall(function()
+    return Snacks.image.supports_terminal()
+  end)
+  if ok then
+    return supported == true
+  end
   return actions.images(M.name())
 end
 
 local function send(sequence)
-  if #vim.api.nvim_list_uis() == 0 then return end
+  if #vim.api.nvim_list_uis() == 0 then
+    return
+  end
   pcall(vim.api.nvim_chan_send, vim.v.stderr, actions.passthrough(sequence, vim.env.TMUX ~= nil))
 end
 
@@ -36,25 +42,37 @@ local function skin()
 end
 
 local function paint_background()
-  if vim.g.eldentree_terminal_background == false then return end
+  if vim.g.eldentree_terminal_background == false then
+    return
+  end
   local base = require("core.themes").palette().base
-  if worn.background == base then return end
+  if worn.background == base then
+    return
+  end
   worn.background = base
   send(actions.background(base))
 end
 
 -- iTerm only switches to profiles that exist, so this waits for an explicit opt in
 local function apply_profile()
-  if M.name() ~= "iterm" or not vim.g.eldentree_iterm_profiles then return end
+  if M.name() ~= "iterm" or not vim.g.eldentree_iterm_profiles then
+    return
+  end
   local profile = skin().iterm_profile
-  if not profile or worn.profile == profile then return end
+  if not profile or worn.profile == profile then
+    return
+  end
   worn.profile = profile
   send(actions.iterm_profile(profile))
 end
 
 local function apply_opacity()
-  if M.name() ~= "kitty" or not vim.g.eldentree_kitty_remote or not skin().kitty_opacity then return end
-  if worn.opacity == skin().kitty_opacity then return end
+  if M.name() ~= "kitty" or not vim.g.eldentree_kitty_remote or not skin().kitty_opacity then
+    return
+  end
+  if worn.opacity == skin().kitty_opacity then
+    return
+  end
   worn.opacity = skin().kitty_opacity
   vim.system({ "kitty", "@", "set-background-opacity", tostring(worn.opacity) })
 end
@@ -79,10 +97,19 @@ function M.setup()
   local group = vim.api.nvim_create_augroup("eldentree_terminal", { clear = true })
   -- regions only recolor, the profile and its font belong to the franchise
   vim.api.nvim_create_autocmd("ColorScheme", { group = group, callback = paint_background })
-  vim.api.nvim_create_autocmd("User", { group = group, pattern = "EldentreeRegionSettled", callback = paint_background })
-  vim.api.nvim_create_autocmd("User", { group = group, pattern = "EldentreeFranchise", callback = M.apply })
+  vim.api.nvim_create_autocmd(
+    "User",
+    { group = group, pattern = "EldentreeRegionSettled", callback = paint_background }
+  )
+  vim.api.nvim_create_autocmd(
+    "User",
+    { group = group, pattern = "EldentreeFranchise", callback = M.apply }
+  )
   vim.api.nvim_create_autocmd({ "UIEnter", "VimResume" }, { group = group, callback = M.apply })
-  vim.api.nvim_create_autocmd({ "VimLeavePre", "VimSuspend" }, { group = group, callback = restore })
+  vim.api.nvim_create_autocmd(
+    { "VimLeavePre", "VimSuspend" },
+    { group = group, callback = restore }
+  )
 end
 
 return M

@@ -49,7 +49,10 @@ describe("branch_from_head", function()
   end)
 
   it("keeps slashes in branch names", function()
-    assert.equal("feature/elden-hub", actions.branch_from_head("ref: refs/heads/feature/elden-hub\n"))
+    assert.equal(
+      "feature/elden-hub",
+      actions.branch_from_head("ref: refs/heads/feature/elden-hub\n")
+    )
   end)
 
   it("shortens a detached sha to seven characters", function()
@@ -64,12 +67,18 @@ end)
 describe("gitdir_from_file", function()
   it("reads an absolute gitdir from a worktree file", function()
     local contents = "gitdir: /Users/ada/umbrella/.git/worktrees/hive\n"
-    assert.equal("/Users/ada/umbrella/.git/worktrees/hive", actions.gitdir_from_file(contents, "/Users/ada/hive"))
+    assert.equal(
+      "/Users/ada/umbrella/.git/worktrees/hive",
+      actions.gitdir_from_file(contents, "/Users/ada/hive")
+    )
   end)
 
   it("resolves a relative gitdir against the repo", function()
     local contents = "gitdir: ../.git/modules/lab"
-    assert.equal("/Users/ada/umbrella/lab/../.git/modules/lab", actions.gitdir_from_file(contents, "/Users/ada/umbrella/lab"))
+    assert.equal(
+      "/Users/ada/umbrella/lab/../.git/modules/lab",
+      actions.gitdir_from_file(contents, "/Users/ada/umbrella/lab")
+    )
   end)
 
   it("returns nil for anything else", function()
@@ -100,7 +109,10 @@ describe("remember", function()
   end)
 
   it("caps the list size", function()
-    assert.same({ RAYA_LUCARIA, STORMVEIL }, actions.remember({ STORMVEIL, LEYNDELL }, RAYA_LUCARIA, 2))
+    assert.same(
+      { RAYA_LUCARIA, STORMVEIL },
+      actions.remember({ STORMVEIL, LEYNDELL }, RAYA_LUCARIA, 2)
+    )
   end)
 end)
 
@@ -115,7 +127,9 @@ describe("is_ignored", function()
   end)
 
   it("keeps regular project files", function()
-    assert.is_false(actions.is_ignored(STORMVEIL .. "/src/gate.ts", { "/Users/melina/.local/share/nvim" }))
+    assert.is_false(
+      actions.is_ignored(STORMVEIL .. "/src/gate.ts", { "/Users/melina/.local/share/nvim" })
+    )
   end)
 end)
 
@@ -173,8 +187,11 @@ describe("browse_start", function()
 end)
 
 describe("pick_root", function()
-  local real = { ["/realms/haligtree"] = true, ["/realms"] = false, ["/realms/haligtree/rot"] = false }
-  local function is_repo(dir) return real[dir] == true end
+  local real =
+    { ["/realms/haligtree"] = true, ["/realms"] = false, ["/realms/haligtree/rot"] = false }
+  local function is_repo(dir)
+    return real[dir] == true
+  end
 
   it("finds Malenia's repo from its own .git", function()
     assert.equal("/realms/haligtree", actions.pick_root({ "/realms/haligtree/.git" }, is_repo))
@@ -196,7 +213,13 @@ end)
 
 describe("buffers_to_close", function()
   local function buffer(id, extra)
-    return vim.tbl_extend("force", { id = id, name = "/haligtree/love_letter.lua", listed = true, modified = false, buftype = "" }, extra or {})
+    return vim.tbl_extend("force", {
+      id = id,
+      name = "/haligtree/love_letter.lua",
+      listed = true,
+      modified = false,
+      buftype = "",
+    }, extra or {})
   end
 
   it("clears the files Malenia left saved", function()
@@ -212,13 +235,18 @@ describe("buffers_to_close", function()
   end)
 
   it("skips unlisted and unnamed buffers", function()
-    assert.same({}, actions.buffers_to_close({ buffer(4, { listed = false }), buffer(5, { name = "" }) }))
+    assert.same(
+      {},
+      actions.buffers_to_close({ buffer(4, { listed = false }), buffer(5, { name = "" }) })
+    )
   end)
 end)
 
 describe("worth_saving", function()
   it("keeps a session when Claire has a file open", function()
-    assert.is_true(actions.worth_saving({ { name = "/terrasave/plan.md", listed = true, buftype = "" } }))
+    assert.is_true(
+      actions.worth_saving({ { name = "/terrasave/plan.md", listed = true, buftype = "" } })
+    )
   end)
 
   it("skips a project with only the dashboard and terminals", function()

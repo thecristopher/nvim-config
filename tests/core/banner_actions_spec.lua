@@ -83,7 +83,9 @@ describe("should_cleanse", function()
   end)
 
   it("ignores errors that flickered for a moment", function()
-    assert.is_false(actions.should_cleanse({ errors = 0, errors_since = 59 * 1000, now = 60 * 1000 }))
+    assert.is_false(
+      actions.should_cleanse({ errors = 0, errors_since = 59 * 1000, now = 60 * 1000 })
+    )
   end)
 
   it("stays quiet while errors remain", function()
@@ -91,7 +93,9 @@ describe("should_cleanse", function()
   end)
 
   it("waits out the cooldown after the last banner", function()
-    assert.is_false(actions.should_cleanse(vim.tbl_extend("force", long_fight, { last_shown = 50 * 1000 })))
+    assert.is_false(
+      actions.should_cleanse(vim.tbl_extend("force", long_fight, { last_shown = 50 * 1000 }))
+    )
   end)
 end)
 
@@ -124,8 +128,12 @@ describe("drip_alpha", function()
 end)
 
 describe("kind styles", function()
-  before_each(function() vim.g.eldentree_franchise = "resident_evil" end)
-  after_each(function() vim.g.eldentree_franchise = "elden_ring" end)
+  before_each(function()
+    vim.g.eldentree_franchise = "resident_evil"
+  end)
+  after_each(function()
+    vim.g.eldentree_franchise = "elden_ring"
+  end)
 
   it("makes Leon's death drip in Raccoon City", function()
     assert.is_true(actions.kind("died").drip)
@@ -139,5 +147,24 @@ end)
 describe("kind styles in the Lands Between", function()
   it("lets Malenia's death fade without dripping", function()
     assert.is_nil(actions.kind("died").drip)
+  end)
+end)
+
+describe("rains", function()
+  it("crumbles Claire's code when she dies in a file", function()
+    assert.is_true(actions.rains("died", "", nil))
+  end)
+
+  it("keeps the code standing for a felled boss", function()
+    assert.is_false(actions.rains("felled", "", nil))
+  end)
+
+  it("stays dry over terminals and pickers", function()
+    assert.is_false(actions.rains("died", "terminal", nil))
+    assert.is_false(actions.rains("died", "nofile", nil))
+  end)
+
+  it("stays dry when Malenia turned the rain off", function()
+    assert.is_false(actions.rains("died", "", false))
   end)
 end)

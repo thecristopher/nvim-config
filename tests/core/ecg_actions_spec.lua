@@ -24,11 +24,17 @@ describe("trace", function()
   end)
 
   it("holds still between steps", function()
-    assert.equal(actions.trace("fine", 0), actions.trace("fine", actions.CONDITIONS.fine.step_ms - 1))
+    assert.equal(
+      actions.trace("fine", 0),
+      actions.trace("fine", actions.CONDITIONS.fine.step_ms - 1)
+    )
   end)
 
   it("scrolls once a step has passed", function()
-    assert.are_not.equal(actions.trace("fine", 0), actions.trace("fine", actions.CONDITIONS.fine.step_ms))
+    assert.are_not.equal(
+      actions.trace("fine", 0),
+      actions.trace("fine", actions.CONDITIONS.fine.step_ms)
+    )
   end)
 
   it("beats faster in danger than when fine", function()

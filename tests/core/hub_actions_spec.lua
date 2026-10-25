@@ -1,7 +1,11 @@
 local actions = require("core.hub.actions")
 local lore = require("core.franchise").current()
 
-local function always(value) return function() return value end end
+local function always(value)
+  return function()
+    return value
+  end
+end
 
 describe("pick_message", function()
   it("picks the first message at the bottom of the roll", function()
@@ -27,7 +31,9 @@ describe("shimmer_level", function()
   it("lights up where the band is passing", function()
     local mid_sweep = actions.SHIMMER.sweep / 2
     local lit = 0
-    for col = 0, 120 do lit = math.max(lit, actions.shimmer_level(col, 0, mid_sweep, 120)) end
+    for col = 0, 120 do
+      lit = math.max(lit, actions.shimmer_level(col, 0, mid_sweep, 120))
+    end
     assert.equal(actions.SHIMMER_LEVELS, lit)
   end)
 
@@ -37,7 +43,9 @@ describe("shimmer_level", function()
 end)
 
 describe("embers", function()
-  local function spawned() return actions.spawn_ember(always(0.5), 100, 40) end
+  local function spawned()
+    return actions.spawn_ember(always(0.5), 100, 40)
+  end
 
   it("rise as time passes", function()
     local ember = spawned()

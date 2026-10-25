@@ -2,7 +2,9 @@
 -- through the empty space, and a player message that writes itself in. Times are milliseconds.
 local M = {}
 
-local function lore() return require("core.franchise").current() end
+local function lore()
+  return require("core.franchise").current()
+end
 
 --- Picks the message the quill writes on the hub, from the franchise's own lines.
 ---@param rand fun(): number random number from 0 to 1
@@ -15,7 +17,9 @@ end
 -- "Malenia" becomes "M  A  L  E  N  I  A", the same carved look the old title had
 function M.spaced(name)
   local letters = {}
-  for letter in name:upper():gmatch(".") do table.insert(letters, letter) end
+  for letter in name:upper():gmatch(".") do
+    table.insert(letters, letter)
+  end
   return table.concat(letters, "  ")
 end
 
@@ -26,7 +30,9 @@ M.SHIMMER = { period = 5200, sweep = 1800, band = 9, skew = 2 }
 function M.shimmer_level(col, row, elapsed, span)
   local s = M.SHIMMER
   local into = elapsed % s.period
-  if into > s.sweep then return 0 end
+  if into > s.sweep then
+    return 0
+  end
   local travel = span + s.band * 2 + s.skew * 40
   local position = -s.band + travel * (into / s.sweep)
   local distance = math.abs(col + row * s.skew - position)
@@ -46,8 +52,12 @@ end
 
 -- where a particle is born for each kind of drift, as a fraction of the height from the top
 local function birth_row(drift, rand, height)
-  if drift == "fall" then return rand() * height * 0.25 end
-  if drift == "float" then return rand() * (height - 1) end
+  if drift == "fall" then
+    return rand() * height * 0.25
+  end
+  if drift == "float" then
+    return rand() * (height - 1)
+  end
   return height - 1 - rand() * height * 0.25
 end
 
@@ -62,14 +72,14 @@ function M.spawn_ember(rand, width, height, weather)
   weather = weather or M.weather()
   local life = 2600 + rand() * 3400
   return {
-    x       = rand() * width,
-    y       = birth_row(weather.drift, rand, height),
-    rise    = climb(weather, rand),
-    phase   = rand() * math.pi * 2,
-    sway    = 0.4 + rand() * 1.1,
-    age     = 0,
-    life    = life,
-    floor   = height,
+    x = rand() * width,
+    y = birth_row(weather.drift, rand, height),
+    rise = climb(weather, rand),
+    phase = rand() * math.pi * 2,
+    sway = 0.4 + rand() * 1.1,
+    age = 0,
+    life = life,
+    floor = height,
   }
 end
 
@@ -110,10 +120,16 @@ end
 -- the quill blinks while writing and for a moment after, then lifts off the page
 function M.quill_visible(length, elapsed)
   local q = M.QUILL
-  if elapsed < q.delay then return math.floor(elapsed / q.blink) % 2 == 0 end
+  if elapsed < q.delay then
+    return math.floor(elapsed / q.blink) % 2 == 0
+  end
   local finished_at = q.delay + length * q.per_char
-  if elapsed < finished_at then return true end
-  if elapsed > finished_at + q.linger then return false end
+  if elapsed < finished_at then
+    return true
+  end
+  if elapsed > finished_at + q.linger then
+    return false
+  end
   return math.floor((elapsed - finished_at) / q.blink) % 2 == 0
 end
 
@@ -126,7 +142,9 @@ function M.occupied(cells)
   local taken, col = {}, 0
   for _, cell in ipairs(cells) do
     if cell[1] ~= " " then
-      for offset = 0, cell[2] - 1 do taken[col + offset] = true end
+      for offset = 0, cell[2] - 1 do
+        taken[col + offset] = true
+      end
     end
     col = col + cell[2]
   end

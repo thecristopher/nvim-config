@@ -5,11 +5,17 @@ M.MAX_DIFF = 60000
 
 -- accepts 42, "42", "#42" or a full GitHub PR url
 function M.parse_number(arg)
-  if type(arg) == "number" then return arg end
-  if type(arg) ~= "string" then return nil end
+  if type(arg) == "number" then
+    return arg
+  end
+  if type(arg) ~= "string" then
+    return nil
+  end
   local trimmed = vim.trim(arg)
   local from_url = trimmed:match("/pull/(%d+)")
-  if from_url then return tonumber(from_url) end
+  if from_url then
+    return tonumber(from_url)
+  end
   return tonumber(trimmed:match("^#?(%d+)$"))
 end
 
@@ -18,7 +24,7 @@ function M.picker_items(prs)
   for _, pr in ipairs(prs or {}) do
     local author = pr.author and pr.author.login or "?"
     items[#items + 1] = {
-      text   = ("#%d  %s  (%s, %s)"):format(pr.number, pr.title, author, pr.headRefName or "?"),
+      text = ("#%d  %s  (%s, %s)"):format(pr.number, pr.title, author, pr.headRefName or "?"),
       number = pr.number,
     }
   end
@@ -28,8 +34,11 @@ end
 -- huge diffs blow past what claude reads well, so keep the head and say what got cut
 function M.trim_diff(diff, max)
   max = max or M.MAX_DIFF
-  if #diff <= max then return diff end
-  return diff:sub(1, max) .. ("\n\n[diff truncated: showing %d of %d characters]"):format(max, #diff)
+  if #diff <= max then
+    return diff
+  end
+  return diff:sub(1, max)
+    .. ("\n\n[diff truncated: showing %d of %d characters]"):format(max, #diff)
 end
 
 function M.build_prompt(pr, diff, lang)
@@ -56,7 +65,11 @@ function M.build_prompt(pr, diff, lang)
     ("Title: %s"):format(pr.title or ""),
     ("Author: %s"):format(author),
     ("Branches: %s -> %s"):format(pr.headRefName or "?", pr.baseRefName or "?"),
-    ("Size: +%d -%d across %d files"):format(pr.additions or 0, pr.deletions or 0, pr.changedFiles or 0),
+    ("Size: +%d -%d across %d files"):format(
+      pr.additions or 0,
+      pr.deletions or 0,
+      pr.changedFiles or 0
+    ),
     "",
     "Description:",
     (pr.body and vim.trim(pr.body) ~= "") and pr.body or "(no description)",
@@ -72,8 +85,12 @@ function M.report_lines(pr, analysis)
     ("# #%d %s"):format(pr.number, pr.title or ""),
     "",
     ("`%s` -> `%s`  ·  +%d -%d  ·  %d files"):format(
-      pr.headRefName or "?", pr.baseRefName or "?",
-      pr.additions or 0, pr.deletions or 0, pr.changedFiles or 0),
+      pr.headRefName or "?",
+      pr.baseRefName or "?",
+      pr.additions or 0,
+      pr.deletions or 0,
+      pr.changedFiles or 0
+    ),
     pr.url or "",
     "",
   }

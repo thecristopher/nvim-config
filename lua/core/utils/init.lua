@@ -6,8 +6,17 @@ local M = {}
 ---@return integer
 function M.hash(text)
   local value = 5381
-  for index = 1, #text do value = (value * 33 + text:byte(index)) % 4294967296 end
+  for index = 1, #text do
+    value = (value * 33 + text:byte(index)) % 4294967296
+  end
   return value
+end
+
+--- Adds execute next to every read permission, the way `chmod +x` does.
+---@param perm string from getfperm, like "rw-r--r--"
+---@return string like "rwxr-xr-x"
+function M.executable_perm(perm)
+  return (perm:gsub("r(.)%-", "r%1x"))
 end
 
 return M

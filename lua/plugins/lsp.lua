@@ -6,10 +6,12 @@ local function setup_diagnostics()
     -- tiny-inline-diagnostic draws them instead
     virtual_text = false,
     -- the franchise skin decides what the gutter shows
-    signs = { text = require("core.skin.actions").sign_text(require("core.skin").current().signs, severity) },
+    signs = {
+      text = require("core.skin.actions").sign_text(require("core.skin").current().signs, severity),
+    },
     update_in_insert = false,
-    underline        = true,
-    severity_sort    = true,
+    underline = true,
+    severity_sort = true,
     float = { border = require("core.skin").border(), source = true, header = "", prefix = "" },
   })
 end
@@ -17,7 +19,9 @@ end
 local function get_capabilities()
   local capabilities = vim.lsp.protocol.make_client_capabilities()
   local ok, blink = pcall(require, "blink.cmp")
-  if ok then capabilities = blink.get_lsp_capabilities(capabilities) end
+  if ok then
+    capabilities = blink.get_lsp_capabilities(capabilities)
+  end
   -- lets servers watch files without nvim polling (big win in large repos)
   capabilities.workspace = capabilities.workspace or {}
   capabilities.workspace.didChangeWatchedFiles = { dynamicRegistration = true }
@@ -25,20 +29,20 @@ local function get_capabilities()
 end
 
 local ts_inlay_hints = {
-  parameterNames         = { enabled = "literals" },
-  parameterTypes         = { enabled = true },
-  variableTypes          = { enabled = false },
+  parameterNames = { enabled = "literals" },
+  parameterTypes = { enabled = true },
+  variableTypes = { enabled = false },
   propertyDeclarationTypes = { enabled = true },
-  functionLikeReturnTypes  = { enabled = true },
-  enumMemberValues       = { enabled = true },
+  functionLikeReturnTypes = { enabled = true },
+  enumMemberValues = { enabled = true },
 }
 
 local ts_settings = {
   updateImportsOnFileMove = { enabled = "always" },
-  suggest     = { completeFunctionCalls = true },
-  inlayHints  = ts_inlay_hints,
+  suggest = { completeFunctionCalls = true },
+  inlayHints = ts_inlay_hints,
   -- Next.js monorepos blow past the default 3GB tsserver heap
-  tsserver    = { maxTsServerMemory = 8192 },
+  tsserver = { maxTsServerMemory = 8192 },
   preferences = { importModuleSpecifier = "non-relative" },
 }
 
@@ -47,10 +51,20 @@ local servers = {
   lua_ls = {
     settings = {
       Lua = {
-        workspace   = { checkThirdParty = false },
-        completion  = { callSnippet = "Replace" },
-        diagnostics = { globals = { "vim", "Snacks", "describe", "it", "before_each", "after_each" }, disable = { "missing-fields" } },
-        hint        = { enable = true, setType = false, paramType = true, paramName = "Disable", semicolon = "Disable", arrayIndex = "Disable" },
+        workspace = { checkThirdParty = false },
+        completion = { callSnippet = "Replace" },
+        diagnostics = {
+          globals = { "vim", "Snacks", "describe", "it", "before_each", "after_each" },
+          disable = { "missing-fields" },
+        },
+        hint = {
+          enable = true,
+          setType = false,
+          paramType = true,
+          paramName = "Disable",
+          semicolon = "Disable",
+          arrayIndex = "Disable",
+        },
       },
     },
   },
@@ -61,7 +75,7 @@ local servers = {
       complete_function_calls = true,
       vtsls = {
         enableMoveToFileCodeAction = true,
-        autoUseWorkspaceTsdk       = true,
+        autoUseWorkspaceTsdk = true,
         experimental = {
           maxInlayHintLength = 30,
           completion = { enableServerSideFuzzyMatch = true },
@@ -77,13 +91,20 @@ local servers = {
     filetypes = { "html", "css", "scss", "javascriptreact", "typescriptreact", "php", "blade" },
   },
   cssls = {},
-  html  = {},
+  html = {},
 
   -- Python: pyright for types, ruff for lint, imports and formatting
   pyright = {
     settings = {
       pyright = { disableOrganizeImports = true },
-      python  = { analysis = { autoSearchPaths = true, useLibraryCodeForTypes = true, diagnosticMode = "openFilesOnly", typeCheckingMode = "basic" } },
+      python = {
+        analysis = {
+          autoSearchPaths = true,
+          useLibraryCodeForTypes = true,
+          diagnosticMode = "openFilesOnly",
+          typeCheckingMode = "basic",
+        },
+      },
     },
   },
   ruff = {},
@@ -94,17 +115,19 @@ local servers = {
   },
 
   rust_analyzer = {},
-  bashls   = {},
-  jsonls   = { settings = { json = { validate = { enable = true } } } },
-  yamlls   = { settings = { yaml = { schemaStore = { enable = false, url = "" }, validate = true } } },
+  bashls = {},
+  jsonls = { settings = { json = { validate = { enable = true } } } },
+  yamlls = { settings = { yaml = { schemaStore = { enable = false, url = "" }, validate = true } } },
   marksman = {},
   dockerls = {},
   docker_compose_language_service = {},
-  taplo    = {},
+  taplo = {},
 }
 
 -- gopls needs a Go toolchain to build, so only ask for it when one exists
-if vim.fn.executable("go") == 1 then servers.gopls = {} end
+if vim.fn.executable("go") == 1 then
+  servers.gopls = {}
+end
 
 -- Not on mason: these ship with their toolchains
 local system_servers = {
@@ -117,7 +140,9 @@ local system_servers = {
 
 local function attach_schemas()
   local ok, schemastore = pcall(require, "schemastore")
-  if not ok then return end
+  if not ok then
+    return
+  end
   servers.jsonls.settings.json.schemas = schemastore.json.schemas()
   servers.yamlls.settings.yaml.schemas = schemastore.yaml.schemas()
 end
@@ -148,17 +173,19 @@ local function setup_attach()
 end
 
 local mason_tools = { "stylua", "shfmt", "prettierd", "shellcheck", "selene" }
-if vim.fn.executable("php") == 1 then table.insert(mason_tools, "php-cs-fixer") end
+if vim.fn.executable("php") == 1 then
+  table.insert(mason_tools, "php-cs-fixer")
+end
 
 return {
   {
     "folke/lazydev.nvim",
-    ft   = "lua",
+    ft = "lua",
     opts = {
       library = {
         { path = "${3rd}/luv/library", words = { "vim%.uv" } },
-        { path = "snacks.nvim",        words = { "Snacks" } },
-        { path = "lazy.nvim",          words = { "LazyVim" } },
+        { path = "snacks.nvim", words = { "Snacks" } },
+        { path = "lazy.nvim", words = { "LazyVim" } },
       },
     },
   },
@@ -167,13 +194,13 @@ return {
 
   {
     "mason-org/mason.nvim",
-    cmd   = { "Mason", "MasonInstall", "MasonUninstall", "MasonUpdate", "MasonLog" },
-    keys  = { { "<leader>cm", "<cmd>Mason<cr>", desc = "Mason" } },
+    cmd = { "Mason", "MasonInstall", "MasonUninstall", "MasonUpdate", "MasonLog" },
+    keys = { { "<leader>cm", "<cmd>Mason<cr>", desc = "Mason" } },
     build = ":MasonUpdate",
-    opts  = {
+    opts = {
       ui = {
         border = require("core.skin").border(),
-        icons  = { package_installed = "✓", package_pending = "➜", package_uninstalled = "✗" },
+        icons = { package_installed = "✓", package_pending = "➜", package_uninstalled = "✗" },
       },
     },
     config = function(_, opts)
@@ -182,7 +209,9 @@ return {
       registry.refresh(function()
         for _, tool in ipairs(mason_tools) do
           local found, package = pcall(registry.get_package, tool)
-          if found and not package:is_installed() then package:install() end
+          if found and not package:is_installed() then
+            package:install()
+          end
         end
       end)
     end,
@@ -195,7 +224,9 @@ return {
     opts = function()
       local exclude = { "stylua" } -- conform already runs it on save
       -- ts_ls stays as a fallback until vtsls installs, both at once would double every diagnostic
-      if vim.fn.executable("vtsls") == 1 then table.insert(exclude, "ts_ls") end
+      if vim.fn.executable("vtsls") == 1 then
+        table.insert(exclude, "ts_ls")
+      end
       return {
         ensure_installed = vim.tbl_keys(servers),
         automatic_enable = { exclude = exclude },
@@ -205,7 +236,7 @@ return {
 
   {
     "neovim/nvim-lspconfig",
-    event        = { "BufReadPre", "BufNewFile" },
+    event = { "BufReadPre", "BufNewFile" },
     dependencies = {
       "mason-org/mason.nvim",
       "folke/lazydev.nvim",

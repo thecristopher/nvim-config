@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # same version as the one mason installs locally, so both agree on the format
+          version: 2.5.2
+          args: --check lua tests init.lua
+
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+      - name: Fetch plenary
+        run: git clone --depth 1 https://github.com/nvim-lua/plenary.nvim "$RUNNER_TEMP/plenary.nvim"
+      - name: Run the specs
+        env:
+          PLENARY_DIR: ${{ runner.temp }}/plenary.nvim
+        run: ./scripts/test.sh

@@ -3,7 +3,10 @@
 local M = {}
 
 M.MOVES = {
-  h = { 0, -1 }, l = { 0, 1 }, k = { -1, 0 }, j = { 1, 0 },
+  h = { 0, -1 },
+  l = { 0, 1 },
+  k = { -1, 0 },
+  j = { 1, 0 },
 }
 
 --- Moves the cursor through a grid of count slots laid out columns wide.
@@ -13,15 +16,21 @@ M.MOVES = {
 ---@param direction string h, j, k or l
 ---@return integer|nil next slot, nil when the move leaves the grid through that edge
 function M.grid_move(index, count, columns, direction)
-  if count == 0 then return nil end
+  if count == 0 then
+    return nil
+  end
   local step = M.MOVES[direction]
   local row, col = math.floor((index - 1) / columns), (index - 1) % columns
   local next_row, next_col = row + step[1], col + step[2]
-  if next_col < 0 or next_col >= columns or next_row < 0 then return nil end
+  if next_col < 0 or next_col >= columns or next_row < 0 then
+    return nil
+  end
   local next_index = next_row * columns + next_col + 1
   if next_index > count then
     -- moving down into a short last row lands on its last slot instead of falling off
-    if step[1] > 0 and next_row * columns < count then return count end
+    if step[1] > 0 and next_row * columns < count then
+      return count
+    end
     return nil
   end
   return next_index
@@ -33,7 +42,9 @@ end
 ---@param step integer 1 forward, -1 back
 ---@return integer
 function M.cycle(index, count, step)
-  if count == 0 then return 1 end
+  if count == 0 then
+    return 1
+  end
   return (index - 1 + step) % count + 1
 end
 
@@ -51,8 +62,12 @@ end
 ---@param offset integer first grid row shown now
 ---@return integer new offset
 function M.scroll(cursor_row, visible, offset)
-  if cursor_row < offset then return cursor_row end
-  if cursor_row >= offset + visible then return cursor_row - visible + 1 end
+  if cursor_row < offset then
+    return cursor_row
+  end
+  if cursor_row >= offset + visible then
+    return cursor_row - visible + 1
+  end
   return offset
 end
 
@@ -61,8 +76,12 @@ end
 ---@param width integer
 ---@return string
 function M.fit(text, width)
-  if width <= 0 then return "" end
-  if vim.api.nvim_strwidth(text) <= width then return text end
+  if width <= 0 then
+    return ""
+  end
+  if vim.api.nvim_strwidth(text) <= width then
+    return text
+  end
   return vim.fn.strcharpart(text, 0, width - 1) .. "…"
 end
 
@@ -86,11 +105,15 @@ function M.wrap(text, width)
     if vim.api.nvim_strwidth(candidate) <= width then
       current = candidate
     else
-      if current ~= "" then table.insert(lines, current) end
+      if current ~= "" then
+        table.insert(lines, current)
+      end
       current = M.fit(word, width)
     end
   end
-  if current ~= "" then table.insert(lines, current) end
+  if current ~= "" then
+    table.insert(lines, current)
+  end
   return lines
 end
 
@@ -99,7 +122,9 @@ end
 ---@return integer
 function M.width(chunks)
   local width = 0
-  for _, chunk in ipairs(chunks) do width = width + vim.api.nvim_strwidth(chunk[1]) end
+  for _, chunk in ipairs(chunks) do
+    width = width + vim.api.nvim_strwidth(chunk[1])
+  end
   return width
 end
 
@@ -110,7 +135,9 @@ end
 function M.pad_chunks(chunks, width)
   local padded = vim.list_extend({}, chunks)
   local gap = width - M.width(chunks)
-  if gap > 0 then table.insert(padded, { (" "):rep(gap) }) end
+  if gap > 0 then
+    table.insert(padded, { (" "):rep(gap) })
+  end
   return padded
 end
 
@@ -122,7 +149,9 @@ function M.clip(chunks, width)
   local clipped, used = {}, 0
   for _, chunk in ipairs(chunks) do
     local room = width - used
-    if room <= 0 then break end
+    if room <= 0 then
+      break
+    end
     local size = vim.api.nvim_strwidth(chunk[1])
     if size > room then
       local cut = vim.tbl_extend("force", {}, chunk)
@@ -157,7 +186,9 @@ end
 ---@param indent integer
 ---@return table[]
 function M.indent(rows, indent)
-  return vim.tbl_map(function(row) return vim.list_extend({ { (" "):rep(indent) } }, row) end, rows)
+  return vim.tbl_map(function(row)
+    return vim.list_extend({ { (" "):rep(indent) } }, row)
+  end, rows)
 end
 
 --- Turns rows of { text, hl } chunks into buffer lines, highlight marks and named spots.
@@ -170,10 +201,16 @@ function M.compose(rows)
   for index, chunks in ipairs(rows) do
     local line, col = "", 0
     for _, chunk in ipairs(chunks) do
-      if chunk.spot then spots[chunk.spot] = { row = index - 1, col = col } end
+      if chunk.spot then
+        spots[chunk.spot] = { row = index - 1, col = col }
+      end
       if chunk[1] ~= "" then
-        if chunk.bg then table.insert(marks, { index - 1, #line, #line + #chunk[1], chunk.bg, 150 }) end
-        if chunk[2] then table.insert(marks, { index - 1, #line, #line + #chunk[1], chunk[2], 200 }) end
+        if chunk.bg then
+          table.insert(marks, { index - 1, #line, #line + #chunk[1], chunk.bg, 150 })
+        end
+        if chunk[2] then
+          table.insert(marks, { index - 1, #line, #line + #chunk[1], chunk[2], 200 })
+        end
       end
       line = line .. chunk[1]
       col = col + vim.api.nvim_strwidth(chunk[1])
@@ -198,7 +235,9 @@ end
 ---@return table[]
 function M.middle(rows, height)
   local padded = {}
-  for _ = 1, math.max(0, math.floor((height - #rows) / 2)) do table.insert(padded, {}) end
+  for _ = 1, math.max(0, math.floor((height - #rows) / 2)) do
+    table.insert(padded, {})
+  end
   return vim.list_extend(padded, rows)
 end
 
@@ -212,7 +251,9 @@ M.PORTRAIT_RATIO = 46 / 28
 ---@return { width: integer, height: integer }|nil
 function M.portrait_fit(max_width, max_height, min_height)
   local height = math.min(max_height, math.floor(max_width / M.PORTRAIT_RATIO))
-  if height < min_height then return nil end
+  if height < min_height then
+    return nil
+  end
   return { width = math.floor(height * M.PORTRAIT_RATIO + 0.5), height = height }
 end
 
@@ -232,7 +273,9 @@ end
 function M.byte_col(line, display_col)
   local width, starts = 0, vim.str_utf_pos(line)
   for index, start in ipairs(starts) do
-    if width >= display_col then return start - 1 end
+    if width >= display_col then
+      return start - 1
+    end
     local stop = (starts[index + 1] or #line + 1) - 1
     width = width + vim.api.nvim_strwidth(line:sub(start, stop))
   end

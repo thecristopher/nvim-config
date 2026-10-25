@@ -5,13 +5,25 @@ M.EXTENSIONS = { wav = true, mp3 = true, aiff = true, m4a = true, ogg = true }
 
 -- every moment that can make a sound, the file name is the event, variants add _1, _2...
 M.EVENTS = {
-  "title", "door", "fog", "rest", "boss", "merchant",
-  "felled", "great", "died", "grace", "cleansed", "region",
+  "title",
+  "door",
+  "fog",
+  "rest",
+  "boss",
+  "merchant",
+  "felled",
+  "great",
+  "died",
+  "grace",
+  "cleansed",
+  "region",
 }
 
 local function event_of(file)
   local stem, extension = file:match("^(.+)%.(%w+)$")
-  if not stem or not M.EXTENSIONS[extension:lower()] then return nil end
+  if not stem or not M.EXTENSIONS[extension:lower()] then
+    return nil
+  end
   return (stem:gsub("_%d+$", ""))
 end
 
@@ -20,7 +32,9 @@ end
 ---@param event string
 ---@return string[]
 function M.candidates(files, event)
-  return vim.tbl_filter(function(file) return event_of(file) == event end, files)
+  return vim.tbl_filter(function(file)
+    return event_of(file) == event
+  end, files)
 end
 
 --- Picks one of the event's files, a different variant each time when there are several.
@@ -31,7 +45,9 @@ end
 function M.pick(files, event, rand)
   local candidates = M.candidates(files, event)
   table.sort(candidates)
-  if #candidates == 0 then return nil end
+  if #candidates == 0 then
+    return nil
+  end
   return candidates[rand(#candidates)]
 end
 
@@ -40,9 +56,15 @@ end
 ---@param executable fun(name: string): boolean
 ---@return string[]|nil command, nil when no player is installed
 function M.command(file, executable)
-  if executable("afplay") then return { "afplay", file } end
-  if executable("paplay") then return { "paplay", file } end
-  if executable("ffplay") then return { "ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", file } end
+  if executable("afplay") then
+    return { "afplay", file }
+  end
+  if executable("paplay") then
+    return { "paplay", file }
+  end
+  if executable("ffplay") then
+    return { "ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", file }
+  end
   return nil
 end
 

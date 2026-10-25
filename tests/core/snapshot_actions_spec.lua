@@ -1,8 +1,13 @@
 local actions = require("core.snapshot.actions")
 
 local COLORS = {
-  base = "#0E0A0D", crust = "#060406", glow = "#2A1420", border = "#6E3A52",
-  accent = "#E47FAD", text = "#EAD5E4", muted = "#6E5969",
+  base = "#0E0A0D",
+  crust = "#060406",
+  glow = "#2A1420",
+  border = "#6E3A52",
+  accent = "#E47FAD",
+  text = "#EAD5E4",
+  muted = "#6E5969",
 }
 
 describe("escape", function()
@@ -18,11 +23,17 @@ describe("merge", function()
   end)
 
   it("splits where the color changes", function()
-    assert.equal(2, #actions.merge({ { text = "a", fg = "#111111" }, { text = "b", fg = "#222222" } }))
+    assert.equal(
+      2,
+      #actions.merge({ { text = "a", fg = "#111111" }, { text = "b", fg = "#222222" } })
+    )
   end)
 
   it("splits where only the weight changes", function()
-    assert.equal(2, #actions.merge({ { text = "a", fg = "#111111" }, { text = "b", fg = "#111111", bold = true } }))
+    assert.equal(
+      2,
+      #actions.merge({ { text = "a", fg = "#111111" }, { text = "b", fg = "#111111", bold = true } })
+    )
   end)
 end)
 
@@ -41,8 +52,16 @@ describe("common_indent", function()
 end)
 
 describe("svg", function()
-  local rows = { { { text = "local ", fg = "#E47FAD", bold = true }, { text = "date = \"anniversary\"", fg = "#9DB87A" } } }
-  local svg = actions.svg(rows, { title = "love.lua", region = "ELDENTREE  ·  HALIGTREE", first_line = 12, colors = COLORS })
+  local rows = {
+    {
+      { text = "local ", fg = "#E47FAD", bold = true },
+      { text = 'date = "anniversary"', fg = "#9DB87A" },
+    },
+  }
+  local svg = actions.svg(
+    rows,
+    { title = "love.lua", region = "ELDENTREE  ·  HALIGTREE", first_line = 12, colors = COLORS }
+  )
 
   it("is a standalone svg document", function()
     assert.is_truthy(svg:match("^<svg "))

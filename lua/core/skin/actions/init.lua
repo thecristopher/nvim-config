@@ -4,8 +4,8 @@ local M = {}
 -- telescope wants the eight border characters spelled out, top then corners
 M.BORDER_CHARS = {
   rounded = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
-  double  = { "═", "║", "═", "║", "╔", "╗", "╝", "╚" },
-  single  = { "─", "│", "─", "│", "┌", "┐", "┘", "└" },
+  double = { "═", "║", "═", "║", "╔", "╗", "╝", "╚" },
+  single = { "─", "│", "─", "│", "┌", "┐", "┘", "└" },
 }
 
 --- Returns telescope's border characters for a border name, rounded when it has none.
@@ -38,9 +38,9 @@ end
 function M.sign_text(signs, severity)
   return {
     [severity.ERROR] = signs.error,
-    [severity.WARN]  = signs.warn,
-    [severity.HINT]  = signs.hint,
-    [severity.INFO]  = signs.info,
+    [severity.WARN] = signs.warn,
+    [severity.HINT] = signs.hint,
+    [severity.INFO] = signs.info,
   }
 end
 

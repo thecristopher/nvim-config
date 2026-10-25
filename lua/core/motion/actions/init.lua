@@ -3,11 +3,21 @@
 local M = {}
 
 M.easings = {
-  linear      = function(t) return t end,
-  out_cubic   = function(t) return 1 - (1 - t) ^ 3 end,
-  in_cubic    = function(t) return t ^ 3 end,
-  in_out_sine = function(t) return -(math.cos(math.pi * t) - 1) / 2 end,
-  out_expo    = function(t) return t >= 1 and 1 or 1 - 2 ^ (-10 * t) end,
+  linear = function(t)
+    return t
+  end,
+  out_cubic = function(t)
+    return 1 - (1 - t) ^ 3
+  end,
+  in_cubic = function(t)
+    return t ^ 3
+  end,
+  in_out_sine = function(t)
+    return -(math.cos(math.pi * t) - 1) / 2
+  end,
+  out_expo = function(t)
+    return t >= 1 and 1 or 1 - 2 ^ (-10 * t)
+  end,
 }
 
 function M.ease(name, t)
@@ -16,12 +26,16 @@ end
 
 -- how far through an animation we are, clamped so late timer ticks never overshoot
 function M.progress(elapsed, duration)
-  if duration <= 0 then return 1 end
+  if duration <= 0 then
+    return 1
+  end
   return math.max(0, math.min(1, elapsed / duration))
 end
 
 function M.mix(from, to, t)
-  local function channel(color, shift) return math.floor(color / 2 ^ shift) % 256 end
+  local function channel(color, shift)
+    return math.floor(color / 2 ^ shift) % 256
+  end
   local function lerp(shift)
     return math.floor(channel(from, shift) + (channel(to, shift) - channel(from, shift)) * t + 0.5)
   end
@@ -33,9 +47,13 @@ local COLOR_KEYS = { "fg", "bg", "sp" }
 -- a highlight group partway between two snapshots; everything but colors snaps to the target
 function M.mix_hl(from, to, t)
   local attrs = vim.deepcopy(to)
-  if not from or from.link or to.link then return attrs end
+  if not from or from.link or to.link then
+    return attrs
+  end
   for _, key in ipairs(COLOR_KEYS) do
-    if from[key] and to[key] then attrs[key] = M.mix(from[key], to[key], t) end
+    if from[key] and to[key] then
+      attrs[key] = M.mix(from[key], to[key], t)
+    end
   end
   return attrs
 end

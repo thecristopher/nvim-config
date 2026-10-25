@@ -15,7 +15,9 @@ end
 
 local function git_out(args)
   local out = vim.fn.system(vim.list_extend({ "git" }, args))
-  if vim.v.shell_error ~= 0 then return nil end
+  if vim.v.shell_error ~= 0 then
+    return nil
+  end
   return vim.trim(out)
 end
 
@@ -28,17 +30,23 @@ end
 ---@param args string[] git arguments
 ---@param on_ok fun(stdout: string)
 local function run(args, on_ok)
-  vim.system(vim.list_extend({ "git" }, args), { text = true }, vim.schedule_wrap(function(result)
-    if result.code ~= 0 then
-      local output = vim.trim((result.stderr or "") .. "\n" .. (result.stdout or ""))
-      return notify("git " .. args[1] .. " failed:\n" .. output, vim.log.levels.ERROR)
-    end
-    on_ok(result.stdout or "")
-  end))
+  vim.system(
+    vim.list_extend({ "git" }, args),
+    { text = true },
+    vim.schedule_wrap(function(result)
+      if result.code ~= 0 then
+        local output = vim.trim((result.stderr or "") .. "\n" .. (result.stdout or ""))
+        return notify("git " .. args[1] .. " failed:\n" .. output, vim.log.levels.ERROR)
+      end
+      on_ok(result.stdout or "")
+    end)
+  )
 end
 
 local function in_repo()
-  if git_ok({ "rev-parse", "--is-inside-work-tree" }) then return true end
+  if git_ok({ "rev-parse", "--is-inside-work-tree" }) then
+    return true
+  end
   notify("Not inside a git repository.", vim.log.levels.WARN)
   return false
 end
@@ -62,7 +70,9 @@ local BASE_CANDIDATES = { "staging", "main", "master" }
 ---@return string|nil
 function M.default_branch()
   local configured = git_out({ "config", "--get", "pr-helper.base" })
-  if configured and configured ~= "" then return configured end
+  if configured and configured ~= "" then
+    return configured
+  end
 
   for _, name in ipairs(BASE_CANDIDATES) do
     if git_ok({ "show-ref", "--verify", "--quiet", "refs/remotes/origin/" .. name }) then
@@ -80,30 +90,48 @@ end
 ---@return string[] skipped
 function M.stage_related()
   -- vim.system keeps the NUL separators that vim.fn.system would mangle
-  local status = vim.system({ "git", "status", "--porcelain=v1", "-z", "--untracked-files=all" }, { text = true }):wait()
-  if status.code ~= 0 then return nil, {} end
+  local status = vim
+    .system({ "git", "status", "--porcelain=v1", "-z", "--untracked-files=all" }, { text = true })
+    :wait()
+  if status.code ~= 0 then
+    return nil, {}
+  end
 
   local stage, skipped = actions.related(actions.parse_status(status.stdout))
-  if #stage == 0 then return stage, skipped end
-  if not git_ok(vim.list_extend({ "add", "-A", "--" }, stage)) then return nil, skipped end
+  if #stage == 0 then
+    return stage, skipped
+  end
+  if not git_ok(vim.list_extend({ "add", "-A", "--" }, stage)) then
+    return nil, skipped
+  end
   return stage, skipped
 end
 
 ---Stages related changes and reports what was left out.
 function M.stage()
-  if not in_repo() then return end
+  if not in_repo() then
+    return
+  end
   local staged, skipped = M.stage_related()
-  if not staged then return notify("git add failed.", vim.log.levels.ERROR) end
+  if not staged then
+    return notify("git add failed.", vim.log.levels.ERROR)
+  end
   local msg = ("Staged %d file(s)."):format(#staged)
-  if #skipped > 0 then msg = msg .. "\nLeft out: " .. table.concat(skipped, ", ") end
+  if #skipped > 0 then
+    msg = msg .. "\nLeft out: " .. table.concat(skipped, ", ")
+  end
   notify(msg)
 end
 
 local function create_branch(prefix)
   vim.ui.input({ prompt = "Branch name: " }, function(name)
-    if not name then return end
+    if not name then
+      return
+    end
     local branch = actions.branch_name(prefix, name)
-    if not branch then return notify("Branch name is empty.", vim.log.levels.WARN) end
+    if not branch then
+      return notify("Branch name is empty.", vim.log.levels.WARN)
+    end
     run({ "switch", "-c", branch }, function()
       notify("Switched to new branch " .. branch)
     end)
@@ -112,32 +140,48 @@ end
 
 ---Asks for a prefix and a name, then creates and switches to the branch.
 function M.new_branch()
-  if not in_repo() then return end
+  if not in_repo() then
+    return
+  end
   vim.ui.select(actions.PREFIXES, { prompt = "Branch type" }, function(prefix)
-    if prefix then create_branch(prefix) end
+    if prefix then
+      create_branch(prefix)
+    end
   end)
 end
 
 ---Pulls the current branch from its upstream.
 function M.pull()
-  if not in_repo() then return end
+  if not in_repo() then
+    return
+  end
   notify("Pulling…")
-  run({ "pull" }, function(out) notify("Pulled: " .. last_line(out)) end)
+  run({ "pull" }, function(out)
+    notify("Pulled: " .. last_line(out))
+  end)
 end
 
 ---Pushes the current branch, setting the upstream on the first push. Never forces.
 function M.push()
-  if not in_repo() then return end
+  if not in_repo() then
+    return
+  end
   local branch = M.current_branch()
   notify("Pushing " .. branch .. "…")
-  run(actions.push_args(M.has_upstream()), function() notify("Pushed " .. branch) end)
+  run(actions.push_args(M.has_upstream()), function()
+    notify("Pushed " .. branch)
+  end)
 end
 
 ---Fetches the base branch and merges it into the current one.
 function M.sync()
-  if not in_repo() then return end
+  if not in_repo() then
+    return
+  end
   local base = M.default_branch()
-  if not base then return notify("Could not find a base branch.", vim.log.levels.WARN) end
+  if not base then
+    return notify("Could not find a base branch.", vim.log.levels.WARN)
+  end
   notify("Bringing in origin/" .. base .. "…")
   run({ "fetch", "origin", base }, function()
     run({ "merge", "--no-edit", "origin/" .. base }, function(out)
@@ -148,24 +192,38 @@ end
 
 ---Switches to the base branch and pulls it.
 function M.home()
-  if not in_repo() then return end
+  if not in_repo() then
+    return
+  end
   local base = M.default_branch()
-  if not base then return notify("Could not find a base branch.", vim.log.levels.WARN) end
+  if not base then
+    return notify("Could not find a base branch.", vim.log.levels.WARN)
+  end
   run({ "switch", base }, function()
-    run({ "pull" }, function(out) notify("On " .. base .. ": " .. last_line(out)) end)
+    run({ "pull" }, function(out)
+      notify("On " .. base .. ": " .. last_line(out))
+    end)
   end)
 end
 
 ---Stashes every change, untracked files included.
 function M.stash()
-  if not in_repo() then return end
-  run({ "stash", "push", "--include-untracked" }, function(out) notify(last_line(out)) end)
+  if not in_repo() then
+    return
+  end
+  run({ "stash", "push", "--include-untracked" }, function(out)
+    notify(last_line(out))
+  end)
 end
 
 ---Brings back the latest stash.
 function M.stash_pop()
-  if not in_repo() then return end
-  run({ "stash", "pop" }, function() notify("Stash restored.") end)
+  if not in_repo() then
+    return
+  end
+  run({ "stash", "pop" }, function()
+    notify("Stash restored.")
+  end)
 end
 
 local function head_is_pushed()
@@ -174,15 +232,21 @@ end
 
 ---Undoes the last commit and keeps its changes staged. Refuses once the commit is pushed.
 function M.undo_commit()
-  if not in_repo() then return end
+  if not in_repo() then
+    return
+  end
   if head_is_pushed() then
     return notify("Last commit is already pushed, not rewriting it.", vim.log.levels.WARN)
   end
   local subject = git_out({ "log", "-1", "--format=%s" }) or ""
-  if vim.fn.confirm("Undo commit \"" .. subject .. "\"? Changes stay staged.", "&Yes\n&Cancel", 2) ~= 1 then
+  if
+    vim.fn.confirm('Undo commit "' .. subject .. '"? Changes stay staged.', "&Yes\n&Cancel", 2) ~= 1
+  then
     return
   end
-  run({ "reset", "--soft", "HEAD~1" }, function() notify("Undid: " .. subject) end)
+  run({ "reset", "--soft", "HEAD~1" }, function()
+    notify("Undid: " .. subject)
+  end)
 end
 
 return M

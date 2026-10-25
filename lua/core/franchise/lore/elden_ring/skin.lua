@@ -5,7 +5,7 @@ return {
   -- wrapped around float titles
   ornament = { "◈ ", " ◈" },
   statusline = {
-    section   = { left = "", right = "" },
+    section = { left = "", right = "" },
     component = { left = "", right = "" },
   },
   -- bufferline separator_style
@@ -15,6 +15,11 @@ return {
   -- which inventory the HUD draws, see core/hud/views
   dashboard = "roundtable",
   -- the title screen keeps the franchise's own colors whatever region you stand in
-  title = { text = "ELDEN RING", subtitle = "Arise now, ye Tarnished", color = "#D8B45A", style = "shimmer" },
+  title = {
+    text = "ELDEN RING",
+    subtitle = "Arise now, ye Tarnished",
+    color = "#D8B45A",
+    style = "shimmer",
+  },
   terminal = { iterm_profile = "Eldentree Elden Ring", kitty_opacity = 0.97 },
 }

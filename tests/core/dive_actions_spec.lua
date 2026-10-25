@@ -2,7 +2,9 @@ local actions = require("core.dive.actions")
 
 local function find(maps, lhs)
   for _, map in ipairs(maps) do
-    if map.lhs == lhs then return map end
+    if map.lhs == lhs then
+      return map
+    end
   end
 end
 

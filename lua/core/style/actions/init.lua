@@ -17,7 +17,9 @@ end
 ---@param guide string|nil raw guide contents, nil when the file is missing
 ---@return string[] prompt lines
 function M.prompt_lines(guide)
-  if not guide or vim.trim(guide) == "" then return M.FALLBACK end
+  if not guide or vim.trim(guide) == "" then
+    return M.FALLBACK
+  end
   return {
     "Follow this style guide exactly. It is the only source of style rules:",
     "",

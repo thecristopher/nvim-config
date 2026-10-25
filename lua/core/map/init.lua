@@ -14,7 +14,8 @@ local function define_highlights()
 end
 
 local function git_lines(root, args)
-  local result = vim.system(vim.list_extend({ "git", "-C", root }, args), { text = true }):wait(5000)
+  local result =
+    vim.system(vim.list_extend({ "git", "-C", root }, args), { text = true }):wait(5000)
   return result.code == 0 and result.stdout or ""
 end
 
@@ -35,7 +36,9 @@ end
 
 local function render(rooms)
   local name_width = 0
-  for _, room in ipairs(rooms) do name_width = math.max(name_width, vim.api.nvim_strwidth(room.name)) end
+  for _, room in ipairs(rooms) do
+    name_width = math.max(name_width, vim.api.nvim_strwidth(room.name))
+  end
   local lines, marks = {}, {}
   for index, room in ipairs(rooms) do
     local glyph = room.cleared and "■" or "□"
@@ -54,13 +57,21 @@ end
 local function open_float(rooms, root)
   local lines, marks = render(rooms)
   local width = 20
-  for _, line in ipairs(lines) do width = math.max(width, vim.api.nvim_strwidth(line) + 2) end
+  for _, line in ipairs(lines) do
+    width = math.max(width, vim.api.nvim_strwidth(line) + 2)
+  end
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   for row, line_marks in ipairs(marks) do
     for _, mark in ipairs(line_marks) do
-      vim.api.nvim_buf_set_extmark(buf, ns, row - 1, mark[1], { end_col = mark[2], hl_group = mark[3] })
+      vim.api.nvim_buf_set_extmark(
+        buf,
+        ns,
+        row - 1,
+        mark[1],
+        { end_col = mark[2], hl_group = mark[3] }
+      )
     end
   end
   vim.bo[buf].modifiable = false
@@ -68,16 +79,25 @@ local function open_float(rooms, root)
   local cleared, total = actions.progress(rooms)
   local words = require("core.franchise").current().words
   local win = vim.api.nvim_open_win(buf, true, {
-    relative = "editor", style = "minimal", border = require("core.skin").border(),
-    width = math.min(width, vim.o.columns - 4), height = math.min(#lines, vim.o.lines - 6),
-    row = 2, col = math.floor((vim.o.columns - width) / 2),
-    title = " " .. require("core.skin").title(("%s · %s"):format(words.map, require("core.themes").current().title)) .. " ",
+    relative = "editor",
+    style = "minimal",
+    border = require("core.skin").border(),
+    width = math.min(width, vim.o.columns - 4),
+    height = math.min(#lines, vim.o.lines - 6),
+    row = 2,
+    col = math.floor((vim.o.columns - width) / 2),
+    title = " " .. require("core.skin").title(
+      ("%s · %s"):format(words.map, require("core.themes").current().title)
+    ) .. " ",
     title_pos = "center",
-    footer = (" %d of %d rooms cleared "):format(cleared, total), footer_pos = "center",
+    footer = (" %d of %d rooms cleared "):format(cleared, total),
+    footer_pos = "center",
   })
   vim.wo[win].cursorline = true
 
-  local close = function() pcall(vim.api.nvim_win_close, win, true) end
+  local close = function()
+    pcall(vim.api.nvim_win_close, win, true)
+  end
   vim.keymap.set("n", "q", close, { buffer = buf, nowait = true })
   vim.keymap.set("n", "<Esc>", close, { buffer = buf, nowait = true })
   vim.keymap.set("n", "<CR>", function()
@@ -98,11 +118,19 @@ end
 function M.open()
   local root = require("core.repos").root()
   if not root then
-    return vim.notify("No map here, this folder is not in a repo", vim.log.levels.INFO, { title = "Map" })
+    return vim.notify(
+      "No map here, this folder is not in a repo",
+      vim.log.levels.INFO,
+      { title = "Map" }
+    )
   end
   local rooms = survey(root)
   if #rooms == 0 then
-    return vim.notify("This project has no rooms yet, only files at its root", vim.log.levels.INFO, { title = "Map" })
+    return vim.notify(
+      "This project has no rooms yet, only files at its root",
+      vim.log.levels.INFO,
+      { title = "Map" }
+    )
   end
   open_float(rooms, root)
 end

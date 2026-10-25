@@ -2,8 +2,8 @@
 -- the empty sky (embers, rot petals, glintstone, snow) and a player message written in by an
 -- invisible quill. Everything is extmarks on top of the HUD's own lines, which it never touches.
 local actions = require("core.hub.actions")
-local motion  = require("core.motion")
-local color   = require("core.motion.actions")
+local motion = require("core.motion")
+local color = require("core.motion.actions")
 
 local M = {}
 
@@ -17,7 +17,12 @@ local function gilded_marks()
   local ornament = vim.trim(lore.skin.ornament[1])
   local character = require("core.themes").current().character
   -- the plaque carves the name wide, or banner style when the panel is narrow
-  return { ornament, hub, actions.spaced(character), require("core.banner.actions").spaced(character) }
+  return {
+    ornament,
+    hub,
+    actions.spaced(character),
+    require("core.banner.actions").spaced(character),
+  }
 end
 
 local session
@@ -43,7 +48,8 @@ local function define_highlights()
     vim.api.nvim_set_hl(0, "EldenShimmer" .. level, { fg = color.mix(gold, white, t), bold = true })
   end
   local weather = current_weather()
-  local base, ember, flare = color.to_int(p.base), color.to_int(p[weather.from]), color.to_int(p[weather.to])
+  local base, ember, flare =
+    color.to_int(p.base), color.to_int(p[weather.from]), color.to_int(p[weather.to])
   for level = 1, actions.EMBER_LEVELS do
     local t = level / actions.EMBER_LEVELS
     local hue = color.mix(ember, flare, t)
@@ -73,12 +79,22 @@ local function index_buffer(buf)
     end
     local gilded = false
     for _, mark in ipairs(marks) do
-      if line:find(mark, 1, true) then gilded = true end
+      if line:find(mark, 1, true) then
+        gilded = true
+      end
     end
     -- rows crossing a frame belong to panels, the weather stays out of them entirely
     local framed = false
-    for _, edge in ipairs(FRAME_EDGES) do framed = framed or line:find(edge, 1, true) ~= nil end
-    rows[row] = { line = line, chars = chars, taken = actions.occupied(cells), gilded = gilded, framed = framed }
+    for _, edge in ipairs(FRAME_EDGES) do
+      framed = framed or line:find(edge, 1, true) ~= nil
+    end
+    rows[row] = {
+      line = line,
+      chars = chars,
+      taken = actions.occupied(cells),
+      gilded = gilded,
+      framed = framed,
+    }
   end
   return rows
 end
@@ -86,7 +102,9 @@ end
 local function find_message(rows, text)
   for row, info in ipairs(rows) do
     local start = info.line:find(text, 1, true)
-    if start then return row, vim.api.nvim_strwidth(info.line:sub(1, start - 1)) end
+    if start then
+      return row, vim.api.nvim_strwidth(info.line:sub(1, start - 1))
+    end
   end
 end
 
@@ -98,7 +116,9 @@ local function draw_shimmer(s, elapsed)
           local level = actions.shimmer_level(char[3], row, elapsed, s.width)
           if level > 0 then
             vim.api.nvim_buf_set_extmark(s.buf, ns, row - 1, char[1], {
-              end_col = char[2], hl_group = "EldenShimmer" .. level, priority = 300,
+              end_col = char[2],
+              hl_group = "EldenShimmer" .. level,
+              priority = 300,
             })
           end
         end
@@ -118,7 +138,9 @@ local function draw_embers(s, dt)
   local alive = {}
   for _, ember in ipairs(s.embers) do
     actions.step_ember(ember, dt)
-    if actions.ember_alive(ember) then table.insert(alive, ember) end
+    if actions.ember_alive(ember) then
+      table.insert(alive, ember)
+    end
   end
   while #alive < actions.ember_budget(s.width, height) and math.random() < 0.35 do
     table.insert(alive, actions.spawn_ember(math.random, s.width, height, weather))
@@ -129,7 +151,14 @@ local function draw_embers(s, dt)
     local row, col = math.floor(ember.y), math.floor(ember.x)
     local info = s.rows[row + 1]
     -- embers drift behind the text instead of scribbling over it
-    if info and not info.framed and col >= 0 and col < s.width and not info.taken[col] and not under_quill(s, row, col) then
+    if
+      info
+      and not info.framed
+      and col >= 0
+      and col < s.width
+      and not info.taken[col]
+      and not under_quill(s, row, col)
+    then
       local glyph, level = actions.ember_look(ember, weather)
       vim.api.nvim_buf_set_extmark(s.buf, ns, row, 0, {
         virt_text = { { glyph, "EldenEmber" .. level } },
@@ -144,13 +173,17 @@ local function draw_quill(s, elapsed)
   local text = '"' .. M.message() .. '"'
   local row, col = find_message(s.rows, text)
   s.quill_mask = nil
-  if not row then return end
+  if not row then
+    return
+  end
   local length = vim.fn.strchars(text)
-  if actions.quill_done(length, elapsed) then return end
+  if actions.quill_done(length, elapsed) then
+    return
+  end
 
   local typed = actions.typed(length, elapsed)
   local quill = actions.quill_visible(length, elapsed) and "▍" or " "
-  local rest  = math.max(0, length - typed - 1)
+  local rest = math.max(0, length - typed - 1)
   vim.api.nvim_buf_set_extmark(s.buf, ns, row - 1, 0, {
     virt_text = {
       { vim.fn.strcharpart(text, 0, typed), "SnacksDashboardDesc" },
@@ -164,9 +197,13 @@ local function draw_quill(s, elapsed)
 end
 
 local function tick(s, elapsed)
-  if not vim.api.nvim_buf_is_valid(s.buf) then return false end
+  if not vim.api.nvim_buf_is_valid(s.buf) then
+    return false
+  end
   s.win = vim.fn.bufwinid(s.buf)
-  if s.win == -1 then return false end
+  if s.win == -1 then
+    return false
+  end
 
   local changedtick = vim.api.nvim_buf_get_changedtick(s.buf)
   if changedtick ~= s.changedtick then
@@ -183,24 +220,37 @@ local function tick(s, elapsed)
 end
 
 function M.stop()
-  if not session then return end
+  if not session then
+    return
+  end
   session.loop:stop()
-  if vim.api.nvim_buf_is_valid(session.buf) then vim.api.nvim_buf_clear_namespace(session.buf, ns, 0, -1) end
+  if vim.api.nvim_buf_is_valid(session.buf) then
+    vim.api.nvim_buf_clear_namespace(session.buf, ns, 0, -1)
+  end
   session = nil
 end
 
 function M.start(buf)
-  if session and session.buf == buf and session.loop:running() then return end
+  if session and session.buf == buf and session.loop:running() then
+    return
+  end
   M.stop()
   local s = { buf = buf, embers = {} }
-  s.loop = motion.loop({ interval = FRAME_MS, on_tick = function(elapsed) return tick(s, elapsed) end })
+  s.loop = motion.loop({
+    interval = FRAME_MS,
+    on_tick = function(elapsed)
+      return tick(s, elapsed)
+    end,
+  })
   session = s
 end
 
 local function start_on_visible_hud()
   for _, win in ipairs(vim.api.nvim_list_wins()) do
     local buf = vim.api.nvim_win_get_buf(win)
-    if vim.bo[buf].filetype == "eldentree_hud" then return M.start(buf) end
+    if vim.bo[buf].filetype == "eldentree_hud" then
+      return M.start(buf)
+    end
   end
 end
 
@@ -212,7 +262,11 @@ function M.setup()
     group = group,
     pattern = "EldentreeMotion",
     callback = function()
-      if motion.enabled() then start_on_visible_hud() else M.stop() end
+      if motion.enabled() then
+        start_on_visible_hud()
+      else
+        M.stop()
+      end
     end,
   })
 end

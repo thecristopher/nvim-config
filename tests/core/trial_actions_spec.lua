@@ -2,8 +2,12 @@ local actions = require("core.trial.actions")
 
 local function only(...)
   local present = {}
-  for _, file in ipairs({ ... }) do present[file] = true end
-  return function(file) return present[file] == true end
+  for _, file in ipairs({ ... }) do
+    present[file] = true
+  end
+  return function(file)
+    return present[file] == true
+  end
 end
 
 describe("detect", function()

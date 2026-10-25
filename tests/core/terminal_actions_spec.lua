@@ -38,7 +38,10 @@ describe("sequences", function()
   end)
 
   it("switches iTerm to Ada's profile", function()
-    assert.equal("\27]1337;SetProfile=Eldentree Resident Evil\7", actions.iterm_profile("Eldentree Resident Evil"))
+    assert.equal(
+      "\27]1337;SetProfile=Eldentree Resident Evil\7",
+      actions.iterm_profile("Eldentree Resident Evil")
+    )
   end)
 end)
 

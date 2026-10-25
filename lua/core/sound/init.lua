@@ -12,20 +12,32 @@ local function folder()
   return vim.fn.stdpath("config") .. "/sounds/" .. require("core.franchise").name()
 end
 
-local function executable(name) return vim.fn.executable(name) == 1 end
+local function executable(name)
+  return vim.fn.executable(name) == 1
+end
 
 --- Plays the sound for an event, if the franchise has one.
 ---@param event string one of actions.EVENTS
 function M.play(event)
-  if vim.g.eldentree_sound == false or #vim.api.nvim_list_uis() == 0 then return end
+  if vim.g.eldentree_sound == false or #vim.api.nvim_list_uis() == 0 then
+    return
+  end
   local now = vim.uv.now()
-  if last_played[event] and now - last_played[event] < DEBOUNCE_MS then return end
+  if last_played[event] and now - last_played[event] < DEBOUNCE_MS then
+    return
+  end
   local ok, files = pcall(vim.fn.readdir, folder())
-  if not ok then return end
+  if not ok then
+    return
+  end
   local file = actions.pick(files, event, math.random)
-  if not file then return end
+  if not file then
+    return
+  end
   local command = actions.command(folder() .. "/" .. file, executable)
-  if not command then return end
+  if not command then
+    return
+  end
   last_played[event] = now
   pcall(vim.system, command, { detach = true })
 end
@@ -37,7 +49,9 @@ function M.setup()
     M.play(cmd.args)
   end, {
     nargs = 1,
-    complete = function() return actions.EVENTS end,
+    complete = function()
+      return actions.EVENTS
+    end,
     desc = "Play one of the franchise's sounds",
   })
 end

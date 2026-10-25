@@ -6,16 +6,35 @@ local M = {}
 ---@param lines string[]
 ---@return { sha: string, author: string, mail: string, time: integer, summary: string, unwritten: boolean }|nil
 function M.parse_porcelain(lines)
-  if not lines or not lines[1] then return nil end
+  if not lines or not lines[1] then
+    return nil
+  end
   local sha = lines[1]:match("^(%x+) ")
-  if not sha then return nil end
-  local info = { sha = sha, author = "", mail = "", time = 0, summary = "", unwritten = sha:match("^0+$") ~= nil }
+  if not sha then
+    return nil
+  end
+  local info = {
+    sha = sha,
+    author = "",
+    mail = "",
+    time = 0,
+    summary = "",
+    unwritten = sha:match("^0+$") ~= nil,
+  }
   for _, line in ipairs(lines) do
     local key, value = line:match("^(%S+) (.*)$")
-    if key == "author" then info.author = value end
-    if key == "author-mail" then info.mail = value:gsub("^<", ""):gsub(">$", "") end
-    if key == "author-time" then info.time = tonumber(value) or 0 end
-    if key == "summary" then info.summary = value end
+    if key == "author" then
+      info.author = value
+    end
+    if key == "author-mail" then
+      info.mail = value:gsub("^<", ""):gsub(">$", "")
+    end
+    if key == "author-time" then
+      info.time = tonumber(value) or 0
+    end
+    if key == "summary" then
+      info.summary = value
+    end
   end
   return info
 end
@@ -57,9 +76,13 @@ end
 ---@param me { name: string|nil, mail: string|nil }
 ---@return "unwritten"|"self"|"other"
 function M.kind(info, me)
-  if info.unwritten then return "unwritten" end
+  if info.unwritten then
+    return "unwritten"
+  end
   me = me or {}
-  if (me.mail and me.mail ~= "" and info.mail == me.mail) or (me.name and info.author == me.name) then
+  if
+    (me.mail and me.mail ~= "" and info.mail == me.mail) or (me.name and info.author == me.name)
+  then
     return "self"
   end
   return "other"
@@ -72,11 +95,17 @@ end
 ---@return { title: string, lines: string[] }
 function M.describe(info, kind, now)
   if kind == "unwritten" then
-    return { title = " ◈ Unwritten ", lines = { "Not yet etched into history.", "Commit it before the fog takes it." } }
+    return {
+      title = " ◈ Unwritten ",
+      lines = { "Not yet etched into history.", "Commit it before the fog takes it." },
+    }
   end
   local words = require("core.franchise").current().words
   local who = kind == "self" and words.past_self or words.phantom:format(info.author)
-  local when = ("%s · %s"):format(M.relative_time(math.max(0, now - info.time)), info.sha:sub(1, 7))
+  local when = ("%s · %s"):format(
+    M.relative_time(math.max(0, now - info.time)),
+    info.sha:sub(1, 7)
+  )
   return { title = " ◈ " .. who .. " ", lines = { when, info.summary } }
 end
 

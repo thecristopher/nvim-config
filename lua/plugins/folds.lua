@@ -3,17 +3,42 @@
 return {
   {
     "kevinhwang91/nvim-ufo",
-    event        = { "BufReadPost", "BufNewFile" },
+    event = { "BufReadPost", "BufNewFile" },
     dependencies = { "kevinhwang91/promise-async" },
     keys = {
-      { "zR", function() require("ufo").openAllFolds() end,  desc = "Open all folds" },
-      { "zM", function() require("ufo").closeAllFolds() end, desc = "Close all folds" },
-      { "zK", function() require("ufo").peekFoldedLinesUnderCursor() end, desc = "Peek fold" },
+      {
+        "zR",
+        function()
+          require("ufo").openAllFolds()
+        end,
+        desc = "Open all folds",
+      },
+      {
+        "zM",
+        function()
+          require("ufo").closeAllFolds()
+        end,
+        desc = "Close all folds",
+      },
+      {
+        "zK",
+        function()
+          require("ufo").peekFoldedLinesUnderCursor()
+        end,
+        desc = "Peek fold",
+      },
     },
     opts = {
-      provider_selector = function() return { "treesitter", "indent" } end,
+      provider_selector = function()
+        return { "treesitter", "indent" }
+      end,
       fold_virt_text_handler = function(virt_text, lnum, end_lnum, width, truncate)
-        return require("core.folds.actions").fold_chunks(virt_text, end_lnum - lnum, width, truncate)
+        return require("core.folds.actions").fold_chunks(
+          virt_text,
+          end_lnum - lnum,
+          width,
+          truncate
+        )
       end,
       preview = { win_config = { border = require("core.skin").border(), winblend = 0 } },
     },

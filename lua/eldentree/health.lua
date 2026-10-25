@@ -16,8 +16,12 @@ local function check_franchises()
       vim.health.error("lore does not load: " .. tostring(lore))
     else
       local problems = validate.problems(lore, portrait_exists)
-      if #problems == 0 then vim.health.ok(("%s is ready, %d regions"):format(lore.title, #lore.regions)) end
-      for _, problem in ipairs(problems) do vim.health.warn(problem) end
+      if #problems == 0 then
+        vim.health.ok(("%s is ready, %d regions"):format(lore.title, #lore.regions))
+      end
+      for _, problem in ipairs(problems) do
+        vim.health.warn(problem)
+      end
     end
   end
 end

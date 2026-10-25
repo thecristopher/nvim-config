@@ -59,6 +59,9 @@ end)
 describe("summary", function()
   it("reads like the results screen Inde and Claire share", function()
     local last = { seconds = 2 * 3600 + 13 * 60, saves = 14, fixes = 9, rank = "A" }
-    assert.equal("Last run  ·  Rank A  ·  2h 13m  ·  14 saves  ·  9 fixes", actions.summary("Last run", last))
+    assert.equal(
+      "Last run  ·  Rank A  ·  2h 13m  ·  14 saves  ·  9 fixes",
+      actions.summary("Last run", last)
+    )
   end)
 end)

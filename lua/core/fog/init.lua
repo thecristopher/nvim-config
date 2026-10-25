@@ -1,7 +1,7 @@
 -- A fog wall rolls across the editor while you travel to another Site of Grace and thins away
 -- once you arrive. Every cell is a space on a blended float, so the new project shows through.
 local actions = require("core.fog.actions")
-local motion  = require("core.motion")
+local motion = require("core.motion")
 
 local M = {}
 
@@ -17,13 +17,21 @@ end
 local function paint_groups(density)
   local color = fog_color()
   for level = 0, actions.LEVELS do
-    vim.api.nvim_set_hl(0, "EldenFog" .. level, { bg = color, blend = actions.blend_for(level, density) })
+    vim.api.nvim_set_hl(
+      0,
+      "EldenFog" .. level,
+      { bg = color, blend = actions.blend_for(level, density) }
+    )
   end
 end
 
 local function close(state)
-  if not state then return end
-  if state.tween then state.tween:stop() end
+  if not state then
+    return
+  end
+  if state.tween then
+    state.tween:stop()
+  end
   pcall(vim.api.nvim_win_close, state.win, true)
   pcall(vim.api.nvim_buf_delete, state.buf, { force = true })
 end
@@ -34,20 +42,22 @@ local function open_float()
   vim.bo[buf].bufhidden = "wipe"
   local blank = (" "):rep(width)
   local lines = {}
-  for row = 1, height do lines[row] = blank end
+  for row = 1, height do
+    lines[row] = blank
+  end
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
   local win = vim.api.nvim_open_win(buf, false, {
-    relative  = "editor",
-    row       = 0,
-    col       = 0,
-    width     = width,
-    height    = height,
-    style     = "minimal",
-    border    = "none",
+    relative = "editor",
+    row = 0,
+    col = 0,
+    width = width,
+    height = height,
+    style = "minimal",
+    border = "none",
     focusable = false,
     -- above pickers and the tree, below banners so a new grace still reads through the fog
-    zindex    = 200,
+    zindex = 200,
     noautocmd = true,
   })
   -- any winblend switches on per cell blending, the groups then choose their own amount
@@ -63,7 +73,13 @@ local function draw_clouds(state, raw)
     local levels = actions.row_levels(state.width, row, state.height, state.seed, drift)
     for _, run in ipairs(actions.runs(levels)) do
       if run[3] > 0 then
-        vim.api.nvim_buf_set_extmark(state.buf, ns, row, run[1], { end_col = run[2], hl_group = "EldenFog" .. run[3] })
+        vim.api.nvim_buf_set_extmark(
+          state.buf,
+          ns,
+          row,
+          run[1],
+          { end_col = run[2], hl_group = "EldenFog" .. run[3] }
+        )
       end
     end
   end
@@ -72,8 +88,12 @@ end
 --- Rolls a fog wall over the editor and lets it fade, unless animations are stilled.
 --- Worlds that travel through doors open one instead.
 function M.roll()
-  if require("core.franchise").mechanic("travel") == "door" then return require("core.door").open() end
-  if not motion.enabled() or vim.g.eldentree_fog == false then return end
+  if require("core.franchise").mechanic("travel") == "door" then
+    return require("core.door").open()
+  end
+  if not motion.enabled() or vim.g.eldentree_fog == false then
+    return
+  end
   close(current)
   require("core.sound").play("fog")
   local state = open_float()
@@ -81,16 +101,20 @@ function M.roll()
   paint_groups(0)
   state.tween = motion.tween({
     duration = actions.DURATION,
-    easing   = "linear",
+    easing = "linear",
     frame_ms = 40,
     on_frame = function(_, raw)
-      if not vim.api.nvim_win_is_valid(state.win) then return end
+      if not vim.api.nvim_win_is_valid(state.win) then
+        return
+      end
       paint_groups(actions.density_at(raw))
       draw_clouds(state, raw)
     end,
-    on_done  = function()
+    on_done = function()
       close(state)
-      if current == state then current = nil end
+      if current == state then
+        current = nil
+      end
     end,
   })
 end

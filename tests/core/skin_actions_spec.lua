@@ -2,7 +2,10 @@ local actions = require("core.skin.actions")
 
 describe("border_chars", function()
   it("gives telescope the double frame of the inventory", function()
-    assert.same({ "═", "║", "═", "║", "╔", "╗", "╝", "╚" }, actions.border_chars("double"))
+    assert.same(
+      { "═", "║", "═", "║", "╔", "╗", "╝", "╚" },
+      actions.border_chars("double")
+    )
   end)
 
   it("falls back to rounded for a border it does not know", function()
@@ -33,7 +36,8 @@ end)
 describe("sign_text", function()
   it("keys every sign by its severity", function()
     local severity = vim.diagnostic.severity
-    local text = actions.sign_text({ error = "☣", warn = "▲", hint = "◆", info = "◇" }, severity)
+    local text =
+      actions.sign_text({ error = "☣", warn = "▲", hint = "◆", info = "◇" }, severity)
     assert.equal("☣", text[severity.ERROR])
     assert.equal("◇", text[severity.INFO])
   end)

@@ -30,7 +30,9 @@ end
 
 local function current_branch()
   local out = vim.fn.system({ "git", "rev-parse", "--abbrev-ref", "HEAD" })
-  if vim.v.shell_error ~= 0 then return nil end
+  if vim.v.shell_error ~= 0 then
+    return nil
+  end
   return vim.trim(out)
 end
 
@@ -49,19 +51,26 @@ end
 
 local function unpushed_count()
   local out = vim.fn.system({ "git", "rev-list", "@{u}..HEAD", "--count" })
-  if vim.v.shell_error ~= 0 then return 0 end
+  if vim.v.shell_error ~= 0 then
+    return 0
+  end
   return tonumber(vim.trim(out)) or 0
 end
 
 local function commit_log(base_r, branch)
-  local out = vim.fn.system({ "git", "log", "--reverse", "--format=- %s", base_r .. ".." .. branch })
-  if vim.v.shell_error ~= 0 then return "" end
+  local out =
+    vim.fn.system({ "git", "log", "--reverse", "--format=- %s", base_r .. ".." .. branch })
+  if vim.v.shell_error ~= 0 then
+    return ""
+  end
   return vim.trim(out)
 end
 
 local function diff_context(base_r, branch)
   local diff = vim.fn.system({ "git", "diff", base_r .. "..." .. branch })
-  if vim.v.shell_error ~= 0 then return "" end
+  if vim.v.shell_error ~= 0 then
+    return ""
+  end
   if #diff > MAX_DIFF then
     local stat = vim.fn.system({ "git", "diff", base_r .. "..." .. branch, "--stat" })
     return vim.trim(stat) .. "\n\n[diff too large to include in full; showing stat only]"
@@ -71,21 +80,30 @@ end
 
 local function existing_pr(branch)
   local out = vim.fn.system({ "gh", "pr", "view", branch, "--json", "number,url" })
-  if vim.v.shell_error ~= 0 then return nil end
+  if vim.v.shell_error ~= 0 then
+    return nil
+  end
   local ok, decoded = pcall(vim.json.decode, out)
-  if not ok or type(decoded) ~= "table" then return nil end
+  if not ok or type(decoded) ~= "table" then
+    return nil
+  end
   return decoded
 end
 
 -- ── Branch/preview pickers (Snacks) ─────────────────────────────────────────
 
 local function local_branches()
-  local out = vim.fn.system({ "git", "for-each-ref", "--format=%(refname:short)%09%(subject)", "refs/heads" })
-  if vim.v.shell_error ~= 0 then return {} end
+  local out =
+    vim.fn.system({ "git", "for-each-ref", "--format=%(refname:short)%09%(subject)", "refs/heads" })
+  if vim.v.shell_error ~= 0 then
+    return {}
+  end
   local list = {}
   for line in vim.gsplit(vim.trim(out), "\n", { plain = true }) do
     local name, subject = line:match("^(.-)\t(.*)$")
-    if name then list[#list + 1] = { name = name, subject = subject } end
+    if name then
+      list[#list + 1] = { name = name, subject = subject }
+    end
   end
   return list
 end
@@ -105,21 +123,25 @@ local function pick_branch(title, default, cb)
   local items = {}
   local function add(b)
     items[#items + 1] = {
-      text   = b.subject ~= "" and (b.name .. "  " .. b.subject) or b.name,
+      text = b.subject ~= "" and (b.name .. "  " .. b.subject) or b.name,
       branch = b.name,
     }
   end
   for _, b in ipairs(branches) do
-    if b.name == default then add(b) end
+    if b.name == default then
+      add(b)
+    end
   end
   for _, b in ipairs(branches) do
-    if b.name ~= default then add(b) end
+    if b.name ~= default then
+      add(b)
+    end
   end
 
   Snacks.picker.pick({
-    title   = title,
-    items   = items,
-    format  = "text",
+    title = title,
+    items = items,
+    format = "text",
     confirm = function(picker, item)
       picker:close()
       if not item then
@@ -127,7 +149,9 @@ local function pick_branch(title, default, cb)
         return
       end
       -- the closing picker drops insert mode on its way out, so open the next prompt after it is gone
-      vim.schedule(function() cb(item.branch) end)
+      vim.schedule(function()
+        cb(item.branch)
+      end)
     end,
   })
 end
@@ -141,17 +165,23 @@ local function preview_diff(base_r, branch, base, cb)
   Snacks.picker.pick({
     finder = function(_, ctx)
       return Diff.diff({
-        cmd  = "git",
+        cmd = "git",
         args = {
-          "-c", "core.quotepath=false", "--no-pager", "diff", "--no-color",
-          "--no-ext-diff", "--diff-filter=u", base_r .. "..." .. branch,
+          "-c",
+          "core.quotepath=false",
+          "--no-pager",
+          "diff",
+          "--no-color",
+          "--no-ext-diff",
+          "--diff-filter=u",
+          base_r .. "..." .. branch,
         },
         cwd = cwd,
       }, ctx)
     end,
-    format  = "git_status",
+    format = "git_status",
     preview = "diff",
-    title   = ("PR Preview: %s -> %s"):format(branch, base),
+    title = ("PR Preview: %s -> %s"):format(branch, base),
     confirm = function(picker)
       picker:close()
       vim.schedule(cb)
@@ -165,10 +195,14 @@ local function draft_via_claude(prompt, cb)
   notify_info("Drafting PR description with Claude…")
   local start = vim.uv.now()
   local timer = vim.uv.new_timer()
-  timer:start(6000, 6000, vim.schedule_wrap(function()
-    local secs = math.floor((vim.uv.now() - start) / 1000)
-    notify_info(("Drafting PR description with Claude… (%ds elapsed)"):format(secs))
-  end))
+  timer:start(
+    6000,
+    6000,
+    vim.schedule_wrap(function()
+      local secs = math.floor((vim.uv.now() - start) / 1000)
+      notify_info(("Drafting PR description with Claude… (%ds elapsed)"):format(secs))
+    end)
+  )
   require("core.claude").run(prompt, function(res)
     timer:stop()
     timer:close()
@@ -188,8 +222,8 @@ end
 
 local function open_editor(base, branch, pr, title, body)
   local buf = vim.api.nvim_create_buf(false, false)
-  vim.bo[buf].buftype   = "acwrite"
-  vim.bo[buf].filetype  = "markdown"
+  vim.bo[buf].buftype = "acwrite"
+  vim.bo[buf].filetype = "markdown"
   vim.bo[buf].bufhidden = "wipe"
   vim.api.nvim_buf_set_name(buf, ("PR Draft: %s -> %s"):format(branch, base))
 
@@ -202,33 +236,40 @@ local function open_editor(base, branch, pr, title, body)
 
   local width, height = math.floor(vim.o.columns * 0.7), math.floor(vim.o.lines * 0.7)
   local win = vim.api.nvim_open_win(buf, true, {
-    relative  = "editor",
-    row       = math.floor((vim.o.lines - height) / 2),
-    col       = math.floor((vim.o.columns - width) / 2),
-    width     = width,
-    height    = height,
-    border    = require("core.skin").border(),
-    title     = pr and (" Update PR #%d "):format(pr.number) or " Create PR ",
+    relative = "editor",
+    row = math.floor((vim.o.lines - height) / 2),
+    col = math.floor((vim.o.columns - width) / 2),
+    width = width,
+    height = height,
+    border = require("core.skin").border(),
+    title = pr and (" Update PR #%d "):format(pr.number) or " Create PR ",
     title_pos = "center",
   })
-  vim.wo[win].wrap      = true
+  vim.wo[win].wrap = true
   vim.wo[win].linebreak = true
   vim.api.nvim_win_set_cursor(win, { 1, 0 })
 
   vim.api.nvim_create_autocmd("BufWriteCmd", {
-    buffer   = buf,
-    callback = function() M.submit(buf) end,
+    buffer = buf,
+    callback = function()
+      M.submit(buf)
+    end,
   })
 
-  notify_info(("Edit the draft, then :w to %s. :q! discards it."):format(
-    pr and ("update PR #" .. pr.number) or "create the PR"))
+  notify_info(
+    ("Edit the draft, then :w to %s. :q! discards it."):format(
+      pr and ("update PR #" .. pr.number) or "create the PR"
+    )
+  )
 end
 
 -- ── Submit: push if needed, then gh pr create/edit ──────────────────────────
 
 function M.submit(buf)
   local ctx = drafts[buf]
-  if not ctx then return end
+  if not ctx then
+    return
+  end
 
   local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
   local title = vim.trim(lines[1] or "")
@@ -237,11 +278,19 @@ function M.submit(buf)
     return
   end
   local body_lines = {}
-  for i = 3, #lines do body_lines[#body_lines + 1] = lines[i] end
+  for i = 3, #lines do
+    body_lines[#body_lines + 1] = lines[i]
+  end
   local body = vim.trim(table.concat(body_lines, "\n"))
 
   if not has_upstream() then
-    if vim.fn.confirm(("Branch '%s' has no upstream. Push to origin now?"):format(ctx.branch), "&Yes\n&Cancel", 1) ~= 1 then
+    if
+      vim.fn.confirm(
+        ("Branch '%s' has no upstream. Push to origin now?"):format(ctx.branch),
+        "&Yes\n&Cancel",
+        1
+      ) ~= 1
+    then
       return
     end
     notify_info(("Pushing '%s' to origin…"):format(ctx.branch))
@@ -253,7 +302,13 @@ function M.submit(buf)
   else
     local ahead = unpushed_count()
     if ahead > 0 then
-      if vim.fn.confirm(("Push %d unpushed commit(s) on '%s' to origin now?"):format(ahead, ctx.branch), "&Yes\n&Cancel", 1) ~= 1 then
+      if
+        vim.fn.confirm(
+          ("Push %d unpushed commit(s) on '%s' to origin now?"):format(ahead, ctx.branch),
+          "&Yes\n&Cancel",
+          1
+        ) ~= 1
+      then
         return
       end
       notify_info(("Pushing %d commit(s) to origin…"):format(ahead))
@@ -265,15 +320,38 @@ function M.submit(buf)
     end
   end
 
-  notify_info(ctx.pr and ("Updating PR #%d on GitHub…"):format(ctx.pr.number) or "Creating PR on GitHub…")
+  notify_info(
+    ctx.pr and ("Updating PR #%d on GitHub…"):format(ctx.pr.number) or "Creating PR on GitHub…"
+  )
   local tmp = vim.fn.tempname()
   vim.fn.writefile(vim.split(body, "\n", { plain = true }), tmp)
 
   local out
   if ctx.pr then
-    out = vim.fn.system({ "gh", "pr", "edit", tostring(ctx.pr.number), "--title", title, "--body-file", tmp })
+    out = vim.fn.system({
+      "gh",
+      "pr",
+      "edit",
+      tostring(ctx.pr.number),
+      "--title",
+      title,
+      "--body-file",
+      tmp,
+    })
   else
-    out = vim.fn.system({ "gh", "pr", "create", "--title", title, "--body-file", tmp, "--base", ctx.base, "--head", ctx.branch })
+    out = vim.fn.system({
+      "gh",
+      "pr",
+      "create",
+      "--title",
+      title,
+      "--body-file",
+      tmp,
+      "--base",
+      ctx.base,
+      "--head",
+      ctx.branch,
+    })
   end
   local ok = vim.v.shell_error == 0
   vim.fn.delete(tmp)
@@ -286,7 +364,9 @@ function M.submit(buf)
 
   vim.bo[buf].modified = false
   local url = ctx.pr and ctx.pr.url or vim.trim(out)
-  notify_info(ctx.pr and ("Updated PR #%d: %s"):format(ctx.pr.number, url) or ("Created PR: %s"):format(url))
+  notify_info(
+    ctx.pr and ("Updated PR #%d: %s"):format(ctx.pr.number, url) or ("Created PR: %s"):format(url)
+  )
   require("core.banner").show("great", { subtitle = title })
 
   vim.schedule(function()
@@ -298,8 +378,8 @@ end
 -- Builds the Claude prompt and fires the draft request.
 local function do_draft(branch, base, log, diff, pr, vibe)
   local vibe_line = vibe ~= ""
-    and ('The user set the vibe: "' .. vibe .. '". Let that color the tone of the opener.')
-    or  "No specific vibe. Follow the style guide naturally."
+      and ('The user set the vibe: "' .. vibe .. '". Let that color the tone of the opener.')
+    or "No specific vibe. Follow the style guide naturally."
 
   local lines = {
     ("Draft a GitHub pull request for merging branch `%s` into `%s`."):format(branch, base),
@@ -318,7 +398,9 @@ local function do_draft(branch, base, log, diff, pr, vibe)
     diff,
     "",
     "Respond with EXACTLY this format and nothing else (no code fences, no preamble):",
-    ("TITLE: [%s] <short description of the work, no trailing period, under 72 chars>"):format(branch),
+    ("TITLE: [%s] <short description of the work, no trailing period, under 72 chars>"):format(
+      branch
+    ),
     "===",
     "<1 to 2 casual sentences about what this PR does and why>",
     "",
@@ -330,7 +412,9 @@ local function do_draft(branch, base, log, diff, pr, vibe)
 
   draft_via_claude(prompt, function(res)
     if res.code ~= 0 or not res.stdout or vim.trim(res.stdout) == "" then
-      notify_err("Claude failed to draft a description: " .. vim.trim(res.stderr or "unknown error"))
+      notify_err(
+        "Claude failed to draft a description: " .. vim.trim(res.stderr or "unknown error")
+      )
       return
     end
     local title, body = parse_draft(res.stdout)
@@ -348,11 +432,13 @@ local function proceed(branch, base)
     return notify_err(("No commits ahead of '%s'."):format(base))
   end
   local diff = diff_context(base_r, branch)
-  local pr   = existing_pr(branch)
+  local pr = existing_pr(branch)
 
   preview_diff(base_r, branch, base, function()
     vim.ui.input({ prompt = "Vibe? (optional, Enter to skip): " }, function(vibe)
-      if vibe == nil then return end
+      if vibe == nil then
+        return
+      end
       do_draft(branch, base, log, diff, pr, vim.trim(vibe))
     end)
   end)
@@ -370,7 +456,9 @@ function M.open()
 
   local default_base = require("core.git").default_branch()
   if not default_base then
-    return notify_err("Couldn't determine the base branch (no origin/staging, origin/main, origin/master, or origin/HEAD). Set one with: git config pr-helper.base <branch>")
+    return notify_err(
+      "Couldn't determine the base branch (no origin/staging, origin/main, origin/master, or origin/HEAD). Set one with: git config pr-helper.base <branch>"
+    )
   end
   local branch = current_branch()
   if not branch or branch == "HEAD" then

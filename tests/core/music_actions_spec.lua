@@ -13,7 +13,10 @@ local CLAIRE_SONG = vim.json.encode({
 describe("cider_command", function()
   it("asks Cider what is playing without a token when auth is off", function()
     local cmd = actions.cider_command("now-playing", "GET", nil)
-    assert.same({ "curl", "-s", "--max-time", "1", "-X", "GET", actions.CIDER_URL .. "/now-playing" }, cmd)
+    assert.same(
+      { "curl", "-s", "--max-time", "1", "-X", "GET", actions.CIDER_URL .. "/now-playing" },
+      cmd
+    )
   end)
 
   it("sends Inde's token in both header spellings", function()
@@ -67,7 +70,10 @@ describe("music_control_command", function()
   it("skips the song only when Music is already open", function()
     local cmd = actions.music_control_command("next")
     assert.equal("osascript", cmd[1])
-    assert.equal('if application "Music" is running then tell application "Music" to next track', cmd[3])
+    assert.equal(
+      'if application "Music" is running then tell application "Music" to next track',
+      cmd[3]
+    )
   end)
 
   it("refuses a control Wesker made up", function()
@@ -101,7 +107,10 @@ describe("label", function()
   end)
 
   it("shows the pause icon and leaves the artist out when there is none", function()
-    assert.equal("󰏤 Love Note", actions.label({ title = "Love Note", artist = "", playing = false }, 40))
+    assert.equal(
+      "󰏤 Love Note",
+      actions.label({ title = "Love Note", artist = "", playing = false }, 40)
+    )
   end)
 
   it("cuts a long title so the statusline keeps its room", function()
@@ -168,7 +177,12 @@ describe("cover_name", function()
 end)
 
 describe("panel", function()
-  local song = { title = "Shared Playlist", artist = "Inde Navarrete", album = "Our Anniversary", playing = true }
+  local song = {
+    title = "Shared Playlist",
+    artist = "Inde Navarrete",
+    album = "Our Anniversary",
+    playing = true,
+  }
 
   it("puts the song beside the cover and the keys under both", function()
     local layout = actions.panel(song, "cider")

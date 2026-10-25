@@ -3,11 +3,17 @@
 
 return {
   {
-    dir  = vim.fn.stdpath("config"),
+    dir = vim.fn.stdpath("config"),
     name = "commit-helper",
     lazy = true,
     keys = {
-      { "<leader>pc", function() require("core.commit").open() end, desc = "Commit: draft with Claude" },
+      {
+        "<leader>pc",
+        function()
+          require("core.commit").open()
+        end,
+        desc = "Commit: draft with Claude",
+      },
     },
   },
 }

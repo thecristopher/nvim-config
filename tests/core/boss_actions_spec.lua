@@ -18,7 +18,9 @@ end)
 
 describe("should_engage", function()
   it("waits while Claire's typos are still fresh", function()
-    assert.is_false(actions.should_engage({ errors = 5, since = 0, now = actions.ENGAGE_AFTER_MS - 1 }))
+    assert.is_false(
+      actions.should_engage({ errors = 5, since = 0, now = actions.ENGAGE_AFTER_MS - 1 })
+    )
   end)
 
   it("starts the fight once the errors linger", function()
@@ -26,7 +28,9 @@ describe("should_engage", function()
   end)
 
   it("ignores a buffer with fewer errors than the threshold", function()
-    assert.is_false(actions.should_engage({ errors = actions.THRESHOLD - 1, since = 0, now = 60000 }))
+    assert.is_false(
+      actions.should_engage({ errors = actions.THRESHOLD - 1, since = 0, now = 60000 })
+    )
   end)
 
   it("never engages before the errors were first seen", function()
@@ -164,7 +168,9 @@ describe("closeness", function()
   end)
 
   it("pushes him back with every fix", function()
-    assert.is_true(actions.closeness(2, 5, actions.APPROACH_MS) < actions.closeness(4, 5, actions.APPROACH_MS))
+    assert.is_true(
+      actions.closeness(2, 5, actions.APPROACH_MS) < actions.closeness(4, 5, actions.APPROACH_MS)
+    )
   end)
 end)
 

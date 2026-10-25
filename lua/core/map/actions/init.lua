@@ -11,7 +11,9 @@ function M.parse_counts(output)
   local counts = {}
   for line in (output or ""):gmatch("[^\n]+") do
     local file, count = line:match("^(.*):(%d+)$")
-    if file then counts[file] = tonumber(count) end
+    if file then
+      counts[file] = tonumber(count)
+    end
   end
   return counts
 end
@@ -31,11 +33,15 @@ function M.rooms(root, files, todos, errors)
   local rooms = {}
   for _, file in ipairs(files) do
     local key = zones.zone_key(root .. "/" .. file, root)
-    if key then room_for(rooms, key).todos = room_for(rooms, key).todos + (todos[file] or 0) end
+    if key then
+      room_for(rooms, key).todos = room_for(rooms, key).todos + (todos[file] or 0)
+    end
   end
   for path, count in pairs(errors) do
     local key = zones.zone_key(path, root)
-    if key then room_for(rooms, key).errors = room_for(rooms, key).errors + count end
+    if key then
+      room_for(rooms, key).errors = room_for(rooms, key).errors + count
+    end
   end
 
   local list = {}
@@ -44,7 +50,9 @@ function M.rooms(root, files, todos, errors)
     room.cleared = room.todos == 0 and room.errors == 0
     table.insert(list, room)
   end
-  table.sort(list, function(a, b) return a.key < b.key end)
+  table.sort(list, function(a, b)
+    return a.key < b.key
+  end)
   return list
 end
 
@@ -53,8 +61,12 @@ end
 ---@return string
 function M.leftovers(room)
   local parts = {}
-  if room.errors > 0 then table.insert(parts, room.errors .. (room.errors == 1 and " error" or " errors")) end
-  if room.todos > 0 then table.insert(parts, room.todos .. (room.todos == 1 and " TODO" or " TODOs")) end
+  if room.errors > 0 then
+    table.insert(parts, room.errors .. (room.errors == 1 and " error" or " errors"))
+  end
+  if room.todos > 0 then
+    table.insert(parts, room.todos .. (room.todos == 1 and " TODO" or " TODOs"))
+  end
   return table.concat(parts, ", ")
 end
 
@@ -62,7 +74,9 @@ end
 ---@param rooms table[] from M.rooms
 ---@return integer cleared, integer total
 function M.progress(rooms)
-  local cleared = #vim.tbl_filter(function(room) return room.cleared end, rooms)
+  local cleared = #vim.tbl_filter(function(room)
+    return room.cleared
+  end, rooms)
   return cleared, #rooms
 end
 

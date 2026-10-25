@@ -12,7 +12,9 @@ end
 -- nvim on Windows often misses the installer's PATH entry, so check the usual homes directly
 local function find_windows_claude()
   local on_path = vim.fn.exepath("claude")
-  if on_path ~= "" then return on_path end
+  if on_path ~= "" then
+    return on_path
+  end
 
   local home = vim.env.USERPROFILE or vim.env.HOME or ""
   local appdata = vim.env.APPDATA or ""
@@ -22,13 +24,17 @@ local function find_windows_claude()
     appdata .. "/npm/claude.cmd",
   }
   for _, path in ipairs(candidates) do
-    if vim.fn.filereadable(path) == 1 then return path end
+    if vim.fn.filereadable(path) == 1 then
+      return path
+    end
   end
   return ""
 end
 
 local function claude_launcher()
-  if not is_windows then return "claude" end
+  if not is_windows then
+    return "claude"
+  end
 
   local exe = find_windows_claude()
   if exe == "" then
@@ -51,22 +57,22 @@ end
 return {
   {
     "coder/claudecode.nvim",
-    event        = "VeryLazy",
+    event = "VeryLazy",
     dependencies = { "folke/snacks.nvim" },
     opts = {
-      auto_start      = true,
-      track_selection = true,   -- sends your cursor/visual selection as context
+      auto_start = true,
+      track_selection = true, -- sends your cursor/visual selection as context
 
       -- default tui keeps nvim scrollback, and a file dodges cmd.exe mangling inline JSON quotes
-      terminal_cmd    = claude_terminal_cmd(),
+      terminal_cmd = claude_terminal_cmd(),
 
       terminal = {
-        provider    = "snacks",
-        auto_insert = true,   -- toggling in drops you straight into Insert mode, ready to type
+        provider = "snacks",
+        auto_insert = true, -- toggling in drops you straight into Insert mode, ready to type
         snacks_win_opts = {
           position = "right",
-          width    = 0.38,
-          border   = require("core.skin").border(),
+          width = 0.38,
+          border = require("core.skin").border(),
           -- same floor as the tree, focused or not, so Claude always reads as a side panel
           wo = {
             winhighlight = "Normal:EldenPanel,NormalNC:EldenPanel,EndOfBuffer:EldenPanel,WinSeparator:WinSeparator,StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC",
@@ -75,24 +81,29 @@ return {
       },
 
       diff_opts = {
-        layout              = "vertical",
-        open_in_new_tab     = false,
+        layout = "vertical",
+        open_in_new_tab = false,
         keep_terminal_focus = false,
       },
     },
 
     keys = {
       -- Toggle / navigation
-      { "<leader>ac", "<cmd>ClaudeCode<cr>",            desc = "Toggle Claude" },
-      { "<leader>af", "<cmd>ClaudeCodeFocus<cr>",       desc = "Focus Claude" },
+      { "<leader>ac", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude" },
+      { "<leader>af", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
       { "<leader>am", "<cmd>ClaudeCodeSelectModel<cr>", desc = "Select model" },
       -- Context
-      { "<leader>ab", "<cmd>ClaudeCodeAdd<cr>",         desc = "Add buffer to context" },
-      { "<leader>as", "<cmd>ClaudeCodeSend<cr>",        desc = "Send selection",         mode = "v" },
-      { "<leader>at", "<cmd>ClaudeCodeTreeAdd<cr>",     desc = "Add file from tree" },
+      { "<leader>ab", "<cmd>ClaudeCodeAdd<cr>", desc = "Add buffer to context" },
+      {
+        "<leader>as",
+        "<cmd>ClaudeCodeSend<cr>",
+        desc = "Send selection",
+        mode = "v",
+      },
+      { "<leader>at", "<cmd>ClaudeCodeTreeAdd<cr>", desc = "Add file from tree" },
       -- Diffs
-      { "<leader>aa", "<cmd>ClaudeCodeDiffAccept<cr>",  desc = "Accept diff" },
-      { "<leader>ad", "<cmd>ClaudeCodeDiffDeny<cr>",    desc = "Deny diff" },
+      { "<leader>aa", "<cmd>ClaudeCodeDiffAccept<cr>", desc = "Accept diff" },
+      { "<leader>ad", "<cmd>ClaudeCodeDiffDeny<cr>", desc = "Deny diff" },
       { "<leader>ax", "<cmd>ClaudeCodeCloseAllDiffs<cr>", desc = "Close all diffs" },
     },
 

@@ -39,9 +39,13 @@ end
 
 -- what a banner does to your runes: death drops them, victory reclaims the stain and pays out
 function M.after_banner(state, kind)
-  if kind == "died" then return M.die(state) end
+  if kind == "died" then
+    return M.die(state)
+  end
   local bounty = M.BOUNTIES[kind]
-  if not bounty then return state end
+  if not bounty then
+    return state
+  end
   return M.award(M.recover(state), bounty)
 end
 

@@ -3,18 +3,59 @@
 local M = {}
 
 M.bindings = {
-  { keys = { "<F12>", "gd" },                    action = "definition",      desc = "Go to definition" },
-  { keys = { "<M-F12>", "<F60>", "gp" },         action = "peek_definition", desc = "Peek definition" },
-  { keys = { "<S-F12>", "<F24>", "gR" },         action = "peek_references", desc = "Peek references" },
-  { keys = { "<C-F12>", "<F36>", "gP" },         action = "peek_implementations", desc = "Peek implementations" },
-  { keys = { "gr" },                             action = "references",      desc = "References" },
-  { keys = { "gI" },                             action = "implementation",  desc = "Go to implementation" },
-  { keys = { "gy" },                             action = "type_definition", desc = "Go to type definition" },
-  { keys = { "gD" },                             action = "declaration",     desc = "Go to declaration" },
-  { keys = { "<F2>", "<leader>cr" },             action = "rename",          desc = "Rename symbol" },
-  { keys = { "<C-LeftMouse>" },                  action = "definition_at_mouse", desc = "Go to definition" },
-  { keys = { "K" },                              action = "hover",           desc = "Hover docs" },
-  { keys = { "<leader>ca" },                     action = "code_action",     desc = "Code action", mode = { "n", "x" } },
+  {
+    keys = { "<F12>", "gd" },
+    action = "definition",
+    desc = "Go to definition",
+  },
+  {
+    keys = { "<M-F12>", "<F60>", "gp" },
+    action = "peek_definition",
+    desc = "Peek definition",
+  },
+  {
+    keys = { "<S-F12>", "<F24>", "gR" },
+    action = "peek_references",
+    desc = "Peek references",
+  },
+  {
+    keys = { "<C-F12>", "<F36>", "gP" },
+    action = "peek_implementations",
+    desc = "Peek implementations",
+  },
+  { keys = { "gr" }, action = "references", desc = "References" },
+  {
+    keys = { "gI" },
+    action = "implementation",
+    desc = "Go to implementation",
+  },
+  {
+    keys = { "gy" },
+    action = "type_definition",
+    desc = "Go to type definition",
+  },
+  {
+    keys = { "gD" },
+    action = "declaration",
+    desc = "Go to declaration",
+  },
+  {
+    keys = { "<F2>", "<leader>cr" },
+    action = "rename",
+    desc = "Rename symbol",
+  },
+  {
+    keys = { "<C-LeftMouse>" },
+    action = "definition_at_mouse",
+    desc = "Go to definition",
+  },
+  { keys = { "K" }, action = "hover", desc = "Hover docs" },
+  {
+    keys = { "<leader>ca" },
+    action = "code_action",
+    desc = "Code action",
+    mode = { "n", "x" },
+  },
 }
 
 local function captured_as(capture, prefix)
@@ -27,7 +68,9 @@ end
 function M.item_category(captures)
   for index = #(captures or {}), 1, -1 do
     for _, category in ipairs(require("core.franchise").current().item_categories) do
-      if captured_as(captures[index], category[1]) then return category[2] end
+      if captured_as(captures[index], category[1]) then
+        return category[2]
+      end
     end
   end
   return "Item"

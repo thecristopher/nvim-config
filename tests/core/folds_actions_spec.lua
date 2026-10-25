@@ -1,6 +1,8 @@
 local actions = require("core.folds.actions")
 
-local function cut(text, width) return vim.fn.strcharpart(text, 0, width) end
+local function cut(text, width)
+  return vim.fn.strcharpart(text, 0, width)
+end
 
 describe("suffix", function()
   it("counts the lines a fold hides", function()

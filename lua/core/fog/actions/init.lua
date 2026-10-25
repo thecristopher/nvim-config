@@ -4,14 +4,14 @@
 local M = {}
 
 M.DURATION = 1300
-M.LEVELS   = 8
+M.LEVELS = 8
 -- the mist thickens quickly, holds while the new project opens, then takes its time to thin out
-M.RISE     = 0.18
-M.HOLD     = 0.42
+M.RISE = 0.18
+M.HOLD = 0.42
 -- how opaque the thickest cloud gets, 1 would hide the editor completely
 M.THICKEST = 0.72
 -- how far the clouds drift across the screen during one crossing, in columns
-M.DRIFT    = 18
+M.DRIFT = 18
 
 local function smooth(x)
   x = math.max(0, math.min(1, x))
@@ -23,14 +23,20 @@ end
 ---@return number density from 0 (clear) to 1 (thickest)
 function M.density_at(raw)
   raw = math.max(0, math.min(1, raw))
-  if raw < M.RISE then return smooth(raw / M.RISE) end
-  if raw < M.HOLD then return 1 end
+  if raw < M.RISE then
+    return smooth(raw / M.RISE)
+  end
+  if raw < M.HOLD then
+    return 1
+  end
   return 1 - smooth((raw - M.HOLD) / (1 - M.HOLD))
 end
 
 -- fog pools at eye level and thins toward the top and bottom of the screen
 local function row_weight(row, height)
-  if height <= 1 then return 1 end
+  if height <= 1 then
+    return 1
+  end
   local from_center = math.abs(row - (height - 1) / 2) / ((height - 1) / 2)
   return 1 - 0.45 * from_center * from_center
 end

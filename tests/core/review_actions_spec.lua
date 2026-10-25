@@ -1,16 +1,16 @@
 local actions = require("core.review.actions")
 
 local leon_pr = {
-  number       = 7,
-  title        = "Escort Ashley out of the village",
-  body         = "Rescue mission, no detours.",
-  author       = { login = "leon" },
-  headRefName  = "feature/escort",
-  baseRefName  = "main",
-  additions    = 12,
-  deletions    = 3,
+  number = 7,
+  title = "Escort Ashley out of the village",
+  body = "Rescue mission, no detours.",
+  author = { login = "leon" },
+  headRefName = "feature/escort",
+  baseRefName = "main",
+  additions = 12,
+  deletions = 3,
   changedFiles = 2,
-  url          = "https://github.com/raccoon/rpd/pull/7",
+  url = "https://github.com/raccoon/rpd/pull/7",
 }
 
 describe("parse_number", function()
@@ -67,7 +67,9 @@ describe("build_prompt", function()
   end)
 
   it("includes the diff", function()
-    assert.truthy(actions.build_prompt(leon_pr, "+ rebecca chambers"):find("+ rebecca chambers", 1, true))
+    assert.truthy(
+      actions.build_prompt(leon_pr, "+ rebecca chambers"):find("+ rebecca chambers", 1, true)
+    )
   end)
 
   it("says so when the PR has no description", function()
@@ -78,7 +80,10 @@ end)
 
 describe("report_lines", function()
   it("opens with the PR number and title", function()
-    assert.equals("# #7 Escort Ashley out of the village", actions.report_lines(leon_pr, "## Resumen")[1])
+    assert.equals(
+      "# #7 Escort Ashley out of the village",
+      actions.report_lines(leon_pr, "## Resumen")[1]
+    )
   end)
 
   it("ends with Claude's analysis", function()

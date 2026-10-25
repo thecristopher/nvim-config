@@ -59,7 +59,7 @@ end)
 describe("changed_groups", function()
   it("lists only groups whose colors move", function()
     local before = { Melina = { fg = 1 }, Margit = { fg = 2 }, Morgott = { link = "Margit" } }
-    local after  = { Melina = { fg = 9 }, Margit = { fg = 2 }, Morgott = { link = "Margit" } }
+    local after = { Melina = { fg = 9 }, Margit = { fg = 2 }, Morgott = { link = "Margit" } }
     assert.same({ "Melina" }, actions.changed_groups(before, after))
   end)
 end)

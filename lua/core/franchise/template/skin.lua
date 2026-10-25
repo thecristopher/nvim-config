@@ -5,7 +5,7 @@ return {
   -- wrapped around float titles
   ornament = { "◈ ", " ◈" },
   statusline = {
-    section   = { left = "", right = "" },
+    section = { left = "", right = "" },
     component = { left = "", right = "" },
   },
   -- bufferline separator_style: "slant", "slope", "thick", "thin" or "padded_slant"

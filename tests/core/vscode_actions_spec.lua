@@ -21,7 +21,9 @@ end)
 describe("vscode bindings", function()
   local function command_for(lhs)
     for _, binding in ipairs(actions.bindings) do
-      if binding.lhs == lhs then return binding.command end
+      if binding.lhs == lhs then
+        return binding.command
+      end
     end
   end
 

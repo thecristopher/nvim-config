@@ -2,14 +2,14 @@
 -- Pure string building only, the editor side hands in lines already split into styled runs.
 local M = {}
 
-M.FONT       = "JetBrainsMono Nerd Font, JetBrains Mono, Menlo, monospace"
-M.FONT_SIZE  = 15
+M.FONT = "JetBrainsMono Nerd Font, JetBrains Mono, Menlo, monospace"
+M.FONT_SIZE = 15
 M.CHAR_WIDTH = 9.03 -- JetBrains Mono advances 0.602 of its size per cell
-M.LINE       = 22
-M.PADDING    = 56
-M.INNER      = 28
-M.TITLE_BAR  = 44
-M.MAX_LINES  = 200
+M.LINE = 22
+M.PADDING = 56
+M.INNER = 28
+M.TITLE_BAR = 44
+M.MAX_LINES = 200
 
 --- Escapes text so it can sit inside SVG markup.
 ---@param text string
@@ -50,8 +50,12 @@ end
 
 local function tspan(run, fallback)
   local attrs = { ('fill="%s"'):format(run.fg or fallback) }
-  if run.bold then table.insert(attrs, 'font-weight="bold"') end
-  if run.italic then table.insert(attrs, 'font-style="italic"') end
+  if run.bold then
+    table.insert(attrs, 'font-weight="bold"')
+  end
+  if run.italic then
+    table.insert(attrs, 'font-style="italic"')
+  end
   return ("<tspan %s>%s</tspan>"):format(table.concat(attrs, " "), M.escape(run.text))
 end
 
@@ -63,29 +67,67 @@ function M.size(rows, gutter)
   local longest = 0
   for _, runs in ipairs(rows) do
     local width = 0
-    for _, run in ipairs(runs) do width = width + vim.api.nvim_strwidth(run.text) end
+    for _, run in ipairs(runs) do
+      width = width + vim.api.nvim_strwidth(run.text)
+    end
     longest = math.max(longest, width)
   end
   local card_width = math.max(520, (longest + gutter) * M.CHAR_WIDTH + M.INNER * 2)
   local card_height = M.TITLE_BAR + #rows * M.LINE + M.INNER * 1.5
-  return { card_width = card_width, card_height = card_height, width = card_width + M.PADDING * 2, height = card_height + M.PADDING * 2 }
+  return {
+    card_width = card_width,
+    card_height = card_height,
+    width = card_width + M.PADDING * 2,
+    height = card_height + M.PADDING * 2,
+  }
 end
 
 local function frame(size, colors, title, region)
   local x, y = M.PADDING, M.PADDING
   return table.concat({
-    ('<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d">'):format(size.width, size.height, size.width, size.height),
+    ('<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d">'):format(
+      size.width,
+      size.height,
+      size.width,
+      size.height
+    ),
     "<defs>",
-    ('<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="%s"/><stop offset="1" stop-color="%s"/></linearGradient>'):format(colors.glow, colors.crust),
+    ('<linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="%s"/><stop offset="1" stop-color="%s"/></linearGradient>'):format(
+      colors.glow,
+      colors.crust
+    ),
     '<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.55"/></filter>',
     "</defs>",
     '<rect width="100%" height="100%" fill="url(#sky)"/>',
-    ('<rect x="%d" y="%d" width="%d" height="%d" rx="14" fill="%s" stroke="%s" stroke-width="1.5" filter="url(#shadow)"/>'):format(x, y, size.card_width, size.card_height, colors.base, colors.border),
+    ('<rect x="%d" y="%d" width="%d" height="%d" rx="14" fill="%s" stroke="%s" stroke-width="1.5" filter="url(#shadow)"/>'):format(
+      x,
+      y,
+      size.card_width,
+      size.card_height,
+      colors.base,
+      colors.border
+    ),
     ('<text x="%d" y="%d" fill="%s" font-family="%s" font-size="13" text-anchor="middle" letter-spacing="3">◈  %s  ◈</text>'):format(
-      x + size.card_width / 2, y + 28, colors.accent, M.FONT, M.escape(title)),
-    ('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="1"/>'):format(x + 24, y + M.TITLE_BAR - 4, x + size.card_width - 24, y + M.TITLE_BAR - 4, colors.border),
+      x + size.card_width / 2,
+      y + 28,
+      colors.accent,
+      M.FONT,
+      M.escape(title)
+    ),
+    ('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="1"/>'):format(
+      x + 24,
+      y + M.TITLE_BAR - 4,
+      x + size.card_width - 24,
+      y + M.TITLE_BAR - 4,
+      colors.border
+    ),
     ('<text x="%d" y="%d" fill="%s" font-family="%s" font-size="12" text-anchor="end" letter-spacing="2">%s</text>'):format(
-      size.width - M.PADDING, size.height - M.PADDING / 2 + 4, colors.muted, M.FONT, M.escape(region)),
+      size.width - M.PADDING,
+      size.height - M.PADDING / 2 + 4,
+      colors.muted,
+      M.FONT,
+      M.escape(region)
+    ),
   }, "\n")
 end
 
@@ -103,11 +145,27 @@ function M.svg(rows, opts)
     local baseline = M.PADDING + M.TITLE_BAR + M.INNER / 2 + index * M.LINE - 6
     local spans = {}
     if opts.first_line then
-      table.insert(spans, tspan({ text = ("%" .. (gutter - 2) .. "d  "):format(opts.first_line + index - 1) }, colors.muted))
+      table.insert(
+        spans,
+        tspan(
+          { text = ("%" .. (gutter - 2) .. "d  "):format(opts.first_line + index - 1) },
+          colors.muted
+        )
+      )
     end
-    for _, run in ipairs(runs) do table.insert(spans, tspan(run, colors.text)) end
-    table.insert(parts, ('<text x="%d" y="%d" font-family="%s" font-size="%d" xml:space="preserve">%s</text>'):format(
-      left, baseline, M.FONT, M.FONT_SIZE, table.concat(spans)))
+    for _, run in ipairs(runs) do
+      table.insert(spans, tspan(run, colors.text))
+    end
+    table.insert(
+      parts,
+      ('<text x="%d" y="%d" font-family="%s" font-size="%d" xml:space="preserve">%s</text>'):format(
+        left,
+        baseline,
+        M.FONT,
+        M.FONT_SIZE,
+        table.concat(spans)
+      )
+    )
   end
   table.insert(parts, "</svg>")
   return table.concat(parts, "\n")

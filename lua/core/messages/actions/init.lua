@@ -14,7 +14,9 @@ end
 ---@return string|nil message # nil when the word is blank
 function M.compose(template, word)
   word = vim.trim(word or "")
-  if word == "" then return nil end
+  if word == "" then
+    return nil
+  end
   local message = template:format(word)
   return message:sub(1, 1):upper() .. message:sub(2)
 end
@@ -25,7 +27,9 @@ end
 ---@return string|nil
 function M.relative(repo, file)
   local prefix = repo:gsub("/+$", "") .. "/"
-  if file:sub(1, #prefix) ~= prefix then return nil end
+  if file:sub(1, #prefix) ~= prefix then
+    return nil
+  end
   return file:sub(#prefix + 1)
 end
 
@@ -36,14 +40,20 @@ end
 ---@return table[] messages as { line, text }
 function M.for_file(store, repo, file)
   local list = vim.deepcopy((store[repo] or {})[file] or {})
-  table.sort(list, function(a, b) return a.line < b.line end)
+  table.sort(list, function(a, b)
+    return a.line < b.line
+  end)
   return list
 end
 
 -- an empty file entry or repo entry would pile up in the json forever
 local function prune(store, repo, file)
-  if store[repo] and store[repo][file] and #store[repo][file] == 0 then store[repo][file] = nil end
-  if store[repo] and next(store[repo]) == nil then store[repo] = nil end
+  if store[repo] and store[repo][file] and #store[repo][file] == 0 then
+    store[repo][file] = nil
+  end
+  if store[repo] and next(store[repo]) == nil then
+    store[repo] = nil
+  end
 end
 
 --- Writes a message on a line, replacing whatever was written there before.
@@ -55,7 +65,9 @@ end
 ---@return table store
 function M.put(store, repo, file, line, text)
   store[repo] = store[repo] or {}
-  local kept = vim.tbl_filter(function(entry) return entry.line ~= line end, store[repo][file] or {})
+  local kept = vim.tbl_filter(function(entry)
+    return entry.line ~= line
+  end, store[repo][file] or {})
   table.insert(kept, { line = line, text = text })
   store[repo][file] = kept
   return store
@@ -70,8 +82,12 @@ end
 ---@return boolean erased # false when nothing was written there
 function M.erase(store, repo, file, line)
   local list = (store[repo] or {})[file] or {}
-  local kept = vim.tbl_filter(function(entry) return entry.line ~= line end, list)
-  if #kept == #list then return store, false end
+  local kept = vim.tbl_filter(function(entry)
+    return entry.line ~= line
+  end, list)
+  if #kept == #list then
+    return store, false
+  end
   store[repo][file] = kept
   prune(store, repo, file)
   return store, true
@@ -102,7 +118,9 @@ function M.list(store, repo)
     end
   end
   table.sort(entries, function(a, b)
-    if a.file ~= b.file then return a.file < b.file end
+    if a.file ~= b.file then
+      return a.file < b.file
+    end
     return a.line < b.line
   end)
   return entries

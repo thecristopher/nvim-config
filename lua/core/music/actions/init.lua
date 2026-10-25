@@ -38,9 +38,13 @@ function M.cover_url(url, size)
 end
 
 local function decode(body)
-  if not body or body == "" then return nil end
+  if not body or body == "" then
+    return nil
+  end
   local ok, data = pcall(vim.json.decode, body)
-  if not ok or type(data) ~= "table" or data.status ~= "ok" then return nil end
+  if not ok or type(data) ~= "table" or data.status ~= "ok" then
+    return nil
+  end
   return data
 end
 
@@ -49,7 +53,9 @@ end
 ---@return boolean|nil playing, nil when Cider did not answer
 function M.parse_cider_playing(body)
   local data = decode(body)
-  if not data then return nil end
+  if not data then
+    return nil
+  end
   return data.is_playing == true
 end
 
@@ -60,13 +66,15 @@ end
 function M.parse_cider_track(body, playing)
   local data = decode(body)
   local info = data and data.info
-  if type(info) ~= "table" or not info.name then return nil end
+  if type(info) ~= "table" or not info.name then
+    return nil
+  end
   local artwork = type(info.artwork) == "table" and info.artwork.url or nil
   return {
-    title   = info.name,
-    artist  = info.artistName or "",
-    album   = info.albumName or "",
-    cover   = artwork and M.cover_url(artwork, COVER_PIXELS) or nil,
+    title = info.name,
+    artist = info.artistName or "",
+    album = info.albumName or "",
+    cover = artwork and M.cover_url(artwork, COVER_PIXELS) or nil,
     playing = playing,
   }
 end
@@ -93,8 +101,14 @@ end
 ---@return string[]|nil
 function M.music_control_command(control)
   local command = MUSIC_COMMANDS[control]
-  if not command then return nil end
-  return { "osascript", "-e", ('if application "Music" is running then tell application "Music" to %s'):format(command) }
+  if not command then
+    return nil
+  end
+  return {
+    "osascript",
+    "-e",
+    ('if application "Music" is running then tell application "Music" to %s'):format(command),
+  }
 end
 
 --- Reads the answer of the Music.app status script into a track.
@@ -104,7 +118,9 @@ function M.parse_music(stdout)
   -- only the newline goes, a full trim would eat the tab before an empty album
   local answer = (stdout or ""):gsub("\r?\n$", "")
   local state, title, artist, album = answer:match("^(%S+)\t(.-)\t(.-)\t(.*)$")
-  if not state or title == "" then return nil end
+  if not state or title == "" then
+    return nil
+  end
   return { title = title, artist = artist, album = album, playing = state == "playing" }
 end
 
@@ -147,8 +163,12 @@ end
 ---@return string|nil
 function M.cover_extension(format)
   format = (format or ""):upper()
-  if format:find("PNG", 1, true) then return "png" end
-  if format:find("JPEG", 1, true) or format:find("JPG", 1, true) then return "jpg" end
+  if format:find("PNG", 1, true) then
+    return "png"
+  end
+  if format:find("JPEG", 1, true) or format:find("JPG", 1, true) then
+    return "jpg"
+  end
   return nil
 end
 
@@ -162,7 +182,9 @@ end
 
 -- cuts text to a width in characters, marking the cut
 local function fit(text, width)
-  if vim.fn.strchars(text) <= width then return text end
+  if vim.fn.strchars(text) <= width then
+    return text
+  end
   return vim.fn.strcharpart(text, 0, width - 1) .. "…"
 end
 
@@ -171,7 +193,9 @@ end
 ---@param max_width integer
 ---@return string empty when nothing is playing
 function M.label(track, max_width)
-  if not track then return "" end
+  if not track then
+    return ""
+  end
   local icon = track.playing and "󰎈" or "󰏤"
   local text = track.artist ~= "" and ("%s · %s"):format(track.artist, track.title) or track.title
   return icon .. " " .. fit(text, max_width)
@@ -190,7 +214,9 @@ local SOURCES = { cider = "Cider", music = "Music" }
 function M.panel(track, source)
   local room = M.PANEL_WIDTH - TEXT_COL - 1
   local state = track.playing and "󰐊 Playing" or "󰏤 Paused"
-  if SOURCES[source] then state = state .. " in " .. SOURCES[source] end
+  if SOURCES[source] then
+    state = state .. " in " .. SOURCES[source]
+  end
   local details = {
     { fit(track.title, room), "EldenMusicTitle" },
     { fit(track.artist, room), "EldenMusicArtist" },
@@ -204,7 +230,9 @@ function M.panel(track, source)
   for row = 1, COVER.height do
     local detail = details[row]
     lines[row] = detail and pad .. detail[1] or ""
-    if detail then table.insert(marks, { row = row - 1, col = TEXT_COL, group = detail[2] }) end
+    if detail then
+      table.insert(marks, { row = row - 1, col = TEXT_COL, group = detail[2] })
+    end
   end
   table.insert(lines, "")
   local toggle = track.playing and "󰏤 p pause" or "󰐊 p play "
