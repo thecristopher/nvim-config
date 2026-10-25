@@ -94,3 +94,50 @@ describe("should_cleanse", function()
     assert.is_false(actions.should_cleanse(vim.tbl_extend("force", long_fight, { last_shown = 50 * 1000 })))
   end)
 end)
+
+describe("drips", function()
+  it("bleeds every other letter", function()
+    assert.equal(3, #actions.drips({ 10, 12, 14, 16, 18 }))
+  end)
+
+  it("never runs deeper than the band", function()
+    for _, drip in ipairs(actions.drips({ 1, 2, 3, 4, 5, 6, 7, 8, 9 })) do
+      assert.is_true(drip.length >= 1 and drip.length <= actions.DRIP_DEPTH)
+    end
+  end)
+
+  it("lays the same drips every time", function()
+    assert.same(actions.drips({ 4, 6, 8 }), actions.drips({ 4, 6, 8 }))
+  end)
+end)
+
+describe("drip_alpha", function()
+  local kind = { fade_in = 300, letter_ms = 500, duration = 4600, fade_out = 1100 }
+
+  it("waits for the letters before the first drop", function()
+    assert.equal(0, actions.drip_alpha(1, 300, kind))
+  end)
+
+  it("lets deeper drops arrive later", function()
+    assert.is_true(actions.drip_alpha(1, 1200, kind) > actions.drip_alpha(3, 1200, kind))
+  end)
+end)
+
+describe("kind styles", function()
+  before_each(function() vim.g.eldentree_franchise = "resident_evil" end)
+  after_each(function() vim.g.eldentree_franchise = "elden_ring" end)
+
+  it("makes Leon's death drip in Raccoon City", function()
+    assert.is_true(actions.kind("died").drip)
+  end)
+
+  it("keeps the other banners clean", function()
+    assert.is_nil(actions.kind("felled").drip)
+  end)
+end)
+
+describe("kind styles in the Lands Between", function()
+  it("lets Malenia's death fade without dripping", function()
+    assert.is_nil(actions.kind("died").drip)
+  end)
+end)

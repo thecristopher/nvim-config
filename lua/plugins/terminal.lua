@@ -35,7 +35,7 @@ return {
       shell                 = vim.o.shell,
       auto_scroll           = true,
       float_opts = {
-        border        = "curved",
+        border        = require("core.skin.actions").toggleterm_border(require("core.skin").border()),
         winblend      = 8,
         width         = function() return math.floor(vim.o.columns * 0.85) end,
         height        = function() return math.floor(vim.o.lines * 0.80) end,
@@ -55,7 +55,6 @@ return {
         local map = vim.keymap.set
         local buf = term.bufnr
         map("t", "<Esc>",   [[<C-\><C-n>]],    { buffer = buf, desc = "Exit terminal mode" })
-        map("t", "jk",      [[<C-\><C-n>]],    { buffer = buf, desc = "Exit terminal mode" })
         map("t", "<C-h>",   [[<C-\><C-n><C-W>h]], { buffer = buf, desc = "Window left" })
         map("t", "<C-j>",   [[<C-\><C-n><C-W>j]], { buffer = buf, desc = "Window down" })
         map("t", "<C-k>",   [[<C-\><C-n><C-W>k]], { buffer = buf, desc = "Window up" })
@@ -75,7 +74,7 @@ return {
         cmd           = "lazygit",
         dir           = "git_dir",
         direction     = "float",
-        float_opts    = { border = "curved" },
+        float_opts    = { border = require("core.skin.actions").toggleterm_border(require("core.skin").border()) },
         on_open = function(term)
           vim.cmd("startinsert!")
           vim.keymap.set("n", "q", "<cmd>close<CR>", { noremap = true, silent = true, buffer = term.bufnr })

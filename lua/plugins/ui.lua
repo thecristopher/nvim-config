@@ -24,8 +24,8 @@ return {
       return {
         options = {
           theme                = "eldentree",
-          component_separators = { left = "", right = "" },
-          section_separators   = { left = "", right = "" },
+          component_separators = require("core.skin").current().statusline.component,
+          section_separators   = require("core.skin").current().statusline.section,
           globalstatus         = true,
         },
         sections = {
@@ -50,8 +50,13 @@ return {
             },
           },
           lualine_x = {
-            -- the glyph carries its own glow group, picked from the breath each frame
-            { function() return require("core.runes").grace() end },
+            -- the breathing grace or the health ECG, each carries its own highlight group
+            {
+              function()
+                if require("core.franchise").mechanic("status") == "ecg" then return require("core.ecg").statusline() end
+                return require("core.runes").grace()
+              end,
+            },
             { lsp_info, color = function() return { fg = palette().yellow } end },
             {
               "diagnostics",
@@ -120,7 +125,7 @@ return {
           show_buffer_icons = true,
           show_buffer_close_icons = true,
           show_tab_indicators = true,
-          separator_style   = "slant",
+          separator_style   = require("core.skin").current().tabs,
           always_show_bufferline = false,
           hover = { enabled = true, delay = 150, reveal = { "close" } },
         },
@@ -179,7 +184,7 @@ return {
         cmdline_popup = {
           position = { row = "40%", col = "50%" },
           size     = { min_width = 60, width = "auto" },
-          border   = { style = "rounded", padding = { 0, 1 } },
+          border   = { style = require("core.skin").border(), padding = { 0, 1 } },
           win_options = { winhighlight = "NormalFloat:NoiceCmdlinePopup,FloatBorder:NoiceCmdlinePopupBorder" },
         },
         mini = {
@@ -194,6 +199,14 @@ return {
         vim.cmd([[messages clear]])
       end
       require("noice").setup(opts)
+      -- nvim 0.12 sends a "restart" ui event with no group_type shape, and noice errors on it,
+      -- which leaves the UI detached after :restart, so events noice cannot parse are skipped
+      local noice_ui = require("noice.ui")
+      local get_handler = noice_ui.get_handler
+      noice_ui.get_handler = function(event, ...)
+        if not event:find("_", 1, true) then return nil end
+        return get_handler(event, ...)
+      end
     end,
   },
 
@@ -211,7 +224,7 @@ return {
         group      = "+",
       },
       win = {
-        border  = "rounded",
+        border  = require("core.skin").border(),
         padding = { 1, 2 },
         wo      = { winblend = 10 },
       },
@@ -283,7 +296,7 @@ return {
       smear_between_buffers    = true,
       smear_between_neighbor_lines = false,
       scroll_buffer_space      = true,
-      filetypes_disabled       = { "bigfile", "snacks_dashboard", "lazy", "mason" },
+      filetypes_disabled       = { "bigfile", "snacks_dashboard", "eldentree_hud", "lazy", "mason" },
     },
     config = function(_, opts)
       local smear = require("smear_cursor")
@@ -316,7 +329,7 @@ return {
       exclude = {
         filetypes = {
           "help", "alpha", "dashboard", "neo-tree", "Trouble", "trouble",
-          "lazy", "mason", "notify", "toggleterm", "snacks_dashboard", "bigfile",
+          "lazy", "mason", "notify", "toggleterm", "snacks_dashboard", "eldentree_hud", "bigfile",
         },
       },
     },
@@ -358,7 +371,7 @@ return {
     opts  = {
       current_only = true,
       winblend     = 20,
-      excluded_filetypes = { "neo-tree", "snacks_dashboard", "lazy", "mason", "Trouble", "trouble", "toggleterm", "bigfile" },
+      excluded_filetypes = { "neo-tree", "snacks_dashboard", "eldentree_hud", "lazy", "mason", "Trouble", "trouble", "toggleterm", "bigfile" },
       handlers = {
         cursor      = { enable = true, symbols = { "⎺", "⎻", "⎼", "⎽" } },
         search      = { enable = true },

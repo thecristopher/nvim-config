@@ -45,6 +45,18 @@ function M.after_banner(state, kind)
   return M.award(M.recover(state), bounty)
 end
 
+M.MERCHANT_EVERY = 10000
+
+--- Tells whether a gain crossed into a new multiple of step, the moment the merchant shows up.
+---@param before integer tally before the gain
+---@param after integer tally after it
+---@param step integer|nil M.MERCHANT_EVERY by default
+---@return boolean
+function M.crossed(before, after, step)
+  step = step or M.MERCHANT_EVERY
+  return math.floor(after / step) > math.floor(before / step)
+end
+
 function M.decode(text)
   local held, bloodstain = (text or ""):match("^(%d+)%s+(%d+)$")
   return { held = tonumber(held) or 0, bloodstain = tonumber(bloodstain) or 0 }

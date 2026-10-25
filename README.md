@@ -1,6 +1,6 @@
 # Eldentree
 
-A Neovim config forged in the Lands Between. Catppuccin Mocha, recolored for whichever Elden Ring region you wake up in, with banners, runes and a Site of Grace that lets you rest when you step away.
+A Neovim config forged in the Lands Between, or in Raccoon City depending on the day. Catppuccin Mocha, recolored for whichever region or location you wake up in, with banners, runes and a Site of Grace that lets you rest when you step away.
 
 Runs on macOS, Linux and Windows, and also inside Cursor and VS Code.
 
@@ -44,15 +44,25 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 
 | Module        | What it does                                                                                                      |
 | ------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `core/themes` | Eleven region palettes. Each repo keeps its own region (the one you picked there, or one derived from its name), outside a repo each launch rolls a new one. Pin one with `vim.g.eldentree_region` |
+| `core/franchise` | Picks the world for the day, rotating between Elden Ring and Resident Evil. Its lore folders hold the palettes, bosses, weather, banners and words. `:Franchise` switches until midnight, `vim.g.eldentree_franchise` pins one. Each lore also picks its `mechanics`, so Resident Evil travels through doors, gets stalked instead of dueling, shows a health ECG, rests at a typewriter and ranks every run. Each lore folder is a pack (palettes, skin, words) found on its own, `:Franchise new Silent Hill` scaffolds one and `:checkhealth eldentree` lists what it still needs |
+| `core/skin`  | Dresses components per franchise: float borders, gutter signs, statusline separators and tabs. Elden Ring is rounded and ornate, Resident Evil wears the inventory's double frames |
+| `core/hud`   | The start screen is a playable inventory. Elden Ring shows category tabs with the Inventory and the Chest side by side, Resident Evil a STATUS panel with the CONDITION monitor, plate tabs and the COMMAND menu. hjkl walks the slots, Tab changes category, Enter uses, K checks, C combines. `:Hud` or `<leader>uh` reopens it |
+| `core/title` | A title screen in big block letters once a day per franchise and on every switch, `:Title` shows it again |
+| `core/terminal` | Paints the terminal around nvim with the region's background, and switches iTerm profiles or Kitty opacity per franchise |
+| `core/sound` | Plays your own sounds from `sounds/<franchise>/` for titles, doors, deaths and the merchant |
+| `core/themes` | Region palettes from the franchise in use (eleven in Elden Ring, seven in Resident Evil). Launching inside a repo starts in its region (the one you picked there, or one derived from its name), outside a repo each launch rolls a new one. The region stays for the whole session, traveling between repos never changes it. Pin one with `vim.g.eldentree_region` |
 | `core/phantom` | `<leader>gw` shows who last wrote the line as a phantom: blue for others, gold for your past self |
 | `core/zones`  | The first time you walk into a folder each session, it is announced like a new area of the Lands Between |
 | `core/snapshot` | `<leader>cp` / `:Snapshot` saves the buffer or selection as a framed PNG in the region's colors and copies it |
-| `core/hub`    | Living dashboard with shimmering gold headers, rising embers and a typed player message                           |
+| `core/hub`    | The HUD's ambient life: shimmering gold, the region's weather and a typed player message |
 | `core/banner` | Elden Ring style banners fired by commits, PRs, test runs, new projects and region changes                        |
-| `core/boss`   | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it |
-| `core/runes`  | Statusline rune tally. Saves and banners pay out, YOU DIED leaves a bloodstain                                    |
-| `core/rest`   | After 5 idle minutes in normal mode the editor rests at a Site of Grace. Any key wakes it                         |
+| `core/boss`   | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it. In Resident Evil the boss is a stalker that walks closer while errors stay and backs off with every fix |
+| `core/door`   | Resident Evil's travel: the screen goes dark and a door creaks open, where Elden Ring rolls the fog wall |
+| `core/ecg`    | Resident Evil's statusline ECG: Fine, Caution or Danger from the buffer's diagnostics |
+| `core/map`    | `:Map` / `<leader>fM` shows every folder as a room, red while errors or TODOs are left in it, blue once cleared |
+| `core/results` | Ranks each run from S to D by fixes and saves, and the Resident Evil STATUS panel shows the last one |
+| `core/runes`  | Statusline rune tally (pesetas in Resident Evil, where the Merchant greets every 10,000). Saves and banners pay out, dying leaves a bloodstain |
+| `core/rest`   | After 5 idle minutes in normal mode the editor rests at a Site of Grace, or at a Safe Room typewriter in Resident Evil. Any key wakes it |
 | `core/repos`  | Background repo scanner, the Sites of Grace project picker and automatic project root                             |
 | `core/dive`   | F12 family: go to definition, Glance peek, references and F2 rename                                               |
 | `core/trial`  | Runs the project's tests in the background and announces the verdict                                              |
@@ -64,7 +74,46 @@ Plugin specs live in `lua/plugins/`, one file per concern.
 
 Traveling to a Site of Grace keeps the session of the repo you leave and restores the one you arrive at. Files with unsaved changes are never closed. Turn it off with `vim.g.eldentree_project_sessions = false`, and per project regions with `vim.g.eldentree_region_per_project = false`.
 
-Portraits in `images/portraits/` are 276x336 crops of the originals in `images/`, with contrast, color and sharpness lifted so they survive half block rendering. A region whose portrait is missing simply shows the hub without art.
+Portraits in `images/portraits/` are 276x336 crops of the originals in `images/`, with contrast, color and sharpness lifted so they survive half block rendering. A region whose portrait is missing simply shows the HUD without art.
+
+### Terminals
+
+Everything works in iTerm. Two extras are worth turning on:
+
+- **Fonts per franchise in iTerm.** Link the profiles once, then add `vim.g.eldentree_iterm_profiles = true` to `lua/core/options.lua`. Elden Ring switches to JetBrains Mono Light with a light blur, Resident Evil to SemiBold with no transparency.
+
+  ```sh
+  ln -s ~/.config/nvim/terminal/iterm/Eldentree.json ~/Library/Application\ Support/iTerm2/DynamicProfiles/
+  ```
+
+- **Real image portraits.** Ghostty, Kitty and WezTerm speak the kitty graphics protocol, so the HUD shows the portraits as actual pictures instead of chafa's half blocks. Ghostty is the closest to iTerm in feel: `brew install --cask ghostty`.
+
+### Sounds
+
+Every sound is made from scratch by `python3 scripts/sounds.py`: synthesized tones and noise, spoken lines from [Piper](https://github.com/OHF-Voice/piper1-gpl) (a local neural voice) with macOS `say` as the fallback, and ffmpeg for the echo and pitch, nothing sampled from the games. Run `python3 scripts/sounds.py --setup-voices` once to install Piper and its voices in `~/.local/share/eldentree`. Run it again after tweaking a recipe, or pass a franchise to rebuild only that one. `:Sound died` previews any of them.
+
+To use your own instead, drop audio files into `sounds/elden_ring/` or `sounds/resident_evil/`, named after the moment they belong to: `title`, `door`, `fog`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`. Variants like `died_2.wav` take turns. Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
+
+### Voice credits
+
+| Voice | Used for | Source | License |
+| ----- | -------- | ------ | ------- |
+| Ryan (high) | Resident Evil announcer | [Piper voices](https://huggingface.co/rhasspy/piper-voices), RyanSpeech dataset | CC BY-NC-SA 4.0 |
+| Northern English Male (medium) | The Merchant, the Elden Ring narrator | [Piper voices](https://huggingface.co/rhasspy/piper-voices) | CC BY-SA 4.0 |
+
+### Portrait credits
+
+The Resident Evil portraits are fan art and photography by their own authors, used here with love and full credit to them.
+
+| Portrait | Region            | Author                       |
+| -------- | ----------------- | ---------------------------- |
+| Claire   | Raccoon City      | Artist pending               |
+| Leon     | RPD               | Artist pending               |
+| Jill     | Spencer Mansion   | Like Detectives              |
+| Wesker   | Umbrella Lab      | Artist pending               |
+| Ashley   | Salazar Castle    | Artist pending               |
+| Ada      | Saddler's Island  | Artist pending               |
+| Chris    | The Village       | Artist pending               |
 
 ## Keys
 
@@ -75,6 +124,9 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>fp` | Find a project (Sites of Grace) |
 | `<leader>ut` | Choose a region theme           |
 | `<leader>uT` | Next region theme               |
+| `<leader>uf` | Choose today's franchise        |
+| `<leader>uh` | Open the inventory HUD          |
+| `<leader>fM` | Project map                     |
 | `<leader>um` | Toggle animations               |
 | `<leader>cT` | Run tests (Trial)               |
 | `<leader>uz` | Zen mode                        |
@@ -138,6 +190,13 @@ On macOS, F11 shows the desktop unless "Use F1, F2, etc. keys as standard functi
 | Command                                        | Action                                  |
 | ---------------------------------------------- | --------------------------------------- |
 | `:Region`                                      | Switch region theme                     |
+| `:Map`                                         | Open the project map                    |
+| `:Franchise [elden_ring\|resident_evil]`       | Switch today's franchise                |
+| `:Franchise new <name>`                        | Create a new franchise from the template |
+| `:Title`                                       | Show the franchise's title screen        |
+| `:Hud`                                         | Open the inventory HUD                   |
+| `:Sound <event>`                               | Preview one of the franchise's sounds    |
+| `:checkhealth eldentree`                       | Check every franchise is complete        |
 | `:Banner felled\|great\|died\|grace\|cleansed` | Fire a banner                           |
 | `:Trial`                                       | Run the project's tests                 |
 | `:Rest`                                        | Rest at a Site of Grace now             |

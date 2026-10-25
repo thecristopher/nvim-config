@@ -17,34 +17,16 @@ M.bindings = {
   { keys = { "<leader>ca" },                     action = "code_action",     desc = "Code action", mode = { "n", "x" } },
 }
 
--- what the thing under the cursor would be in your inventory, most specific capture first
-M.ITEM_CATEGORIES = {
-  { "function.method", "Sorcery" },
-  { "function",        "Incantation" },
-  { "constructor",     "Incantation" },
-  { "type",            "Talisman" },
-  { "variable.parameter", "Ash of War" },
-  { "variable.member", "Key Item" },
-  { "property",        "Key Item" },
-  { "constant",        "Great Rune" },
-  { "boolean",         "Great Rune" },
-  { "number",          "Great Rune" },
-  { "module",          "Map Fragment" },
-  { "keyword",         "Spell" },
-  { "string",          "Note" },
-  { "variable",        "Item" },
-}
-
 local function captured_as(capture, prefix)
   return capture == prefix or capture:sub(1, #prefix + 1) == prefix .. "."
 end
 
---- Names the inventory category for the treesitter captures under the cursor.
+--- Names the inventory category for the treesitter captures under the cursor, in the franchise's words.
 ---@param captures string[] capture names, innermost last
 ---@return string
 function M.item_category(captures)
   for index = #(captures or {}), 1, -1 do
-    for _, category in ipairs(M.ITEM_CATEGORIES) do
+    for _, category in ipairs(require("core.franchise").current().item_categories) do
       if captured_as(captures[index], category[1]) then return category[2] end
     end
   end

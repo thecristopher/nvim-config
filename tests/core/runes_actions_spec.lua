@@ -90,3 +90,17 @@ describe("glow_level", function()
     end
   end)
 end)
+
+describe("crossed", function()
+  it("calls the merchant when Ada's purse passes ten thousand", function()
+    assert.is_true(actions.crossed(9800, 10200))
+  end)
+
+  it("stays quiet for a gain inside the same ten thousand", function()
+    assert.is_false(actions.crossed(10200, 19900))
+  end)
+
+  it("honors a custom step", function()
+    assert.is_true(actions.crossed(90, 110, 100))
+  end)
+end)

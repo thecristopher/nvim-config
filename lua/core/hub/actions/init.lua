@@ -2,32 +2,14 @@
 -- through the empty space, and a player message that writes itself in. Times are milliseconds.
 local M = {}
 
--- appraisals not included, you will have to imagine the "Good" count yourself
-M.MESSAGES = {
-  "Try refactoring, but hole",
-  "Praise the green test!",
-  "Be wary of null",
-  "Liar ahead: TODO",
-  "Could this be a race condition?",
-  "If only I had a type system...",
-  "Merge conflict ahead, therefore try retreat",
-  "Visions of production...",
-  "Time for git blame",
-  "Hidden path ahead: the README",
-  "Be wary of Friday deploys",
-  "Praise the linter!",
-  "Ahh, regex...",
-  "Behold, legacy code!",
-  "Seek :help",
-  "Didn't expect an off by one...",
-  "Guidance of grace shall lead the way",
-  "Rise, and let grace light your path",
-  "Fear not the stack trace, Tarnished",
-  "Seek the lands between your functions",
-}
+local function lore() return require("core.franchise").current() end
 
+--- Picks the message the quill writes on the hub, from the franchise's own lines.
+---@param rand fun(): number random number from 0 to 1
+---@return string
 function M.pick_message(rand)
-  return M.MESSAGES[math.floor(rand() * #M.MESSAGES) + 1]
+  local messages = lore().hub_messages
+  return messages[math.floor(rand() * #messages) + 1]
 end
 
 -- "Malenia" becomes "M  A  L  E  N  I  A", the same carved look the old title had
@@ -53,29 +35,13 @@ function M.shimmer_level(col, row, elapsed, span)
 end
 
 M.EMBER_LEVELS = 5
-M.EMBER_GLYPHS = { "·", "∙", "•" }
 
--- each region has its own sky: drift says where particles travel, speed is rows per second,
--- from and to are the palette slots a particle glows between as it heats up
-M.WEATHER = {
-  leyndell     = { glyphs = M.EMBER_GLYPHS,      drift = "rise",  speed = { 1.6, 4.0 }, from = "peach",    to = "yellow" },
-  haligtree    = { glyphs = { "·", "✿", "❀" },   drift = "fall",  speed = { 0.8, 2.0 }, from = "red",      to = "yellow" },
-  raya_lucaria = { glyphs = { "·", "✧", "✦" },   drift = "float", speed = { 0.2, 0.6 }, from = "lavender", to = "yellow" },
-  caelid       = { glyphs = { "·", "∙", "•" },   drift = "rise",  speed = { 3.0, 6.0 }, from = "red",      to = "peach" },
-  mohgwyn      = { glyphs = { "·", "•", "●" },   drift = "fall",  speed = { 2.5, 5.0 }, from = "maroon",   to = "yellow" },
-  ordina       = { glyphs = { "·", "∗", "❄" },   drift = "fall",  speed = { 0.6, 1.6 }, from = "overlay2", to = "text" },
-  limgrave     = { glyphs = { "·", "∙", "❦" },   drift = "fall",  speed = { 0.8, 2.2 }, from = "peach",    to = "yellow" },
-  stormveil    = { glyphs = { "·", "╎", "│" },   drift = "fall",  speed = { 9.0, 15.0 }, from = "overlay2", to = "sky" },
-  volcano_manor = { glyphs = { "·", "•", "●" },  drift = "rise",  speed = { 2.5, 5.5 }, from = "red",      to = "yellow" },
-  nokron       = { glyphs = { "·", "✧", "✦" },   drift = "float", speed = { 0.1, 0.4 }, from = "overlay2", to = "yellow" },
-  farum_azula  = { glyphs = { "·", "✧", "ϟ" },   drift = "float", speed = { 0.3, 0.9 }, from = "lavender", to = "yellow" },
-}
-
---- Returns the weather for a region, the golden embers of Leyndell when it has none.
+--- Returns the weather for a region, the first region's sky when it has none.
 ---@param name string|nil region name
----@return table weather
+---@return table weather as { glyphs, drift, speed, from, to }
 function M.weather(name)
-  return M.WEATHER[name] or M.WEATHER.leyndell
+  local weather = lore().weather
+  return weather[name] or weather[lore().regions[1].name]
 end
 
 -- where a particle is born for each kind of drift, as a fraction of the height from the top
@@ -93,7 +59,7 @@ local function climb(weather, rand)
 end
 
 function M.spawn_ember(rand, width, height, weather)
-  weather = weather or M.WEATHER.leyndell
+  weather = weather or M.weather()
   local life = 2600 + rand() * 3400
   return {
     x       = rand() * width,
@@ -121,7 +87,7 @@ end
 
 -- embers flare up as they leave the ground and cool to ash before they vanish
 function M.ember_look(ember, weather)
-  local glyphs = (weather or M.WEATHER.leyndell).glyphs
+  local glyphs = (weather or M.weather()).glyphs
   local t = ember.age / ember.life
   local heat = t < 0.15 and t / 0.15 or 1 - (t - 0.15) / 0.85
   local level = math.max(1, math.min(M.EMBER_LEVELS, math.ceil(heat * M.EMBER_LEVELS)))

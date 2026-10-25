@@ -5,18 +5,12 @@ local function setup_diagnostics()
   vim.diagnostic.config({
     -- tiny-inline-diagnostic draws them instead
     virtual_text = false,
-    signs = {
-      text = {
-        [severity.ERROR] = " ",
-        [severity.WARN]  = " ",
-        [severity.HINT]  = " ",
-        [severity.INFO]  = " ",
-      },
-    },
+    -- the franchise skin decides what the gutter shows
+    signs = { text = require("core.skin.actions").sign_text(require("core.skin").current().signs, severity) },
     update_in_insert = false,
     underline        = true,
     severity_sort    = true,
-    float = { border = "rounded", source = true, header = "", prefix = "" },
+    float = { border = require("core.skin").border(), source = true, header = "", prefix = "" },
   })
 end
 
@@ -178,7 +172,7 @@ return {
     build = ":MasonUpdate",
     opts  = {
       ui = {
-        border = "rounded",
+        border = require("core.skin").border(),
         icons  = { package_installed = "✓", package_pending = "➜", package_uninstalled = "✗" },
       },
     },

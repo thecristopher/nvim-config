@@ -1,14 +1,15 @@
 local actions = require("core.hub.actions")
+local lore = require("core.franchise").current()
 
 local function always(value) return function() return value end end
 
 describe("pick_message", function()
   it("picks the first message at the bottom of the roll", function()
-    assert.equal(actions.MESSAGES[1], actions.pick_message(always(0)))
+    assert.equal(lore.hub_messages[1], actions.pick_message(always(0)))
   end)
 
   it("picks the last message at the top of the roll", function()
-    assert.equal(actions.MESSAGES[#actions.MESSAGES], actions.pick_message(always(0.9999)))
+    assert.equal(lore.hub_messages[#lore.hub_messages], actions.pick_message(always(0.9999)))
   end)
 end)
 
@@ -67,13 +68,13 @@ describe("weather", function()
   local snow = actions.weather("ordina")
 
   it("gives every region its own sky", function()
-    for _, region in ipairs(require("core.themes.actions").REGIONS) do
-      assert.equal(actions.WEATHER[region.name], actions.weather(region.name))
+    for _, region in ipairs(require("core.themes.actions").regions()) do
+      assert.equal(lore.weather[region.name], actions.weather(region.name))
     end
   end)
 
   it("falls back to Leyndell's embers for a region it does not know", function()
-    assert.equal(actions.WEATHER.leyndell, actions.weather("raccoon_city"))
+    assert.equal(lore.weather.leyndell, actions.weather("raccoon_city"))
   end)
 
   it("lets Malenia's rot petals drift down from the top", function()

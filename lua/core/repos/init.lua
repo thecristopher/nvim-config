@@ -277,7 +277,7 @@ end
 
 function M.pick()
   Snacks.picker({
-    title = "Sites of Grace",
+    title = require("core.franchise").current().words.sites,
     items = repo_items(),
     preview = "directory",
     format = format_item,
@@ -323,7 +323,7 @@ function M.setup()
     once = true,
     callback = function()
       M.scan(function()
-        if vim.bo.filetype == "snacks_dashboard" then Snacks.dashboard.update() end
+        require("core.hud").refresh(true)
       end)
     end,
   })

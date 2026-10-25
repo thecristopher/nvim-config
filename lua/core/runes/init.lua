@@ -27,8 +27,17 @@ local function refresh_statusline()
   if ok then lualine.refresh({ place = { "statusline" } }) end
 end
 
+-- worlds with a merchant greet you each time your purse crosses another milestone
+local function visit_merchant(before, after)
+  local lines = require("core.franchise").current().merchant
+  if not lines or not actions.crossed(before, after) then return end
+  require("core.sound").play("merchant")
+  vim.notify(lines[math.random(#lines)], vim.log.levels.INFO, { title = "Merchant" })
+end
+
 local function settle(next_state, gained)
   local from = shown
+  visit_merchant(state.held, next_state.held)
   state = next_state
   save()
   if gained and gained > 0 then gain = { amount = gained, until_ms = vim.uv.now() + 2600 } end
@@ -57,8 +66,9 @@ end
 -- statusline pieces -------------------------------------------------------------------
 
 function M.held()
-  local text = "◈ " .. actions.format(shown)
-  if state.bloodstain > 0 then text = text .. "  󰈸 " .. actions.format(state.bloodstain) end
+  local currency = require("core.franchise").current().currency
+  local text = currency.glyph .. " " .. actions.format(shown)
+  if state.bloodstain > 0 then text = text .. "  " .. currency.stain .. " " .. actions.format(state.bloodstain) end
   return text
 end
 

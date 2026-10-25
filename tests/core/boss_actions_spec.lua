@@ -6,8 +6,8 @@ describe("boss_for", function()
   end)
 
   it("gives every region its own boss", function()
-    for _, region in ipairs(require("core.themes.actions").REGIONS) do
-      assert.is_truthy(actions.BOSSES[region.name], region.name)
+    for _, region in ipairs(require("core.themes.actions").regions()) do
+      assert.is_truthy(require("core.franchise").current().bosses[region.name], region.name)
     end
   end)
 
@@ -151,5 +151,52 @@ describe("placement", function()
 
   it("moves to the top while Leon edits the last lines", function()
     assert.equal(1, actions.placement(vim.tbl_extend("force", screen, { cursor_row = 47 })))
+  end)
+end)
+
+describe("closeness", function()
+  it("starts the hunt far away even with every error still there", function()
+    assert.is_true(actions.closeness(5, 5, 0) < 0.5)
+  end)
+
+  it("brings Mr. X all the way while Leon ignores the errors", function()
+    assert.equal(1, actions.closeness(5, 5, actions.APPROACH_MS))
+  end)
+
+  it("pushes him back with every fix", function()
+    assert.is_true(actions.closeness(2, 5, actions.APPROACH_MS) < actions.closeness(4, 5, actions.APPROACH_MS))
+  end)
+end)
+
+describe("footsteps", function()
+  it("sounds distant when the stalker is far", function()
+    assert.equal("distant footsteps", actions.footsteps(0.1))
+  end)
+
+  it("warns when it is right behind you", function()
+    assert.equal("right behind you", actions.footsteps(1))
+  end)
+end)
+
+describe("hall", function()
+  it("leaves the whole hall between Claire and a stalker that just arrived", function()
+    assert.same({ near = 38, far = 0 }, actions.hall(40, 0))
+  end)
+
+  it("closes the gap when it reaches her", function()
+    assert.same({ near = 0, far = 38 }, actions.hall(40, 1))
+  end)
+
+  it("always fills the width with you and the stalker included", function()
+    local hall = actions.hall(40, 0.37)
+    assert.equal(40, hall.near + hall.far + 2)
+  end)
+end)
+
+describe("stalker_header", function()
+  it("puts the stalker's name left and its footsteps right", function()
+    local header = actions.stalker_header("Mr. X", 1, 30)
+    assert.equal(30, vim.api.nvim_strwidth(header))
+    assert.is_truthy(header:match("^Mr%. X%s+right behind you$"))
   end)
 end)

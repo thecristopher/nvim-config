@@ -44,7 +44,7 @@ return {
       columns                      = { "icon" },
       skip_confirm_for_simple_edits = true,
       view_options                 = { show_hidden = true },
-      float                        = { padding = 4, border = "rounded" },
+      float                        = { padding = 4, border = require("core.skin").border() },
     },
   },
 

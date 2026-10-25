@@ -91,7 +91,7 @@ function M.write()
   end
   local line = vim.api.nvim_win_get_cursor(0)[1]
 
-  vim.ui.select(actions.TEMPLATES, {
+  vim.ui.select(actions.templates(), {
     prompt = "Choose a template",
     format_item = function(template) return template:format("****") end,
   }, function(template)
@@ -116,6 +116,13 @@ function M.erase()
   end
   write_store(store)
   M.render(buf)
+end
+
+--- Returns every message left in a repo, by file then line.
+---@param repo string repo root
+---@return table[] entries as { file, line, text }
+function M.entries(repo)
+  return actions.list(read_store(), vim.fs.normalize(repo))
 end
 
 --- Lists every message in the current repo and jumps to the one you pick.

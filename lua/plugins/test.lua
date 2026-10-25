@@ -42,7 +42,7 @@ return {
         status   = { virtual_text = true, signs = true },
         output   = { open_on_run = false },
         quickfix = { open = false },
-        floating = { border = "rounded" },
+        floating = { border = require("core.skin").border() },
         icons = {
           passed  = "✓",
           failed  = "✗",

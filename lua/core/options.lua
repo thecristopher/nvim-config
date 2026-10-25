@@ -109,6 +109,9 @@ opt.shortmess:append({ W = true, I = true, c = true, C = true })
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
+-- iTerm switches to the franchise's profile (terminal/iterm/Eldentree.json, linked into DynamicProfiles)
+vim.g.eldentree_iterm_profiles = true
+
 -- the Claude native installer drops claude.exe here but often never makes it onto PATH
 if vim.fn.has("win32") == 1 then
   local claude_bin = (vim.env.USERPROFILE or "") .. "\\.local\\bin"

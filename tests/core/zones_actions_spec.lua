@@ -36,7 +36,7 @@ describe("zone_name", function()
 
   it("gives any other folder a place that never changes", function()
     assert.equal(actions.zone_name("lua/core"), actions.zone_name("lua/core"))
-    assert.is_truthy(vim.tbl_contains(actions.PLACES, actions.zone_name("lua/core")))
+    assert.is_truthy(vim.tbl_contains(require("core.franchise").current().places, actions.zone_name("lua/core")))
   end)
 end)
 

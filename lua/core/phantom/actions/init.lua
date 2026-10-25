@@ -74,7 +74,8 @@ function M.describe(info, kind, now)
   if kind == "unwritten" then
     return { title = " ◈ Unwritten ", lines = { "Not yet etched into history.", "Commit it before the fog takes it." } }
   end
-  local who = kind == "self" and "Bloodstain of your past self" or ("Phantom of " .. info.author)
+  local words = require("core.franchise").current().words
+  local who = kind == "self" and words.past_self or words.phantom:format(info.author)
   local when = ("%s · %s"):format(M.relative_time(math.max(0, now - info.time)), info.sha:sub(1, 7))
   return { title = " ◈ " .. who .. " ", lines = { when, info.summary } }
 end

@@ -75,7 +75,7 @@ return {
           path_display       = { "truncate" },
           winblend           = 5,
           border             = {},
-          borderchars        = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
+          borderchars        = require("core.skin.actions").border_chars(require("core.skin").border()),
           color_devicons     = true,
           set_env            = { COLORTERM = "truecolor" },
           mappings = {

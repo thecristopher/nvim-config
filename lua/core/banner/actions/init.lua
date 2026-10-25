@@ -1,4 +1,4 @@
--- The "ENEMY FELLED" banners: what each one says, how it breathes in and out,
+-- The "ENEMY FELLED" banners: what each one says (from the franchise), how it breathes in and out,
 -- and the soft band of shadow it sits on. Times are milliseconds since the banner appeared.
 local ease = require("core.motion.actions")
 
@@ -12,24 +12,24 @@ M.BAND_LEVELS = 10
 
 M.KINDS = {
   felled = {
-    text = "ENEMY FELLED", color = "yellow",
+    color = "yellow",
     duration = 3200, fade_in = 450, fade_out = 900, stagger = 40, letter_ms = 380, band = 0.92,
   },
   great = {
-    text = "GREAT ENEMY FELLED", color = "yellow",
+    color = "yellow",
     duration = 3800, fade_in = 500, fade_out = 1000, stagger = 35, letter_ms = 420, band = 0.95, rule = true,
   },
   -- death never hurries, the whole word seeps in at once
   died = {
-    text = "YOU DIED", color = "red",
+    color = "red",
     duration = 4200, fade_in = 900, fade_out = 1100, stagger = 0, letter_ms = 1400, band = 0.97,
   },
   grace = {
-    text = "LOST GRACE DISCOVERED", color = "yellow",
+    color = "yellow",
     duration = 3200, fade_in = 450, fade_out = 900, stagger = 30, letter_ms = 360, band = 0.88, rule = true,
   },
   cleansed = {
-    text = "SCARLET ROT CLEANSED", color = "green",
+    color = "green",
     duration = 2600, fade_in = 350, fade_out = 800, stagger = 25, letter_ms = 300, band = 0.85,
   },
   -- walking into a new part of a project, quieter still so it never interrupts the work
@@ -44,10 +44,47 @@ M.KINDS = {
   },
 }
 
+--- Returns a banner kind with the franchise's words and style on it, nil for an unknown kind.
+---@param name string kind name from M.KINDS
+---@param overrides table|nil fields that win over the kind's own
+---@return table|nil
 function M.kind(name, overrides)
   local base = M.KINDS[name]
   if not base then return nil end
-  return vim.tbl_extend("force", base, overrides or {})
+  local lore = require("core.franchise").current()
+  local style = (lore.banner_styles or {})[name] or {}
+  local text = lore.banners[name] or base.text or ""
+  return vim.tbl_extend("force", base, style, { text = text }, overrides or {})
+end
+
+-- dripping banners ------------------------------------------------------------------------
+
+M.DRIP_DEPTH = 3
+M.DRIP_MS = 420
+
+--- Picks which letters bleed and how far, the same every time so the banner never flickers.
+---@param letter_cols integer[] zero based columns of the banner's letters
+---@return { col: integer, length: integer }[]
+function M.drips(letter_cols)
+  local drips = {}
+  for index, col in ipairs(letter_cols) do
+    if index % 2 == 1 then
+      table.insert(drips, { col = col, length = 1 + (index * 7) % M.DRIP_DEPTH })
+    end
+  end
+  return drips
+end
+
+--- Returns how visible a drip is at a depth below its letter: deeper drops arrive later.
+---@param depth integer 1 right under the letter, up to DRIP_DEPTH
+---@param elapsed number milliseconds since the banner appeared
+---@param kind table
+---@return number from 0 to 1
+function M.drip_alpha(depth, elapsed, kind)
+  local delay = kind.fade_in + kind.letter_ms * 0.6 + (depth - 1) * M.DRIP_MS
+  local running = ease.ease("out_cubic", ease.progress(elapsed - delay, M.DRIP_MS))
+  local falling = 1 - ease.progress(elapsed - (kind.duration - kind.fade_out), kind.fade_out)
+  return running * ease.ease("in_out_sine", falling)
 end
 
 -- "ENEMY FELLED" becomes "E N E M Y   F E L L E D", the way the game letterspaces it
