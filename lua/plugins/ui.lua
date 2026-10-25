@@ -50,6 +50,11 @@ return {
             },
           },
           lualine_x = {
+            {
+              function() return require("core.music").statusline() end,
+              color    = function() return { fg = palette().mauve } end,
+              on_click = function() require("core.music").open() end,
+            },
             -- the breathing grace or the health ECG, each carries its own highlight group
             {
               function()
@@ -250,6 +255,7 @@ return {
         { "<leader>gw", icon = { icon = "󰊠", color = "blue" } },
         { "<leader>m",  group = "messages", icon = { icon = "✎", color = "orange" } },
         { "<leader>D",  group = "debug", icon = { icon = "", color = "red" } },
+        { "<leader>o",  icon = { icon = "󰎈", color = "purple" } },
         { "<leader>M",  group = "multicursor", icon = { icon = "󰇀", color = "yellow" } },
         { "<leader>T",  group = "tests", icon = { icon = "󰙨", color = "green" } },
         { "<leader>s",  group = "split" },

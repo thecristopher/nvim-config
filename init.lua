@@ -35,6 +35,7 @@ else
   require("core.results").setup()
   require("core.rest").setup()
   require("core.trace").setup()
+  require("core.music").setup()
 end
 
 -- ── Bootstrap lazy.nvim ──────────────────────────────────────────────────────
