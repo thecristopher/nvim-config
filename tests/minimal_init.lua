@@ -9,7 +9,9 @@ local function find_plenary()
     vim.env.PLENARY_DIR,
   }
   for _, path in ipairs(candidates) do
-    if path and vim.fn.isdirectory(path) == 1 then return path end
+    if path and vim.fn.isdirectory(path) == 1 then
+      return path
+    end
   end
   error("plenary.nvim not found. Open nvim once so lazy installs it, or set PLENARY_DIR.")
 end

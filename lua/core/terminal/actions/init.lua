@@ -8,10 +8,18 @@ M.IMAGE_TERMINALS = { kitty = true, ghostty = true, wezterm = true }
 ---@param env table<string, string> like vim.env
 ---@return string name one of kitty, ghostty, wezterm, iterm or unknown
 function M.detect(env)
-  if env.KITTY_WINDOW_ID or env.TERM == "xterm-kitty" then return "kitty" end
-  if env.GHOSTTY_RESOURCES_DIR or env.TERM_PROGRAM == "ghostty" then return "ghostty" end
-  if env.TERM_PROGRAM == "WezTerm" then return "wezterm" end
-  if env.TERM_PROGRAM == "iTerm.app" then return "iterm" end
+  if env.KITTY_WINDOW_ID or env.TERM == "xterm-kitty" then
+    return "kitty"
+  end
+  if env.GHOSTTY_RESOURCES_DIR or env.TERM_PROGRAM == "ghostty" then
+    return "ghostty"
+  end
+  if env.TERM_PROGRAM == "WezTerm" then
+    return "wezterm"
+  end
+  if env.TERM_PROGRAM == "iTerm.app" then
+    return "iterm"
+  end
   return "unknown"
 end
 
@@ -47,7 +55,9 @@ end
 ---@param inside_tmux boolean
 ---@return string
 function M.passthrough(sequence, inside_tmux)
-  if not inside_tmux then return sequence end
+  if not inside_tmux then
+    return sequence
+  end
   return "\27Ptmux;" .. sequence:gsub("\27", "\27\27") .. "\27\\"
 end
 

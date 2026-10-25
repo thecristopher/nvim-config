@@ -1,6 +1,6 @@
 -- Resting at a Site of Grace: after a long idle the world dims, embers rise, and any key wakes you.
 local banner = require("core.banner.actions")
-local ease   = require("core.motion.actions")
+local ease = require("core.motion.actions")
 
 local M = {}
 
@@ -10,8 +10,12 @@ M.DEEPEST_ALPHA = 0.78
 
 -- only drift off from normal mode, nobody wants to be ambushed mid sentence
 function M.should_rest(opts)
-  if opts.resting or not opts.enabled then return false end
-  if opts.mode ~= "n" then return false end
+  if opts.resting or not opts.enabled then
+    return false
+  end
+  if opts.mode ~= "n" then
+    return false
+  end
   return opts.idle >= (opts.after or M.DEFAULT_AFTER_MS)
 end
 
@@ -71,7 +75,11 @@ function M.layout(width, height, region_title, opts)
     row = row + line.gap
     local width_of = vim.fn.strdisplaywidth(line.text)
     table.insert(placed, {
-      row = row, col = banner.center_col(width, width_of), text = line.text, group = line.group, typed = line.typed,
+      row = row,
+      col = banner.center_col(width, width_of),
+      text = line.text,
+      group = line.group,
+      typed = line.typed,
     })
     row = row + 1
   end

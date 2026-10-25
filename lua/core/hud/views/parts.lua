@@ -10,21 +10,40 @@ local M = {}
 ---@return string
 function M.champion_name(character, width)
   local carved = require("core.hub.actions").spaced(character)
-  if vim.api.nvim_strwidth(carved) <= width then return carved end
+  if vim.api.nvim_strwidth(carved) <= width then
+    return carved
+  end
   local spaced = require("core.banner.actions").spaced(character)
-  if vim.api.nvim_strwidth(spaced) <= width then return spaced end
+  if vim.api.nvim_strwidth(spaced) <= width then
+    return spaced
+  end
   return hud.fit(character:upper(), width)
 end
 
-local STATUS_HL = { M = "EldenHudKey", A = "EldenHudTitle", D = "EldenHudDim", R = "EldenHudKey", ["?"] = "EldenHudCount" }
+local STATUS_HL = {
+  M = "EldenHudKey",
+  A = "EldenHudTitle",
+  D = "EldenHudDim",
+  R = "EldenHudKey",
+  ["?"] = "EldenHudCount",
+}
 
 local function change_chunks(line, width, selected)
   local code = vim.trim(line:sub(1, 2))
   local path = line:sub(4)
   local bg = selected and "EldenHudSlotSel" or nil
   return {
-    { hud.pad(code, 3), STATUS_HL[code:sub(1, 1)] or "EldenHudCount", bg = bg, spot = selected and "cursor" or nil },
-    { hud.pad(hud.fit(path, width - 4), width - 3), selected and "EldenHudBanner" or "EldenHudDesc", bg = bg },
+    {
+      hud.pad(code, 3),
+      STATUS_HL[code:sub(1, 1)] or "EldenHudCount",
+      bg = bg,
+      spot = selected and "cursor" or nil,
+    },
+    {
+      hud.pad(hud.fit(path, width - 4), width - 3),
+      selected and "EldenHudBanner" or "EldenHudDesc",
+      bg = bg,
+    },
   }
 end
 
@@ -39,20 +58,28 @@ end
 function M.changes(changes, width, rows, selected)
   local column = math.floor((width - 2) / 2)
   local capacity = rows * 2
-  if capacity == 0 then return {} end
+  if capacity == 0 then
+    return {}
+  end
   local first = selected and math.floor((selected - 1) / capacity) * capacity or 0
   local shown = math.min(#changes - first, capacity)
-  if not selected and #changes > capacity then shown = capacity - 1 end
+  if not selected and #changes > capacity then
+    shown = capacity - 1
+  end
   local cells = {}
   for cell = 1, shown do
     local index = first + cell
     cells[cell] = change_chunks(changes[index], column, index == selected)
   end
-  if not selected and shown < #changes then cells[capacity] = { { ("+%d more"):format(#changes - shown), "EldenHudDim" } } end
+  if not selected and shown < #changes then
+    cells[capacity] = { { ("+%d more"):format(#changes - shown), "EldenHudDim" } }
+  end
   local out = {}
   for row = 1, rows do
     local left, right = cells[row], cells[row + rows]
-    if not left then break end
+    if not left then
+      break
+    end
     local chunks = hud.pad_chunks(left, column)
     if right then
       table.insert(chunks, { "  " })
@@ -67,8 +94,12 @@ end
 ---@param model table
 ---@return table|nil
 function M.selected(model)
-  if model.selected then return model.selected end
-  if model.focus == "chest" and model.chest then return model.chest.items[model.cursor.chest or 1] end
+  if model.selected then
+    return model.selected
+  end
+  if model.focus == "chest" and model.chest then
+    return model.chest.items[model.cursor.chest or 1]
+  end
   return model.tabs[model.tab].items[model.cursor.items or 1]
 end
 
@@ -76,11 +107,15 @@ end
 ---@param model table
 ---@return boolean last_selected, integer|nil change index
 function M.quest_selection(model)
-  if model.focus ~= "quest" then return false, nil end
+  if model.focus ~= "quest" then
+    return false, nil
+  end
   local index = model.cursor.quest or 1
   local status = model.status or {}
   if status.last_ready then
-    if index == 1 then return true, nil end
+    if index == 1 then
+      return true, nil
+    end
     return false, index - 1
   end
   return false, index
@@ -101,15 +136,23 @@ end
 ---@param fallback string what to say outside a repo
 ---@return table[] chunks
 function M.quest_line(status, width, fallback)
-  if not status.project then return { { hud.fit(fallback, width), "EldenHudDim" } } end
+  if not status.project then
+    return { { hud.fit(fallback, width), "EldenHudDim" } }
+  end
   local count = status.changes and #status.changes or nil
   local tally = count == nil and "counting…" or count == 0 and "clean" or (count .. " changed")
   -- the icons, the gaps and the dot take 14 cells, the branch gets what the name and tally leave
-  local branch_width = math.max(4, width - 14 - vim.api.nvim_strwidth(status.project) - vim.api.nvim_strwidth(tally))
+  local branch_width =
+    math.max(4, width - 14 - vim.api.nvim_strwidth(status.project) - vim.api.nvim_strwidth(tally))
   return hud.clip({
-    { "󰊢 ", "EldenHudIcon" }, { status.project, "EldenHudBanner" }, { "    ", nil },
-    { " ", "EldenHudKey" }, { hud.fit(status.branch or "?", branch_width), "EldenHudName" }, { "    " },
-    { "● ", count and count > 0 and "EldenHudKey" or "EldenHudDim" }, { tally, "EldenHudCount" },
+    { "󰊢 ", "EldenHudIcon" },
+    { status.project, "EldenHudBanner" },
+    { "    ", nil },
+    { " ", "EldenHudKey" },
+    { hud.fit(status.branch or "?", branch_width), "EldenHudName" },
+    { "    " },
+    { "● ", count and count > 0 and "EldenHudKey" or "EldenHudDim" },
+    { tally, "EldenHudCount" },
   }, width)
 end
 
@@ -122,7 +165,9 @@ function M.footer(model, width)
   local message = model.message or ""
   -- the hub's quill finds the message by its exact text, so it is only cut when it truly cannot fit
   table.insert(rows, hud.center({ { hud.fit(message, width), "SnacksDashboardDesc" } }, width))
-  if model.stats then table.insert(rows, hud.center({ { hud.fit(model.stats, width), "EldenHudDim" } }, width)) end
+  if model.stats then
+    table.insert(rows, hud.center({ { hud.fit(model.stats, width), "EldenHudDim" } }, width))
+  end
   return rows
 end
 

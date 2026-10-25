@@ -32,7 +32,9 @@ describe("terminal_thieves", function()
     local specs = {}
     for _, file in ipairs(vim.api.nvim_get_runtime_file("lua/plugins/*.lua", true)) do
       local spec = dofile(file)
-      if type(spec[1]) == "string" then spec = { spec } end
+      if type(spec[1]) == "string" then
+        spec = { spec }
+      end
       vim.list_extend(specs, spec)
     end
     assert.same({}, actions.terminal_thieves(specs))

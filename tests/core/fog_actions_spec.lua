@@ -57,7 +57,9 @@ describe("row_levels", function()
   it("gives every column a level within range", function()
     local levels = actions.row_levels(30, 10, 21, 2.0, 0)
     assert.equal(30, #levels)
-    for _, level in ipairs(levels) do assert.is_true(level >= 0 and level <= actions.LEVELS) end
+    for _, level in ipairs(levels) do
+      assert.is_true(level >= 0 and level <= actions.LEVELS)
+    end
   end)
 
   it("moves the clouds as they drift", function()

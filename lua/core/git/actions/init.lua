@@ -37,8 +37,12 @@ end
 ---@return string|nil branch nil when nothing usable is left
 function M.branch_name(prefix, name)
   local slug = M.slug(name)
-  if slug == "" then return nil end
-  if slug:find("/", 1, true) or not prefix then return slug end
+  if slug == "" then
+    return nil
+  end
+  if slug:find("/", 1, true) or not prefix then
+    return slug
+  end
   return prefix .. "/" .. slug
 end
 
@@ -55,7 +59,9 @@ function M.parse_status(raw)
       local code = field:sub(1, 2)
       entries[#entries + 1] = { code = code, path = field:sub(4) }
       -- renames and copies carry the old path as the next field
-      if code:find("[RC]") then i = i + 1 end
+      if code:find("[RC]") then
+        i = i + 1
+      end
     end
     i = i + 1
   end
@@ -65,7 +71,9 @@ end
 local function matches_any(path, patterns)
   local name = vim.fs.basename(path)
   for _, pattern in ipairs(patterns) do
-    if name:find(pattern) then return true end
+    if name:find(pattern) then
+      return true
+    end
   end
   return false
 end
@@ -98,7 +106,9 @@ end
 ---@param has_upstream boolean
 ---@return string[] args for git
 function M.push_args(has_upstream)
-  if has_upstream then return { "push" } end
+  if has_upstream then
+    return { "push" }
+  end
   return { "push", "-u", "origin", "HEAD" }
 end
 
@@ -111,14 +121,14 @@ end
 -- one list feeds the keymaps, which-key and the terminal hint so they never drift apart
 ---@type GitQuickKey[]
 M.QUICK_KEYS = {
-  { key = "N", fn = "new_branch",  desc = "New branch",                      short = "branch" },
-  { key = "j", fn = "pull",        desc = "Pull",                            short = "pull" },
-  { key = "k", fn = "push",        desc = "Push",                            short = "push" },
-  { key = "m", fn = "sync",        desc = "Merge base branch in",            short = "merge" },
-  { key = "M", fn = "home",        desc = "Switch to base branch and pull",  short = "base" },
-  { key = "a", fn = "stage",       desc = "Stage related changes",           short = "stage" },
-  { key = "z", fn = "stash",       desc = "Stash changes",                   short = "stash" },
-  { key = "Z", fn = "stash_pop",   desc = "Pop stash",                       short = "pop" },
+  { key = "N", fn = "new_branch", desc = "New branch", short = "branch" },
+  { key = "j", fn = "pull", desc = "Pull", short = "pull" },
+  { key = "k", fn = "push", desc = "Push", short = "push" },
+  { key = "m", fn = "sync", desc = "Merge base branch in", short = "merge" },
+  { key = "M", fn = "home", desc = "Switch to base branch and pull", short = "base" },
+  { key = "a", fn = "stage", desc = "Stage related changes", short = "stage" },
+  { key = "z", fn = "stash", desc = "Stash changes", short = "stash" },
+  { key = "Z", fn = "stash_pop", desc = "Pop stash", short = "pop" },
   { key = "u", fn = "undo_commit", desc = "Undo last commit (keep changes)", short = "undo" },
 }
 

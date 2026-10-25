@@ -41,10 +41,23 @@ end
 function M.scan_command(roots)
   if vim.fn.executable("fd") == 1 then
     local cmd = {
-      "fd", "--hidden", "--no-ignore", "--glob", ".git",
-      "--type", "d", "--type", "f",
-      "--max-depth", tostring(M.MAX_DEPTH),
-      "--exclude", "node_modules", "--exclude", "vendor", "--exclude", ".venv",
+      "fd",
+      "--hidden",
+      "--no-ignore",
+      "--glob",
+      ".git",
+      "--type",
+      "d",
+      "--type",
+      "f",
+      "--max-depth",
+      tostring(M.MAX_DEPTH),
+      "--exclude",
+      "node_modules",
+      "--exclude",
+      "vendor",
+      "--exclude",
+      ".venv",
       "--prune",
     }
     for _, root in ipairs(roots) do
@@ -57,9 +70,15 @@ function M.scan_command(roots)
   local cmd = { "find" }
   vim.list_extend(cmd, roots)
   vim.list_extend(cmd, {
-    "-maxdepth", tostring(M.MAX_DEPTH),
-    "-name", "node_modules", "-prune", "-o",
-    "-name", ".git", "-print",
+    "-maxdepth",
+    tostring(M.MAX_DEPTH),
+    "-name",
+    "node_modules",
+    "-prune",
+    "-o",
+    "-name",
+    ".git",
+    "-print",
   })
   return cmd
 end
@@ -73,9 +92,13 @@ function M.display_path(path, home)
 end
 
 function M.branch_from_head(head_contents)
-  if not head_contents or head_contents == "" then return nil end
+  if not head_contents or head_contents == "" then
+    return nil
+  end
   local branch = head_contents:match("^ref:%s*refs/heads/(.-)%s*$")
-  if branch then return branch end
+  if branch then
+    return branch
+  end
   -- detached HEAD is just a sha, show it short like git does
   local sha = head_contents:match("^(%x+)%s*$")
   return sha and sha:sub(1, 7) or nil
@@ -83,8 +106,12 @@ end
 
 function M.gitdir_from_file(contents, repo)
   local gitdir = contents and contents:match("^gitdir:%s*(.-)%s*$")
-  if not gitdir then return nil end
-  if gitdir:sub(1, 1) == "/" then return gitdir end
+  if not gitdir then
+    return nil
+  end
+  if gitdir:sub(1, 1) == "/" then
+    return gitdir
+  end
   return repo .. "/" .. gitdir
 end
 
@@ -96,7 +123,9 @@ end
 function M.pick_root(markers, is_repo)
   for _, marker in ipairs(markers or {}) do
     local dir = vim.fs.dirname(marker)
-    if is_repo(dir) then return dir end
+    if is_repo(dir) then
+      return dir
+    end
   end
   return nil
 end
@@ -120,7 +149,9 @@ end
 ---@return boolean
 function M.worth_saving(buffers)
   for _, buf in ipairs(buffers or {}) do
-    if buf.listed and buf.buftype == "" and buf.name ~= "" then return true end
+    if buf.listed and buf.buftype == "" and buf.name ~= "" then
+      return true
+    end
   end
   return false
 end
@@ -130,20 +161,30 @@ function M.rank(tracked, scanned, activity, limit)
   local ranked, seen = {}, {}
 
   local function add(path)
-    if seen[path] or (limit and #ranked >= limit) then return end
+    if seen[path] or (limit and #ranked >= limit) then
+      return
+    end
     seen[path] = true
     table.insert(ranked, path)
   end
 
-  for _, path in ipairs(tracked or {}) do add(path) end
+  for _, path in ipairs(tracked or {}) do
+    add(path)
+  end
 
-  local rest = vim.tbl_filter(function(path) return not seen[path] end, scanned or {})
+  local rest = vim.tbl_filter(function(path)
+    return not seen[path]
+  end, scanned or {})
   table.sort(rest, function(a, b)
     local a_time, b_time = (activity or {})[a] or 0, (activity or {})[b] or 0
-    if a_time ~= b_time then return a_time > b_time end
+    if a_time ~= b_time then
+      return a_time > b_time
+    end
     return a < b
   end)
-  for _, path in ipairs(rest) do add(path) end
+  for _, path in ipairs(rest) do
+    add(path)
+  end
 
   return ranked
 end
@@ -161,19 +202,25 @@ end
 -- typed paths arrive with stray spaces, tildes and trailing slashes
 function M.folder_from_input(input)
   local trimmed = vim.trim(input or "")
-  if trimmed == "" then return nil end
+  if trimmed == "" then
+    return nil
+  end
   return vim.fs.normalize(vim.fn.expand(trimmed))
 end
 
 function M.is_inside(path, dir)
-  if not path or not dir then return false end
+  if not path or not dir then
+    return false
+  end
   return path == dir or path:sub(1, #dir + 1) == dir .. "/"
 end
 
 -- start typing from the dev folder you are in, or the first one that exists
 function M.browse_start(roots, cwd, home)
   for _, root in ipairs(roots or {}) do
-    if M.is_inside(cwd, root) then return M.display_path(root, home) .. "/" end
+    if M.is_inside(cwd, root) then
+      return M.display_path(root, home) .. "/"
+    end
   end
   local fallback = (roots or {})[1] or cwd or ""
   return M.display_path(fallback, home) .. "/"
@@ -181,17 +228,25 @@ end
 
 -- jumping into a plugin or dependency source should not drag the cwd along
 function M.is_ignored(file, ignored_dirs)
-  if file:find("/node_modules/", 1, true) then return true end
+  if file:find("/node_modules/", 1, true) then
+    return true
+  end
   for _, dir in ipairs(ignored_dirs or {}) do
-    if M.is_inside(file, dir) then return true end
+    if M.is_inside(file, dir) then
+      return true
+    end
   end
   return false
 end
 
 -- only hop when the file lives in a different repo than where we stand
 function M.should_change_root(file, cwd, root)
-  if not file or file == "" or not root then return false end
-  if root == cwd then return false end
+  if not file or file == "" or not root then
+    return false
+  end
+  if root == cwd then
+    return false
+  end
   return not M.is_inside(file, cwd)
 end
 

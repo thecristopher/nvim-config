@@ -19,7 +19,9 @@ end
 --- Returns the name of the franchise in use right now.
 ---@return string
 function M.name()
-  if vim.g.eldentree_franchise then return actions.resolve(vim.g.eldentree_franchise) end
+  if vim.g.eldentree_franchise then
+    return actions.resolve(vim.g.eldentree_franchise)
+  end
   active = active or read_choice() or actions.of_the_day(os.date("*t"))
   return active
 end
@@ -42,7 +44,11 @@ end
 ---@param name string franchise name
 function M.switch(name)
   if vim.g.eldentree_franchise then
-    return vim.notify("vim.g.eldentree_franchise pins " .. M.current().title, vim.log.levels.WARN, { title = "Eldentree" })
+    return vim.notify(
+      "vim.g.eldentree_franchise pins " .. M.current().title,
+      vim.log.levels.WARN,
+      { title = "Eldentree" }
+    )
   end
   active = actions.resolve(name)
   pcall(vim.fn.writefile, { actions.encode_choice(today(), active) }, state_file)
@@ -53,9 +59,13 @@ end
 function M.pick()
   vim.ui.select(actions.names(), {
     prompt = "Choose today's franchise",
-    format_item = function(name) return actions.lore(name).title end,
+    format_item = function(name)
+      return actions.lore(name).title
+    end,
   }, function(name)
-    if name then M.switch(name) end
+    if name then
+      M.switch(name)
+    end
   end)
 end
 
@@ -67,34 +77,48 @@ end
 ---@param text string the franchise's name as a person writes it, like "Silent Hill"
 function M.create(text)
   local name = actions.slug(text)
-  if not name then return vim.notify("Name the franchise, like :Franchise new Silent Hill", vim.log.levels.WARN) end
+  if not name then
+    return vim.notify("Name the franchise, like :Franchise new Silent Hill", vim.log.levels.WARN)
+  end
   local dir = lore_dir(name)
-  if vim.uv.fs_stat(dir) then return vim.notify(name .. " already exists", vim.log.levels.WARN, { title = "Eldentree" }) end
+  if vim.uv.fs_stat(dir) then
+    return vim.notify(name .. " already exists", vim.log.levels.WARN, { title = "Eldentree" })
+  end
 
   vim.fn.mkdir(dir, "p")
   local template = vim.fn.stdpath("config") .. "/lua/core/franchise/template/"
   for _, file in ipairs({ "init.lua", "regions.lua", "skin.lua" }) do
     local text_lines = vim.fn.readfile(template .. file)
-    local filled = vim.split(actions.fill_template(table.concat(text_lines, "\n"), name), "\n", { plain = true })
+    local filled =
+      vim.split(actions.fill_template(table.concat(text_lines, "\n"), name), "\n", { plain = true })
     vim.fn.writefile(filled, dir .. "/" .. file)
   end
   actions.rediscover()
   vim.cmd.edit(vim.fn.fnameescape(dir .. "/init.lua"))
-  vim.notify(("%s is born. Fill its lore, then :checkhealth eldentree"):format(actions.title(name)),
-    vim.log.levels.INFO, { title = "Eldentree" })
+  vim.notify(
+    ("%s is born. Fill its lore, then :checkhealth eldentree"):format(actions.title(name)),
+    vim.log.levels.INFO,
+    { title = "Eldentree" }
+  )
 end
 
 local function run(cmd)
   local first, rest = cmd.args:match("^(%S*)%s*(.-)$")
-  if first == "" then return M.pick() end
-  if first == "new" then return M.create(rest) end
+  if first == "" then
+    return M.pick()
+  end
+  if first == "new" then
+    return M.create(rest)
+  end
   M.switch(first)
 end
 
 function M.setup()
   vim.api.nvim_create_user_command("Franchise", run, {
     nargs = "*",
-    complete = function() return vim.list_extend({ "new" }, vim.deepcopy(actions.names())) end,
+    complete = function()
+      return vim.list_extend({ "new" }, vim.deepcopy(actions.names()))
+    end,
     desc = "Switch today's franchise, or :Franchise new <name> to create one",
   })
 end

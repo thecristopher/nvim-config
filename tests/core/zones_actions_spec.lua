@@ -36,7 +36,9 @@ describe("zone_name", function()
 
   it("gives any other folder a place that never changes", function()
     assert.equal(actions.zone_name("lua/core"), actions.zone_name("lua/core"))
-    assert.is_truthy(vim.tbl_contains(require("core.franchise").current().places, actions.zone_name("lua/core")))
+    assert.is_truthy(
+      vim.tbl_contains(require("core.franchise").current().places, actions.zone_name("lua/core"))
+    )
   end)
 end)
 
@@ -48,11 +50,14 @@ describe("should_announce", function()
   end)
 
   it("stays quiet in a zone already seen this session", function()
-    assert.is_false(actions.should_announce(vim.tbl_extend("force", fresh, { seen = { ["lua/core"] = true } })))
+    assert.is_false(
+      actions.should_announce(vim.tbl_extend("force", fresh, { seen = { ["lua/core"] = true } }))
+    )
   end)
 
   it("waits out the cooldown after the last zone", function()
-    local opts = vim.tbl_extend("force", fresh, { last_shown = fresh.now - actions.COOLDOWN_MS + 1 })
+    local opts =
+      vim.tbl_extend("force", fresh, { last_shown = fresh.now - actions.COOLDOWN_MS + 1 })
     assert.is_false(actions.should_announce(opts))
   end)
 
@@ -61,6 +66,8 @@ describe("should_announce", function()
   end)
 
   it("has nothing to say without a zone", function()
-    assert.is_false(actions.should_announce({ key = nil, seen = {}, now = fresh.now, busy = false }))
+    assert.is_false(
+      actions.should_announce({ key = nil, seen = {}, now = fresh.now, busy = false })
+    )
   end)
 end)

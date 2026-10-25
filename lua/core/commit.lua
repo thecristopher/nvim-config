@@ -46,10 +46,14 @@ local function draft_via_claude(prompt, cb)
   notify_info("Drafting commit message with Claude…")
   local start = vim.uv.now()
   local timer = vim.uv.new_timer()
-  timer:start(4000, 4000, vim.schedule_wrap(function()
-    local secs = math.floor((vim.uv.now() - start) / 1000)
-    notify_info(("Drafting… (%ds)"):format(secs))
-  end))
+  timer:start(
+    4000,
+    4000,
+    vim.schedule_wrap(function()
+      local secs = math.floor((vim.uv.now() - start) / 1000)
+      notify_info(("Drafting… (%ds)"):format(secs))
+    end)
+  )
   require("core.claude").run(prompt, function(res)
     timer:stop()
     timer:close()
@@ -59,8 +63,8 @@ end
 
 local function open_editor(msg)
   local buf = vim.api.nvim_create_buf(false, false)
-  vim.bo[buf].buftype   = "acwrite"
-  vim.bo[buf].filetype  = "gitcommit"
+  vim.bo[buf].buftype = "acwrite"
+  vim.bo[buf].filetype = "gitcommit"
   vim.bo[buf].bufhidden = "wipe"
   vim.api.nvim_buf_set_name(buf, "COMMIT_EDITMSG (Claude)")
 
@@ -68,36 +72,42 @@ local function open_editor(msg)
   vim.bo[buf].modified = false
   pending[buf] = true
 
-  local width  = math.min(math.floor(vim.o.columns * 0.7), 100)
+  local width = math.min(math.floor(vim.o.columns * 0.7), 100)
   local height = math.min(math.floor(vim.o.lines * 0.45), 18)
   local win = vim.api.nvim_open_win(buf, true, {
-    relative  = "editor",
-    row       = math.floor((vim.o.lines - height) / 2),
-    col       = math.floor((vim.o.columns - width) / 2),
-    width     = width,
-    height    = height,
-    border    = require("core.skin").border(),
-    title     = " Commit Message ",
+    relative = "editor",
+    row = math.floor((vim.o.lines - height) / 2),
+    col = math.floor((vim.o.columns - width) / 2),
+    width = width,
+    height = height,
+    border = require("core.skin").border(),
+    title = " Commit Message ",
     title_pos = "center",
   })
-  vim.wo[win].wrap      = true
+  vim.wo[win].wrap = true
   vim.wo[win].linebreak = true
   vim.api.nvim_win_set_cursor(win, { 1, 0 })
 
   vim.api.nvim_create_autocmd("BufWriteCmd", {
-    buffer   = buf,
-    callback = function() M.submit(buf) end,
+    buffer = buf,
+    callback = function()
+      M.submit(buf)
+    end,
   })
 
   notify_info("Edit then :w to commit. :q! discards.")
 end
 
 function M.submit(buf)
-  if not pending[buf] then return end
+  if not pending[buf] then
+    return
+  end
 
-  local lines     = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-  local msg_lines = vim.tbl_filter(function(l) return not l:match("^%s*#") end, lines)
-  local msg       = vim.trim(table.concat(msg_lines, "\n"))
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  local msg_lines = vim.tbl_filter(function(l)
+    return not l:match("^%s*#")
+  end, lines)
+  local msg = vim.trim(table.concat(msg_lines, "\n"))
 
   if msg == "" then
     notify_err("Commit message can't be empty.")
@@ -132,30 +142,42 @@ function M.open()
   end
 
   local staged, skipped = require("core.git").stage_related()
-  if not staged then return notify_err("git add failed.") end
-  if #skipped > 0 then
-    vim.notify("Left out of the commit: " .. table.concat(skipped, ", "), vim.log.levels.WARN, { title = "Commit" })
+  if not staged then
+    return notify_err("git add failed.")
   end
-  if not has_staged() then return notify_info("Nothing to commit.") end
+  if #skipped > 0 then
+    vim.notify(
+      "Left out of the commit: " .. table.concat(skipped, ", "),
+      vim.log.levels.WARN,
+      { title = "Commit" }
+    )
+  end
+  if not has_staged() then
+    return notify_info("Nothing to commit.")
+  end
 
   local diff = staged_diff()
-  if diff == "" then return notify_err("No staged diff to commit.") end
+  if diff == "" then
+    return notify_err("No staged diff to commit.")
+  end
 
   if #diff > MAX_DIFF then
     diff = vim.trim(vim.fn.system({ "git", "diff", "--cached", "--stat" }))
       .. "\n\n[diff truncated — stat only]"
   end
 
-  local log    = recent_log()
+  local log = recent_log()
   local branch = branch_name()
 
   vim.ui.input({ prompt = "Vibe? (optional, Enter to skip): " }, function(vibe)
-    if vibe == nil then return end  -- user hit <Esc>
+    if vibe == nil then
+      return
+    end -- user hit <Esc>
     vibe = vim.trim(vibe)
 
     local vibe_line = vibe ~= ""
-      and ('The user set the vibe: "' .. vibe .. '". Let that flavor the personality of the message.')
-      or  "No specific vibe set. Follow the style guide naturally."
+        and ('The user set the vibe: "' .. vibe .. '". Let that flavor the personality of the message.')
+      or "No specific vibe set. Follow the style guide naturally."
 
     local lines = { "Write a git commit message for the staged diff below.", "" }
     vim.list_extend(lines, require("core.style").prompt_lines())

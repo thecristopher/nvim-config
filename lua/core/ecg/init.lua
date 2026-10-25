@@ -1,7 +1,7 @@
 -- The health ECG in the statusline while the franchise plays it: Fine, Caution or Danger,
 -- read from the current buffer's diagnostics, with the trace scrolling at the heart's pace.
 local actions = require("core.ecg.actions")
-local motion  = require("core.motion")
+local motion = require("core.motion")
 
 local M = {}
 
@@ -21,21 +21,31 @@ end
 local function define_highlights()
   local p = require("core.themes").palette()
   for name, look in pairs(actions.CONDITIONS) do
-    vim.api.nvim_set_hl(0, "EldenEcg" .. look.label, { fg = p[look.color], bg = p.surface0, bold = name ~= "fine" })
+    vim.api.nvim_set_hl(
+      0,
+      "EldenEcg" .. look.label,
+      { fg = p[look.color], bg = p.surface0, bold = name ~= "fine" }
+    )
   end
 end
 
 local function refresh_statusline()
   local ok, lualine = pcall(require, "lualine")
-  if ok then lualine.refresh({ place = { "statusline" } }) end
+  if ok then
+    lualine.refresh({ place = { "statusline" } })
+  end
 end
 
 -- the statusline only repaints when the trace actually moved
 local function beat(elapsed)
-  if not active() then return end
+  if not active() then
+    return
+  end
   condition = read_condition()
   local next_trace = actions.trace(condition, elapsed)
-  if next_trace == trace then return end
+  if next_trace == trace then
+    return
+  end
   trace = next_trace
   refresh_statusline()
 end

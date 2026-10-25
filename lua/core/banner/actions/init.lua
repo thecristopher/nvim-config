@@ -4,43 +4,84 @@ local ease = require("core.motion.actions")
 
 local M = {}
 
-M.HEIGHT     = 7
-M.TEXT_ROW   = 2
-M.RULE_ROW   = 3
-M.SUB_ROW    = 4
+M.HEIGHT = 7
+M.TEXT_ROW = 2
+M.RULE_ROW = 3
+M.SUB_ROW = 4
 M.BAND_LEVELS = 10
 
 M.KINDS = {
   felled = {
     color = "yellow",
-    duration = 3200, fade_in = 450, fade_out = 900, stagger = 40, letter_ms = 380, band = 0.92,
+    duration = 3200,
+    fade_in = 450,
+    fade_out = 900,
+    stagger = 40,
+    letter_ms = 380,
+    band = 0.92,
   },
   great = {
     color = "yellow",
-    duration = 3800, fade_in = 500, fade_out = 1000, stagger = 35, letter_ms = 420, band = 0.95, rule = true,
+    duration = 3800,
+    fade_in = 500,
+    fade_out = 1000,
+    stagger = 35,
+    letter_ms = 420,
+    band = 0.95,
+    rule = true,
   },
   -- death never hurries, the whole word seeps in at once
   died = {
     color = "red",
-    duration = 4200, fade_in = 900, fade_out = 1100, stagger = 0, letter_ms = 1400, band = 0.97,
+    duration = 4200,
+    fade_in = 900,
+    fade_out = 1100,
+    stagger = 0,
+    letter_ms = 1400,
+    band = 0.97,
   },
   grace = {
     color = "yellow",
-    duration = 3200, fade_in = 450, fade_out = 900, stagger = 30, letter_ms = 360, band = 0.88, rule = true,
+    duration = 3200,
+    fade_in = 450,
+    fade_out = 900,
+    stagger = 30,
+    letter_ms = 360,
+    band = 0.88,
+    rule = true,
   },
   cleansed = {
     color = "green",
-    duration = 2600, fade_in = 350, fade_out = 800, stagger = 25, letter_ms = 300, band = 0.85,
+    duration = 2600,
+    fade_in = 350,
+    fade_out = 800,
+    stagger = 25,
+    letter_ms = 300,
+    band = 0.85,
   },
   -- walking into a new part of a project, quieter still so it never interrupts the work
   zone = {
-    text = "", color = "subtext1",
-    duration = 2200, fade_in = 450, fade_out = 800, stagger = 30, letter_ms = 380, band = 0.42, rule = true,
+    text = "",
+    color = "subtext1",
+    duration = 2200,
+    fade_in = 450,
+    fade_out = 800,
+    stagger = 30,
+    letter_ms = 380,
+    band = 0.42,
+    rule = true,
   },
   -- area names hang lightly over the world instead of blotting it out
   region = {
-    text = "", color = "text",
-    duration = 2800, fade_in = 600, fade_out = 900, stagger = 45, letter_ms = 500, band = 0.55, rule = true,
+    text = "",
+    color = "text",
+    duration = 2800,
+    fade_in = 600,
+    fade_out = 900,
+    stagger = 45,
+    letter_ms = 500,
+    band = 0.55,
+    rule = true,
   },
 }
 
@@ -50,7 +91,9 @@ M.KINDS = {
 ---@return table|nil
 function M.kind(name, overrides)
   local base = M.KINDS[name]
-  if not base then return nil end
+  if not base then
+    return nil
+  end
   local lore = require("core.franchise").current()
   local style = (lore.banner_styles or {})[name] or {}
   local text = lore.banners[name] or base.text or ""
@@ -98,7 +141,7 @@ end
 
 -- 0 to 1 and back, how visible the whole banner is at this moment
 function M.envelope(elapsed, kind)
-  local rising  = ease.progress(elapsed, kind.fade_in)
+  local rising = ease.progress(elapsed, kind.fade_in)
   local falling = 1 - ease.progress(elapsed - (kind.duration - kind.fade_out), kind.fade_out)
   return ease.ease("in_out_sine", math.min(rising, falling))
 end
@@ -118,7 +161,7 @@ end
 
 -- strongest across the middle, melting away toward the top, bottom and both edges
 function M.band_alpha(row, col, width, height)
-  local center   = (height - 1) / 2
+  local center = (height - 1) / 2
   local vertical = 1 - (math.abs(row - center) / (center + 1)) ^ 2
   local fade_cols = math.max(1, math.floor(width * 0.22))
   local from_edge = math.min(col, width - 1 - col)
@@ -140,7 +183,9 @@ end
 
 -- a thin rule that glows at the middle and fades to nothing at its tips
 function M.rule_alpha(index, length)
-  if length <= 1 then return 1 end
+  if length <= 1 then
+    return 1
+  end
   local from_middle = math.abs((index - 1) / (length - 1) - 0.5) * 2
   return 1 - from_middle ^ 2
 end
@@ -150,9 +195,15 @@ M.CLEANSE_COOLDOWN_MS = 2 * 60 * 1000
 
 -- only a long fight earns the banner, errors that flicker while typing do not count
 function M.should_cleanse(opts)
-  if opts.errors > 0 or not opts.errors_since then return false end
-  if opts.now - opts.errors_since < M.CLEANSE_AFTER_MS then return false end
-  if opts.last_shown and opts.now - opts.last_shown < M.CLEANSE_COOLDOWN_MS then return false end
+  if opts.errors > 0 or not opts.errors_since then
+    return false
+  end
+  if opts.now - opts.errors_since < M.CLEANSE_AFTER_MS then
+    return false
+  end
+  if opts.last_shown and opts.now - opts.last_shown < M.CLEANSE_COOLDOWN_MS then
+    return false
+  end
   return true
 end
 

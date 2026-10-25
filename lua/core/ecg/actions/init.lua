@@ -9,9 +9,9 @@ M.BEAT = { "▂", "▁", "▇", "▁", "▃" }
 M.BASELINE = "▁"
 
 M.CONDITIONS = {
-  fine    = { label = "Fine",    color = "green", step_ms = 140, gap = 12 },
+  fine = { label = "Fine", color = "green", step_ms = 140, gap = 12 },
   caution = { label = "Caution", color = "peach", step_ms = 100, gap = 9 },
-  danger  = { label = "Danger",  color = "red",   step_ms = 60,  gap = 6 },
+  danger = { label = "Danger", color = "red", step_ms = 60, gap = 6 },
 }
 
 --- Reads the buffer's health from its diagnostics.
@@ -19,8 +19,12 @@ M.CONDITIONS = {
 ---@param warnings integer
 ---@return string condition: fine, caution or danger
 function M.condition(errors, warnings)
-  if errors >= 3 then return "danger" end
-  if errors > 0 or warnings >= 5 then return "caution" end
+  if errors >= 3 then
+    return "danger"
+  end
+  if errors > 0 or warnings >= 5 then
+    return "caution"
+  end
   return "fine"
 end
 

@@ -11,9 +11,13 @@ M.DEPTH = 2
 ---@param root string|nil repo root
 ---@return string|nil zone like "lua/core", nil for files at the root or outside it
 function M.zone_key(file, root)
-  if not root or file:sub(1, #root + 1) ~= root .. "/" then return nil end
+  if not root or file:sub(1, #root + 1) ~= root .. "/" then
+    return nil
+  end
   local relative_dir = vim.fs.dirname(file:sub(#root + 2))
-  if relative_dir == "." or relative_dir == "" then return nil end
+  if relative_dir == "." or relative_dir == "" then
+    return nil
+  end
   local segments = vim.split(relative_dir, "/", { plain = true })
   return table.concat(vim.list_slice(segments, 1, M.DEPTH), "/")
 end
@@ -26,7 +30,9 @@ function M.zone_name(key)
   local segments = vim.split(key, "/", { plain = true })
   for index = #segments, 1, -1 do
     local landmark = lore.landmarks[segments[index]]
-    if landmark then return landmark end
+    if landmark then
+      return landmark
+    end
   end
   return lore.places[utils.hash(key) % #lore.places + 1]
 end
@@ -35,7 +41,9 @@ end
 ---@param opts { key: string|nil, seen: table<string, boolean>, now: number, last_shown: number|nil, busy: boolean }
 ---@return boolean
 function M.should_announce(opts)
-  if not opts.key or opts.seen[opts.key] or opts.busy then return false end
+  if not opts.key or opts.seen[opts.key] or opts.busy then
+    return false
+  end
   return not opts.last_shown or opts.now - opts.last_shown >= M.COOLDOWN_MS
 end
 

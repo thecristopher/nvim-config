@@ -5,14 +5,14 @@ local ease = require("core.motion.actions")
 local M = {}
 
 M.DURATION = 2400
-M.WIDTH    = 26
-M.HEIGHT   = 13
+M.WIDTH = 26
+M.HEIGHT = 13
 
 -- the dark falls fast, the door waits a beat, swings, and then the dark lifts off the new project
-M.DARK_UNTIL  = 0.12
-M.SWING_FROM  = 0.30
+M.DARK_UNTIL = 0.12
+M.SWING_FROM = 0.30
 M.SWING_UNTIL = 0.78
-M.LIGHT_FROM  = 0.80
+M.LIGHT_FROM = 0.80
 
 -- the panels lose their face as they turn away from you
 M.PANEL_SHADES = { "█", "▓", "▒", "░" }
@@ -21,8 +21,12 @@ M.PANEL_SHADES = { "█", "▓", "▒", "░" }
 ---@param raw number progress from 0 to 1
 ---@return number
 function M.darkness(raw)
-  if raw < M.DARK_UNTIL then return ease.ease("out_cubic", raw / M.DARK_UNTIL) end
-  if raw < M.LIGHT_FROM then return 1 end
+  if raw < M.DARK_UNTIL then
+    return ease.ease("out_cubic", raw / M.DARK_UNTIL)
+  end
+  if raw < M.LIGHT_FROM then
+    return 1
+  end
   return 1 - ease.ease("in_out_sine", (raw - M.LIGHT_FROM) / (1 - M.LIGHT_FROM))
 end
 

@@ -7,15 +7,23 @@ return {
   {
     -- Local module, no external package.
     -- lazy.nvim only wires the keymap; the module loads on first use.
-    dir  = vim.fn.stdpath("config"),
+    dir = vim.fn.stdpath("config"),
     name = "pr-helper",
     lazy = true,
     keys = {
-      { "<leader>pp", function() require("core.pr").open() end, desc = "PR: draft & create/update" },
+      {
+        "<leader>pp",
+        function()
+          require("core.pr").open()
+        end,
+        desc = "PR: draft & create/update",
+      },
     },
     config = function()
       local ok, wk = pcall(require, "which-key")
-      if ok then wk.add({ { "<leader>p", group = "ai git" } }) end
+      if ok then
+        wk.add({ { "<leader>p", group = "ai git" } })
+      end
     end,
   },
 }

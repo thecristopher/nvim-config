@@ -18,7 +18,9 @@ opt.laststatus = 3
 opt.pumheight = 10
 opt.pumblend = 10
 -- 'pumborder' arrived in 0.12, the config still runs on 0.11
-if vim.fn.exists("+pumborder") == 1 then opt.pumborder = "rounded" end
+if vim.fn.exists("+pumborder") == 1 then
+  opt.pumborder = "rounded"
+end
 -- every float without its own border gets this one, full screen layers opt out with border = "none"
 opt.winborder = "rounded"
 opt.winblend = 5
@@ -89,12 +91,12 @@ opt.foldenable = true
 opt.list = true
 opt.listchars = { tab = "→ ", trail = "·", nbsp = "␣" }
 opt.fillchars = {
-  foldopen  = "▾",
+  foldopen = "▾",
   foldclose = "▸",
-  foldsep   = " ",
-  fold      = " ",
-  diff      = "╱",
-  eob       = " ",
+  foldsep = " ",
+  fold = " ",
+  diff = "╱",
+  eob = " ",
 }
 
 -- Spell
@@ -102,7 +104,8 @@ opt.spelllang = { "en_us" }
 opt.spelloptions = "camel"
 
 -- Misc
-opt.sessionoptions = { "buffers", "curdir", "tabpages", "winsize", "help", "globals", "skiprtp", "folds" }
+opt.sessionoptions =
+  { "buffers", "curdir", "tabpages", "winsize", "help", "globals", "skiprtp", "folds" }
 opt.shortmess:append({ W = true, I = true, c = true, C = true })
 
 -- Disable built-in file browser (neo-tree handles it)

@@ -33,17 +33,25 @@ end
 
 -- a plugin already set up rebuilds from its spec, which reads the new skin
 local function resetup(plugin, module)
-  if not package.loaded[module] then return end
+  if not package.loaded[module] then
+    return
+  end
   local ok, config = pcall(require, "lazy.core.config")
-  if not ok or not config.spec.plugins[plugin] then return end
+  if not ok or not config.spec.plugins[plugin] then
+    return
+  end
   local opts = require("lazy.core.plugin").values(config.spec.plugins[plugin], "opts", false)
-  pcall(function() require(module).setup(opts) end)
+  pcall(function()
+    require(module).setup(opts)
+  end)
 end
 
 --- Applies the skin of the franchise in use to everything that can change live.
 function M.apply()
   vim.o.winborder = M.border()
-  if vim.fn.exists("+pumborder") == 1 then vim.o.pumborder = M.border() end
+  if vim.fn.exists("+pumborder") == 1 then
+    vim.o.pumborder = M.border()
+  end
   apply_signs()
   resetup("lualine.nvim", "lualine")
   resetup("bufferline.nvim", "bufferline")

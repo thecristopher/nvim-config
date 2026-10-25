@@ -9,12 +9,26 @@ local last_shown
 
 local function enter(buf)
   -- scheduled from BufEnter, so the buffer may be gone already (the HUD wipes itself on leaving)
-  if vim.g.eldentree_zones == false or not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].buftype ~= "" then return end
+  if
+    vim.g.eldentree_zones == false
+    or not vim.api.nvim_buf_is_valid(buf)
+    or vim.bo[buf].buftype ~= ""
+  then
+    return
+  end
   local file = vim.api.nvim_buf_get_name(buf)
   local key = actions.zone_key(file, require("core.repos").root(vim.fs.dirname(file)))
   local banner = require("core.banner")
   local now = vim.uv.now()
-  if not actions.should_announce({ key = key, seen = seen, now = now, last_shown = last_shown, busy = banner.busy() }) then
+  if
+    not actions.should_announce({
+      key = key,
+      seen = seen,
+      now = now,
+      last_shown = last_shown,
+      busy = banner.busy(),
+    })
+  then
     return
   end
   seen[key] = true
@@ -25,7 +39,11 @@ end
 function M.setup()
   vim.api.nvim_create_autocmd("BufEnter", {
     group = vim.api.nvim_create_augroup("eldentree_zones", { clear = true }),
-    callback = function(ev) vim.schedule(function() enter(ev.buf) end) end,
+    callback = function(ev)
+      vim.schedule(function()
+        enter(ev.buf)
+      end)
+    end,
   })
 end
 

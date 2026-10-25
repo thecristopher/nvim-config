@@ -4,16 +4,18 @@ local M = {}
 -- checked in order, the first file that exists decides the command
 M.RUNNERS = {
   { file = "scripts/test.sh", cmd = { "./scripts/test.sh" } },
-  { file = "package.json",    cmd = { "npm", "test", "--silent" } },
-  { file = "Cargo.toml",      cmd = { "cargo", "test" } },
-  { file = "go.mod",          cmd = { "go", "test", "./..." } },
-  { file = "pyproject.toml",  cmd = { "pytest", "-q" } },
-  { file = "Makefile",        cmd = { "make", "test" } },
+  { file = "package.json", cmd = { "npm", "test", "--silent" } },
+  { file = "Cargo.toml", cmd = { "cargo", "test" } },
+  { file = "go.mod", cmd = { "go", "test", "./..." } },
+  { file = "pyproject.toml", cmd = { "pytest", "-q" } },
+  { file = "Makefile", cmd = { "make", "test" } },
 }
 
 function M.detect(exists)
   for _, runner in ipairs(M.RUNNERS) do
-    if exists(runner.file) then return runner.cmd end
+    if exists(runner.file) then
+      return runner.cmd
+    end
   end
   return nil
 end

@@ -4,15 +4,14 @@ local ease = require("core.motion.actions")
 
 local M = {}
 
-M.THRESHOLD       = 3
+M.THRESHOLD = 3
 M.ENGAGE_AFTER_MS = 8000
-M.ENTRANCE_MS     = 700
-M.CHIP_HOLD_MS    = 500
-M.CHIP_MS         = 600
+M.ENTRANCE_MS = 700
+M.CHIP_HOLD_MS = 500
+M.CHIP_MS = 600
 M.DAMAGE_LINGER_MS = 900
-M.HEIGHT          = 2
-M.MAX_WIDTH       = 80
-
+M.HEIGHT = 2
+M.MAX_WIDTH = 80
 
 --- Returns the boss guarding a region, the first region's boss when it has none.
 ---@param region string|nil region name
@@ -26,7 +25,9 @@ end
 ---@param opts { errors: integer, since: number|nil, now: number, threshold: integer|nil }
 ---@return boolean
 function M.should_engage(opts)
-  if opts.errors < (opts.threshold or M.THRESHOLD) or not opts.since then return false end
+  if opts.errors < (opts.threshold or M.THRESHOLD) or not opts.since then
+    return false
+  end
   return opts.now - opts.since >= M.ENGAGE_AFTER_MS
 end
 
@@ -35,7 +36,9 @@ end
 ---@param peak integer most errors seen during the fight
 ---@return number from 0 to 1
 function M.health(errors, peak)
-  if not peak or peak <= 0 then return 0 end
+  if not peak or peak <= 0 then
+    return 0
+  end
   return math.max(0, math.min(1, errors / peak))
 end
 
@@ -67,7 +70,9 @@ end
 ---@param since_hit number milliseconds since the hit
 ---@return number
 function M.chip_at(from, to, since_hit)
-  if to >= from then return to end
+  if to >= from then
+    return to
+  end
   local drained = ease.ease("in_out_sine", ease.progress(since_hit - M.CHIP_HOLD_MS, M.CHIP_MS))
   return from - (from - to) * drained
 end
@@ -79,7 +84,9 @@ end
 function M.frame(fight, now)
   local entrance = ease.ease("out_cubic", ease.progress(now - fight.entered_at, M.ENTRANCE_MS))
   local fill = fight.health * entrance
-  if not fight.hit_at then return { fill = fill, chip = fill } end
+  if not fight.hit_at then
+    return { fill = fill, chip = fill }
+  end
 
   local since_hit = now - fight.hit_at
   local chip = M.chip_at(fight.chip_from or fight.health, fight.health, since_hit)
@@ -134,7 +141,9 @@ end
 ---@return string
 function M.footsteps(closeness)
   for _, step in ipairs(M.FOOTSTEPS) do
-    if closeness < step.below then return step.text end
+    if closeness < step.below then
+      return step.text
+    end
   end
   return M.FOOTSTEPS[#M.FOOTSTEPS].text
 end
@@ -163,7 +172,9 @@ end
 ---@return integer zero based editor row
 function M.placement(opts)
   local bottom = opts.lines - opts.cmdheight - opts.statusline - M.HEIGHT
-  if opts.cursor_row >= bottom then return opts.top end
+  if opts.cursor_row >= bottom then
+    return opts.top
+  end
   return bottom
 end
 

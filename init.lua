@@ -42,7 +42,9 @@ end
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.uv.fs_stat(lazypath) then
   vim.fn.system({
-    "git", "clone", "--filter=blob:none",
+    "git",
+    "clone",
+    "--filter=blob:none",
     "https://github.com/folke/lazy.nvim.git",
     "--branch=stable",
     lazypath,
@@ -55,10 +57,10 @@ require("lazy").setup({
     { import = "plugins" },
   },
   defaults = {
-    lazy    = true,
+    lazy = true,
     version = false,
     -- inside Cursor or VS Code the editor draws the UI, so only editing plugins load
-    cond    = function(plugin)
+    cond = function(plugin)
       return not vim.g.vscode or require("core.vscode").allowed(plugin)
     end,
   },
@@ -66,15 +68,15 @@ require("lazy").setup({
     colorscheme = { "catppuccin", "habamax" },
   },
   checker = {
-    enabled   = true,
-    notify    = false,
+    enabled = true,
+    notify = false,
     frequency = 86400,
   },
   change_detection = {
     notify = false,
   },
   ui = {
-    border  = "rounded",
+    border = "rounded",
     -- lazy opens its backdrop without a border, so winborder would frame the whole screen
     backdrop = 100,
   },
@@ -82,8 +84,14 @@ require("lazy").setup({
     cache = { enabled = true },
     rtp = {
       disabled_plugins = {
-        "gzip", "matchit", "matchparen", "netrwPlugin",
-        "tarPlugin", "tohtml", "tutor", "zipPlugin",
+        "gzip",
+        "matchit",
+        "matchparen",
+        "netrwPlugin",
+        "tarPlugin",
+        "tohtml",
+        "tutor",
+        "zipPlugin",
       },
     },
   },

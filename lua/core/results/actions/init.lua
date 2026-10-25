@@ -27,7 +27,9 @@ end
 function M.rank(run)
   local pace = M.pace(run)
   for _, step in ipairs(M.RANKS) do
-    if pace >= step.per_hour then return step.rank end
+    if pace >= step.per_hour then
+      return step.rank
+    end
   end
   return "D"
 end
@@ -37,7 +39,9 @@ end
 ---@return string like "2h 13m" or "45m"
 function M.duration(seconds)
   local minutes = math.floor(seconds / 60)
-  if minutes < 60 then return minutes .. "m" end
+  if minutes < 60 then
+    return minutes .. "m"
+  end
   return ("%dh %02dm"):format(math.floor(minutes / 60), minutes % 60)
 end
 
@@ -62,7 +66,12 @@ end
 ---@return string
 function M.summary(label, run)
   return ("%s  ·  Rank %s  ·  %s  ·  %d saves  ·  %d fixes"):format(
-    label, run.rank, M.duration(run.seconds), run.saves, run.fixes)
+    label,
+    run.rank,
+    M.duration(run.seconds),
+    run.saves,
+    run.fixes
+  )
 end
 
 return M

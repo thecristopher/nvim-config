@@ -11,7 +11,9 @@ end
 ---@return string|nil guide contents, nil when the file is missing or unreadable
 function M.read()
   local ok, lines = pcall(vim.fn.readfile, M.path())
-  if not ok or #lines == 0 then return nil end
+  if not ok or #lines == 0 then
+    return nil
+  end
   return table.concat(lines, "\n")
 end
 

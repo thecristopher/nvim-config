@@ -2,24 +2,52 @@ local roundtable = require("core.hud.views.roundtable")
 local inventory = require("core.hud.views.inventory")
 
 local function item(name, extra)
-  return vim.tbl_extend("force", { icon = "◈", name = name, desc = "A note for Inde about " .. name }, extra or {})
+  return vim.tbl_extend(
+    "force",
+    { icon = "◈", name = name, desc = "A note for Inde about " .. name },
+    extra or {}
+  )
 end
 
 local function model(overrides)
   return vim.tbl_extend("force", {
-    width = 140, height = 45, tab = 1, focus = "items",
-    cursor = { items = 2, chest = 1 }, offset = { items = 0, chest = 0 },
+    width = 140,
+    height = 45,
+    tab = 1,
+    focus = "items",
+    cursor = { items = 2, chest = 1 },
+    offset = { items = 0, chest = 0 },
     tabs = {
-      { title = "Tools", icon = "⚒", items = { item("Love letter", { key = "f" }), item("Playlist", { count = 12 }), item("Roses") } },
+      {
+        title = "Tools",
+        icon = "⚒",
+        items = {
+          item("Love letter", { key = "f" }),
+          item("Playlist", { count = 12 }),
+          item("Roses"),
+        },
+      },
       { title = "Recent", icon = "◈", items = {} },
     },
-    chest = { title = "Sites of Grace", items = { item("haligtree", { key = "1", branch = "anniversary-dinner", count = 3 }) } },
+    chest = {
+      title = "Sites of Grace",
+      items = { item("haligtree", { key = "1", branch = "anniversary-dinner", count = 3 }) },
+    },
     message = '"Praise the green test!"',
-    character = "Malenia", area = "Haligtree", hub = "Roundtable Hold", sites = "Sites of Grace",
-    greeting = "Good evening, Inde", date = "Saturday, October 24",
+    character = "Malenia",
+    area = "Haligtree",
+    hub = "Roundtable Hold",
+    sites = "Sites of Grace",
+    greeting = "Good evening, Inde",
+    date = "Saturday, October 24",
     status = {
-      character = "Claire Redfield", area = "Raccoon City", purse = "₧ 600",
-      project = "love-letters", branch = "feature/claire-and-inde", last_file = "notes/anniversary.md", last_ready = true,
+      character = "Claire Redfield",
+      area = "Raccoon City",
+      purse = "₧ 600",
+      project = "love-letters",
+      branch = "feature/claire-and-inde",
+      last_file = "notes/anniversary.md",
+      last_ready = true,
       changes = { " M notes/anniversary.md", "?? playlists/road-trip.txt" },
     },
   }, overrides or {})
@@ -27,28 +55,42 @@ end
 
 local function has_mark(view, group)
   for _, mark in ipairs(view.marks) do
-    if mark[4] == group then return true end
+    if mark[4] == group then
+      return true
+    end
   end
   return false
 end
 
-local function text(view) return table.concat(view.lines, "\n") end
+local function text(view)
+  return table.concat(view.lines, "\n")
+end
 
 describe("changes", function()
   it("shows the page holding the selected change instead of counting the rest", function()
     local parts = require("core.hud.views.parts")
     local many = {}
-    for index = 1, 9 do many[index] = (" M letters/claire-%d.md"):format(index) end
-    local drawn = table.concat(require("core.hud.actions").compose(parts.changes(many, 60, 2, 6)), "\n")
+    for index = 1, 9 do
+      many[index] = (" M letters/claire-%d.md"):format(index)
+    end
+    local drawn =
+      table.concat(require("core.hud.actions").compose(parts.changes(many, 60, 2, 6)), "\n")
     assert.is_truthy(drawn:find("claire-6.md", 1, true))
     assert.is_falsy(drawn:find("more", 1, true))
   end)
 
   local parts = require("core.hud.views.parts")
-  local lines = { " M notes/claire.md", " M notes/inde.md", "?? playlists/malenia.txt", " M dates/october.md", " D old/letters.md" }
+  local lines = {
+    " M notes/claire.md",
+    " M notes/inde.md",
+    "?? playlists/malenia.txt",
+    " M dates/october.md",
+    " D old/letters.md",
+  }
 
   it("fills two columns and counts what did not fit in the last cell", function()
-    local drawn = table.concat(require("core.hud.actions").compose(parts.changes(lines, 60, 2)), "\n")
+    local drawn =
+      table.concat(require("core.hud.actions").compose(parts.changes(lines, 60, 2)), "\n")
     assert.is_truthy(drawn:find("notes/claire.md", 1, true))
     assert.is_truthy(drawn:find("+2 more", 1, true))
     assert.is_falsy(drawn:find("old/letters.md", 1, true))
@@ -63,7 +105,9 @@ end)
 
 local function widest(view)
   local width = 0
-  for _, line in ipairs(view.lines) do width = math.max(width, vim.api.nvim_strwidth(line)) end
+  for _, line in ipairs(view.lines) do
+    width = math.max(width, vim.api.nvim_strwidth(line))
+  end
   return width
 end
 
@@ -115,7 +159,10 @@ local function behaves_on_any_screen(render)
 
   it("puts the cursor on the last file when the quest takes the focus", function()
     local view = render(model({ focus = "quest", cursor = { items = 1, chest = 1, quest = 1 } }))
-    assert.is_truthy(view.lines[view.cursor.row]:find("anniversary.md", 1, true) or view.lines[view.cursor.row]:find("last", 1, true))
+    assert.is_truthy(
+      view.lines[view.cursor.row]:find("anniversary.md", 1, true)
+        or view.lines[view.cursor.row]:find("last", 1, true)
+    )
     assert.equal(3, view.grids.quest.count)
   end)
 
@@ -143,7 +190,9 @@ describe("roundtable", function()
   end)
 
   it("prints a slot's count in its frame", function()
-    assert.is_truthy(text(view):find("─12─┘", 1, true) or text(view):find("━12━┛", 1, true))
+    assert.is_truthy(
+      text(view):find("─12─┘", 1, true) or text(view):find("━12━┛", 1, true)
+    )
   end)
 
   it("names every item in its slot, not only the selected one", function()
@@ -194,7 +243,9 @@ describe("inventory", function()
 
   it("opens the STATUS panel with the survivor's data", function()
     assert.is_truthy(text(view):find("STATUS", 1, true))
-    assert.is_truthy(text(view):find("C  L  A  I  R  E", 1, true) or text(view):find("C L A I R E", 1, true))
+    assert.is_truthy(
+      text(view):find("C  L  A  I  R  E", 1, true) or text(view):find("C L A I R E", 1, true)
+    )
     assert.is_truthy(text(view):find("CONDITION", 1, true))
   end)
 
@@ -204,7 +255,14 @@ describe("inventory", function()
 
   it("hides the COMMAND menu until Enter opens it", function()
     assert.is_falsy(text(view):find("COMMAND", 1, true))
-    local menu = { index = 2, entries = { { label = "EQUIP", enabled = true }, { label = "CHECK", enabled = true }, { label = "COMBN", enabled = false } } }
+    local menu = {
+      index = 2,
+      entries = {
+        { label = "EQUIP", enabled = true },
+        { label = "CHECK", enabled = true },
+        { label = "COMBN", enabled = false },
+      },
+    }
     local opened = text(inventory.render(model({ menu = menu })))
     assert.is_truthy(opened:find("COMMAND", 1, true))
     assert.is_truthy(opened:find("▶CHECK", 1, true))

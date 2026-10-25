@@ -7,13 +7,13 @@ return {
     dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
     opts = {
       heading = {
-        sign  = false,
+        sign = false,
         icons = { "◈ ", "◆ ", "◇ ", "· ", "· ", "· " },
       },
-      bullet   = { icons = { "◆", "◇", "•", "·" } },
+      bullet = { icons = { "◆", "◇", "•", "·" } },
       checkbox = {
         unchecked = { icon = "󰄱 " },
-        checked   = { icon = "󰄵 " },
+        checked = { icon = "󰄵 " },
       },
       code = { sign = false, width = "block", right_pad = 2 },
     },

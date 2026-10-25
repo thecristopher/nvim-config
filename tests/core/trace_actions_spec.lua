@@ -46,13 +46,20 @@ describe("suspect", function()
   end)
 
   it("says no Esc arrived when something else ended insert", function()
-    assert.equal("no Esc arrived, something switched windows or called stopinsert", trace.suspect({ "s", "a" }))
+    assert.equal(
+      "no Esc arrived, something switched windows or called stopinsert",
+      trace.suspect({ "s", "a" })
+    )
   end)
 end)
 
 describe("entry", function()
   it("writes one readable line for the love letter file", function()
-    local line = trace.entry("21:52:09", { "s", "a" }, { file = "letters/inde.md", filetype = "markdown", floats = 1, mode = "n" })
+    local line = trace.entry(
+      "21:52:09",
+      { "s", "a" },
+      { file = "letters/inde.md", filetype = "markdown", floats = 1, mode = "n" }
+    )
     assert.is_truthy(line:find("letters/inde.md markdown, 1 floats", 1, true))
     assert.is_truthy(line:find("keys: s a", 1, true))
   end)

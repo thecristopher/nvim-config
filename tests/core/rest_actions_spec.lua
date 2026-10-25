@@ -1,7 +1,11 @@
 local actions = require("core.rest.actions")
 
 local function idle(overrides)
-  return vim.tbl_extend("force", { idle = actions.DEFAULT_AFTER_MS, mode = "n", enabled = true, resting = false }, overrides or {})
+  return vim.tbl_extend(
+    "force",
+    { idle = actions.DEFAULT_AFTER_MS, mode = "n", enabled = true, resting = false },
+    overrides or {}
+  )
 end
 
 describe("should_rest", function()
@@ -55,7 +59,9 @@ describe("layout", function()
   end)
 
   it("names the region you are resting in", function()
-    local texts = vim.tbl_map(function(line) return line.text end, actions.layout(120, 40, "Caelid"))
+    local texts = vim.tbl_map(function(line)
+      return line.text
+    end, actions.layout(120, 40, "Caelid"))
     assert.is_true(vim.tbl_contains(texts, "Caelid"))
   end)
 end)
@@ -78,17 +84,28 @@ describe("typed", function()
 end)
 
 describe("layout in a safe room", function()
-  before_each(function() vim.g.eldentree_franchise = "resident_evil" end)
-  after_each(function() vim.g.eldentree_franchise = "elden_ring" end)
+  before_each(function()
+    vim.g.eldentree_franchise = "resident_evil"
+  end)
+  after_each(function()
+    vim.g.eldentree_franchise = "elden_ring"
+  end)
 
   it("asks Jill about the ink ribbon on a typed line", function()
     local lines = actions.layout(100, 40, "Spencer Mansion", { style = "typewriter", ribbons = 3 })
-    local typed = vim.tbl_filter(function(line) return line.typed end, lines)
+    local typed = vim.tbl_filter(function(line)
+      return line.typed
+    end, lines)
     assert.equal("Will you use an Ink Ribbon?", typed[1].text)
   end)
 
   it("counts the ribbons used this run", function()
     local lines = actions.layout(100, 40, "Spencer Mansion", { style = "typewriter", ribbons = 3 })
-    assert.is_truthy(vim.tbl_contains(vim.tbl_map(function(line) return line.text end, lines), "Ink Ribbons ×3"))
+    assert.is_truthy(vim.tbl_contains(
+      vim.tbl_map(function(line)
+        return line.text
+      end, lines),
+      "Ink Ribbons ×3"
+    ))
   end)
 end)

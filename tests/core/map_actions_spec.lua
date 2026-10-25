@@ -1,7 +1,8 @@
 local actions = require("core.map.actions")
 
 local root = "/home/claire/terrasave"
-local files = { "README.md", "lua/core/notes.lua", "lua/core/dates.lua", "tests/core/notes_spec.lua" }
+local files =
+  { "README.md", "lua/core/notes.lua", "lua/core/dates.lua", "tests/core/notes_spec.lua" }
 
 describe("parse_counts", function()
   it("reads git grep counts per file", function()
@@ -21,7 +22,12 @@ end)
 describe("rooms", function()
   it("turns every folder into one room and leaves root files out", function()
     local rooms = actions.rooms(root, files, {}, {})
-    assert.same({ "lua/core", "tests/core" }, vim.tbl_map(function(room) return room.key end, rooms))
+    assert.same(
+      { "lua/core", "tests/core" },
+      vim.tbl_map(function(room)
+        return room.key
+      end, rooms)
+    )
   end)
 
   it("keeps a room red while Inde's TODO is still in it", function()
@@ -58,7 +64,8 @@ end)
 
 describe("progress", function()
   it("counts the cleared rooms out of all of them", function()
-    local cleared, total = actions.progress({ { cleared = true }, { cleared = false }, { cleared = true } })
+    local cleared, total =
+      actions.progress({ { cleared = true }, { cleared = false }, { cleared = true } })
     assert.equal(2, cleared)
     assert.equal(3, total)
   end)

@@ -16,26 +16,39 @@ end)
 
 describe("pick", function()
   it("plays the door Jill pushes open", function()
-    assert.equal("door.aiff", actions.pick(files, "door", function() return 1 end))
+    assert.equal(
+      "door.aiff",
+      actions.pick(files, "door", function()
+        return 1
+      end)
+    )
   end)
 
   it("stays quiet for an event without a file", function()
-    assert.is_nil(actions.pick(files, "merchant", function() return 1 end))
+    assert.is_nil(actions.pick(files, "merchant", function()
+      return 1
+    end))
   end)
 end)
 
 describe("command", function()
   it("uses afplay on macOS", function()
-    local function only_afplay(name) return name == "afplay" end
+    local function only_afplay(name)
+      return name == "afplay"
+    end
     assert.same({ "afplay", "/love/inde.wav" }, actions.command("/love/inde.wav", only_afplay))
   end)
 
   it("falls back to ffplay with no window", function()
-    local function only_ffplay(name) return name == "ffplay" end
+    local function only_ffplay(name)
+      return name == "ffplay"
+    end
     assert.equal("ffplay", actions.command("/love/inde.wav", only_ffplay)[1])
   end)
 
   it("admits when nothing can play it", function()
-    assert.is_nil(actions.command("/love/inde.wav", function() return false end))
+    assert.is_nil(actions.command("/love/inde.wav", function()
+      return false
+    end))
   end)
 end)

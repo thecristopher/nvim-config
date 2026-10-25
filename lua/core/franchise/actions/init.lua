@@ -10,7 +10,9 @@ local discovered
 --- Lists every franchise found in the lore folder, sorted so the daily rotation is stable.
 ---@return string[]
 function M.names()
-  if discovered then return discovered end
+  if discovered then
+    return discovered
+  end
   local seen, names = {}, {}
   for _, path in ipairs(vim.api.nvim_get_runtime_file("lua/core/franchise/lore/*/init.lua", true)) do
     local name = vim.fs.basename(vim.fs.dirname(path))
@@ -48,7 +50,9 @@ end
 ---@return integer
 function M.day_number(date)
   -- noon keeps daylight saving shifts from landing the date on its neighbor
-  return math.floor(os.time({ year = date.year, month = date.month, day = date.day, hour = 12 }) / 86400)
+  return math.floor(
+    os.time({ year = date.year, month = date.month, day = date.day, hour = 12 }) / 86400
+  )
 end
 
 --- Returns the franchise for a date, rotating through all of them one day at a time.
@@ -74,7 +78,9 @@ end
 ---@return string|nil franchise name
 function M.choice_for(line, day)
   local saved_day, name = (line or ""):match("^(%S+)%s+(%S+)$")
-  if saved_day ~= day or not vim.tbl_contains(M.names(), name) then return nil end
+  if saved_day ~= day or not vim.tbl_contains(M.names(), name) then
+    return nil
+  end
   return name
 end
 
@@ -90,7 +96,11 @@ end
 ---@param name string like "silent_hill"
 ---@return string like "Silent Hill"
 function M.title(name)
-  return (name:gsub("_", " "):gsub("(%a)([%w]*)", function(first, rest) return first:upper() .. rest end))
+  return (
+    name:gsub("_", " "):gsub("(%a)([%w]*)", function(first, rest)
+      return first:upper() .. rest
+    end)
+  )
 end
 
 --- Fills the template's placeholders for a new franchise.

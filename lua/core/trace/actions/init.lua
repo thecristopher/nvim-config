@@ -10,7 +10,9 @@ M.MEMORY = 24
 ---@return string[]
 function M.remember(memory, entry, size)
   table.insert(memory, entry)
-  while #memory > (size or M.MEMORY) do table.remove(memory, 1) end
+  while #memory > (size or M.MEMORY) do
+    table.remove(memory, 1)
+  end
   return memory
 end
 
@@ -19,8 +21,12 @@ end
 ---@param typed string what the person typed, already readable, empty when a mapping or plugin sent it
 ---@return string
 function M.describe_key(key, typed)
-  if typed == "" then return "{" .. key .. "}" end
-  if typed ~= key then return typed .. ">" .. key end
+  if typed == "" then
+    return "{" .. key .. "}"
+  end
+  if typed ~= key then
+    return typed .. ">" .. key
+  end
   return key
 end
 
@@ -37,9 +43,15 @@ end
 ---@return string
 function M.suspect(memory)
   local last, before = memory[#memory] or "", memory[#memory - 1] or ""
-  if last == "<Esc>" then return "you pressed Esc" end
-  if last == "{<Esc>}" then return "a plugin sent Esc (" .. before .. " came before it)" end
-  if last:find("><Esc>$") then return "a mapping turned " .. last:match("^(.-)><Esc>$") .. " into Esc" end
+  if last == "<Esc>" then
+    return "you pressed Esc"
+  end
+  if last == "{<Esc>}" then
+    return "a plugin sent Esc (" .. before .. " came before it)"
+  end
+  if last:find("><Esc>$") then
+    return "a mapping turned " .. last:match("^(.-)><Esc>$") .. " into Esc"
+  end
   return "no Esc arrived, something switched windows or called stopinsert"
 end
 
@@ -49,8 +61,15 @@ end
 ---@param context { file: string, filetype: string, floats: integer, mode: string }
 ---@return string
 function M.entry(when, memory, context)
-  return ("%s  %s  ->%s  [%s %s, %d floats]  keys: %s"):format(when, M.suspect(memory), context.mode,
-    context.file, context.filetype, context.floats, table.concat(memory, " "))
+  return ("%s  %s  ->%s  [%s %s, %d floats]  keys: %s"):format(
+    when,
+    M.suspect(memory),
+    context.mode,
+    context.file,
+    context.filetype,
+    context.floats,
+    table.concat(memory, " ")
+  )
 end
 
 return M

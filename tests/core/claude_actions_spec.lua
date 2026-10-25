@@ -1,7 +1,13 @@
 local actions = require("core.claude.actions")
 
-local function never() return false end
-local function only(path) return function(p) return p == path end end
+local function never()
+  return false
+end
+local function only(path)
+  return function(p)
+    return p == path
+  end
+end
 
 describe("fallback_paths", function()
   it("looks for claude.exe in Leon's .local/bin on Windows", function()
@@ -22,7 +28,10 @@ end)
 
 describe("resolve", function()
   it("prefers the override Wesker pinned", function()
-    assert.equals("D:/umbrella/claude.exe", actions.resolve("D:/umbrella/claude.exe", "C:/bin/claude.exe", {}, never))
+    assert.equals(
+      "D:/umbrella/claude.exe",
+      actions.resolve("D:/umbrella/claude.exe", "C:/bin/claude.exe", {}, never)
+    )
   end)
 
   it("uses PATH when there is no override", function()
@@ -41,6 +50,9 @@ end)
 
 describe("command", function()
   it("keeps the prompt out of argv so cmd.exe never sees it", function()
-    assert.same({ "claude", "-p", "--disallowedTools", actions.DISALLOWED_TOOLS }, actions.command("claude"))
+    assert.same(
+      { "claude", "-p", "--disallowedTools", actions.DISALLOWED_TOOLS },
+      actions.command("claude")
+    )
   end)
 end)

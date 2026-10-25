@@ -83,7 +83,9 @@ describe("should_cleanse", function()
   end)
 
   it("ignores errors that flickered for a moment", function()
-    assert.is_false(actions.should_cleanse({ errors = 0, errors_since = 59 * 1000, now = 60 * 1000 }))
+    assert.is_false(
+      actions.should_cleanse({ errors = 0, errors_since = 59 * 1000, now = 60 * 1000 })
+    )
   end)
 
   it("stays quiet while errors remain", function()
@@ -91,7 +93,9 @@ describe("should_cleanse", function()
   end)
 
   it("waits out the cooldown after the last banner", function()
-    assert.is_false(actions.should_cleanse(vim.tbl_extend("force", long_fight, { last_shown = 50 * 1000 })))
+    assert.is_false(
+      actions.should_cleanse(vim.tbl_extend("force", long_fight, { last_shown = 50 * 1000 }))
+    )
   end)
 end)
 
@@ -124,8 +128,12 @@ describe("drip_alpha", function()
 end)
 
 describe("kind styles", function()
-  before_each(function() vim.g.eldentree_franchise = "resident_evil" end)
-  after_each(function() vim.g.eldentree_franchise = "elden_ring" end)
+  before_each(function()
+    vim.g.eldentree_franchise = "resident_evil"
+  end)
+  after_each(function()
+    vim.g.eldentree_franchise = "elden_ring"
+  end)
 
   it("makes Leon's death drip in Raccoon City", function()
     assert.is_true(actions.kind("died").drip)

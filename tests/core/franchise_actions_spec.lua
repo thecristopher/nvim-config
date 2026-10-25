@@ -2,17 +2,51 @@ local actions = require("core.franchise.actions")
 local themes = require("core.themes.actions")
 
 local SLOTS = {
-  "base", "mantle", "crust", "surface0", "surface1", "surface2",
-  "overlay0", "overlay1", "overlay2", "subtext0", "subtext1", "text",
-  "yellow", "peach", "green", "teal", "lavender", "mauve", "red", "maroon",
-  "rosewater", "flamingo", "blue", "sapphire", "sky", "pink",
+  "base",
+  "mantle",
+  "crust",
+  "surface0",
+  "surface1",
+  "surface2",
+  "overlay0",
+  "overlay1",
+  "overlay2",
+  "subtext0",
+  "subtext1",
+  "text",
+  "yellow",
+  "peach",
+  "green",
+  "teal",
+  "lavender",
+  "mauve",
+  "red",
+  "maroon",
+  "rosewater",
+  "flamingo",
+  "blue",
+  "sapphire",
+  "sky",
+  "pink",
 }
 
 local BANNERS = { "felled", "great", "died", "grace", "cleansed" }
 
 local WORDS = {
-  "traveler", "hub", "sites", "site", "sites_found", "no_sites", "rise", "choose_region",
-  "region_prompt", "phantom", "past_self", "salute", "motion_on", "motion_off",
+  "traveler",
+  "hub",
+  "sites",
+  "site",
+  "sites_found",
+  "no_sites",
+  "rise",
+  "choose_region",
+  "region_prompt",
+  "phantom",
+  "past_self",
+  "salute",
+  "motion_on",
+  "motion_off",
 }
 
 -- Claire and Inde's first date, and the day after
@@ -35,7 +69,10 @@ end)
 
 describe("of_the_day", function()
   it("gives the same franchise all day long", function()
-    assert.equal(actions.of_the_day(first_date), actions.of_the_day({ year = 2026, month = 2, day = 14 }))
+    assert.equal(
+      actions.of_the_day(first_date),
+      actions.of_the_day({ year = 2026, month = 2, day = 14 })
+    )
   end)
 
   it("moves to the next franchise the day after the date", function()
@@ -50,7 +87,10 @@ end)
 
 describe("choice_for", function()
   it("keeps what Malenia chose for today", function()
-    assert.equal("resident_evil", actions.choice_for(actions.encode_choice("2026-10-23", "resident_evil"), "2026-10-23"))
+    assert.equal(
+      "resident_evil",
+      actions.choice_for(actions.encode_choice("2026-10-23", "resident_evil"), "2026-10-23")
+    )
   end)
 
   it("forgets yesterday's choice", function()
@@ -75,7 +115,9 @@ for _, name in ipairs(actions.names()) do
     end)
 
     it("passes every check :checkhealth runs, portraits included", function()
-      local function on_disk(file) return vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. file) == 1 end
+      local function on_disk(file)
+        return vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. file) == 1
+      end
       assert.same({}, require("core.franchise.actions.validate").problems(lore, on_disk))
     end)
 
@@ -127,7 +169,11 @@ for _, name in ipairs(actions.names()) do
       local p = region.palette
 
       it(("keeps %s's portrait on disk"):format(region.title), function()
-        assert.equal(1, vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. region.portrait), region.portrait)
+        assert.equal(
+          1,
+          vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. region.portrait),
+          region.portrait
+        )
       end)
 
       it(("gives %s a champion, a portrait, a boss and a sky"):format(region.title), function()
@@ -151,17 +197,24 @@ for _, name in ipairs(actions.names()) do
         assert.is_true(themes.contrast(themes.derive(p).separator, p.base) >= 2.0)
       end)
 
-      it(("lifts %s's panels enough to see but not enough to glare"):format(region.title), function()
-        local ratio = themes.contrast(themes.derive(p).panel, p.base)
-        assert.is_true(ratio >= 1.07 and ratio < 1.15)
-      end)
+      it(
+        ("lifts %s's panels enough to see but not enough to glare"):format(region.title),
+        function()
+          local ratio = themes.contrast(themes.derive(p).panel, p.base)
+          assert.is_true(ratio >= 1.07 and ratio < 1.15)
+        end
+      )
     end
   end)
 end
 
 describe("resident evil", function()
-  before_each(function() vim.g.eldentree_franchise = "resident_evil" end)
-  after_each(function() vim.g.eldentree_franchise = "elden_ring" end)
+  before_each(function()
+    vim.g.eldentree_franchise = "resident_evil"
+  end)
+  after_each(function()
+    vim.g.eldentree_franchise = "elden_ring"
+  end)
 
   it("sends Claire into Raccoon City first", function()
     assert.equal("Claire Redfield", themes.resolve(nil).character)
@@ -189,7 +242,10 @@ describe("resident evil", function()
 
   it("names Leon in the files he left behind", function()
     local phantom = require("core.phantom.actions").describe(
-      { author = "Leon Kennedy", sha = "4f9c2a1", time = 0, summary = "love note for Ada" }, "other", 60)
+      { author = "Leon Kennedy", sha = "4f9c2a1", time = 0, summary = "love note for Ada" },
+      "other",
+      60
+    )
     assert.equal(" ◈ Files left by Leon Kennedy ", phantom.title)
   end)
 
@@ -215,7 +271,11 @@ describe("of_the_day with a third franchise", function()
   it("rotates through every name it is given", function()
     local seen = {}
     for day = 1, 3 do
-      seen[actions.of_the_day({ year = 2026, month = 3, day = day }, { "elden_ring", "resident_evil", "silent_hill" })] = true
+      seen[actions.of_the_day(
+        { year = 2026, month = 3, day = day },
+        { "elden_ring", "resident_evil", "silent_hill" }
+      )] =
+        true
     end
     assert.equal(3, vim.tbl_count(seen))
   end)
@@ -243,7 +303,13 @@ end)
 
 describe("fill_template", function()
   it("names the new franchise everywhere the template leaves a blank", function()
-    local filled = actions.fill_template('name = "__name__", title = "__title__", require("core.franchise.lore.__name__.skin")', "silent_hill")
-    assert.equal('name = "silent_hill", title = "Silent Hill", require("core.franchise.lore.silent_hill.skin")', filled)
+    local filled = actions.fill_template(
+      'name = "__name__", title = "__title__", require("core.franchise.lore.__name__.skin")',
+      "silent_hill"
+    )
+    assert.equal(
+      'name = "silent_hill", title = "Silent Hill", require("core.franchise.lore.silent_hill.skin")',
+      filled
+    )
   end)
 end)

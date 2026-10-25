@@ -39,9 +39,19 @@ au("VimResized", {
 au("FileType", {
   group = aug("close_with_q"),
   pattern = {
-    "help", "lspinfo", "man", "notify", "qf", "spectre_panel",
-    "startuptime", "neotest-output", "checkhealth", "neotest-summary",
-    "neotest-output-panel", "PlenaryTestPopup", "query",
+    "help",
+    "lspinfo",
+    "man",
+    "notify",
+    "qf",
+    "spectre_panel",
+    "startuptime",
+    "neotest-output",
+    "checkhealth",
+    "neotest-summary",
+    "neotest-output-panel",
+    "PlenaryTestPopup",
+    "query",
   },
   callback = function(ev)
     vim.bo[ev.buf].buflisted = false
@@ -77,12 +87,14 @@ local function paint_mode(mode)
   local p = require("core.themes").palette()
   local look = themes.mode_look(p, themes.derive(p), mode)
   local motion = require("core.motion")
-  motion.fade_hl("CursorLine",   { bg = look.cursorline }, { duration = 180 })
+  motion.fade_hl("CursorLine", { bg = look.cursorline }, { duration = 180 })
   motion.fade_hl("CursorLineNr", { fg = look.number, bold = true }, { duration = 180 })
 end
 au("ModeChanged", {
   group = aug("mode_paint"),
-  callback = function() paint_mode(vim.v.event.new_mode) end,
+  callback = function()
+    paint_mode(vim.v.event.new_mode)
+  end,
 })
 
 -- Strip trailing whitespace on save (respects filetype exclusions)
@@ -90,7 +102,9 @@ local ws_exclude = { "markdown", "diff" }
 au("BufWritePre", {
   group = aug("strip_whitespace"),
   callback = function()
-    if vim.tbl_contains(ws_exclude, vim.bo.filetype) then return end
+    if vim.tbl_contains(ws_exclude, vim.bo.filetype) then
+      return
+    end
     local view = vim.fn.winsaveview()
     vim.cmd([[silent! %s/\s\+$//e]])
     vim.fn.winrestview(view)
@@ -101,7 +115,9 @@ au("BufWritePre", {
 au("BufWritePre", {
   group = aug("auto_mkdir"),
   callback = function(ev)
-    if ev.match:match("^%w%w+://") then return end
+    if ev.match:match("^%w%w+://") then
+      return
+    end
     local dir = vim.fn.fnamemodify(ev.match, ":p:h")
     if vim.fn.isdirectory(dir) == 0 then
       vim.fn.mkdir(dir, "p")

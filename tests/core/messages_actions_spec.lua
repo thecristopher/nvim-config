@@ -34,13 +34,19 @@ end)
 describe("put", function()
   it("leaves a message on a line", function()
     local store = actions.put({}, repo, "date.lua", 7, "Try kissing, but hole")
-    assert.same({ { line = 7, text = "Try kissing, but hole" } }, actions.for_file(store, repo, "date.lua"))
+    assert.same(
+      { { line = 7, text = "Try kissing, but hole" } },
+      actions.for_file(store, repo, "date.lua")
+    )
   end)
 
   it("replaces the old message on the same line", function()
     local store = actions.put({}, repo, "date.lua", 7, "Be wary of Wesker")
     actions.put(store, repo, "date.lua", 7, "Praise the playlist!")
-    assert.same({ { line = 7, text = "Praise the playlist!" } }, actions.for_file(store, repo, "date.lua"))
+    assert.same(
+      { { line = 7, text = "Praise the playlist!" } },
+      actions.for_file(store, repo, "date.lua")
+    )
   end)
 end)
 
@@ -48,7 +54,12 @@ describe("for_file", function()
   it("sorts Claire's notes to Inde by line", function()
     local store = actions.put({}, repo, "date.lua", 30, "Visions of dessert...")
     actions.put(store, repo, "date.lua", 4, "Time for flowers")
-    assert.same({ 4, 30 }, vim.tbl_map(function(m) return m.line end, actions.for_file(store, repo, "date.lua")))
+    assert.same(
+      { 4, 30 },
+      vim.tbl_map(function(m)
+        return m.line
+      end, actions.for_file(store, repo, "date.lua"))
+    )
   end)
 
   it("returns nothing for a file without messages", function()
@@ -58,13 +69,15 @@ end)
 
 describe("erase", function()
   it("erases the message on a line and prunes the empty repo", function()
-    local store, erased = actions.erase(actions.put({}, repo, "date.lua", 7, "Seek Malenia"), repo, "date.lua", 7)
+    local store, erased =
+      actions.erase(actions.put({}, repo, "date.lua", 7, "Seek Malenia"), repo, "date.lua", 7)
     assert.is_true(erased)
     assert.same({}, store)
   end)
 
   it("reports when nothing was written on that line", function()
-    local _, erased = actions.erase(actions.put({}, repo, "date.lua", 7, "Seek Malenia"), repo, "date.lua", 8)
+    local _, erased =
+      actions.erase(actions.put({}, repo, "date.lua", 7, "Seek Malenia"), repo, "date.lua", 8)
     assert.is_false(erased)
   end)
 end)
@@ -73,7 +86,10 @@ describe("replace", function()
   it("moves messages to the lines edits pushed them to", function()
     local store = actions.put({}, repo, "date.lua", 7, "Praise the playlist!")
     actions.replace(store, repo, "date.lua", { { line = 12, text = "Praise the playlist!" } })
-    assert.same({ { line = 12, text = "Praise the playlist!" } }, actions.for_file(store, repo, "date.lua"))
+    assert.same(
+      { { line = 12, text = "Praise the playlist!" } },
+      actions.for_file(store, repo, "date.lua")
+    )
   end)
 end)
 
@@ -85,7 +101,9 @@ describe("list", function()
     local entries = actions.list(store, repo)
     assert.same(
       { "anniversary.lua:2", "anniversary.lua:9", "raccoon_city.lua:1" },
-      vim.tbl_map(function(e) return e.file .. ":" .. e.line end, entries)
+      vim.tbl_map(function(e)
+        return e.file .. ":" .. e.line
+      end, entries)
     )
   end)
 end)

@@ -1,10 +1,32 @@
 local actions = require("core.themes.actions")
 
 local SLOTS = {
-  "base", "mantle", "crust", "surface0", "surface1", "surface2",
-  "overlay0", "overlay1", "overlay2", "subtext0", "subtext1", "text",
-  "yellow", "peach", "green", "teal", "lavender", "mauve", "red", "maroon",
-  "rosewater", "flamingo", "blue", "sapphire", "sky", "pink",
+  "base",
+  "mantle",
+  "crust",
+  "surface0",
+  "surface1",
+  "surface2",
+  "overlay0",
+  "overlay1",
+  "overlay2",
+  "subtext0",
+  "subtext1",
+  "text",
+  "yellow",
+  "peach",
+  "green",
+  "teal",
+  "lavender",
+  "mauve",
+  "red",
+  "maroon",
+  "rosewater",
+  "flamingo",
+  "blue",
+  "sapphire",
+  "sky",
+  "pink",
 }
 
 local malenia = actions.find("haligtree").palette
@@ -17,15 +39,27 @@ end
 describe("regions", function()
   it("lists all eleven in picker order", function()
     assert.same({
-      "leyndell", "haligtree", "raya_lucaria", "caelid", "mohgwyn", "ordina",
-      "limgrave", "stormveil", "volcano_manor", "nokron", "farum_azula",
+      "leyndell",
+      "haligtree",
+      "raya_lucaria",
+      "caelid",
+      "mohgwyn",
+      "ordina",
+      "limgrave",
+      "stormveil",
+      "volcano_manor",
+      "nokron",
+      "farum_azula",
     }, actions.names())
   end)
 
   it("fills every catppuccin slot with a hex color in every region", function()
     for _, region in ipairs(actions.regions()) do
       for _, slot in ipairs(SLOTS) do
-        assert.is_truthy((region.palette[slot] or ""):match("^#%x%x%x%x%x%x$"), region.name .. "." .. slot)
+        assert.is_truthy(
+          (region.palette[slot] or ""):match("^#%x%x%x%x%x%x$"),
+          region.name .. "." .. slot
+        )
       end
     end
   end)
@@ -108,10 +142,13 @@ describe("derive", function()
   end)
 
   for _, region in ipairs(actions.regions()) do
-    it(("draws a separator in %s that reads as clearly as everywhere else"):format(region.title), function()
-      local separator = actions.derive(region.palette).separator
-      assert.is_true(actions.contrast(separator, region.palette.base) >= 2.0)
-    end)
+    it(
+      ("draws a separator in %s that reads as clearly as everywhere else"):format(region.title),
+      function()
+        local separator = actions.derive(region.palette).separator
+        assert.is_true(actions.contrast(separator, region.palette.base) >= 2.0)
+      end
+    )
 
     it(("lifts %s's panels enough to see but not enough to glare"):format(region.title), function()
       local ratio = actions.contrast(actions.derive(region.palette).panel, region.palette.base)
@@ -167,11 +204,16 @@ describe("ui builders", function()
   end)
 
   for _, region in ipairs(actions.regions()) do
-    it(("keeps %s's scope louder than the outermost guide it shares a color with"):format(region.title), function()
-      local p = region.palette
-      local guide = actions.indent_guides(p)[1]
-      assert.is_true(actions.contrast(p.yellow, p.base) > actions.contrast(guide, p.base))
-    end)
+    it(
+      ("keeps %s's scope louder than the outermost guide it shares a color with"):format(
+        region.title
+      ),
+      function()
+        local p = region.palette
+        local guide = actions.indent_guides(p)[1]
+        assert.is_true(actions.contrast(p.yellow, p.base) > actions.contrast(guide, p.base))
+      end
+    )
   end
 end)
 
@@ -192,12 +234,21 @@ describe("mode_look", function()
 end)
 
 describe("random_name", function()
-  local function first() return 1 end
-  local function last(count) return count end
+  local function first()
+    return 1
+  end
+  local function last(count)
+    return count
+  end
 
   it("never rolls the region Radahn just left", function()
     for roll = 1, #actions.regions() - 1 do
-      assert.are_not.equal("caelid", actions.random_name("caelid", function() return roll end))
+      assert.are_not.equal(
+        "caelid",
+        actions.random_name("caelid", function()
+          return roll
+        end)
+      )
     end
   end)
 
@@ -285,7 +336,10 @@ describe("project_region", function()
   end)
 
   it("follows the folder name, so a fresh clone looks the same", function()
-    assert.equal(actions.project_region("/home/claire/anniversary"), actions.project_region("/tmp/anniversary"))
+    assert.equal(
+      actions.project_region("/home/claire/anniversary"),
+      actions.project_region("/tmp/anniversary")
+    )
   end)
 
   it("ignores a saved region that no longer exists", function()

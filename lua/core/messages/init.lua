@@ -12,7 +12,9 @@ local marks = {}
 
 local function read_store()
   local ok, lines = pcall(vim.fn.readfile, store_file)
-  if not ok then return {} end
+  if not ok then
+    return {}
+  end
   local decoded_ok, decoded = pcall(vim.json.decode, table.concat(lines, "\n"))
   return (decoded_ok and type(decoded) == "table") and decoded or {}
 end
@@ -28,23 +30,35 @@ end
 
 -- the repo and the file's path inside it, or nil for buffers that are not repo files
 local function locate(buf)
-  if vim.bo[buf].buftype ~= "" then return nil end
+  if vim.bo[buf].buftype ~= "" then
+    return nil
+  end
   local name = vim.api.nvim_buf_get_name(buf)
-  if name == "" then return nil end
+  if name == "" then
+    return nil
+  end
   local repo = vim.fs.root(buf, ".git")
-  if not repo then return nil end
+  if not repo then
+    return nil
+  end
   repo = vim.fs.normalize(repo)
   local file = actions.relative(repo, vim.fs.normalize(name))
-  if not file then return nil end
+  if not file then
+    return nil
+  end
   return repo, file
 end
 
 function M.render(buf)
-  if not vim.api.nvim_buf_is_valid(buf) then return end
+  if not vim.api.nvim_buf_is_valid(buf) then
+    return
+  end
   vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
   marks[buf] = {}
   local repo, file = locate(buf)
-  if not repo then return end
+  if not repo then
+    return
+  end
 
   local line_count = vim.api.nvim_buf_line_count(buf)
   for _, message in ipairs(actions.for_file(read_store(), repo, file)) do
@@ -64,14 +78,18 @@ local function current_positions(buf)
   local messages = {}
   for _, mark in ipairs(vim.api.nvim_buf_get_extmarks(buf, ns, 0, -1, {})) do
     local text = (marks[buf] or {})[mark[1]]
-    if text then table.insert(messages, { line = mark[2] + 1, text = text }) end
+    if text then
+      table.insert(messages, { line = mark[2] + 1, text = text })
+    end
   end
   return messages
 end
 
 local function save_positions(buf)
   local repo, file = locate(buf)
-  if not repo or not marks[buf] then return end
+  if not repo or not marks[buf] then
+    return
+  end
   write_store(actions.replace(read_store(), repo, file, current_positions(buf)))
 end
 
@@ -86,19 +104,29 @@ end
 function M.write()
   local buf = vim.api.nvim_get_current_buf()
   if not locate(buf) then
-    vim.notify("Messages can only be left on files inside a repo", vim.log.levels.WARN, { title = "Eldentree" })
+    vim.notify(
+      "Messages can only be left on files inside a repo",
+      vim.log.levels.WARN,
+      { title = "Eldentree" }
+    )
     return
   end
   local line = vim.api.nvim_win_get_cursor(0)[1]
 
   vim.ui.select(actions.templates(), {
     prompt = "Choose a template",
-    format_item = function(template) return template:format("****") end,
+    format_item = function(template)
+      return template:format("****")
+    end,
   }, function(template)
-    if not template then return end
+    if not template then
+      return
+    end
     vim.ui.input({ prompt = "Fill the blank: " }, function(word)
       local text = actions.compose(template, word)
-      if text then write_message(buf, line, text) end
+      if text then
+        write_message(buf, line, text)
+      end
     end)
   end)
 end
@@ -107,9 +135,16 @@ end
 function M.erase()
   local buf = vim.api.nvim_get_current_buf()
   local repo, file = locate(buf)
-  if not repo then return end
+  if not repo then
+    return
+  end
   local line = vim.api.nvim_win_get_cursor(0)[1]
-  local store, erased = actions.erase(actions.replace(read_store(), repo, file, current_positions(buf)), repo, file, line)
+  local store, erased = actions.erase(
+    actions.replace(read_store(), repo, file, current_positions(buf)),
+    repo,
+    file,
+    line
+  )
   if not erased then
     vim.notify("No message on this line", vim.log.levels.INFO, { title = "Eldentree" })
     return
@@ -162,12 +197,31 @@ function M.setup()
   define_highlights()
   local group = vim.api.nvim_create_augroup("eldentree_messages", { clear = true })
   vim.api.nvim_create_autocmd("ColorScheme", { group = group, callback = define_highlights })
-  vim.api.nvim_create_autocmd("BufReadPost", { group = group, callback = function(ev) M.render(ev.buf) end })
-  vim.api.nvim_create_autocmd("BufWritePost", { group = group, callback = function(ev) save_positions(ev.buf) end })
-  vim.api.nvim_create_autocmd("BufWipeout", { group = group, callback = function(ev) marks[ev.buf] = nil end })
+  vim.api.nvim_create_autocmd("BufReadPost", {
+    group = group,
+    callback = function(ev)
+      M.render(ev.buf)
+    end,
+  })
+  vim.api.nvim_create_autocmd("BufWritePost", {
+    group = group,
+    callback = function(ev)
+      save_positions(ev.buf)
+    end,
+  })
+  vim.api.nvim_create_autocmd("BufWipeout", {
+    group = group,
+    callback = function(ev)
+      marks[ev.buf] = nil
+    end,
+  })
 
   vim.api.nvim_create_user_command("Inscribe", M.write, { desc = "Leave a message on this line" })
-  vim.api.nvim_create_user_command("Inscriptions", M.pick, { desc = "List the messages in this repo" })
+  vim.api.nvim_create_user_command(
+    "Inscriptions",
+    M.pick,
+    { desc = "List the messages in this repo" }
+  )
 end
 
 return M

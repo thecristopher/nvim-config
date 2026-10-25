@@ -42,7 +42,9 @@ describe("shimmer_level", function()
 
   it("glints brightest where the band crosses", function()
     local width = 60
-    local middle = actions.SHIMMER.period * (actions.SHIMMER.band + 30) / (width + actions.SHIMMER.band * 2)
+    local middle = actions.SHIMMER.period
+      * (actions.SHIMMER.band + 30)
+      / (width + actions.SHIMMER.band * 2)
     assert.equal(actions.LEVELS, actions.shimmer_level(30, middle, width))
   end)
 end)

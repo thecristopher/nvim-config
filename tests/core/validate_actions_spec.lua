@@ -6,7 +6,9 @@ end
 
 local function mentions(problems, text)
   for _, problem in ipairs(problems) do
-    if problem:find(text, 1, true) then return true end
+    if problem:find(text, 1, true) then
+      return true
+    end
   end
   return false
 end
@@ -49,8 +51,12 @@ describe("problems", function()
   end)
 
   it("notices a portrait that is not on disk", function()
-    local function nothing_on_disk() return false end
-    assert.is_true(mentions(validate.problems(lore(), nothing_on_disk), "is not in images/portraits"))
+    local function nothing_on_disk()
+      return false
+    end
+    assert.is_true(
+      mentions(validate.problems(lore(), nothing_on_disk), "is not in images/portraits")
+    )
   end)
 
   it("notices a missing skin piece", function()

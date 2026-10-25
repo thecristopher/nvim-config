@@ -1,6 +1,8 @@
 local actions = require("core.runes.actions")
 
-local function held(amount, bloodstain) return { held = amount, bloodstain = bloodstain or 0 } end
+local function held(amount, bloodstain)
+  return { held = amount, bloodstain = bloodstain or 0 }
+end
 
 describe("format", function()
   it("groups Radahn's bounty by thousands", function()

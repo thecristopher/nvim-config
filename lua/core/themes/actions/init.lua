@@ -10,12 +10,16 @@ function M.regions()
 end
 
 function M.names()
-  return vim.tbl_map(function(region) return region.name end, M.regions())
+  return vim.tbl_map(function(region)
+    return region.name
+  end, M.regions())
 end
 
 function M.find(name)
   for _, region in ipairs(M.regions()) do
-    if region.name == name then return region end
+    if region.name == name then
+      return region
+    end
   end
   return nil
 end
@@ -27,7 +31,9 @@ end
 
 -- any region but the last one, so two terminals opened back to back never look alike
 function M.random_name(previous, rand)
-  local choices = vim.tbl_filter(function(name) return name ~= previous end, M.names())
+  local choices = vim.tbl_filter(function(name)
+    return name ~= previous
+  end, M.names())
   return choices[rand(#choices)]
 end
 
@@ -35,7 +41,9 @@ end
 function M.next_name(name)
   local names = M.names()
   for index, candidate in ipairs(names) do
-    if candidate == name then return names[index % #names + 1] end
+    if candidate == name then
+      return names[index % #names + 1]
+    end
   end
   return names[1]
 end
@@ -46,7 +54,9 @@ end
 ---@return string region name
 function M.project_region(root, chosen)
   local picked = chosen and chosen[root]
-  if picked and M.find(picked) then return picked end
+  if picked and M.find(picked) then
+    return picked
+  end
   local names = M.names()
   -- the hash is stable across machines, so a project keeps its region everywhere
   return names[require("core.utils").hash(vim.fs.basename(root)) % #names + 1]
@@ -61,7 +71,9 @@ end
 function M.blend(fg, bg, alpha)
   local fr, fgreen, fb = to_rgb(fg)
   local br, bgreen, bb = to_rgb(bg)
-  local function mix(top, bottom) return math.floor(alpha * top + (1 - alpha) * bottom + 0.5) end
+  local function mix(top, bottom)
+    return math.floor(alpha * top + (1 - alpha) * bottom + 0.5)
+  end
   return ("#%02X%02X%02X"):format(mix(fr, br), mix(fgreen, bgreen), mix(fb, bb))
 end
 
@@ -72,13 +84,17 @@ end
 
 local function luminance(hex)
   local r, g, b = to_rgb(hex)
-  return 0.2126 * channel_luminance(r) + 0.7152 * channel_luminance(g) + 0.0722 * channel_luminance(b)
+  return 0.2126 * channel_luminance(r)
+    + 0.7152 * channel_luminance(g)
+    + 0.0722 * channel_luminance(b)
 end
 
 -- WCAG contrast ratio, 1 means identical and 21 is black on white
 function M.contrast(a, b)
   local light, dark = luminance(a), luminance(b)
-  if light < dark then light, dark = dark, light end
+  if light < dark then
+    light, dark = dark, light
+  end
   return (light + 0.05) / (dark + 0.05)
 end
 
@@ -86,35 +102,39 @@ end
 function M.tint_to_contrast(fg, bg, target)
   for step = 1, 100 do
     local mixed = M.blend(fg, bg, step / 100)
-    if M.contrast(mixed, bg) >= target then return mixed end
+    if M.contrast(mixed, bg) >= target then
+      return mixed
+    end
   end
   return fg
 end
 
 -- tinted backgrounds are derived, so a new region only needs its 26 base colors
 function M.derive(p)
-  local tint = function(color, alpha) return M.blend(color, p.base, alpha) end
+  local tint = function(color, alpha)
+    return M.blend(color, p.base, alpha)
+  end
   return {
-    cursorline        = tint(p.yellow, 0.06),
+    cursorline = tint(p.yellow, 0.06),
     cursorline_insert = tint(p.yellow, 0.16),
-    visual            = tint(p.rosewater, 0.15),
-    diag_error_bg     = tint(p.red, 0.10),
-    diag_warn_bg      = tint(p.peach, 0.10),
-    diag_hint_bg      = tint(p.teal, 0.10),
-    diag_info_bg      = tint(p.blue, 0.10),
-    diff_add          = tint(p.green, 0.12),
-    diff_change       = tint(p.yellow, 0.08),
-    diff_delete       = tint(p.red, 0.12),
-    diff_text         = tint(p.yellow, 0.18),
-    indent            = tint(p.overlay0, 0.35),
-    indent_scope      = tint(p.yellow, 0.25),
-    glance_preview    = tint(p.surface0, 0.45),
+    visual = tint(p.rosewater, 0.15),
+    diag_error_bg = tint(p.red, 0.10),
+    diag_warn_bg = tint(p.peach, 0.10),
+    diag_hint_bg = tint(p.teal, 0.10),
+    diag_info_bg = tint(p.blue, 0.10),
+    diff_add = tint(p.green, 0.12),
+    diff_change = tint(p.yellow, 0.08),
+    diff_delete = tint(p.red, 0.12),
+    diff_text = tint(p.yellow, 0.18),
+    indent = tint(p.overlay0, 0.35),
+    indent_scope = tint(p.yellow, 0.25),
+    glance_preview = tint(p.surface0, 0.45),
     glance_cursorline = tint(p.yellow, 0.08),
-    blame             = tint(p.overlay1, 0.85),
-    stopped_line      = tint(p.yellow, 0.14),
+    blame = tint(p.overlay1, 0.85),
+    stopped_line = tint(p.yellow, 0.14),
     -- a whisper of the accent keeps side panels warm with the character instead of plain gray
-    panel             = M.tint_to_contrast(M.blend(p.yellow, p.surface0, 0.12), p.base, 1.07),
-    separator         = M.tint_to_contrast(p.yellow, p.base, 2.0),
+    panel = M.tint_to_contrast(M.blend(p.yellow, p.surface0, 0.12), p.base, 1.07),
+    separator = M.tint_to_contrast(p.yellow, p.base, 2.0),
   }
 end
 
@@ -129,7 +149,9 @@ M.GUIDE_ALPHA = 0.4
 ---@param p table region palette
 ---@return string[] one hex color per indent level
 function M.indent_guides(p)
-  return vim.tbl_map(function(color) return M.blend(color, p.base, M.GUIDE_ALPHA) end, M.rainbow(p))
+  return vim.tbl_map(function(color)
+    return M.blend(color, p.base, M.GUIDE_ALPHA)
+  end, M.rainbow(p))
 end
 
 -- what the cursor line and its number look like in each mode, matching the statusline colors
@@ -187,11 +209,11 @@ function M.lualine_theme(p)
     }
   end
   return {
-    normal   = mode(p.yellow),
-    insert   = mode(p.green),
-    visual   = mode(p.lavender),
-    replace  = mode(p.red),
-    command  = mode(p.peach),
+    normal = mode(p.yellow),
+    insert = mode(p.green),
+    visual = mode(p.lavender),
+    replace = mode(p.red),
+    command = mode(p.peach),
     terminal = mode(p.sky),
     inactive = {
       a = { fg = p.subtext0, bg = p.base },
@@ -204,31 +226,31 @@ end
 function M.bufferline_highlights(p)
   local bg, bg1, fg, dim, accent = p.base, p.surface0, p.text, p.overlay1, p.yellow
   return {
-    fill                  = { bg = bg },
-    background            = { fg = dim, bg = bg1 },
-    buffer_visible        = { fg = dim, bg = bg1 },
-    buffer_selected       = { fg = fg, bg = bg, bold = true },
-    indicator_selected    = { fg = accent, bg = bg },
-    separator             = { fg = bg, bg = bg1 },
-    separator_visible     = { fg = bg, bg = bg1 },
-    separator_selected    = { fg = bg, bg = bg },
-    modified              = { fg = accent, bg = bg1 },
-    modified_selected     = { fg = accent, bg = bg },
-    close_button          = { fg = dim, bg = bg1 },
+    fill = { bg = bg },
+    background = { fg = dim, bg = bg1 },
+    buffer_visible = { fg = dim, bg = bg1 },
+    buffer_selected = { fg = fg, bg = bg, bold = true },
+    indicator_selected = { fg = accent, bg = bg },
+    separator = { fg = bg, bg = bg1 },
+    separator_visible = { fg = bg, bg = bg1 },
+    separator_selected = { fg = bg, bg = bg },
+    modified = { fg = accent, bg = bg1 },
+    modified_selected = { fg = accent, bg = bg },
+    close_button = { fg = dim, bg = bg1 },
     close_button_selected = { fg = dim, bg = bg },
-    numbers               = { fg = dim, bg = bg1 },
-    numbers_selected      = { fg = accent, bg = bg, bold = true },
-    diagnostic            = { fg = dim, bg = bg1 },
-    diagnostic_selected   = { fg = fg, bg = bg },
-    error                 = { fg = p.red, bg = bg1 },
-    error_selected        = { fg = p.red, bg = bg, bold = true },
-    warning               = { fg = p.peach, bg = bg1 },
-    warning_selected      = { fg = p.peach, bg = bg, bold = true },
-    hint                  = { fg = p.teal, bg = bg1 },
-    hint_selected         = { fg = p.teal, bg = bg },
-    tab                   = { fg = dim, bg = bg1 },
-    tab_selected          = { fg = accent, bg = bg, bold = true },
-    tab_close             = { fg = dim, bg = bg },
+    numbers = { fg = dim, bg = bg1 },
+    numbers_selected = { fg = accent, bg = bg, bold = true },
+    diagnostic = { fg = dim, bg = bg1 },
+    diagnostic_selected = { fg = fg, bg = bg },
+    error = { fg = p.red, bg = bg1 },
+    error_selected = { fg = p.red, bg = bg, bold = true },
+    warning = { fg = p.peach, bg = bg1 },
+    warning_selected = { fg = p.peach, bg = bg, bold = true },
+    hint = { fg = p.teal, bg = bg1 },
+    hint_selected = { fg = p.teal, bg = bg },
+    tab = { fg = dim, bg = bg1 },
+    tab_selected = { fg = accent, bg = bg, bold = true },
+    tab_close = { fg = dim, bg = bg },
   }
 end
 
