@@ -1,0 +1,21 @@
+{
+  "Profiles": [
+    {
+      "Name": "Eldentree Elden Ring",
+      "Guid": "eldentree-elden-ring",
+      "Dynamic Profile Parent Name": "Default",
+      "Normal Font": "JetBrainsMonoNFM-Light 14",
+      "Transparency": 0.06,
+      "Blur": true,
+      "Blur Radius": 8
+    },
+    {
+      "Name": "Eldentree Resident Evil",
+      "Guid": "eldentree-resident-evil",
+      "Dynamic Profile Parent Name": "Default",
+      "Normal Font": "JetBrainsMonoNFM-SemiBold 14",
+      "Transparency": 0,
+      "Blur": false
+    }
+  ]
+}

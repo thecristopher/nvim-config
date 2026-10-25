@@ -4,6 +4,7 @@ return {
   title = "Resident Evil",
 
   regions = require("core.franchise.lore.resident_evil.regions"),
+  skin    = require("core.franchise.lore.resident_evil.skin"),
 
   -- which version of each mechanic this world plays
   mechanics = {

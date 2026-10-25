@@ -54,7 +54,7 @@ return {
           end,
         },
         menu = {
-          win_configs = { border = "rounded" },
+          win_configs = { border = require("core.skin").border() },
           preview = true,
         },
         icons = {

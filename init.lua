@@ -13,6 +13,10 @@ if vim.g.vscode then
   require("core.vscode").setup()
 else
   require("core.franchise").setup()
+  require("core.skin").setup()
+  require("core.terminal").setup()
+  require("core.title").setup()
+  require("core.sound").setup()
   require("core.repos").setup()
   require("core.motion").setup()
   require("core.banner").setup()
@@ -21,6 +25,7 @@ else
   require("core.zones").setup()
   require("core.snapshot").setup()
   require("core.hub").setup()
+  require("core.hud").setup()
   require("core.fog").setup()
   require("core.messages").setup()
   require("core.trial").setup()
@@ -29,6 +34,7 @@ else
   require("core.map").setup()
   require("core.results").setup()
   require("core.rest").setup()
+  require("core.trace").setup()
 end
 
 -- ── Bootstrap lazy.nvim ──────────────────────────────────────────────────────

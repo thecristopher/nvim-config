@@ -64,6 +64,7 @@ end
 function M.open()
   if not motion.enabled() or vim.g.eldentree_fog == false then return end
   close(current)
+  require("core.sound").play("door")
   local state = open_float()
   current = state
   paint_groups(0)

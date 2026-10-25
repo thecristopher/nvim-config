@@ -1,0 +1,22 @@
+-- __title__, one region per palette. Every palette fills the same catppuccin slots,
+-- yellow is the region accent, rosewater is functions, lavender is types, green is strings.
+-- Drop the portrait into images/portraits/ with the name below.
+return {
+  {
+    name = "first_region",
+    character = "The First Hero",
+    portrait = "__name___first_hero.jpg",
+    title = "The First Region",
+    tagline = "describe its sky in a few words",
+    palette = {
+      base = "#0D0B09", mantle = "#090705", crust = "#060403",
+      surface0 = "#1C1815", surface1 = "#252019", surface2 = "#312B22",
+      overlay0 = "#4A4340", overlay1 = "#6B5E54", overlay2 = "#8C7A6E",
+      subtext0 = "#A89278", subtext1 = "#C4AE96", text = "#E0CDA8",
+      yellow = "#C9A84C", peach = "#CC8A40", green = "#7DAE68", teal = "#6BA888",
+      lavender = "#9B8EC4", mauve = "#A888C8", red = "#B83838", maroon = "#CC4848",
+      rosewater = "#DCC0A0", flamingo = "#CC8870", blue = "#6898B8", sapphire = "#5888A8",
+      sky = "#68B8C8", pink = "#C488A8",
+    },
+  },
+}

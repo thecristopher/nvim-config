@@ -76,7 +76,7 @@ local function open_editor(msg)
     col       = math.floor((vim.o.columns - width) / 2),
     width     = width,
     height    = height,
-    border    = "rounded",
+    border    = require("core.skin").border(),
     title     = " Commit Message ",
     title_pos = "center",
   })

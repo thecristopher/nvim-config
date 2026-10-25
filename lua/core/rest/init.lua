@@ -88,6 +88,7 @@ end
 
 function M.rest()
   if scene then return end
+  require("core.sound").play("rest")
   local width, height = vim.o.columns, vim.o.lines
   local s = { width = width, height = height, embers = {}, text_rows = {} }
   s.style = require("core.franchise").mechanic("rest")

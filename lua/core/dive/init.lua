@@ -28,7 +28,7 @@ local function hover()
   local ok, captures = pcall(vim.treesitter.get_captures_at_cursor, 0)
   tome.category = actions.item_category(ok and captures or {})
   local title = " ◈ " .. vim.fn.expand("<cword>") .. " "
-  vim.lsp.buf.hover({ border = "rounded", max_width = 90, title = { { title, "EldenTomeTitle" } }, title_pos = "left" })
+  vim.lsp.buf.hover({ border = require("core.skin").border(), max_width = 90, title = { { title, "EldenTomeTitle" } }, title_pos = "left" })
 end
 
 local handlers = {
@@ -69,7 +69,7 @@ function M.attach(buf)
     })
   end
 
-  vim.keymap.set("i", "<C-k>", function() vim.lsp.buf.signature_help({ border = "rounded" }) end, { buffer = buf, desc = "LSP: Signature help" })
+  vim.keymap.set("i", "<C-k>", function() vim.lsp.buf.signature_help({ border = require("core.skin").border() }) end, { buffer = buf, desc = "LSP: Signature help" })
   vim.keymap.set("n", "<leader>uh", function()
     vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = buf }), { bufnr = buf })
   end, { buffer = buf, desc = "Toggle inlay hints" })

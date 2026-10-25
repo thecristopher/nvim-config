@@ -31,6 +31,7 @@ end
 local function visit_merchant(before, after)
   local lines = require("core.franchise").current().merchant
   if not lines or not actions.crossed(before, after) then return end
+  require("core.sound").play("merchant")
   vim.notify(lines[math.random(#lines)], vim.log.levels.INFO, { title = "Merchant" })
 end
 

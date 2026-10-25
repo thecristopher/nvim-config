@@ -15,7 +15,7 @@ return {
       fold_virt_text_handler = function(virt_text, lnum, end_lnum, width, truncate)
         return require("core.folds.actions").fold_chunks(virt_text, end_lnum - lnum, width, truncate)
       end,
-      preview = { win_config = { border = "rounded", winblend = 0 } },
+      preview = { win_config = { border = require("core.skin").border(), winblend = 0 } },
     },
   },
 }

@@ -67,7 +67,7 @@ return {
       completion = {
         accept = { auto_brackets = { enabled = true } },
         menu = {
-          border   = "rounded",
+          border   = require("core.skin").border(),
           winhighlight = "Normal:BlinkCmpMenu,FloatBorder:BlinkCmpMenuBorder,CursorLine:BlinkCmpMenuSelection",
           draw = {
             treesitter = { "lsp" },
@@ -78,7 +78,7 @@ return {
           auto_show          = true,
           auto_show_delay_ms = 250,
           window = {
-            border     = "rounded",
+            border     = require("core.skin").border(),
             winhighlight = "Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder",
           },
         },
@@ -87,7 +87,7 @@ return {
       -- ── Signature help ───────────────────────────────────────────────
       signature = {
         enabled = true,
-        window  = { border = "rounded" },
+        window  = { border = require("core.skin").border() },
       },
       -- ── Snippets ────────────────────────────────────────────────────
       snippets = { preset = "default" },

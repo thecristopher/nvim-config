@@ -4,6 +4,7 @@ return {
   title = "Elden Ring",
 
   regions = require("core.franchise.lore.elden_ring.regions"),
+  skin    = require("core.franchise.lore.elden_ring.skin"),
 
   -- which version of each mechanic this world plays
   mechanics = {

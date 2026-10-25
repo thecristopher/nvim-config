@@ -1,6 +1,6 @@
--- Brings the Roundtable Hold dashboard to life: shimmering gold headers, the region's weather
--- drifting through the empty space (embers, rot petals, glintstone, snow) and a player message
--- written in by an invisible quill. Everything is extmarks on top of snacks' render.
+-- Brings the HUD to life: shimmering gold on ornamented rows, the region's weather drifting through
+-- the empty sky (embers, rot petals, glintstone, snow) and a player message written in by an
+-- invisible quill. Everything is extmarks on top of the HUD's own lines, which it never touches.
 local actions = require("core.hub.actions")
 local motion  = require("core.motion")
 local color   = require("core.motion.actions")
@@ -12,8 +12,12 @@ local FRAME_MS = 40
 
 -- the rows worth gilding, matched by the ornaments and the character name the dashboard draws
 local function gilded_marks()
-  local hub = require("core.banner.actions").spaced(require("core.franchise").current().words.hub)
-  return { "◈", hub, actions.spaced(require("core.themes").current().character) }
+  local lore = require("core.franchise").current()
+  local hub = require("core.banner.actions").spaced(lore.words.hub)
+  local ornament = vim.trim(lore.skin.ornament[1])
+  local character = require("core.themes").current().character
+  -- the plaque carves the name wide, or banner style when the panel is narrow
+  return { ornament, hub, actions.spaced(character), require("core.banner.actions").spaced(character) }
 end
 
 local session
@@ -49,6 +53,9 @@ local function define_highlights()
 end
 
 -- per row lists of { byte_start, byte_end, col, char } so drawing never re-parses lines
+-- any of these on a row means it crosses a panel or a slot
+local FRAME_EDGES = { "│", "║", "┃", "┌", "└", "┏", "┗", "╔", "╚" }
+
 local function index_buffer(buf)
   local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
   local rows = {}
@@ -68,7 +75,10 @@ local function index_buffer(buf)
     for _, mark in ipairs(marks) do
       if line:find(mark, 1, true) then gilded = true end
     end
-    rows[row] = { line = line, chars = chars, taken = actions.occupied(cells), gilded = gilded }
+    -- rows crossing a frame belong to panels, the weather stays out of them entirely
+    local framed = false
+    for _, edge in ipairs(FRAME_EDGES) do framed = framed or line:find(edge, 1, true) ~= nil end
+    rows[row] = { line = line, chars = chars, taken = actions.occupied(cells), gilded = gilded, framed = framed }
   end
   return rows
 end
@@ -119,7 +129,7 @@ local function draw_embers(s, dt)
     local row, col = math.floor(ember.y), math.floor(ember.x)
     local info = s.rows[row + 1]
     -- embers drift behind the text instead of scribbling over it
-    if info and col >= 0 and col < s.width and not info.taken[col] and not under_quill(s, row, col) then
+    if info and not info.framed and col >= 0 and col < s.width and not info.taken[col] and not under_quill(s, row, col) then
       local glyph, level = actions.ember_look(ember, weather)
       vim.api.nvim_buf_set_extmark(s.buf, ns, row, 0, {
         virt_text = { { glyph, "EldenEmber" .. level } },
@@ -187,10 +197,10 @@ function M.start(buf)
   session = s
 end
 
-local function start_on_visible_dashboard()
+local function start_on_visible_hud()
   for _, win in ipairs(vim.api.nvim_list_wins()) do
     local buf = vim.api.nvim_win_get_buf(win)
-    if vim.bo[buf].filetype == "snacks_dashboard" then return M.start(buf) end
+    if vim.bo[buf].filetype == "eldentree_hud" then return M.start(buf) end
   end
 end
 
@@ -200,15 +210,9 @@ function M.setup()
   vim.api.nvim_create_autocmd("ColorScheme", { group = group, callback = define_highlights })
   vim.api.nvim_create_autocmd("User", {
     group = group,
-    pattern = { "SnacksDashboardOpened", "SnacksDashboardUpdatePost" },
-    callback = function() vim.schedule(start_on_visible_dashboard) end,
-  })
-  vim.api.nvim_create_autocmd("User", { group = group, pattern = "SnacksDashboardClosed", callback = M.stop })
-  vim.api.nvim_create_autocmd("User", {
-    group = group,
     pattern = "EldentreeMotion",
     callback = function()
-      if motion.enabled() then start_on_visible_dashboard() else M.stop() end
+      if motion.enabled() then start_on_visible_hud() else M.stop() end
     end,
   })
 end

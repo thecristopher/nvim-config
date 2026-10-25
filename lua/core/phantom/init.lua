@@ -53,7 +53,7 @@ local function open_float(phantom, kind)
   local win = vim.api.nvim_open_win(buf, false, {
     relative = "cursor", row = 1, col = 0,
     width = width, height = #phantom.lines,
-    style = "minimal", border = "rounded", focusable = false,
+    style = "minimal", border = require("core.skin").border(), focusable = false,
     title = { { phantom.title, KIND_GROUPS[kind] } }, title_pos = "left",
     noautocmd = true,
   })

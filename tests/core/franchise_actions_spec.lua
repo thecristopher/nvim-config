@@ -66,12 +66,17 @@ describe("choice_for", function()
   end)
 end)
 
-for _, name in ipairs(actions.NAMES) do
+for _, name in ipairs(actions.names()) do
   local lore = actions.lore(name)
 
   describe(lore.title, function()
     it("names itself after its file", function()
       assert.equal(name, lore.name)
+    end)
+
+    it("passes every check :checkhealth runs, portraits included", function()
+      local function on_disk(file) return vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. file) == 1 end
+      assert.same({}, require("core.franchise.actions.validate").problems(lore, on_disk))
     end)
 
     it("picks a version of every mechanic", function()
@@ -191,5 +196,54 @@ describe("resident evil", function()
   it("lets Jill rest in a safe room", function()
     local layout = require("core.rest.actions").layout(80, 24, "Spencer Mansion")
     assert.equal("S A F E   R O O M", layout[2].text)
+  end)
+end)
+
+describe("names", function()
+  it("finds every franchise folder, Elden Ring and Resident Evil included", function()
+    local names = actions.names()
+    assert.is_truthy(vim.tbl_contains(names, "elden_ring"))
+    assert.is_truthy(vim.tbl_contains(names, "resident_evil"))
+  end)
+
+  it("never mistakes the template for a franchise", function()
+    assert.is_false(vim.tbl_contains(actions.names(), "template"))
+  end)
+end)
+
+describe("of_the_day with a third franchise", function()
+  it("rotates through every name it is given", function()
+    local seen = {}
+    for day = 1, 3 do
+      seen[actions.of_the_day({ year = 2026, month = 3, day = day }, { "elden_ring", "resident_evil", "silent_hill" })] = true
+    end
+    assert.equal(3, vim.tbl_count(seen))
+  end)
+end)
+
+describe("slug", function()
+  it("turns Inde's favorite into a folder name", function()
+    assert.equal("silent_hill", actions.slug("Silent Hill"))
+  end)
+
+  it("drops punctuation and extra spaces", function()
+    assert.equal("devil_may_cry_5", actions.slug("  Devil May Cry: 5! "))
+  end)
+
+  it("refuses a name with nothing usable in it", function()
+    assert.is_nil(actions.slug("  !!  "))
+  end)
+end)
+
+describe("title", function()
+  it("turns a folder name back into a title", function()
+    assert.equal("Silent Hill", actions.title("silent_hill"))
+  end)
+end)
+
+describe("fill_template", function()
+  it("names the new franchise everywhere the template leaves a blank", function()
+    local filled = actions.fill_template('name = "__name__", title = "__title__", require("core.franchise.lore.__name__.skin")', "silent_hill")
+    assert.equal('name = "silent_hill", title = "Silent Hill", require("core.franchise.lore.silent_hill.skin")', filled)
   end)
 end)

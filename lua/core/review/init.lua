@@ -40,7 +40,7 @@ local function open_report(pr, analysis)
     col       = math.floor((vim.o.columns - width) / 2),
     width     = width,
     height    = height,
-    border    = "rounded",
+    border    = require("core.skin").border(),
     title     = (" PR #%d  ·  d diff  ·  q close "):format(pr.number),
     title_pos = "center",
   })

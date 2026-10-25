@@ -118,6 +118,13 @@ function M.erase()
   M.render(buf)
 end
 
+--- Returns every message left in a repo, by file then line.
+---@param repo string repo root
+---@return table[] entries as { file, line, text }
+function M.entries(repo)
+  return actions.list(read_store(), vim.fs.normalize(repo))
+end
+
 --- Lists every message in the current repo and jumps to the one you pick.
 function M.pick()
   local repo = vim.fs.root(0, ".git") or vim.uv.cwd()

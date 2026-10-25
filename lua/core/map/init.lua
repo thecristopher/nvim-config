@@ -68,10 +68,11 @@ local function open_float(rooms, root)
   local cleared, total = actions.progress(rooms)
   local words = require("core.franchise").current().words
   local win = vim.api.nvim_open_win(buf, true, {
-    relative = "editor", style = "minimal", border = "rounded",
+    relative = "editor", style = "minimal", border = require("core.skin").border(),
     width = math.min(width, vim.o.columns - 4), height = math.min(#lines, vim.o.lines - 6),
     row = 2, col = math.floor((vim.o.columns - width) / 2),
-    title = (" %s · %s "):format(words.map, require("core.themes").current().title), title_pos = "center",
+    title = " " .. require("core.skin").title(("%s · %s"):format(words.map, require("core.themes").current().title)) .. " ",
+    title_pos = "center",
     footer = (" %d of %d rooms cleared "):format(cleared, total), footer_pos = "center",
   })
   vim.wo[win].cursorline = true
@@ -84,6 +85,13 @@ local function open_float(rooms, root)
     close()
     Snacks.picker.files({ cwd = root .. "/" .. room.key })
   end, { buffer = buf, nowait = true })
+end
+
+--- Returns the rooms of a project, red or blue, for anything else that wants to draw them.
+---@param root string repo root
+---@return table[]
+function M.rooms(root)
+  return survey(root)
 end
 
 --- Opens the map of the project you stand in.

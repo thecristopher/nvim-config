@@ -8,7 +8,8 @@ local seen = {}
 local last_shown
 
 local function enter(buf)
-  if vim.g.eldentree_zones == false or vim.bo[buf].buftype ~= "" then return end
+  -- scheduled from BufEnter, so the buffer may be gone already (the HUD wipes itself on leaving)
+  if vim.g.eldentree_zones == false or not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].buftype ~= "" then return end
   local file = vim.api.nvim_buf_get_name(buf)
   local key = actions.zone_key(file, require("core.repos").root(vim.fs.dirname(file)))
   local banner = require("core.banner")

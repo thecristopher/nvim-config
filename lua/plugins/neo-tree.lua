@@ -132,7 +132,7 @@ return {
       popups = {
         position = { col = "50%", row = "30%" },
         size     = { width = 60, height = 15 },
-        border   = { style = "rounded" },
+        border   = { style = require("core.skin").border() },
       },
       event_handlers = {
         {

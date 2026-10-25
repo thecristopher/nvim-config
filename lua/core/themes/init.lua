@@ -109,8 +109,8 @@ function M.apply(name, opts)
   else
     fade_into(region, opts.duration or 650)
   end
-  -- the hub prints the region name, so redraw it if it is on screen
-  if vim.bo.filetype == "snacks_dashboard" then Snacks.dashboard.update() end
+  -- the HUD shows the region and its champion, so it redraws when it is open
+  require("core.hud").refresh(true)
   if opts.announce then require("core.banner").region(region) end
 end
 
@@ -164,21 +164,6 @@ local function starting_region()
   return actions.random_name(read_saved(), math.random)
 end
 
--- traveling to another repo, by picker, auto root or :cd, crossfades into that repo's region
-local function follow_projects()
-  vim.api.nvim_create_autocmd("DirChanged", {
-    group = vim.api.nvim_create_augroup("eldentree_project_region", { clear = true }),
-    pattern = "global",
-    callback = function()
-      if M.pinned then return end
-      local root = project_root()
-      if not root then return end
-      local name = actions.project_region(root, read_projects())
-      if name ~= M.current().name then M.apply(name, { save = false }) end
-    end,
-  })
-end
-
 --- Moves into the new franchise's world after :Franchise, announcing where you landed.
 function M.follow_franchise()
   M.apply(starting_region(), { announce = true })
@@ -187,8 +172,8 @@ end
 function M.setup(base_opts)
   M.base_opts = base_opts
   M.pinned = vim.g.eldentree_region ~= nil
+  -- the region you start in stays for the whole session, traveling between repos never changes it
   M.apply(starting_region())
-  follow_projects()
 
   vim.api.nvim_create_user_command("Region", function(cmd)
     if cmd.args == "" then return M.pick() end

@@ -182,6 +182,7 @@ local function engage(fight)
   fight.health     = 1
   fight.entered_at = vim.uv.now()
   fight.name       = actions.boss_for(require("core.themes").current().name)
+  require("core.sound").play("boss")
   animate(fight, actions.ENTRANCE_MS)
 end
 

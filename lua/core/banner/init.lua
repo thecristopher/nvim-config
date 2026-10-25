@@ -143,6 +143,7 @@ function M.show(name, opts)
   -- runes change hands even when the banner itself stays hidden
   if opts.reward ~= false then require("core.runes").after_banner(name) end
   if not motion.enabled() or vim.g.eldentree_banners == false then return end
+  require("core.sound").play(name)
 
   close(current)
   local width = vim.o.columns

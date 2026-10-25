@@ -207,7 +207,7 @@ local function open_editor(base, branch, pr, title, body)
     col       = math.floor((vim.o.columns - width) / 2),
     width     = width,
     height    = height,
-    border    = "rounded",
+    border    = require("core.skin").border(),
     title     = pr and (" Update PR #%d "):format(pr.number) or " Create PR ",
     title_pos = "center",
   })
