@@ -320,6 +320,7 @@ return {
         { "<leader>gZ", icon = { icon = "󰆓", color = "yellow" } },
         { "<leader>gu", icon = { icon = "󰕌", color = "red" } },
         { "<leader>gw", icon = { icon = "󰊠", color = "blue" } },
+        { "<leader>rw", icon = { icon = "󰛔", color = "cyan" } },
         { "<leader>m", group = "messages", icon = { icon = "✎", color = "orange" } },
         { "<leader>D", group = "debug", icon = { icon = "", color = "red" } },
         { "<leader>o", icon = { icon = "󰎈", color = "purple" } },

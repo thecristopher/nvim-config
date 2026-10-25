@@ -151,7 +151,7 @@ end
 ---@return string[] problems
 function M.problems(lore, portrait_exists)
   local problems = {}
-  missing_keys(lore, { "name", "title", "currency" }, "lore", problems)
+  missing_keys(lore, { "name", "title", "currency", "claude" }, "lore", problems)
   missing_keys(lore.banners, M.BANNERS, "banners", problems)
   missing_keys(lore.mechanics, M.MECHANICS, "mechanics", problems)
   missing_keys(lore.skin, M.SKIN, "skin", problems)

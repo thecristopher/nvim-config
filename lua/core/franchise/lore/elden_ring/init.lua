@@ -17,6 +17,23 @@ return {
 
   currency = { glyph = "◈", stain = "󰈸" },
 
+  -- Claude Code's statusline bars and spinner (claude/install.lua merges the verbs into settings)
+  claude = {
+    bars = { context = "HP", five_hour = "FP", seven_day = "ST" },
+    verbs = {
+      "Seeking grace",
+      "Two-handing the bug",
+      "Rolling through the fog",
+      "Reading a message on the ground",
+      "Summoning spirit ashes",
+      "Parrying the stack trace",
+      "Leveling Mind",
+      "Asking Melina",
+      "Resting at a Site of Grace",
+      "Trying finger but hole",
+    },
+  },
+
   -- who guards each region when errors pile up
   bosses = {
     leyndell = "Morgott, the Omen King",

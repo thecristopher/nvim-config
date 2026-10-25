@@ -100,6 +100,15 @@ function M.kind(name, overrides)
   return vim.tbl_extend("force", base, style, { text = text }, overrides or {})
 end
 
+--- Tells whether a banner should crumble the code into rain behind it.
+---@param name string kind name
+---@param buftype string of the window the rain would cover
+---@param enabled boolean|nil vim.g.eldentree_rain, only false turns it off
+---@return boolean
+function M.rains(name, buftype, enabled)
+  return name == "died" and buftype == "" and enabled ~= false
+end
+
 -- dripping banners ------------------------------------------------------------------------
 
 M.DRIP_DEPTH = 3

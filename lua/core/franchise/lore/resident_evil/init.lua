@@ -18,6 +18,23 @@ return {
   -- pesetas, and what you drop when you die is still yours to reclaim
   currency = { glyph = "₧", stain = "☣" },
 
+  -- Claude Code's statusline bars and spinner (claude/install.lua merges the verbs into settings)
+  claude = {
+    bars = { context = "CONDITION", five_hour = "AMMO", seven_day = "HERBS" },
+    verbs = {
+      "Checking the map",
+      "Combining herbs",
+      "Saving at the typewriter",
+      "Solving the crest puzzle",
+      "Reloading",
+      "Talking to the merchant",
+      "Opening the door slowly",
+      "Sorting the item box",
+      "Outrunning Nemesis",
+      "Reading a file",
+    },
+  },
+
   -- the merchant shows up every time your pesetas cross another MERCHANT_EVERY
   merchant = {
     "What are ya buyin'?",

@@ -160,6 +160,21 @@ local function update_groups(state, elapsed)
   })
 end
 
+-- the code crumbles behind YOU DIED and comes back as the banner fades
+local function crumble(duration)
+  local ok = pcall(require("cellular-automaton").start_animation, "make_it_rain")
+  -- the rain window takes focus, so this is the one to close later
+  local rain = vim.api.nvim_get_current_win()
+  if not ok then
+    return
+  end
+  vim.defer_fn(function()
+    if vim.api.nvim_win_is_valid(rain) then
+      require("cellular-automaton.manager").clean()
+    end
+  end, duration)
+end
+
 -- shows a banner by kind name ("felled", "great", "died", "grace", "cleansed", "region")
 function M.show(name, opts)
   opts = opts or {}
@@ -175,6 +190,9 @@ function M.show(name, opts)
     return
   end
   require("core.sound").play(name)
+  if actions.rains(name, vim.bo.buftype, vim.g.eldentree_rain) then
+    crumble(kind.duration)
+  end
 
   close(current)
   local width = vim.o.columns

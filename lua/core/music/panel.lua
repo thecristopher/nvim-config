@@ -30,7 +30,7 @@ function M.close()
   end
   local win = current.win
   current = nil
-  require("core.hud.portrait").close()
+  require("core.hud.portrait").close("music")
   pcall(vim.api.nvim_win_close, win, true)
 end
 
@@ -55,7 +55,7 @@ local function draw(track, source)
     if not file or current ~= shown or shown.track ~= track then
       return
     end
-    require("core.hud.portrait").show(shown.win, file, layout.cover)
+    require("core.hud.portrait").show(shown.win, file, layout.cover, "music")
   end)
 end
 

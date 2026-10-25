@@ -149,3 +149,22 @@ describe("kind styles in the Lands Between", function()
     assert.is_nil(actions.kind("died").drip)
   end)
 end)
+
+describe("rains", function()
+  it("crumbles Claire's code when she dies in a file", function()
+    assert.is_true(actions.rains("died", "", nil))
+  end)
+
+  it("keeps the code standing for a felled boss", function()
+    assert.is_false(actions.rains("felled", "", nil))
+  end)
+
+  it("stays dry over terminals and pickers", function()
+    assert.is_false(actions.rains("died", "terminal", nil))
+    assert.is_false(actions.rains("died", "nofile", nil))
+  end)
+
+  it("stays dry when Malenia turned the rain off", function()
+    assert.is_false(actions.rains("died", "", false))
+  end)
+end)

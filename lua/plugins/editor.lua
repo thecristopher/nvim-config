@@ -535,4 +535,20 @@ return {
       { "<leader>fy", "<cmd>YankyRingHistory<cr>", mode = { "n", "x" }, desc = "Yank history" },
     },
   },
+
+  -- ── cloak: masks .env values so they never show on a shared screen ──
+  {
+    "laytan/cloak.nvim",
+    event = { "BufReadPre", "BufNewFile" },
+    opts = {
+      cloak_character = "*",
+      patterns = {
+        { file_pattern = { ".env*", "*.env" }, cloak_pattern = "=.+" },
+      },
+    },
+    keys = {
+      { "<leader>uc", "<cmd>CloakToggle<cr>", desc = "Toggle .env cloak" },
+      { "<leader>uC", "<cmd>CloakPreviewLine<cr>", desc = "Peek this .env line" },
+    },
+  },
 }

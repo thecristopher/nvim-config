@@ -22,7 +22,7 @@ On Resident Evil days it is the STATUS screen, with Claire, the CONDITION monito
 
 ![Resident Evil inventory](images/demo/hud_re.gif)
 
-Banners land on commits, PRs, test runs and felled bosses.
+Banners land on commits, PRs, test runs and felled bosses. When you die, the code crumbles into rain behind the banner and comes back as it fades.
 
 ![Banners](images/demo/banner.gif)
 
@@ -100,6 +100,8 @@ Plugin specs live in `lua/plugins/`, one file per concern.
 
 Copilot suggestions come through blink as one more source, and the top item previews inline as ghost text. The quickfix list is editable with quicker.nvim (change a line, `:w` writes it back to the file), yanky.nvim keeps a yank history, and spell checks English and Spanish in markdown, commits and text.
 
+A few classics from ThePrimeagen's setup live here too: cloak.nvim masks `.env` values so secrets never show on a shared screen or a snapshot, `<leader>rw` replaces the word under the cursor across the file, `<leader>cx` makes the file executable, `:VimBeGood` trains your motions, and `<leader>ur` makes it rain. Dying makes it rain on its own, `vim.g.eldentree_rain = false` keeps the code standing.
+
 Traveling to a Site of Grace keeps the session of the repo you leave and restores the one you arrive at. Files with unsaved changes are never closed. Turn it off with `vim.g.eldentree_project_sessions = false`, and per project regions with `vim.g.eldentree_region_per_project = false`.
 
 Portraits in `images/portraits/` are 276x336 crops of the originals in `images/`, with contrast, color and sharpness lifted so they survive half block rendering. A region whose portrait is missing simply shows the HUD without art.
@@ -165,6 +167,10 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>xQ` | Toggle the quickfix list, editable (quicker) |
 | `[y` / `]y`  | Right after a paste, swap it for the older or newer yank |
 | `<leader>fy` | Yank history                    |
+| `<leader>rw` | Replace the word under the cursor in this file (`<C-w>` clears the prefilled word) |
+| `<leader>cx` | Make this file executable       |
+| `<leader>uc` / `<leader>uC` | Toggle the `.env` cloak, or peek one line |
+| `<leader>ur` | Make it rain                    |
 | `K`          | Hover docs, dressed as an item description |
 | `<leader>fR` | Find and replace in the project (grug-far), works on a selection too |
 | `<leader>fF` | Find and replace in this file   |
@@ -238,9 +244,26 @@ On macOS, F11 shows the desktop unless "Use F1, F2, etc. keys as standard functi
 | `:Snapshot`                                    | Save a framed PNG of the buffer or range |
 | `:Music [playpause\|next\|previous]`          | Control Cider or Music without the panel |
 | `:Copilot auth`                                | Sign in to GitHub Copilot once          |
+| `:VimBeGood`                                   | Practice vim motions as a game          |
 | `:GrugFar`                                     | Find and replace across the project     |
 | `:OpenFolder`                                  | Open the file tree at a folder you pick |
 | `:Repos` / `:ReposRescan`                      | Browse or rescan known repositories     |
+
+## Claude Code
+
+Claude Code can wear Eldentree too. One command wires it into `~/.claude/settings.json`, keeping everything already there and a backup of the settings from before (`settings.json.eldentree.bak`):
+
+```sh
+nvim -l claude/install.lua --dry-run   # list what would change
+nvim -l claude/install.lua
+```
+
+- **Statusline**: the region, branch, model, runes and the song playing on top, and below them the context left plus both usage limits as the game's bars (HP, FP and stamina in the Lands Between, the CONDITION monitor with AMMO and HERBS in Raccoon City)
+- **Theme**: nvim rewrites `~/.claude/themes/eldentree.json` from the region's palette on every region or franchise change, and Claude Code reloads it on the spot. Restart Claude Code once after the first install so it sees the new themes folder
+- **Spinner verbs**: every franchise's `claude.verbs`, like "Seeking grace" or "Combining herbs"
+- **Sounds**: grace when Claude finishes, died when it fails, the fog wall or the door when it asks for permission
+
+`ELDENTREE_CLAUDE_SOUND=0` mutes the sounds, `ELDENTREE_CLAUDE_MUSIC=0` drops the song from the statusline, `ELDENTREE_CIDER_TOKEN` carries Cider's token there, and `vim.g.eldentree_claude_ui = false` stops nvim from touching the theme. Organizations that set `allowManagedHooksOnly` keep the sound hooks from running, the rest still works.
 
 ## Tests
 

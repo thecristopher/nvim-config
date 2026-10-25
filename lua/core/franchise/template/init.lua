@@ -18,6 +18,12 @@ return {
 
   currency = { glyph = "◈", stain = "󰈸" },
 
+  -- Claude Code's statusline: context left, the 5 hour limit and the weekly one, plus spinner verbs
+  claude = {
+    bars = { context = "HP", five_hour = "MP", seven_day = "ST" },
+    verbs = { "Exploring __title__" },
+  },
+
   -- who guards each region, one per region name
   bosses = {
     first_region = "The First Boss",

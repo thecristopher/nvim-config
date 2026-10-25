@@ -157,6 +157,24 @@ map("n", "<leader>o", function()
   require("core.music").open()
 end, { desc = "Now playing" })
 
+-- ── ThePrimeagen's classics ─────────────────────────────────────────────────
+-- the substitute comes typed out with the word as its replacement, <C-w> clears it to type a new one
+map(
+  "n",
+  "<leader>rw",
+  [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]],
+  { desc = "Replace the word under the cursor in this file" }
+)
+map("n", "<leader>cx", function()
+  local file = vim.api.nvim_buf_get_name(0)
+  local perm = vim.fn.getfperm(file)
+  if perm == "" then
+    return vim.notify("Save the file first", vim.log.levels.WARN)
+  end
+  vim.fn.setfperm(file, require("core.utils").executable_perm(perm))
+  vim.notify(vim.fn.fnamemodify(file, ":t") .. " can run now")
+end, { desc = "Make this file executable" })
+
 -- ── Snapshots ────────────────────────────────────────────────────────────────
 map("n", "<leader>cp", "<cmd>Snapshot<cr>", { desc = "Snapshot the buffer as a PNG" })
 map("x", "<leader>cp", ":Snapshot<cr>", { desc = "Snapshot the selection as a PNG", silent = true })

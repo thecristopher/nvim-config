@@ -17,3 +17,17 @@ describe("hash", function()
     assert.is_true(utils.hash(("radahn"):rep(500)) < 4294967296)
   end)
 end)
+
+describe("executable_perm", function()
+  it("lets everyone who can read Inde's script run it", function()
+    assert.equal("rwxr-xr-x", utils.executable_perm("rw-r--r--"))
+  end)
+
+  it("keeps Wesker's private file private", function()
+    assert.equal("rwx------", utils.executable_perm("rw-------"))
+  end)
+
+  it("leaves a script that already runs as it is", function()
+    assert.equal("rwxr-xr-x", utils.executable_perm("rwxr-xr-x"))
+  end)
+end)
