@@ -130,6 +130,25 @@ describe("byte_col", function()
   end)
 end)
 
+describe("hud_window", function()
+  -- Malenia's HUD shows in windows 1000 and 1003, Claire's cursor sits in one of them or elsewhere
+  it("goes with the cursor when it is in a window showing the HUD", function()
+    assert.equal(1003, hud.hud_window(1003, 1000, { 1000, 1003 }))
+  end)
+
+  it("stays where it was while the cursor is in Inde's love letter", function()
+    assert.equal(1000, hud.hud_window(1005, 1000, { 1000, 1003 }))
+  end)
+
+  it("moves back to the window left when its split moved on to another buffer", function()
+    assert.equal(1000, hud.hud_window(1003, 1003, { 1000 }))
+  end)
+
+  it("gives nil when no window shows the HUD anymore", function()
+    assert.is_nil(hud.hud_window(1003, 1000, {}))
+  end)
+end)
+
 describe("follows", function()
   -- Malenia opens the HUD in window 1000 (buffer 7) and Claire zooms it into window 1001
   it("moves to a zoom float showing the HUD", function()
