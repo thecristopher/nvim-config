@@ -87,15 +87,18 @@ end
 
 ---Splits status entries into paths worth staging and paths to leave alone.
 ---Tracked changes always count, untracked files only when they are not noise.
+---Entries already fully staged are left out, since there is nothing left to add.
 ---@param entries { code: string, path: string }[]
 ---@return string[] stage, string[] skipped
 function M.related(entries)
   local stage, skipped = {}, {}
   for _, entry in ipairs(entries) do
     local untracked = entry.code == "??"
+    -- a staged deletion is gone from disk and index, so `git add -- path` would abort the whole add
+    local fully_staged = entry.code:sub(2, 2) == " "
     if untracked and M.is_unrelated(entry.path) then
       skipped[#skipped + 1] = entry.path
-    else
+    elseif not fully_staged then
       stage[#stage + 1] = entry.path
     end
   end
