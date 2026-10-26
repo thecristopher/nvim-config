@@ -226,6 +226,7 @@ function M.open(repo)
 
   vim.fn.chdir(repo)
   M.record_visit(repo)
+  require("core.themes").follow_project()
   if first_visit then
     require("core.banner").show("grace", { subtitle = vim.fs.basename(repo) })
   else

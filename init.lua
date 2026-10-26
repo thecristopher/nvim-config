@@ -36,6 +36,7 @@ else
   require("core.rest").setup()
   require("core.trace").setup()
   require("core.music").setup()
+  require("core.links").setup()
   require("core.claude_ui").setup()
 end
 

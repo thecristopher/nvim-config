@@ -100,6 +100,11 @@ map("n", "<leader>uR", function()
   vim.notify("Auto root " .. (vim.g.eldentree_autoroot and "on" or "off"))
 end, { desc = "Toggle auto root" })
 
+-- ── Links printed in terminals ───────────────────────────────────────────────
+map("n", "<leader>to", function()
+  require("core.links").open_last()
+end, { desc = "Open the last link a terminal printed" })
+
 -- ── Git quick actions ────────────────────────────────────────────────────────
 for _, entry in ipairs(require("core.git.actions").QUICK_KEYS) do
   map("n", "<leader>g" .. entry.key, function()

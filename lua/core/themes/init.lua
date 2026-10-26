@@ -193,6 +193,17 @@ local function starting_region()
   return actions.random_name(read_saved(), math.random)
 end
 
+--- Crossfades into the region saved for the repo you just traveled to, unless one is pinned.
+function M.follow_project()
+  if M.pinned then
+    return
+  end
+  local name = actions.region_to_follow(project_root(), read_projects(), M.current().name)
+  if name then
+    M.apply(name, { save = false })
+  end
+end
+
 --- Moves into the new franchise's world after :Franchise, announcing where you landed.
 function M.follow_franchise()
   M.apply(starting_region(), { announce = true })
@@ -201,7 +212,7 @@ end
 function M.setup(base_opts)
   M.base_opts = base_opts
   M.pinned = vim.g.eldentree_region ~= nil
-  -- the region you start in stays for the whole session, traveling between repos never changes it
+  -- traveling with the repo picker follows each repo's region, auto root and :cd never change it
   M.apply(starting_region())
 
   vim.api.nvim_create_user_command("Region", function(cmd)

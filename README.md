@@ -171,6 +171,8 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>gw` | Who wrote this line (phantom)   |
 | `<leader>cp` | Snapshot the buffer or selection as a PNG |
 | `<leader>o`  | Now playing panel with the album cover |
+| `<leader>to` | Open the last link a terminal printed, like the dev server's localhost |
+| `<C-LeftMouse>` | In a terminal, open the link under the mouse |
 | `<leader>xQ` | Toggle the quickfix list, editable (quicker) |
 | `[y` / `]y`  | Right after a paste, swap it for the older or newer yank |
 | `<leader>fy` | Yank history                    |

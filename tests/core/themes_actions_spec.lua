@@ -324,6 +324,22 @@ describe("guicursor", function()
   end)
 end)
 
+describe("region_to_follow", function()
+  local chosen = { ["/raccoon/terrasave"] = "haligtree" }
+
+  it("crossfades into the region Claire saved for her repo", function()
+    assert.equal("haligtree", actions.region_to_follow("/raccoon/terrasave", chosen, "caelid"))
+  end)
+
+  it("stays put when Malenia already wears that region", function()
+    assert.is_nil(actions.region_to_follow("/raccoon/terrasave", chosen, "haligtree"))
+  end)
+
+  it("stays put outside of a repo, where Inde keeps her love notes", function()
+    assert.is_nil(actions.region_to_follow(nil, chosen, "caelid"))
+  end)
+end)
+
 describe("project_region", function()
   it("keeps the region Claire chose for her project", function()
     local chosen = { ["/raccoon/terrasave"] = "haligtree" }

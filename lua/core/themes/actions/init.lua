@@ -62,6 +62,22 @@ function M.project_region(root, chosen)
   return names[require("core.utils").hash(vim.fs.basename(root)) % #names + 1]
 end
 
+--- Returns the region to crossfade into after traveling to a repo, nil when it already wears it.
+---@param root string|nil repo traveled to, nil outside of one
+---@param chosen table<string, string>|nil regions picked per project root
+---@param current string region worn now
+---@return string|nil
+function M.region_to_follow(root, chosen, current)
+  if not root then
+    return nil
+  end
+  local name = M.project_region(root, chosen)
+  if name == current then
+    return nil
+  end
+  return name
+end
+
 local function to_rgb(hex)
   local r, g, b = hex:match("^#(%x%x)(%x%x)(%x%x)$")
   return tonumber(r, 16), tonumber(g, 16), tonumber(b, 16)
