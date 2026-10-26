@@ -66,6 +66,20 @@ describe("related", function()
     local stage = actions.related({ { code = " D", path = "lua/radahn.lua" } })
     assert.same({ "lua/radahn.lua" }, stage)
   end)
+
+  it("leaves out Claire's love note deletion once it is already staged", function()
+    local stage, skipped = actions.related({
+      { code = "D ", path = "notes/claire_to_inde.lua" },
+      { code = "M ", path = "lua/malenia_playlist.lua" },
+    })
+    assert.same({}, stage)
+    assert.same({}, skipped)
+  end)
+
+  it("still stages a file edited again after it was staged", function()
+    local stage = actions.related({ { code = "MM", path = "lua/anniversary.lua" } })
+    assert.same({ "lua/anniversary.lua" }, stage)
+  end)
 end)
 
 describe("push_args", function()
