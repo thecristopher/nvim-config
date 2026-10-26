@@ -80,6 +80,93 @@ describe("ghostty_config", function()
   end)
 end)
 
+describe("parse_opacity", function()
+  it("takes Inde's 0.9 as it is", function()
+    assert.equal(0.9, actions.parse_opacity("0.9"))
+  end)
+
+  it("reads Malenia's 85 as a percentage", function()
+    assert.equal(0.85, actions.parse_opacity("85"))
+  end)
+
+  it("reads Claire's 94% with the sign", function()
+    assert.equal(0.94, actions.parse_opacity("94%"))
+  end)
+
+  it("refuses an opacity so low Leon could not read his love notes", function()
+    assert.is_nil(actions.parse_opacity("5%"))
+  end)
+
+  it("refuses anything that is not a number", function()
+    assert.is_nil(actions.parse_opacity("wesker"))
+  end)
+end)
+
+describe("opacity_label", function()
+  it("shows Claire and Inde's anniversary glass at 97%", function()
+    assert.equal("97%", actions.opacity_label(0.97))
+  end)
+end)
+
+describe("with_opacity", function()
+  it("lays Inde's choice over Malenia's skin", function()
+    local skin = { ["font-style"] = "Light", ["background-opacity"] = 0.94 }
+    assert.same(
+      { ["font-style"] = "Light", ["background-opacity"] = 0.8 },
+      actions.with_opacity(skin, 0.8)
+    )
+  end)
+
+  it("leaves the skin's own table untouched", function()
+    local skin = { ["background-opacity"] = 0.94 }
+    actions.with_opacity(skin, 0.8)
+    assert.equal(0.94, skin["background-opacity"])
+  end)
+
+  it("keeps the skin as it is when nothing was chosen", function()
+    local skin = { ["background-opacity"] = 1 }
+    assert.equal(skin, actions.with_opacity(skin, nil))
+  end)
+
+  it("still sets the opacity when Claire's skin has no Ghostty keys", function()
+    assert.same({ ["background-opacity"] = 0.9 }, actions.with_opacity(nil, 0.9))
+  end)
+end)
+
+describe("body_groups", function()
+  local base, mantle = 0x0E0908, 0x1A1412
+
+  it("clears the body Claire writes Inde's love notes on", function()
+    local groups = actions.body_groups({
+      Normal = { fg = 0xFFFFFF, bg = base },
+      SignColumn = { bg = base },
+    })
+    assert.same({ "Normal", "SignColumn" }, groups)
+  end)
+
+  it("keeps Malenia's floats solid on their own shade", function()
+    local groups = actions.body_groups({
+      Normal = { bg = base },
+      NormalFloat = { bg = mantle },
+    })
+    assert.same({ "Normal" }, groups)
+  end)
+
+  it("clears the dimmed inactive windows too", function()
+    local groups = actions.body_groups({ Normal = { bg = base }, NormalNC = { bg = mantle } })
+    assert.same({ "Normal", "NormalNC" }, groups)
+  end)
+
+  it("leaves links and groups without a background alone", function()
+    local groups = actions.body_groups({
+      Normal = { bg = base },
+      EndOfBuffer = { link = "Normal" },
+      Comment = { fg = 0x888888 },
+    })
+    assert.same({ "Normal" }, groups)
+  end)
+end)
+
 describe("passthrough", function()
   it("leaves the sequence alone outside tmux", function()
     assert.equal("\27]111\7", actions.passthrough("\27]111\7", false))

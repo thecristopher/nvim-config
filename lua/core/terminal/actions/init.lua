@@ -71,6 +71,64 @@ function M.ghostty_config(settings)
   return lines
 end
 
+-- steps the opacity picker offers, from solid to the most see through that stays readable
+M.OPACITY_STEPS = { 1, 0.97, 0.94, 0.9, 0.85, 0.8, 0.75, 0.7 }
+
+--- Reads an opacity typed as 0.9, 90 or 90%.
+---@param text string
+---@return number|nil opacity between 0.1 and 1, nil when it is not one
+function M.parse_opacity(text)
+  local digits, percent = vim.trim(text or ""):match("^([%d%.]+)(%%?)$")
+  local value = tonumber(digits)
+  if not value then
+    return nil
+  end
+  if percent == "%" or value > 1 then
+    value = value / 100
+  end
+  if value < 0.1 or value > 1 then
+    return nil
+  end
+  return value
+end
+
+--- Shows an opacity as a percentage.
+---@param opacity number between 0 and 1
+---@return string like "94%"
+function M.opacity_label(opacity)
+  return string.format("%d%%", math.floor(opacity * 100 + 0.5))
+end
+
+--- Ghostty settings with the chosen opacity laid over the skin's, leaving the skin's table untouched.
+---@param settings table<string, string|number|boolean>|nil the skin's Ghostty keys
+---@param opacity number|nil chosen opacity, nil keeps the skin's
+---@return table<string, string|number|boolean>|nil
+function M.with_opacity(settings, opacity)
+  if not opacity then
+    return settings
+  end
+  local merged = vim.deepcopy(settings or {})
+  merged["background-opacity"] = opacity
+  return merged
+end
+
+--- Names the groups that paint the editor body, so clearing their background lets a see through
+--- terminal show behind the text. Floats and side panels keep their own shade and stay solid.
+---@param highlights table<string, vim.api.keyset.get_hl_info> like nvim_get_hl(0, {})
+---@return string[] names sorted
+function M.body_groups(highlights)
+  local body = highlights.Normal and highlights.Normal.bg
+  local names = {}
+  for name, attrs in pairs(highlights) do
+    local is_body = name == "Normal" or name == "NormalNC" or (body ~= nil and attrs.bg == body)
+    if is_body and attrs.bg and not attrs.link then
+      names[#names + 1] = name
+    end
+  end
+  table.sort(names)
+  return names
+end
+
 --- AppleScript that makes Ghostty read its config again. Any terminal works as the target,
 --- reload_config applies to the whole app.
 ---@return string
