@@ -73,7 +73,7 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 | `core/skin`  | Dresses components per franchise: float borders, gutter signs, statusline separators and tabs. Elden Ring is rounded and ornate, Resident Evil wears the inventory's double frames |
 | `core/hud`   | The start screen is a playable inventory. Elden Ring shows category tabs with the Inventory and the Chest side by side, Resident Evil a STATUS panel with the CONDITION monitor, plate tabs and the COMMAND menu. hjkl walks the slots, Tab changes category, Enter uses, K checks, C combines. `:Hud` or `<leader>uh` reopens it |
 | `core/title` | A title screen in big block letters once a day per franchise and on every switch, `:Title` shows it again |
-| `core/terminal` | Paints the terminal around nvim with the region's background, and switches iTerm profiles, Kitty opacity or the Ghostty font and opacity per franchise |
+| `core/terminal` | Paints the terminal around nvim with the region's background, and switches iTerm profiles, Kitty opacity or the Ghostty font and opacity per franchise. `:Opacity [90|skin]` or `<leader>uo` picks your own opacity, kept until set back to `skin` |
 | `core/sound` | Plays your own sounds from `sounds/<franchise>/` for titles, doors, deaths and the merchant |
 | `core/themes` | Region palettes from the franchise in use (eleven in Elden Ring, seven in Resident Evil). Launching inside a repo starts in its region (the one you picked there, or one derived from its name), outside a repo each launch rolls a new one. The region stays for the whole session, traveling between repos never changes it. Pin one with `vim.g.eldentree_region` |
 | `core/phantom` | `<leader>gw` shows who last wrote the line as a phantom: blue for others, gold for your past self |
@@ -128,7 +128,7 @@ Everything works in iTerm. Two extras are worth turning on:
 
 Every sound is made from scratch by `python3 scripts/sounds.py`: synthesized tones and noise, spoken lines from [Piper](https://github.com/OHF-Voice/piper1-gpl) (a local neural voice) with macOS `say` as the fallback, and ffmpeg for the echo and pitch, nothing sampled from the games. Run `python3 scripts/sounds.py --setup-voices` once to install Piper and its voices in `~/.local/share/eldentree`. Run it again after tweaking a recipe, or pass a franchise to rebuild only that one. `:Sound died` previews any of them.
 
-To use your own instead, drop audio files into `sounds/elden_ring/` or `sounds/resident_evil/`, named after the moment they belong to: `title`, `door`, `fog`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`. Variants like `died_2.wav` take turns. Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
+To use your own instead, drop audio files into `sounds/elden_ring/` or `sounds/resident_evil/`, named after the moment they belong to: `title`, `door`, `fog`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`, `zone`, `phantom`, `continue`, and the inventory HUD's `hud_open`, `hud_close`, `hud_move`, `hud_select`, `hud_back`. Variants like `died_2.wav` take turns. Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
 
 ### Voice credits
 
@@ -161,6 +161,7 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>ut` | Choose a region theme           |
 | `<leader>uT` | Next region theme               |
 | `<leader>uf` | Choose today's franchise        |
+| `<leader>uo` | Choose the terminal opacity (Kitty, Ghostty) |
 | `<leader>uh` | Open the inventory HUD          |
 | `<leader>fM` | Project map                     |
 | `<leader>um` | Toggle animations               |

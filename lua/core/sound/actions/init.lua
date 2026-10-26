@@ -17,7 +17,26 @@ M.EVENTS = {
   "grace",
   "cleansed",
   "region",
+  "zone",
+  "phantom",
+  "continue",
+  "hud_open",
+  "hud_close",
+  "hud_move",
+  "hud_select",
+  "hud_back",
 }
+
+--- How long an event stays quiet after playing, so a burst of the same moment is one sound.
+--- Inventory sounds follow every keypress, the rest are moments that should not echo.
+---@param event string
+---@return integer milliseconds
+function M.debounce_ms(event)
+  if event:match("^hud_") then
+    return 60
+  end
+  return 400
+end
 
 local function event_of(file)
   local stem, extension = file:match("^(.+)%.(%w+)$")

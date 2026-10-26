@@ -217,7 +217,7 @@ end
 --- with the files you had open there, or a file picker on a first visit.
 ---@param repo string
 function M.open(repo)
-  local first_visit = not vim.tbl_contains(read_json_list(visits_file), repo)
+  local first_visit = not actions.returning(read_json_list(visits_file), repo)
   local sessions = vim.g.eldentree_project_sessions ~= false and M.root() ~= repo
   require("core.fog").roll()
   if sessions then
@@ -228,6 +228,8 @@ function M.open(repo)
   M.record_visit(repo)
   if first_visit then
     require("core.banner").show("grace", { subtitle = vim.fs.basename(repo) })
+  else
+    require("core.sound").play("continue")
   end
 
   if sessions and has_session() then
@@ -358,10 +360,24 @@ local function maybe_change_root(buf)
   end
 end
 
+-- launching inside a repo you know continues the game, unless the title screen already plays today
+local function continue_on_launch()
+  local root = M.root()
+  local returning = actions.returning(read_json_list(visits_file), root)
+  M.record_visit(vim.uv.cwd())
+  if returning and not require("core.title").due_today() then
+    require("core.sound").play("continue")
+  end
+end
+
 function M.setup()
   local group = vim.api.nvim_create_augroup("eldentree_repos", { clear = true })
 
-  vim.api.nvim_create_autocmd({ "VimEnter", "DirChanged" }, {
+  vim.api.nvim_create_autocmd("VimEnter", {
+    group = group,
+    callback = continue_on_launch,
+  })
+  vim.api.nvim_create_autocmd("DirChanged", {
     group = group,
     callback = function()
       M.record_visit(vim.uv.cwd())
