@@ -20,5 +20,15 @@ return {
     color = "#C8202C",
     style = "drip",
   },
-  terminal = { iterm_profile = "Eldentree Resident Evil", kitty_opacity = 1.0 },
+  terminal = {
+    iterm_profile = "Eldentree Resident Evil",
+    kitty_opacity = 1.0,
+    ghostty = {
+      ["font-family"] = "JetBrainsMono Nerd Font Mono",
+      ["font-style"] = "SemiBold",
+      ["font-size"] = 14,
+      ["background-opacity"] = 1,
+      ["background-blur"] = false,
+    },
+  },
 }

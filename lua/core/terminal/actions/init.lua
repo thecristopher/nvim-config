@@ -30,6 +30,14 @@ function M.images(name)
   return M.IMAGE_TERMINALS[name] == true
 end
 
+--- Tells whether snacks can draw a file as pixels: PNG as it is, anything else only through ImageMagick.
+---@param file string image path
+---@param has_magick boolean whether magick or convert is installed
+---@return boolean
+function M.pixels_for(file, has_magick)
+  return has_magick or file:lower():match("%.png$") ~= nil
+end
+
 --- Sequence that paints the terminal's own background, the margin around nvim included.
 ---@param hex string like "#0E0908"
 ---@return string
@@ -48,6 +56,26 @@ end
 ---@return string
 function M.iterm_profile(profile)
   return "\27]1337;SetProfile=" .. profile .. "\7"
+end
+
+--- Lines of the Ghostty config the franchise wears, keys sorted so the file only changes with the skin.
+---@param settings table<string, string|number|boolean>|nil Ghostty config keys and values
+---@return string[]
+function M.ghostty_config(settings)
+  local lines = { "# written by Eldentree from the franchise skin, edits here are overwritten" }
+  local keys = vim.tbl_keys(settings or {})
+  table.sort(keys)
+  for _, key in ipairs(keys) do
+    lines[#lines + 1] = key .. " = " .. tostring(settings[key])
+  end
+  return lines
+end
+
+--- AppleScript that makes Ghostty read its config again. Any terminal works as the target,
+--- reload_config applies to the whole app.
+---@return string
+function M.ghostty_reload_script()
+  return 'tell application "Ghostty" to perform action "reload_config" on terminal 1'
 end
 
 --- Wraps a sequence so it passes through tmux to the real terminal.

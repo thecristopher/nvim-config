@@ -15,5 +15,10 @@ return {
   dashboard = "roundtable",
   -- style: "shimmer" or "drip"
   title = { text = "__title__", subtitle = "press any key", color = "#D8B45A", style = "shimmer" },
-  terminal = { iterm_profile = "Eldentree __title__", kitty_opacity = 1.0 },
+  -- ghostty takes any Ghostty config keys, written to ~/.config/ghostty/eldentree
+  terminal = {
+    iterm_profile = "Eldentree __title__",
+    kitty_opacity = 1.0,
+    ghostty = { ["background-opacity"] = 1 },
+  },
 }
