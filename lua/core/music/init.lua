@@ -41,11 +41,13 @@ local function run(cmd, on_done)
   end
 end
 
-local function show(source, track)
+local function show(source, track, asked_at)
   polling = false
   now.source, now.track = source, track
-  -- the players answer every few seconds, the lyrics need the second in between
-  now.polled_at = vim.uv.now()
+  -- the player read its position somewhere between the question and the answer, the middle is
+  -- the best guess, and the lyrics count the seconds from there until the next answer
+  local answered = vim.uv.now()
+  now.polled_at = asked_at and (asked_at + answered) / 2 or answered
   local label = actions.label(track, MAX_TEXT)
   if label == now.label then
     return
@@ -59,9 +61,10 @@ local function ask_music()
   if not is_mac then
     return show(nil, nil)
   end
+  local asked_at = vim.uv.now()
   run(actions.music_status_command(), function(stdout)
     local track = actions.parse_music(stdout)
-    show(track and "music" or nil, track)
+    show(track and "music" or nil, track, asked_at)
   end)
 end
 
@@ -72,12 +75,13 @@ local function ask_cider()
     if playing == nil then
       return ask_music()
     end
+    local asked_at = vim.uv.now()
     run(actions.cider_command("now-playing", "GET", token), function(track_body)
       local track = actions.parse_cider_track(track_body, playing)
       if not track then
         return ask_music()
       end
-      show("cider", track)
+      show("cider", track, asked_at)
     end)
   end)
 end

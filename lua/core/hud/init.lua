@@ -20,11 +20,19 @@ local function view()
   return require("core.hud.views." .. (style() == "inventory" and "inventory" or "roundtable"))
 end
 
+-- the HUD lives in whichever window shows its buffer, so a split that moves on to another buffer
+-- or a closed zoom float hands it back instead of leaving the portrait behind
 local function valid()
-  return state
-    and vim.api.nvim_buf_is_valid(state.buf)
-    and vim.api.nvim_win_is_valid(state.win)
-    and vim.api.nvim_win_get_buf(state.win) == state.buf
+  if not state or not vim.api.nvim_buf_is_valid(state.buf) then
+    return false
+  end
+  local showing = vim.fn.win_findbuf(state.buf)
+  local win = actions.hud_window(vim.api.nvim_get_current_win(), state.win, showing)
+  if not win then
+    return false
+  end
+  state.win = win
+  return true
 end
 
 -- highlights -----------------------------------------------------------------------------
@@ -610,7 +618,6 @@ local function watch(buf)
     callback = function()
       local win = vim.api.nvim_get_current_win()
       if state and actions.follows(state.win, state.buf, win, vim.api.nvim_win_get_buf(win)) then
-        state.win = win
         window_options(win)
         M.refresh()
       end
@@ -620,6 +627,21 @@ local function watch(buf)
     group = group,
     callback = function()
       M.refresh()
+    end,
+  })
+  -- the window the HUD was drawn in now shows something else or is closing, so the HUD and its
+  -- portrait move to the window still showing it once the layout settles
+  vim.api.nvim_create_autocmd({ "BufWinEnter", "WinClosed" }, {
+    group = group,
+    callback = function()
+      vim.schedule(function()
+        local still_there = state
+          and vim.api.nvim_win_is_valid(state.win)
+          and vim.api.nvim_win_get_buf(state.win) == state.buf
+        if state and not still_there then
+          M.refresh()
+        end
+      end)
     end,
   })
 end

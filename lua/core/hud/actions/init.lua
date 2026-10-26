@@ -292,4 +292,20 @@ function M.follows(hud_win, hud_buf, win, buf)
   return buf == hud_buf and win ~= hud_win
 end
 
+--- Picks the window the HUD lives in among those showing its buffer: the one with the cursor, then
+--- the one it was in, then any, so a split that moves on or a closed zoom hands it back.
+---@param current integer window with the cursor
+---@param last integer window the HUD was laid out for
+---@param showing integer[] windows showing the HUD buffer
+---@return integer|nil win, nil when no window shows it anymore
+function M.hud_window(current, last, showing)
+  if vim.tbl_contains(showing, current) then
+    return current
+  end
+  if vim.tbl_contains(showing, last) then
+    return last
+  end
+  return showing[1]
+end
+
 return M

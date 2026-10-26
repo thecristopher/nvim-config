@@ -1,6 +1,6 @@
 -- Lyrics for the now playing panel: asked to LRCLIB once per song and kept in nvim's cache next to
 -- the covers. Songs LRCLIB does not know are remembered only until nvim closes, so they get
--- another chance later. `vim.g.eldentree_lyrics = false` keeps song names from leaving the machine.
+-- another chance later. Only asked while the panel shows lyrics, so hidden ones send nothing.
 local actions = require("core.music.actions.lyrics")
 
 local M = {}
@@ -33,11 +33,8 @@ end
 
 --- Finds the lyrics of a track, asking LRCLIB the first time the song shows up.
 ---@param track table from the music actions parsers
----@param on_done fun(lyrics: table|false) false when the song has none or the lookup is off
+---@param on_done fun(lyrics: table|false) false when the song has none
 function M.fetch(track, on_done)
-  if vim.g.eldentree_lyrics == false then
-    return on_done(false)
-  end
   local file = cache_file(track)
   local known = read_cache(file)
   if known then

@@ -1,6 +1,7 @@
 -- The now playing panel: a float above the statusline's corner with the album cover, the song, an
 -- equalizer, the progress bar and the lyrics following the music, dressed by the franchise's skin.
--- Each moving piece redraws alone in its own namespace. It closes as soon as focus leaves it.
+-- `l` shows or hides the lyrics, `vim.g.eldentree_lyrics = false` starts with them hidden. Each
+-- moving piece redraws alone in its own namespace. It closes as soon as focus leaves it.
 local layout = require("core.music.actions.panel")
 local lyric_actions = require("core.music.actions.lyrics")
 local cover = require("core.music.cover")
@@ -11,7 +12,7 @@ local M = {}
 -- quick enough for the karaoke sweep to glide, it only repaints when something moved
 local FOLLOW_MS = 100
 local EQ_MS = 120
-local PIECES = { "static", "state", "progress", "lyrics" }
+local PIECES = { "static", "equalizer", "progress", "lyrics" }
 
 local namespaces = {}
 for _, piece in ipairs(PIECES) do
@@ -20,14 +21,23 @@ end
 
 local current
 local sung_line, far_line = {}, {}
+-- the choice made with l holds for the session, the setting only picks how it starts
+local lyrics_shown
+
+local function showing_lyrics()
+  if lyrics_shown == nil then
+    lyrics_shown = vim.g.eldentree_lyrics ~= false
+  end
+  return lyrics_shown
+end
 
 local function define_highlights()
   local p = require("core.themes").palette()
   local groups = {
     EldenMusicTitle = { fg = p.yellow, bold = true },
-    EldenMusicArtist = { fg = p.text },
-    EldenMusicAlbum = { fg = p.subtext0, italic = true },
-    EldenMusicState = { fg = p.mauve },
+    EldenMusicArtist = { fg = p.text, bold = true },
+    EldenMusicAlbum = { fg = p.subtext1, italic = true },
+    EldenMusicAlbumIcon = { fg = p.peach },
     EldenMusicKeys = { fg = p.overlay1 },
     EldenMusicKeyIcon = { fg = p.peach },
     EldenMusicEqLow = { fg = p.mauve },
@@ -85,6 +95,7 @@ local function view()
     eq_ms = current.eq_ms,
     style = current.style,
     words = current.words,
+    hide_lyrics = not showing_lyrics(),
   }
 end
 
@@ -127,11 +138,11 @@ local function draw_piece(piece, row, built)
   paint(piece, built.marks, row)
 end
 
-local function draw_state()
+local function draw_equalizer()
   draw_piece(
-    "state",
-    layout.ROWS.state,
-    layout.state_row(current.track, current.source, current.eq_ms)
+    "equalizer",
+    layout.ROWS.equalizer,
+    layout.equalizer_rows(current.track, current.eq_ms)
   )
 end
 
@@ -144,6 +155,9 @@ local function draw_progress()
 end
 
 local function draw_lyrics()
+  if not showing_lyrics() then
+    return
+  end
   draw_piece("lyrics", layout.ROWS.lyrics, layout.lyrics_block(view()))
 end
 
@@ -154,13 +168,17 @@ end
 
 local function follow_lyrics()
   local found = current.lyrics
-  if type(found) ~= "table" or found.kind ~= "synced" or not current.elapsed then
+  if not showing_lyrics() or not current.elapsed then
     return
   end
-  local focus = lyric_actions.line_at(found.lines, current.elapsed)
+  if type(found) ~= "table" or found.kind ~= "synced" then
+    return
+  end
+  local at = current.elapsed + lyric_actions.LEAD_SECONDS
+  local focus = lyric_actions.line_at(found.lines, at)
   local moved = focus ~= current.focus
   current.focus = focus
-  current.sweep = lyric_actions.sung(found.lines, focus, current.elapsed, current.track.duration)
+  current.sweep = lyric_actions.sung(found.lines, focus, at, current.track.duration)
   draw_lyrics()
   if moved then
     light_up_sung_line()
@@ -188,11 +206,13 @@ end
 
 local function load_lyrics(track)
   local shown, name = current, current.lyrics_for
+  shown.fetching = true
   lyrics.fetch(track, function(found)
     -- the song may have changed or the panel closed while LRCLIB answered
     if current ~= shown or shown.lyrics_for ~= name then
       return
     end
+    shown.fetching = false
     shown.lyrics = found
     shown.focus = type(found) == "table" and found.kind == "plain" and 1 or 0
     draw_lyrics()
@@ -203,13 +223,16 @@ end
 local function draw(track, source)
   local song_changed = reset_lyrics(track)
   current.elapsed = require("core.music").elapsed()
-  local built = layout.panel(track, source, view())
+  local built = layout.panel(track, view())
   write_lines(0, -1, built.lines)
   current.drawn = {}
   for _, piece in ipairs(PIECES) do
     paint(piece, built.marks[piece], 0)
   end
   if song_changed then
+    current.fetching = false
+  end
+  if showing_lyrics() and current.lyrics == nil and not current.fetching then
     load_lyrics(track)
   end
 
@@ -252,25 +275,37 @@ local function map_keys(buf)
   map("k", function()
     scroll(-1)
   end, "Scroll the lyrics up")
+  map("l", M.toggle_lyrics, "Show or hide the lyrics")
   map("q", M.close, "Close")
   map("<Esc>", M.close, "Close")
 end
 
-local function open_window(buf)
-  local skin = require("core.skin")
-  return vim.api.nvim_open_win(buf, true, {
+-- where the panel sits and how tall it is, it grows upward from the statusline's corner
+local function placement()
+  local height = layout.height(not showing_lyrics())
+  return {
     relative = "editor",
-    row = math.max(0, vim.o.lines - layout.HEIGHT - vim.o.cmdheight - 3),
+    row = math.max(0, vim.o.lines - height - vim.o.cmdheight - 3),
     col = math.max(0, vim.o.columns - layout.WIDTH - 2),
     width = layout.WIDTH,
-    height = layout.HEIGHT,
-    style = "minimal",
-    border = skin.border(),
-    title = skin.title(" " .. current.words.title .. " "),
-    title_pos = "center",
-    -- the cover float sits at 45, so the panel stays under it
-    zindex = 40,
-  })
+    height = height,
+  }
+end
+
+local function open_window(buf)
+  local skin = require("core.skin")
+  return vim.api.nvim_open_win(
+    buf,
+    true,
+    vim.tbl_extend("force", placement(), {
+      style = "minimal",
+      border = skin.border(),
+      title = skin.title(" " .. current.words.title .. " "),
+      title_pos = "center",
+      -- the cover float sits at 45, so the panel stays under it
+      zindex = 40,
+    })
+  )
 end
 
 local function start_animations()
@@ -285,9 +320,21 @@ local function start_animations()
         return false
       end
       current.eq_ms = ms
-      draw_state()
+      draw_equalizer()
     end,
   })
+end
+
+--- Shows the lyrics under the song or hides them, resizing the panel around the change.
+function M.toggle_lyrics()
+  lyrics_shown = not showing_lyrics()
+  if not M.is_open() then
+    return
+  end
+  vim.api.nvim_win_set_config(current.win, placement())
+  -- the panel moved, so the cover is placed anew instead of left where the panel was
+  require("core.hud.portrait").close("music")
+  draw(current.track, current.source)
 end
 
 --- Redraws the panel for a new song or state, if it is open.
