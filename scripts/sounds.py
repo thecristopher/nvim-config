@@ -156,78 +156,12 @@ def deep_voice(pitch):
 
 
 # Spoken lines: (role, text, length_scale, ffmpeg chain). length_scale above 1 speaks slower.
-def re_title():
-    return ("voice", "announcer", "Resident Evil.", 1.35, f"{deep_voice(0.8)},{HALL}")
-
-
 def re_died():
     return ("voice", "announcer", "You are dead.", 1.4, f"{deep_voice(0.78)},{HALL}")
 
 
 def re_merchant():
     return ("voice", "merchant", "What are ya buyin'?", 1.35, f"{deep_voice(0.94)},{ROOM}")
-
-
-def hinge_squeal(seconds, seed=3):
-    """A hinge rubbing: stick and slip at a few hundred times a second, so it squeals with a pitch.
-
-    The pitch rises while the door swings and sags at the end, every cycle a little off from the last,
-    and the hinge catches now and then, which is what makes it sound old.
-    """
-    rng = random.Random(seed)
-    count = int(seconds * RATE)
-    out, phase, freq, grip = [], 0.0, 150.0, 1.0
-    for index in range(count):
-        progress = index / count
-        target = 150 + 260 * math.sin(math.pi * min(1.0, progress * 1.3)) ** 0.7
-        phase += freq / RATE
-        if phase >= 1.0:
-            # a new slip: the pitch jitters and the grip sometimes catches
-            phase -= 1.0
-            freq = target * rng.uniform(0.94, 1.06)
-            grip = 0.25 if rng.random() < 0.06 else min(1.0, grip + 0.25)
-        out.append(((1.0 - phase) ** 4 - 0.2) * grip)
-    return out
-
-
-def latch():
-    """The handle turning: two small metallic clicks."""
-    tick = decay(highpass(noise(0.03, seed=8), 2500), 0.004)
-    ring = decay(tone(3150, 0.12), 0.03)
-    click = mix((tick, 1.0, 0.0), (ring, 0.25, 0.0))
-    return mix((click, 0.8, 0.0), (click, 0.6, 0.085))
-
-
-def slam():
-    """The door landing in its frame: a low body, a wooden knock and a small rattle after."""
-    body = decay(tone(110, 0.5, glide_to=80), 0.12)
-    knock = decay(lowpass(highpass(noise(0.25, seed=19), 180), 1300), 0.05)
-    rattle = decay(lowpass(highpass(noise(0.12, seed=23), 400), 2200), 0.02)
-    return mix((thump(62, 0.7), 0.9, 0.0), (body, 0.7, 0.0), (knock, 0.9, 0.0), (rattle, 0.4, 0.07))
-
-
-def re_door():
-    # the handle, the long squeal of the hinge with air pushed by the swing, and the frame
-    squeal = envelope(lowpass(highpass(hinge_squeal(1.45), 300), 2600), attack=0.12, release=0.3)
-    air = envelope(lowpass(noise(1.3, seed=29), 500), attack=0.5, release=0.5)
-    return mix(
-        (latch(), 0.7, 0.0),
-        (squeal, 0.75, 0.2),
-        (air, 0.25, 0.3),
-        (slam(), 1.0, 1.75),
-    ), f"lowpass=f=2800,lowpass=f=2800,{ROOM}"
-
-
-def re_typewriter():
-    # keys struck at an uneven pace, then the carriage bell asks the question
-    rng = random.Random(11)
-    layers, at = [], 0.0
-    for _ in range(9):
-        key = decay(highpass(noise(0.05, seed=rng.randint(1, 99)), 1800), 0.012)
-        layers.append((key, 0.9, at))
-        at += rng.uniform(0.08, 0.17)
-    layers.append((bell(1760, 1.2), 0.45, at + 0.15))
-    return mix(*layers), f"lowpass=f=7000,{ROOM}"
 
 
 def re_boss():
@@ -269,10 +203,6 @@ def re_cleansed():
     return mix((sweep, 0.7, 0.0), (bell(1568, 1.0), 0.45, 0.55)), ROOM
 
 
-def re_rest():
-    return re_typewriter()
-
-
 def re_region():
     # a new location: a low swell and the click of the map
     swell = envelope(lowpass(chord([55.0, 82.41], 1.5, "saw"), 260), attack=0.6, release=0.6)
@@ -280,26 +210,11 @@ def re_region():
     return mix((swell, 0.9, 0.0), (click, 0.6, 1.2)), ROOM
 
 
-def er_title():
-    # the narrator speaks the name softly into a vast hall, a low choir rising under it
-    return ("voice", "narrator", "Elden Ring.", 1.5, f"{deep_voice(0.86)},volume=0.8,{HALL},{HALL}")
-
-
 def er_choir_pad(freqs, seconds, brightness):
     """Detuned saws through a slowly opening filter, the closest thing to a choir from scratch."""
     pad = chord(freqs, seconds, "saw", detune=0.006)
     count = len(pad)
     return lowpass(pad, lambda index: 250 + brightness * index / count)
-
-
-def er_died():
-    drone = envelope(er_choir_pad([55.0, 82.41, 110.0], 3.2, 500), attack=0.4, release=1.6)
-    return mix((drone, 0.8, 0.0), (bell(196, 3.0), 0.55, 0.05)), HALL
-
-
-def er_felled():
-    swell = envelope(er_choir_pad([146.83, 220.0, 293.66, 369.99], 2.2, 2600), attack=0.5, release=0.9)
-    return swell, HALL
 
 
 def er_great():
@@ -329,14 +244,6 @@ def er_fog():
     return envelope(wind, attack=0.5, release=0.7), ROOM
 
 
-def er_rest():
-    # sitting at the grace: a warm low bed and the crackle of embers
-    bed = envelope(lowpass(chord([130.81, 196.0], 2.8, "triangle"), 700), 0.8, 1.2)
-    rng = random.Random(17)
-    crackles = [(decay(highpass(noise(0.03, seed=rng.randint(1, 500)), 2500), 0.006), 0.35, rng.uniform(0.2, 2.5)) for _ in range(14)]
-    return mix((bed, 0.7, 0.0), *crackles), ROOM
-
-
 def er_boss():
     drums = [(thump(55, 0.5), 0.9, at) for at in (0.0, 0.4, 0.8, 1.0, 1.2)]
     strings = [value * (0.6 + 0.4 * math.sin(index / 400.0)) for index, value in enumerate(er_choir_pad([73.42, 110.0, 146.83], 1.9, 1400))]
@@ -350,19 +257,18 @@ def er_region():
 
 
 RECIPES = {
+    # title, door, rest, continue and the hud_ inventory sounds are clips from the game, so they are not built here
     "resident_evil": {
-        "title": re_title, "died": re_died, "merchant": re_merchant, "door": re_door,
-        "rest": re_rest, "boss": re_boss, "felled": re_felled, "great": re_great,
-        "grace": re_grace, "cleansed": re_cleansed, "region": re_region,
+        "died": re_died, "merchant": re_merchant, "boss": re_boss, "felled": re_felled, "great": re_great, "grace": re_grace, "cleansed": re_cleansed,
+        "region": re_region,
     },
+    # title, died, felled, rest, zone, merchant, phantom and continue are clips from the game, so they are not built here
     "elden_ring": {
-        "title": er_title, "died": er_died, "felled": er_felled, "great": er_great,
-        "grace": er_grace, "cleansed": er_cleansed, "fog": er_fog, "rest": er_rest,
-        "boss": er_boss, "region": er_region,
+        "great": er_great, "grace": er_grace, "cleansed": er_cleansed,
+        "fog": er_fog, "boss": er_boss, "region": er_region,
     },
 }
 
-# the Elden Ring title is a whisper over the choir, so its pad is laid under the voice afterwards
 def re_impact():
     """The hit and low rumble under the announcer, the way the old title screens open."""
     rumble = envelope(lowpass(chord([41.2, 55.0], 2.4, "saw"), 180), attack=0.02, release=1.4)
@@ -371,8 +277,6 @@ def re_impact():
 
 # spoken lines get a bed laid under them afterwards
 UNDERLAYS = {
-    ("elden_ring", "title"): lambda: envelope(er_choir_pad([65.41, 98.0, 130.81], 3.2, 900), 0.8, 1.4),
-    ("resident_evil", "title"): re_impact,
     ("resident_evil", "died"): re_impact,
 }
 

@@ -307,9 +307,14 @@ local function move_menu(direction)
     actions.cycle(state.menu.index, #state.menu.entries, direction == "j" and 1 or -1)
 end
 
+local function sound(event)
+  require("core.sound").play(event)
+end
+
 local function move(direction)
   if state.menu then
     move_menu(direction)
+    sound("hud_move")
     return M.refresh()
   end
   local grid = state.grids[state.focus]
@@ -320,6 +325,7 @@ local function move(direction)
   elseif not cross_panes(direction) then
     return
   end
+  sound("hud_move")
   M.refresh()
 end
 
@@ -327,6 +333,7 @@ local function switch_tab(step)
   state.tab = actions.cycle(state.tab, #state.tabs, step)
   state.focus, state.menu = "items", nil
   state.cursor.items, state.offset.items = 1, 0
+  sound("hud_move")
   M.refresh()
 end
 
@@ -429,6 +436,7 @@ local function confirm()
   if not item then
     return
   end
+  sound("hud_select")
   if style() ~= "inventory" then
     return use(item)
   end
@@ -450,6 +458,7 @@ end
 local function escape()
   if state.menu then
     state.menu = nil
+    sound("hud_back")
     M.refresh()
   end
 end
@@ -581,6 +590,10 @@ local function watch(buf)
     buffer = buf,
     callback = function()
       require("core.hud.portrait").close()
+      -- quitting nvim is not closing the inventory
+      if vim.v.exiting == vim.NIL then
+        sound("hud_close")
+      end
     end,
   })
   vim.api.nvim_create_autocmd("BufWinEnter", {
@@ -623,6 +636,7 @@ function M.open()
   define_highlights()
   map_keys(buf)
   watch(buf)
+  sound("hud_open")
   M.refresh(true)
   require("core.hub").start(buf)
   -- the CONDITION monitor beats on its own, the rest of the HUD only redraws when something moves

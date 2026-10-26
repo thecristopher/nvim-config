@@ -109,6 +109,7 @@ local function summon(info, buf, dir)
   local phantom = actions.describe(info, kind, os.time())
   current = { win = open_float(phantom, kind) }
   fade_in(current)
+  require("core.sound").play("phantom")
   vim.api.nvim_create_autocmd(
     { "CursorMoved", "CursorMovedI", "BufLeave", "InsertEnter", "WinScrolled" },
     {

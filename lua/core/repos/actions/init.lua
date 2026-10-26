@@ -199,6 +199,14 @@ function M.remember(list, path, max)
   return updated
 end
 
+--- Tells whether a repo was visited before, so opening it continues instead of starting anew.
+---@param visits string[]|nil repo roots already visited
+---@param root string|nil repo being opened, nil outside of one
+---@return boolean
+function M.returning(visits, root)
+  return root ~= nil and vim.tbl_contains(visits or {}, root)
+end
+
 -- typed paths arrive with stray spaces, tildes and trailing slashes
 function M.folder_from_input(input)
   local trimmed = vim.trim(input or "")

@@ -116,6 +116,20 @@ describe("remember", function()
   end)
 end)
 
+describe("returning", function()
+  it("continues in Leyndell, where Malenia and Inde left off", function()
+    assert.is_true(actions.returning({ STORMVEIL, LEYNDELL }, LEYNDELL))
+  end)
+
+  it("starts anew in Raya Lucaria, a place Claire never visited", function()
+    assert.is_false(actions.returning({ STORMVEIL }, RAYA_LUCARIA))
+  end)
+
+  it("stays quiet outside of a repo", function()
+    assert.is_false(actions.returning({ STORMVEIL }, nil))
+  end)
+end)
+
 describe("is_ignored", function()
   it("ignores files inside node_modules", function()
     assert.is_true(actions.is_ignored(STORMVEIL .. "/node_modules/react/index.js", {}))

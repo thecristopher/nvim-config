@@ -168,6 +168,10 @@ function M.close()
   if scene.loop then
     scene.loop:stop()
   end
+  -- the music belongs to the title screen, so it stops when the screen lifts
+  if scene.sound then
+    pcall(scene.sound.kill, scene.sound, 15)
+  end
   pcall(vim.api.nvim_win_close, scene.win, true)
   pcall(vim.api.nvim_buf_delete, scene.buf, { force = true })
   scene = nil
@@ -180,7 +184,7 @@ function M.show()
     return
   end
   open_scene()
-  require("core.sound").play("title")
+  scene.sound = require("core.sound").play("title")
   scene.loop = motion.loop({ interval = 50, on_tick = draw })
 end
 
@@ -191,6 +195,12 @@ end
 local function first_today()
   local ok, lines = pcall(vim.fn.readfile, state_file, "", 1)
   return not actions.shown_today(ok and lines[1] or nil, os.date("%Y-%m-%d"), lore().name)
+end
+
+--- Tells whether the title screen still has to show today for this franchise.
+---@return boolean
+function M.due_today()
+  return vim.g.eldentree_title ~= false and first_today()
 end
 
 local function show_and_remember()

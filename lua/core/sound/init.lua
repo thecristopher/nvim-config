@@ -5,8 +5,6 @@ local actions = require("core.sound.actions")
 local M = {}
 
 local last_played = {}
--- the same event twice in a heartbeat is one sound, not an echo
-local DEBOUNCE_MS = 400
 
 local function folder()
   return vim.fn.stdpath("config") .. "/sounds/" .. require("core.franchise").name()
@@ -18,12 +16,13 @@ end
 
 --- Plays the sound for an event, if the franchise has one.
 ---@param event string one of actions.EVENTS
+---@return vim.SystemObj|nil playing the player process, so a long sound can be cut short
 function M.play(event)
   if vim.g.eldentree_sound == false or #vim.api.nvim_list_uis() == 0 then
     return
   end
   local now = vim.uv.now()
-  if last_played[event] and now - last_played[event] < DEBOUNCE_MS then
+  if last_played[event] and now - last_played[event] < actions.debounce_ms(event) then
     return
   end
   local ok, files = pcall(vim.fn.readdir, folder())
@@ -39,7 +38,8 @@ function M.play(event)
     return
   end
   last_played[event] = now
-  pcall(vim.system, command, { detach = true })
+  local started, playing = pcall(vim.system, command, { detach = true })
+  return started and playing or nil
 end
 
 function M.setup()
