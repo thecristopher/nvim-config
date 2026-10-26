@@ -232,7 +232,7 @@ function M.regions()
       name = region.title,
       desc = region.tagline .. ", watched over by " .. region.character .. ".",
       use = function()
-        require("core.themes").apply(region.name, { announce = true, remember = true })
+        require("core.themes").apply(region.name, { announce = true })
       end,
       check = function()
         return { region.title, "", region.tagline, "", "Champion  " .. region.character }

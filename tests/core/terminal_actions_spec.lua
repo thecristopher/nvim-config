@@ -167,6 +167,26 @@ describe("body_groups", function()
   end)
 end)
 
+describe("others_alive", function()
+  local function only(pids)
+    return function(pid)
+      return vim.tbl_contains(pids, pid)
+    end
+  end
+
+  it("keeps Claire's nvim dressed while Inde's closes", function()
+    assert.same({ 101 }, actions.others_alive({ "101", "202" }, 202, only({ 101, 202 })))
+  end)
+
+  it("forgets the nvim Wesker killed without saying goodbye", function()
+    assert.same({}, actions.others_alive({ "101", "303" }, 202, only({ 202 })))
+  end)
+
+  it("ignores files that are not a pid", function()
+    assert.same({}, actions.others_alive({ ".DS_Store" }, 202, only({ 202 })))
+  end)
+end)
+
 describe("passthrough", function()
   it("leaves the sequence alone outside tmux", function()
     assert.equal("\27]111\7", actions.passthrough("\27]111\7", false))
