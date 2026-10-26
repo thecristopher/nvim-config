@@ -62,7 +62,7 @@ end
 --- Reads Cider's `/now-playing` answer into a track.
 ---@param body string|nil
 ---@param playing boolean
----@return { title: string, artist: string, album: string, cover: string|nil, playing: boolean }|nil track, nil when nothing is loaded
+---@return { title: string, artist: string, album: string, cover: string|nil, playing: boolean, position: number|nil, duration: number|nil }|nil track, nil when nothing is loaded
 function M.parse_cider_track(body, playing)
   local data = decode(body)
   local info = data and data.info
@@ -76,6 +76,8 @@ function M.parse_cider_track(body, playing)
     album = info.albumName or "",
     cover = artwork and M.cover_url(artwork, COVER_PIXELS) or nil,
     playing = playing,
+    position = tonumber(info.currentPlaybackTime),
+    duration = tonumber(info.durationInMillis) and info.durationInMillis / 1000 or nil,
   }
 end
 
@@ -85,7 +87,7 @@ if application "Music" is running then
   tell application "Music"
     if player state is stopped then return "stopped"
     set this_track to current track
-    return (player state as text) & tab & (name of this_track) & tab & (artist of this_track) & tab & (album of this_track)
+    return (player state as text) & tab & (player position as text) & tab & (duration of this_track as text) & tab & (name of this_track) & tab & (artist of this_track) & tab & (album of this_track)
   end tell
 end if
 return "closed"]]
@@ -111,17 +113,30 @@ function M.music_control_command(control)
   }
 end
 
+-- AppleScript writes numbers the way the system locale does, so 12,5 has to read as 12.5
+local function locale_number(text)
+  return tonumber((text:gsub(",", ".")))
+end
+
 --- Reads the answer of the Music.app status script into a track.
 ---@param stdout string|nil
----@return { title: string, artist: string, album: string, playing: boolean }|nil track, nil when closed or stopped
+---@return { title: string, artist: string, album: string, playing: boolean, position: number|nil, duration: number|nil }|nil track, nil when closed or stopped
 function M.parse_music(stdout)
   -- only the newline goes, a full trim would eat the tab before an empty album
   local answer = (stdout or ""):gsub("\r?\n$", "")
-  local state, title, artist, album = answer:match("^(%S+)\t(.-)\t(.-)\t(.*)$")
+  local state, position, duration, title, artist, album =
+    answer:match("^(%S+)\t(.-)\t(.-)\t(.-)\t(.-)\t(.*)$")
   if not state or title == "" then
     return nil
   end
-  return { title = title, artist = artist, album = album, playing = state == "playing" }
+  return {
+    title = title,
+    artist = artist,
+    album = album,
+    playing = state == "playing",
+    position = locale_number(position),
+    duration = locale_number(duration),
+  }
 end
 
 -- writes the cover's raw bytes to %s and answers with its format, empty when the song has none
@@ -180,14 +195,6 @@ function M.cover_name(track)
   return "cover_" .. require("core.utils").hash(track.artist .. "|" .. album)
 end
 
--- cuts text to a width in characters, marking the cut
-local function fit(text, width)
-  if vim.fn.strchars(text) <= width then
-    return text
-  end
-  return vim.fn.strcharpart(text, 0, width - 1) .. "…"
-end
-
 --- Builds the statusline text for a track, cut to fit.
 ---@param track { title: string, artist: string, playing: boolean }|nil
 ---@param max_width integer
@@ -198,47 +205,7 @@ function M.label(track, max_width)
   end
   local icon = track.playing and "󰎈" or "󰏤"
   local text = track.artist ~= "" and ("%s · %s"):format(track.artist, track.title) or track.title
-  return icon .. " " .. fit(text, max_width)
-end
-
-M.PANEL_WIDTH = 46
--- terminal cells are about twice as tall as wide, so 12 by 6 reads as a square
-local COVER = { row = 0, col = 1, width = 12, height = 6 }
-local TEXT_COL = COVER.col + COVER.width + 2
-local SOURCES = { cider = "Cider", music = "Music" }
-
---- Lays out the now playing panel: details beside the cover, the controls under both.
----@param track { title: string, artist: string, album: string, playing: boolean }
----@param source string|nil "cider" or "music"
----@return { lines: string[], marks: { row: integer, col: integer, group: string }[], cover: table }
-function M.panel(track, source)
-  local room = M.PANEL_WIDTH - TEXT_COL - 1
-  local state = track.playing and "󰐊 Playing" or "󰏤 Paused"
-  if SOURCES[source] then
-    state = state .. " in " .. SOURCES[source]
-  end
-  local details = {
-    { fit(track.title, room), "EldenMusicTitle" },
-    { fit(track.artist, room), "EldenMusicArtist" },
-    { fit(track.album, room), "EldenMusicAlbum" },
-    { "", "EldenMusicAlbum" },
-    { state, "EldenMusicState" },
-  }
-
-  local pad = (" "):rep(TEXT_COL)
-  local lines, marks = {}, {}
-  for row = 1, COVER.height do
-    local detail = details[row]
-    lines[row] = detail and pad .. detail[1] or ""
-    if detail then
-      table.insert(marks, { row = row - 1, col = TEXT_COL, group = detail[2] })
-    end
-  end
-  table.insert(lines, "")
-  local toggle = track.playing and "󰏤 p pause" or "󰐊 p play "
-  table.insert(lines, " 󰒮 b back    " .. toggle .. "   󰒭 n next    q close")
-  table.insert(marks, { row = #lines - 1, col = 0, group = "EldenMusicKeys" })
-  return { lines = lines, marks = marks, cover = COVER }
+  return icon .. " " .. require("core.music.actions.panel").fit(text, max_width)
 end
 
 return M

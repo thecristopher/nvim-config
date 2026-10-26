@@ -21,13 +21,20 @@ return {
     color = "#D8B45A",
     style = "shimmer",
   },
+  -- the now playing panel: the progress bar runs like a gold thread, dividers frame the lyrics
+  -- and the marks wrap the sung line
+  music = {
+    bar = { done = "━", head = "◈", left = "─" },
+    divider = { line = "─", gem = "◈" },
+    sung = { "▸ ", " ◂" },
+  },
   terminal = {
     iterm_profile = "Eldentree Elden Ring",
     kitty_opacity = 0.97,
     ghostty = {
       ["font-family"] = "JetBrainsMono Nerd Font Mono",
       ["font-style"] = "Light",
-      ["font-size"] = 14,
+      ["font-size"] = 16,
       ["background-opacity"] = 0.94,
       ["background-blur"] = 8,
     },

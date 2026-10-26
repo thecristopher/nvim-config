@@ -38,6 +38,18 @@ describe("problems", function()
     assert.is_true(mentions(validate.problems(broken), "words.typewriter"))
   end)
 
+  it("notices the music panel missing the words Claire sings to Inde", function()
+    local broken = lore()
+    broken.music.missing = nil
+    assert.is_true(mentions(validate.problems(broken), "music.missing"))
+  end)
+
+  it("notices the music panel missing its progress bar", function()
+    local broken = lore()
+    broken.skin.music.bar = nil
+    assert.is_true(mentions(validate.problems(broken), "skin.music.bar"))
+  end)
+
   it("notices a palette slot that is not a color", function()
     local broken = lore()
     broken.regions[1].palette.text = "white"

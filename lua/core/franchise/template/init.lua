@@ -24,6 +24,14 @@ return {
     verbs = { "Exploring __title__" },
   },
 
+  -- the now playing panel's title and what its lyrics say while they are not there
+  music = {
+    title = "Now playing",
+    loading = "Looking for the lyrics…",
+    missing = "No lyrics for this one",
+    instrumental = "Instrumental",
+  },
+
   -- who guards each region, one per region name
   bosses = {
     first_region = "The First Boss",

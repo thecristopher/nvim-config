@@ -35,7 +35,10 @@ M.SLOTS = {
 
 M.BANNERS = { "felled", "great", "died", "grace", "cleansed" }
 M.MECHANICS = { "travel", "boss", "status", "rest" }
-M.SKIN = { "border", "ornament", "statusline", "tabs", "signs", "dashboard", "title" }
+M.SKIN = { "border", "ornament", "statusline", "tabs", "signs", "dashboard", "title", "music" }
+-- what the now playing panel reads, its looks from the skin and its words from the lore
+M.MUSIC_SKIN = { "bar", "divider", "sung" }
+M.MUSIC_WORDS = { "title", "loading", "missing", "instrumental" }
 M.LISTS = { "hub_messages", "message_templates", "places", "item_categories" }
 
 M.WORDS = {
@@ -76,6 +79,15 @@ local function check_words(lore, problems)
     if (lore.mechanics or {})[rule.mechanic] == rule.value then
       missing_keys(lore.words, rule.words, "words", problems)
     end
+  end
+end
+
+local function check_music(lore, problems)
+  if lore.skin and lore.skin.music then
+    missing_keys(lore.skin.music, M.MUSIC_SKIN, "skin.music", problems)
+  end
+  if lore.music then
+    missing_keys(lore.music, M.MUSIC_WORDS, "music", problems)
   end
 end
 
@@ -151,12 +163,13 @@ end
 ---@return string[] problems
 function M.problems(lore, portrait_exists)
   local problems = {}
-  missing_keys(lore, { "name", "title", "currency", "claude" }, "lore", problems)
+  missing_keys(lore, { "name", "title", "currency", "claude", "music" }, "lore", problems)
   missing_keys(lore.banners, M.BANNERS, "banners", problems)
   missing_keys(lore.mechanics, M.MECHANICS, "mechanics", problems)
   missing_keys(lore.skin, M.SKIN, "skin", problems)
   missing_keys(lore, M.LISTS, "lore", problems)
   check_words(lore, problems)
+  check_music(lore, problems)
   check_regions(lore, portrait_exists, problems)
   return problems
 end

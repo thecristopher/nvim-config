@@ -13,7 +13,7 @@ local is_mac = vim.fn.has("mac") == 1
 
 local timer
 local polling = false
-local now = { source = nil, track = nil, label = "" }
+local now = { source = nil, track = nil, label = "", polled_at = 0 }
 
 local function enabled()
   return vim.g.eldentree_music ~= false
@@ -44,6 +44,8 @@ end
 local function show(source, track)
   polling = false
   now.source, now.track = source, track
+  -- the players answer every few seconds, the lyrics need the second in between
+  now.polled_at = vim.uv.now()
   local label = actions.label(track, MAX_TEXT)
   if label == now.label then
     return
@@ -124,6 +126,19 @@ function M.open()
     )
   end
   panel.open(now.track, now.source)
+end
+
+--- How many seconds into the song the player is right now, counting since the last answer.
+---@return number|nil nil when nothing plays or the player did not say
+function M.elapsed()
+  local track = now.track
+  if not track or not track.position then
+    return nil
+  end
+  if not track.playing then
+    return track.position
+  end
+  return track.position + (vim.uv.now() - now.polled_at) / 1000
 end
 
 --- The statusline piece: icon, artist and title, empty when nothing plays.
