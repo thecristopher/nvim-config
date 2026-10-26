@@ -70,16 +70,10 @@ return {
       -- ── Images: real pixels on kitty, Ghostty and WezTerm, an info page elsewhere ──
       image = { enabled = true },
 
-      -- ── Input / Picker / Zen / Lazygit ────────────────────────────
+      -- ── Input / Picker / Lazygit ──────────────────────────────────
       input = { enabled = true },
       picker = { enabled = true },
       lazygit = { enabled = true },
-      zen = {
-        enabled = true,
-        toggles = { dim = true, git_signs = false, diagnostics = false, inlay_hints = false },
-        show = { statusline = false, tabline = false },
-        win = { backdrop = { transparent = true, blend = 40 }, width = 100 },
-      },
 
       -- ── Utilities ─────────────────────────────────────────────────
       bufdelete = { enabled = true },

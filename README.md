@@ -166,7 +166,6 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>fM` | Project map                     |
 | `<leader>um` | Toggle animations               |
 | `<leader>cT` | Run tests (Trial)               |
-| `<leader>uz` | Zen mode                        |
 | `<leader>uB` | Toggle boss fights              |
 | `<leader>gw` | Who wrote this line (phantom)   |
 | `<leader>cp` | Snapshot the buffer or selection as a PNG |
