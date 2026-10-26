@@ -53,6 +53,20 @@ describe("fit", function()
   end)
 end)
 
+describe("wrap", function()
+  it("breaks Claire's love note between words", function()
+    assert.same({ "Meet me at", "the roof" }, panel.wrap("Meet me at the roof", 10))
+  end)
+
+  it("cuts a word wider than the row", function()
+    assert.same({ "Haligt", "ree" }, panel.wrap("Haligtree", 6))
+  end)
+
+  it("keeps an empty line as one empty row", function()
+    assert.same({ "" }, panel.wrap("", 10))
+  end)
+end)
+
 describe("clock", function()
   it("writes the minute of Claire's song like a player", function()
     assert.equal("1:02", panel.clock(62.9))
@@ -62,20 +76,48 @@ end)
 
 describe("equalizer", function()
   it("lies flat while Inde's song is paused", function()
-    assert.same({ 1, 1, 1, 1, 1, 1 }, panel.equalizer(500, false))
+    for _, height in ipairs(panel.equalizer(500, false)) do
+      assert.equal(1, height)
+    end
   end)
 
-  it("dances inside the bar heights while it plays", function()
-    local moved = false
-    for _, height in ipairs(panel.equalizer(900, true)) do
-      assert.is_true(height >= 1 and height <= 8)
-      moved = moved or height > 1
+  it("dances through both rows of levels while it plays", function()
+    local tallest = 1
+    for ms = 0, 3000, 100 do
+      for _, height in ipairs(panel.equalizer(ms, true)) do
+        assert.is_true(height >= 1 and height <= 16)
+        tallest = math.max(tallest, height)
+      end
     end
-    assert.is_true(moved)
+    assert.is_true(tallest > 8)
+  end)
+
+  it("lets the bass on the left stand taller than the treble, like Claire's car stereo", function()
+    local bass, treble = 0, 0
+    for ms = 0, 20000, 50 do
+      local heights = panel.equalizer(ms, true)
+      bass, treble = bass + heights[1], treble + heights[#heights]
+    end
+    assert.is_true(bass > treble)
   end)
 
   it("moves from one moment to the next", function()
     assert.are_not.same(panel.equalizer(0, true), panel.equalizer(400, true))
+  end)
+end)
+
+describe("equalizer_rows", function()
+  it("leaves the upper row dark while the song is paused", function()
+    local paused = vim.tbl_extend("force", song, { playing = false })
+    local rows = panel.equalizer_rows(paused, 0)
+    assert.equal("", vim.trim(rows.lines[1]))
+    assert.truthy(rows.lines[2]:find("▁ ▁", 1, true))
+  end)
+
+  it("fits beside the cover", function()
+    for _, line in ipairs(panel.equalizer_rows(song, 900).lines) do
+      assert.is_true(vim.fn.strdisplaywidth(line) <= panel.WIDTH)
+    end
   end)
 end)
 
@@ -136,6 +178,87 @@ describe("lyrics_block", function()
     assert.equal("Inde,", swept)
   end)
 
+  local serenade = {
+    kind = "synced",
+    lines = {
+      { time = 1, text = "Malenia waits beneath the Haligtree" },
+      {
+        time = 5,
+        text = "Inde crossed the Lands Between with a love letter folded in her gauntlet for Malenia",
+      },
+      { time = 12, text = "Claire hums along" },
+    },
+  }
+
+  it("wraps a long sung line onto the next row instead of cutting it", function()
+    local block = panel.lyrics_block(view({ lyrics = serenade, focus = 2 }))
+    local sung = vim.trim(block.lines[2]) .. " " .. vim.trim(block.lines[3])
+    assert.equal(
+      "▸ Inde crossed the Lands Between with a love ◂ ▸ letter folded in her gauntlet for Malenia ◂",
+      sung
+    )
+    for _, line in ipairs(block.lines) do
+      assert.is_nil(line:find("…", 1, true))
+    end
+  end)
+
+  it("gives the spare row around a wrapped sung line to what comes next", function()
+    local block = panel.lyrics_block(view({ lyrics = serenade, focus = 2 }))
+    assert.equal("Malenia waits beneath the Haligtree", vim.trim(block.lines[1]))
+    assert.equal("Claire hums along", vim.trim(block.lines[4]))
+  end)
+
+  it(
+    "cuts a neighbor that does not fit whole on one row instead of leaving a piece of it",
+    function()
+      local vow = ("Malenia promised Inde a garden of scarlet roses "):rep(3)
+      local promise = {
+        kind = "synced",
+        lines = { { time = 1, text = vow }, { time = 9, text = "Claire hums along" } },
+      }
+      local block = panel.lyrics_block(view({ lyrics = promise, focus = 2 }))
+      assert.equal("", block.lines[1])
+      assert.truthy(block.lines[2]:find("…$"))
+      assert.equal("▸ Claire hums along ◂", vim.trim(block.lines[3]))
+    end
+  )
+
+  it("keeps a neighbor on each side however long the sung line is", function()
+    local vow = ("Inde "):rep(60)
+    local promise = {
+      kind = "synced",
+      lines = {
+        { time = 1, text = "Claire hums along" },
+        { time = 5, text = vow },
+        { time = 9, text = "Malenia answers" },
+      },
+    }
+    local block = panel.lyrics_block(view({ lyrics = promise, focus = 2 }))
+    assert.equal("Claire hums along", vim.trim(block.lines[1]))
+    assert.truthy(block.lines[4]:find("… ◂", 1, true))
+    assert.equal("Malenia answers", vim.trim(block.lines[5]))
+  end)
+
+  it("carries the sweep from the first row of Inde's verse onto the second", function()
+    local block = panel.lyrics_block(view({ lyrics = serenade, focus = 2, sweep = 0.75 }))
+    assert.same(
+      { "EldenMusicLyricMark", "EldenMusicLyricSweep", "EldenMusicLyricMark" },
+      groups_on(block.marks, 1)
+    )
+    assert.same({
+      "EldenMusicLyricMark",
+      "EldenMusicLyricSweep",
+      "EldenMusicLyric",
+      "EldenMusicLyricMark",
+    }, groups_on(block.marks, 2))
+  end)
+
+  it("shows a long neighbor whole when it fits above the sung line", function()
+    local block = panel.lyrics_block(view({ lyrics = serenade, focus = 3 }))
+    assert.equal("folded in her gauntlet for Malenia", vim.trim(block.lines[2]))
+    assert.equal("▸ Claire hums along ◂", vim.trim(block.lines[3]))
+  end)
+
   it("shows the note icon during the pause between verses", function()
     local block = panel.lyrics_block(view({ lyrics = date_night, focus = 3 }))
     assert.equal("▸ 󰝚 ◂", vim.trim(block.lines[3]))
@@ -167,6 +290,10 @@ describe("lyrics_block", function()
 end)
 
 describe("keys_row", function()
+  it("offers l to show or hide the lyrics", function()
+    assert.truthy(panel.keys_row(song).lines[1]:find("󰝚 l", 1, true))
+  end)
+
   it("offers pause while Inde's playlist plays", function()
     assert.truthy(panel.keys_row(song).lines[1]:find("󰏤 p", 1, true))
   end)
@@ -193,19 +320,48 @@ describe("clamp_scroll", function()
   end)
 end)
 
+describe("height", function()
+  it("shrinks when Malenia hides the lyrics", function()
+    assert.is_true(panel.height(true) < panel.height(false))
+    assert.equal(panel.height(false) - panel.LYRIC_ROWS - 1, panel.height(true))
+  end)
+end)
+
 describe("panel", function()
-  it("puts the song beside the cover, the lyrics between dividers and the keys last", function()
-    local layout = panel.panel(song, "cider", view())
-    assert.equal(panel.HEIGHT, #layout.lines)
-    assert.truthy(layout.lines[1]:find("Shared Playlist", 1, true))
-    assert.truthy(layout.lines[panel.ROWS.state + 1]:find("Playing in Cider", 1, true))
+  it("puts the song, the equalizer and the progress beside the cover, the keys last", function()
+    local layout = panel.panel(song, view())
+    assert.equal(panel.height(false), #layout.lines)
+    assert.truthy(layout.lines[2]:find("Shared Playlist", 1, true))
+    assert.truthy(layout.lines[3]:find("Inde Navarrete", 1, true))
+    assert.truthy(layout.lines[4]:find("󰀥 Our Anniversary", 1, true))
+    assert.truthy(layout.lines[panel.ROWS.equalizer + 2]:find("[▁▂▃▄▅▆▇█]"))
     assert.truthy(layout.lines[panel.ROWS.progress + 1]:find("1:02", 1, true))
     assert.truthy(layout.lines[panel.ROWS.lyrics]:find("◈", 1, true))
-    assert.truthy(layout.lines[panel.HEIGHT]:find("󰅖 q", 1, true))
+    assert.truthy(layout.lines[#layout.lines]:find("󰅖 q", 1, true))
+  end)
+
+  it("never says which player is playing", function()
+    for _, line in ipairs(panel.panel(song, view()).lines) do
+      assert.is_nil(line:find("Playing", 1, true))
+      assert.is_nil(line:find("Cider", 1, true))
+    end
+  end)
+
+  it("leaves the album row empty for a single without one", function()
+    local single = vim.tbl_extend("force", song, { album = "" })
+    assert.equal("", panel.panel(single, view()).lines[4])
+  end)
+
+  it("drops the lyrics and their divider when they are hidden", function()
+    local layout = panel.panel(song, view({ lyrics = date_night, focus = 1, hide_lyrics = true }))
+    assert.equal(panel.height(true), #layout.lines)
+    assert.same({}, layout.marks.lyrics)
+    assert.truthy(layout.lines[panel.ROWS.lyrics]:find("◈", 1, true))
+    assert.truthy(layout.lines[#layout.lines]:find("󰝚 l", 1, true))
   end)
 
   it("leaves the cover's columns empty so the image lands on blank space", function()
-    local layout = panel.panel(song, "music", view())
+    local layout = panel.panel(song, view())
     local beside = layout.cover.col + layout.cover.width
     for row = 1, layout.cover.height do
       assert.equal("", vim.trim(layout.lines[row]:sub(1, beside)))
@@ -213,9 +369,12 @@ describe("panel", function()
   end)
 
   it("keeps each moving piece's marks on its own rows", function()
-    local layout = panel.panel(song, "cider", view({ lyrics = date_night, focus = 1 }))
-    for _, mark in ipairs(layout.marks.state) do
-      assert.equal(panel.ROWS.state, mark.row)
+    local layout = panel.panel(song, view({ lyrics = date_night, focus = 1 }))
+    for _, mark in ipairs(layout.marks.equalizer) do
+      assert.is_true(mark.row == panel.ROWS.equalizer or mark.row == panel.ROWS.equalizer + 1)
+    end
+    for _, mark in ipairs(layout.marks.progress) do
+      assert.equal(panel.ROWS.progress, mark.row)
     end
     for _, mark in ipairs(layout.marks.lyrics) do
       assert.is_true(mark.row >= panel.ROWS.lyrics)
@@ -224,17 +383,20 @@ describe("panel", function()
   end)
 
   it("keeps the same height whether the lyrics arrived or not", function()
-    local waiting = panel.panel(song, "cider", view())
-    local synced = panel.panel(song, "cider", view({ lyrics = date_night, focus = 1 }))
+    local waiting = panel.panel(song, view())
+    local synced = panel.panel(song, view({ lyrics = date_night, focus = 1 }))
     assert.equal(#waiting.lines, #synced.lines)
   end)
 
   it("keeps every line inside the panel in both franchises", function()
     local long = vim.tbl_extend("force", song, { title = ("Malenia "):rep(10) })
+    local long_verse = { kind = "synced", lines = { { time = 1, text = ("Inde "):rep(40) } } }
     for _, lore in ipairs({ elden, evil }) do
-      local looks = view({ lyrics = date_night, focus = 2, style = lore.skin.music })
-      for _, line in ipairs(panel.panel(long, "cider", looks).lines) do
-        assert.is_true(vim.fn.strdisplaywidth(line) <= panel.WIDTH)
+      for _, lyrics in ipairs({ date_night, long_verse }) do
+        local looks = view({ lyrics = lyrics, focus = 1, eq_ms = 900, style = lore.skin.music })
+        for _, line in ipairs(panel.panel(long, looks).lines) do
+          assert.is_true(vim.fn.strdisplaywidth(line) <= panel.WIDTH)
+        end
       end
     end
   end)

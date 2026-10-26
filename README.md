@@ -67,34 +67,34 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 
 ## What is inside
 
-| Module        | What it does                                                                                                      |
-| ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Module           | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `core/franchise` | Picks the world for the day, rotating between Elden Ring and Resident Evil. Its lore folders hold the palettes, bosses, weather, banners and words. `:Franchise` switches until midnight, `vim.g.eldentree_franchise` pins one. Each lore also picks its `mechanics`, so Resident Evil travels through doors, gets stalked instead of dueling, shows a health ECG, rests at a typewriter and ranks every run. Each lore folder is a pack (palettes, skin, words) found on its own, `:Franchise new Silent Hill` scaffolds one and `:checkhealth eldentree` lists what it still needs |
-| `core/skin`  | Dresses components per franchise: float borders, gutter signs, statusline separators and tabs. Elden Ring is rounded and ornate, Resident Evil wears the inventory's double frames |
-| `core/hud`   | The start screen is a playable inventory. Elden Ring shows category tabs with the Inventory and the Chest side by side, Resident Evil a STATUS panel with the CONDITION monitor, plate tabs and the COMMAND menu. hjkl walks the slots, Tab changes category, Enter uses, K checks, C combines. `:Hud` or `<leader>uh` reopens it |
-| `core/title` | A title screen in big block letters once a day per franchise and on every switch, `:Title` shows it again |
-| `core/terminal` | Paints the terminal around nvim with the region's background, and switches iTerm profiles, Kitty opacity or the Ghostty font and opacity per franchise. `:Opacity [90|skin]` or `<leader>uo` picks your own opacity, kept until set back to `skin` |
-| `core/sound` | Plays your own sounds from `sounds/<franchise>/` for titles, doors, deaths and the merchant |
-| `core/themes` | Region palettes from the franchise in use (eleven in Elden Ring, seven in Resident Evil). One region per day, the same in every repo and every launch. Picking another with `<leader>ut` holds until midnight, and traveling between repos never changes it. Pin one with `vim.g.eldentree_region` |
-| `core/phantom` | `<leader>gw` shows who last wrote the line as a phantom: blue for others, gold for your past self |
-| `core/music`  | The song playing in Cider (macOS, Windows, Linux) or Music.app (macOS) sits in the statusline. `<leader>o` or a click on it opens a now playing panel with the album cover, `p` plays or pauses, `n` and `b` skip. Cider needs its API on in Settings > Connectivity, and `vim.g.eldentree_cider_token` when it asks for a token. `vim.g.eldentree_music = false` turns it off |
-| `core/zones`  | The first time you walk into a folder each session, it is announced like a new area of the Lands Between |
-| `core/snapshot` | `<leader>cp` / `:Snapshot` saves the buffer or selection as a framed PNG in the region's colors and copies it |
-| `core/hub`    | The HUD's ambient life: shimmering gold, the region's weather and a typed player message |
-| `core/banner` | Elden Ring style banners fired by commits, PRs, test runs, new projects and region changes                        |
-| `core/boss`   | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it. In Resident Evil the boss is a stalker that walks closer while errors stay and backs off with every fix |
-| `core/door`   | Resident Evil's travel: the screen goes dark and a door creaks open, where Elden Ring rolls the fog wall |
-| `core/ecg`    | Resident Evil's statusline ECG: Fine, Caution or Danger from the buffer's diagnostics |
-| `core/map`    | `:Map` / `<leader>fM` shows every folder as a room, red while errors or TODOs are left in it, blue once cleared |
-| `core/results` | Ranks each run from S to D by fixes and saves, and the Resident Evil STATUS panel shows the last one |
-| `core/runes`  | Statusline rune tally (pesetas in Resident Evil, where the Merchant greets every 10,000). Saves and banners pay out, dying leaves a bloodstain |
-| `core/rest`   | After 5 idle minutes in normal mode the editor rests at a Site of Grace, or at a Safe Room typewriter in Resident Evil. Any key wakes it |
-| `core/repos`  | Background repo scanner, the Sites of Grace project picker and automatic project root                             |
-| `core/dive`   | F12 family: go to definition, Glance peek, references and F2 rename                                               |
-| `core/trial`  | Runs the project's tests in the background and announces the verdict                                              |
-| `core/git`    | Quick branch, pull, push, sync, stash and undo shortcuts, plus the related change staging `<leader>pc` uses       |
-| `core/motion` | Shared animation engine. Ambient loops pause while Neovim is unfocused                                            |
-| `core/vscode` | Inside Cursor or VS Code, only the allow listed editing plugins load                                              |
+| `core/skin`      | Dresses components per franchise: float borders, gutter signs, statusline separators and tabs. Elden Ring is rounded and ornate, Resident Evil wears the inventory's double frames                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `core/hud`       | The start screen is a playable inventory. Elden Ring shows category tabs with the Inventory and the Chest side by side, Resident Evil a STATUS panel with the CONDITION monitor, plate tabs and the COMMAND menu. hjkl walks the slots, Tab changes category, Enter uses, K checks, C combines. `:Hud` or `<leader>uh` reopens it                                                                                                                                                                                                                                                    |
+| `core/title`     | A title screen in big block letters once a day per franchise and on every switch, `:Title` shows it again                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `core/terminal`  | Paints the terminal around nvim with the region's background, and switches iTerm profiles, Kitty opacity or the Ghostty font and opacity per franchise. `:Opacity [90                                                                                                                                                                                                                                                                                                                                                                                                                | skin]`or`<leader>uo`picks your own opacity, kept until set back to`skin` |
+| `core/sound`     | Plays your own sounds from `sounds/<franchise>/` for titles, doors, deaths and the merchant                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `core/themes`    | Region palettes from the franchise in use (eleven in Elden Ring, seven in Resident Evil). One region per day, the same in every repo and every launch. Picking another with `<leader>ut` holds until midnight, and traveling between repos never changes it. Pin one with `vim.g.eldentree_region`                                                                                                                                                                                                                                                                                   |
+| `core/phantom`   | `<leader>gw` shows who last wrote the line as a phantom: blue for others, gold for your past self                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `core/music`     | The song playing in Cider (macOS, Windows, Linux) or Music.app (macOS) sits in the statusline. `<leader>o` or a click on it opens a now playing panel with the album cover, `p` plays or pauses, `n` and `b` skip. Cider needs its API on in Settings > Connectivity, and `vim.g.eldentree_cider_token` when it asks for a token. `vim.g.eldentree_music = false` turns it off                                                                                                                                                                                                       |
+| `core/zones`     | The first time you walk into a folder each session, it is announced like a new area of the Lands Between                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `core/snapshot`  | `<leader>cp` / `:Snapshot` saves the buffer or selection as a framed PNG in the region's colors and copies it                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `core/hub`       | The HUD's ambient life: shimmering gold, the region's weather and a typed player message                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `core/banner`    | Elden Ring style banners fired by commits, PRs, test runs, new projects and region changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `core/boss`      | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it. In Resident Evil the boss is a stalker that walks closer while errors stay and backs off with every fix                                                                                                                                                                                                                                                                                                                                                      |
+| `core/door`      | Resident Evil's travel: the screen goes dark and a door creaks open, where Elden Ring rolls the fog wall                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `core/ecg`       | Resident Evil's statusline ECG: Fine, Caution or Danger from the buffer's diagnostics                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `core/map`       | `:Map` / `<leader>fM` shows every folder as a room, red while errors or TODOs are left in it, blue once cleared                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `core/results`   | Ranks each run from S to D by fixes and saves, and the Resident Evil STATUS panel shows the last one                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `core/runes`     | Statusline rune tally (pesetas in Resident Evil, where the Merchant greets every 10,000). Saves and banners pay out, dying leaves a bloodstain                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `core/rest`      | After 5 idle minutes in normal mode the editor rests at a Site of Grace, or at a Safe Room typewriter in Resident Evil. Any key wakes it                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `core/repos`     | Background repo scanner, the Sites of Grace project picker and automatic project root                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `core/dive`      | F12 family: go to definition, Glance peek, references and F2 rename                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `core/trial`     | Runs the project's tests in the background and announces the verdict                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `core/git`       | Quick branch, pull, push, sync, stash and undo shortcuts, plus the related change staging `<leader>pc` uses                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `core/motion`    | Shared animation engine. Ambient loops pause while Neovim is unfocused                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `core/vscode`    | Inside Cursor or VS Code, only the allow listed editing plugins load                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 Plugin specs live in `lua/plugins/`, one file per concern.
 
@@ -132,130 +132,131 @@ To use your own instead, drop audio files into `sounds/elden_ring/` or `sounds/r
 
 ### Voice credits
 
-| Voice | Used for | Source | License |
-| ----- | -------- | ------ | ------- |
-| Ryan (high) | Resident Evil announcer | [Piper voices](https://huggingface.co/rhasspy/piper-voices), RyanSpeech dataset | CC BY-NC-SA 4.0 |
-| Northern English Male (medium) | The Merchant, the Elden Ring narrator | [Piper voices](https://huggingface.co/rhasspy/piper-voices) | CC BY-SA 4.0 |
+| Voice                          | Used for                              | Source                                                                          | License         |
+| ------------------------------ | ------------------------------------- | ------------------------------------------------------------------------------- | --------------- |
+| Ryan (high)                    | Resident Evil announcer               | [Piper voices](https://huggingface.co/rhasspy/piper-voices), RyanSpeech dataset | CC BY-NC-SA 4.0 |
+| Northern English Male (medium) | The Merchant, the Elden Ring narrator | [Piper voices](https://huggingface.co/rhasspy/piper-voices)                     | CC BY-SA 4.0    |
 
 ### Portrait credits
 
 The Resident Evil portraits are fan art and photography by their own authors, used here with love and full credit to them.
 
-| Portrait | Region            | Author                       |
-| -------- | ----------------- | ---------------------------- |
-| Claire   | Raccoon City      | Artist pending               |
-| Leon     | RPD               | Artist pending               |
-| Jill     | Spencer Mansion   | Like Detectives              |
-| Wesker   | Umbrella Lab      | Artist pending               |
-| Ashley   | Salazar Castle    | Artist pending               |
-| Ada      | Saddler's Island  | Artist pending               |
-| Chris    | The Village       | Artist pending               |
+| Portrait | Region           | Author          |
+| -------- | ---------------- | --------------- |
+| Claire   | Raccoon City     | Artist pending  |
+| Leon     | RPD              | Artist pending  |
+| Jill     | Spencer Mansion  | Like Detectives |
+| Wesker   | Umbrella Lab     | Artist pending  |
+| Ashley   | Salazar Castle   | Artist pending  |
+| Ada      | Saddler's Island | Artist pending  |
+| Chris    | The Village      | Artist pending  |
 
 ## Keys
 
 Leader is `<Space>`, local leader is `\`.
 
-| Key          | Action                          |
-| ------------ | ------------------------------- |
-| `<leader>fp` | Find a project (Sites of Grace) |
-| `<leader>ut` | Choose a region theme           |
-| `<leader>uT` | Next region theme               |
-| `<leader>uf` | Choose today's franchise        |
-| `<leader>uo` | Choose the terminal opacity (Kitty, Ghostty) |
-| `<leader>uh` | Open the inventory HUD          |
-| `<leader>fM` | Project map                     |
-| `<leader>um` | Toggle animations               |
-| `<leader>cT` | Run tests (Trial)               |
-| `<leader>uB` | Toggle boss fights              |
-| `<leader>gw` | Who wrote this line (phantom)   |
-| `<leader>cp` | Snapshot the buffer or selection as a PNG |
-| `<leader>o`  | Now playing panel with the album cover |
-| `<leader>to` | Open the last link a terminal printed, like the dev server's localhost |
-| `<C-LeftMouse>` | In a terminal, open the link under the mouse |
-| `<leader>xQ` | Toggle the quickfix list, editable (quicker) |
-| `[y` / `]y`  | Right after a paste, swap it for the older or newer yank |
-| `<leader>fy` | Yank history                    |
-| `<leader>rw` | Replace the word under the cursor in this file (`<C-w>` clears the prefilled word) |
-| `<leader>cx` | Make this file executable       |
-| `<leader>uc` / `<leader>uC` | Toggle the `.env` cloak, or peek one line |
-| `<leader>ur` | Make it rain                    |
-| `K`          | Hover docs, dressed as an item description |
-| `<leader>fR` | Find and replace in the project (grug-far), works on a selection too |
-| `<leader>fF` | Find and replace in this file   |
-| `<C-n>`      | Add a cursor on the next match (multicursor) |
-| `<A-Up>` / `<A-Down>` | Add a cursor above or below |
-| `<leader>Ma` | Add a cursor on every match     |
-| `<leader>pc` | Stage related changes and draft the commit with Claude |
-| `<leader>gN` | New branch (pick a prefix, type a name) |
-| `<leader>gj` | Pull                            |
-| `<leader>gk` | Push (sets upstream the first time, never forces) |
-| `<leader>gm` | Merge the base branch into this one |
-| `<leader>gM` | Switch to the base branch and pull |
-| `<leader>ga` | Stage related changes (skips .env, logs, swap files) |
-| `<leader>gz` | Stash everything, untracked included |
-| `<leader>gZ` | Pop the latest stash            |
-| `<leader>gu` | Undo the last unpushed commit, keep its changes staged |
-| `<leader>gn` | Neogit status                   |
-| `<leader>gc` | Neogit commit                   |
-| `<leader>gp` / `<leader>gP` | Neogit pull / push popups |
-| `<leader>gv` | Neogit log                      |
-| `<leader>gr` | Neogit branch popup             |
-| `<leader>gC` | Search commits (Telescope)      |
+| Key                         | Action                                                                             |
+| --------------------------- | ---------------------------------------------------------------------------------- |
+| `<leader>fp`                | Find a project (Sites of Grace)                                                    |
+| `<leader>ut`                | Choose a region theme                                                              |
+| `<leader>uT`                | Next region theme                                                                  |
+| `<leader>uf`                | Choose today's franchise                                                           |
+| `<leader>uo`                | Choose the terminal opacity (Kitty, Ghostty)                                       |
+| `<leader>uh`                | Open the inventory HUD                                                             |
+| `<leader>fM`                | Project map                                                                        |
+| `<leader>um`                | Toggle animations                                                                  |
+| `<leader>cT`                | Run tests (Trial)                                                                  |
+| `<leader>uB`                | Toggle boss fights                                                                 |
+| `<leader>gw`                | Who wrote this line (phantom)                                                      |
+| `<leader>cp`                | Snapshot the buffer or selection as a PNG                                          |
+| `<leader>o`                 | Now playing panel with the album cover                                             |
+| `<leader>to`                | Open the last link a terminal printed, like the dev server's localhost             |
+| `<C-LeftMouse>`             | In a terminal, open the link under the mouse                                       |
+| `<leader>xQ`                | Toggle the quickfix list, editable (quicker)                                       |
+| `[y` / `]y`                 | Right after a paste, swap it for the older or newer yank                           |
+| `<leader>fy`                | Yank history                                                                       |
+| `<leader>rw`                | Replace the word under the cursor in this file (`<C-w>` clears the prefilled word) |
+| `<leader>cx`                | Make this file executable                                                          |
+| `<leader>uc` / `<leader>uC` | Toggle the `.env` cloak, or peek one line                                          |
+| `<leader>ur`                | Make it rain                                                                       |
+| `K`                         | Hover docs, dressed as an item description                                         |
+| `<leader>fR`                | Find and replace in the project (grug-far), works on a selection too               |
+| `<leader>fF`                | Find and replace in this file                                                      |
+| `<C-n>`                     | Add a cursor on the next match (multicursor)                                       |
+| `<A-Up>` / `<A-Down>`       | Add a cursor above or below                                                        |
+| `<leader>Ma`                | Add a cursor on every match                                                        |
+| `<leader>pc`                | Stage related changes and draft the commit with Claude                             |
+| `<leader>gN`                | New branch (pick a prefix, type a name)                                            |
+| `<leader>gj`                | Pull                                                                               |
+| `<leader>gk`                | Push (sets upstream the first time, never forces)                                  |
+| `<leader>gm`                | Merge the base branch into this one                                                |
+| `<leader>gM`                | Switch to the base branch and pull                                                 |
+| `<leader>ga`                | Stage related changes (skips .env, logs, swap files)                               |
+| `<leader>gz`                | Stash everything, untracked included                                               |
+| `<leader>gZ`                | Pop the latest stash                                                               |
+| `<leader>gu`                | Undo the last unpushed commit, keep its changes staged                             |
+| `<leader>gn`                | Neogit status                                                                      |
+| `<leader>gc`                | Neogit commit                                                                      |
+| `<leader>gp` / `<leader>gP` | Neogit pull / push popups                                                          |
+| `<leader>gv`                | Neogit log                                                                         |
+| `<leader>gr`                | Neogit branch popup                                                                |
+| `<leader>gC`                | Search commits (Telescope)                                                         |
 
 Inside a toggleterm terminal, the bar at the top lists the quick git keys. Press `<Esc>` and then `<Space>g` to use them.
 
 While several cursors are active, `n` / `N` add the next or previous match, `q` / `Q` skip one, `<Left>` / `<Right>` switch the main cursor and `<Esc>` clears them.
 
-| Key          | Action                          |
-| ------------ | ------------------------------- |
-| `<leader>Tt` | Run the nearest test (neotest)  |
-| `<leader>Tf` | Run every test in this file     |
-| `<leader>Td` | Debug the nearest test          |
-| `<leader>Ts` | Test summary                    |
-| `<leader>To` | Output of the test under the cursor |
-| `<leader>Tw` | Rerun this file on every save   |
-| `]T` / `[T`  | Next or previous failed test    |
-| `F5`         | Start or continue debugging     |
-| `Shift F5`   | Stop debugging                  |
-| `F9`         | Toggle breakpoint               |
-| `F10` / `F11` / `Shift F11` | Step over, into, out |
-| `<leader>DB` | Conditional breakpoint          |
-| `<leader>Dp` | Log point                       |
-| `<leader>Dv` | Toggle the debug view           |
+| Key                         | Action                              |
+| --------------------------- | ----------------------------------- |
+| `<leader>Tt`                | Run the nearest test (neotest)      |
+| `<leader>Tf`                | Run every test in this file         |
+| `<leader>Td`                | Debug the nearest test              |
+| `<leader>Ts`                | Test summary                        |
+| `<leader>To`                | Output of the test under the cursor |
+| `<leader>Tw`                | Rerun this file on every save       |
+| `]T` / `[T`                 | Next or previous failed test        |
+| `F5`                        | Start or continue debugging         |
+| `Shift F5`                  | Stop debugging                      |
+| `F9`                        | Toggle breakpoint                   |
+| `F10` / `F11` / `Shift F11` | Step over, into, out                |
+
+| `<leader>DB` | Conditional breakpoint |
+| `<leader>Dp` | Log point |
+| `<leader>Dv` | Toggle the debug view |
 | `<leader>Dw` | Watch the expression under the cursor |
 
 On macOS, F11 shows the desktop unless "Use F1, F2, etc. keys as standard function keys" is on. `<leader>Di` steps into without it.
 
-| Key          | Action                          |
-| ------------ | ------------------------------- |
-| `F12`        | Go to definition                |
-| `F2`         | Rename symbol                   |
+| Key   | Action           |
+| ----- | ---------------- |
+| `F12` | Go to definition |
+| `F2`  | Rename symbol    |
 
 ## Commands
 
-| Command                                        | Action                                  |
-| ---------------------------------------------- | --------------------------------------- |
-| `:Region`                                      | Switch region theme                     |
-| `:Map`                                         | Open the project map                    |
-| `:Franchise [elden_ring\|resident_evil]`       | Switch today's franchise                |
+| Command                                        | Action                                   |
+| ---------------------------------------------- | ---------------------------------------- |
+| `:Region`                                      | Switch region theme                      |
+| `:Map`                                         | Open the project map                     |
+| `:Franchise [elden_ring\|resident_evil]`       | Switch today's franchise                 |
 | `:Franchise new <name>`                        | Create a new franchise from the template |
 | `:Title`                                       | Show the franchise's title screen        |
 | `:Hud`                                         | Open the inventory HUD                   |
 | `:Sound <event>`                               | Preview one of the franchise's sounds    |
 | `:checkhealth eldentree`                       | Check every franchise is complete        |
-| `:Banner felled\|great\|died\|grace\|cleansed` | Fire a banner                           |
-| `:Trial`                                       | Run the project's tests                 |
-| `:Rest`                                        | Rest at a Site of Grace now             |
-| `:Motion`                                      | Toggle animations                       |
-| `:Boss`                                        | Toggle boss fights                      |
-| `:Phantom`                                     | Who wrote the line under the cursor     |
+| `:Banner felled\|great\|died\|grace\|cleansed` | Fire a banner                            |
+| `:Trial`                                       | Run the project's tests                  |
+| `:Rest`                                        | Rest at a Site of Grace now              |
+| `:Motion`                                      | Toggle animations                        |
+| `:Boss`                                        | Toggle boss fights                       |
+| `:Phantom`                                     | Who wrote the line under the cursor      |
 | `:Snapshot`                                    | Save a framed PNG of the buffer or range |
-| `:Music [playpause\|next\|previous]`          | Control Cider or Music without the panel |
-| `:Copilot auth`                                | Sign in to GitHub Copilot once          |
-| `:VimBeGood`                                   | Practice vim motions as a game          |
-| `:GrugFar`                                     | Find and replace across the project     |
-| `:OpenFolder`                                  | Open the file tree at a folder you pick |
-| `:Repos` / `:ReposRescan`                      | Browse or rescan known repositories     |
+| `:Music [playpause\|next\|previous]`           | Control Cider or Music without the panel |
+| `:Copilot auth`                                | Sign in to GitHub Copilot once           |
+| `:VimBeGood`                                   | Practice vim motions as a game           |
+| `:GrugFar`                                     | Find and replace across the project      |
+| `:OpenFolder`                                  | Open the file tree at a folder you pick  |
+| `:Repos` / `:ReposRescan`                      | Browse or rescan known repositories      |
 
 ## Claude Code
 

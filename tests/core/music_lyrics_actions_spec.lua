@@ -79,26 +79,32 @@ describe("line_at", function()
 end)
 
 describe("sung", function()
-  local lines = lyrics.parse_lrc(DATE_NIGHT_LRC)
+  -- 45 characters, sung in 5.5 seconds at the slowest
+  local love_letter = ("Inde "):rep(9)
+  local quick = { { time = 0, text = love_letter }, { time = 4, text = "Claire" } }
+  local before_solo = { { time = 0, text = love_letter }, { time = 30, text = "Malenia" } }
 
-  it("is halfway through Claire's verse halfway to the next one", function()
-    assert.equal(0.5, lyrics.sung(lines, 1, 3.25, nil))
+  it("sings Claire's verse in most of its slot, leaving a breath before the next", function()
+    assert.near(0.5, lyrics.sung(quick, 1, 1.7, nil), 1e-9)
+    assert.equal(1, lyrics.sung(quick, 1, 3.4, nil))
+  end)
+
+  it("does not crawl through the long solo after Inde's verse", function()
+    assert.near(0.5, lyrics.sung(before_solo, 1, 2.75, nil), 1e-9)
+    assert.equal(1, lyrics.sung(before_solo, 1, 5.5, nil))
+  end)
+
+  it("closes the last verse before the song ends", function()
+    local last = { { time = 0, text = love_letter } }
+    assert.near(0.5, lyrics.sung(last, 1, 1.7, 4), 1e-9)
   end)
 
   it("stays between empty and full", function()
-    assert.equal(0, lyrics.sung(lines, 2, 1, nil))
-    assert.equal(1, lyrics.sung(lines, 2, 60, nil))
-  end)
-
-  it("closes the last verse at the end of the song", function()
-    assert.equal(0.5, lyrics.sung(lines, 4, 13, 14))
-  end)
-
-  it("does not crawl through the long silence after Inde's last verse", function()
-    assert.equal(1, lyrics.sung(lines, 4, 19, 300))
+    assert.equal(0, lyrics.sung(quick, 1, -1, nil))
+    assert.equal(1, lyrics.sung(quick, 1, 60, nil))
   end)
 
   it("gives nothing before the first verse", function()
-    assert.equal(0, lyrics.sung(lines, 0, 0.5, nil))
+    assert.equal(0, lyrics.sung(quick, 0, 0.5, nil))
   end)
 end)

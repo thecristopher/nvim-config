@@ -3,8 +3,13 @@ local M = {}
 
 M.LRCLIB_URL = "https://lrclib.net/api/get"
 
--- a line with a long silence after it would sweep for ages, nobody holds a verse that long
-local MAX_LINE_SECONDS = 7
+-- singers breathe before the next line, so a verse fills most of its slot, not all of it
+local SUNG_SHARE = 0.85
+-- the slowest a verse is sung, so the one before a long solo does not crawl through it
+local MIN_CHARS_PER_SECOND = 9
+
+-- a beat early covers the follow tick and the repaint, so the color lands with the voice
+M.LEAD_SECONDS = 0.15
 
 --- Builds the curl call that asks LRCLIB for a song's lyrics.
 ---@param track { title: string, artist: string }
@@ -122,12 +127,12 @@ function M.sung(lines, index, elapsed, duration)
     return 0
   end
   local next_line = lines[index + 1]
-  local ends = next_line and next_line.time or duration or math.huge
-  ends = math.min(ends, line.time + MAX_LINE_SECONDS)
-  if ends <= line.time then
+  local slot = (next_line and next_line.time or duration or math.huge) - line.time
+  local span = math.min(slot * SUNG_SHARE, vim.fn.strchars(line.text) / MIN_CHARS_PER_SECOND + 0.5)
+  if span <= 0 then
     return 1
   end
-  return math.min(math.max((elapsed - line.time) / (ends - line.time), 0), 1)
+  return math.min(math.max((elapsed - line.time) / span, 0), 1)
 end
 
 return M
