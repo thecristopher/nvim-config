@@ -35,6 +35,14 @@ return {
     },
   },
 
+  -- the now playing panel's title and what its lyrics say while they are not there
+  music = {
+    title = "Save Room",
+    loading = "Searching the files…",
+    missing = "No file on this song",
+    instrumental = "Instrumental tape",
+  },
+
   -- the merchant shows up every time your pesetas cross another MERCHANT_EVERY
   merchant = {
     "What are ya buyin'?",

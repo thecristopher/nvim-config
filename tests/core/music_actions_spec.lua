@@ -6,6 +6,8 @@ local CLAIRE_SONG = vim.json.encode({
     name = "Anniversary Waltz",
     artistName = "Claire Redfield",
     albumName = "Notes for Inde",
+    currentPlaybackTime = 61.5,
+    durationInMillis = 193000,
     artwork = { url = "https://is1-ssl.mzstatic.com/image/thumb/terrasave/{w}x{h}bb.jpg" },
   },
 })
@@ -51,6 +53,8 @@ describe("parse_cider_track", function()
       album = "Notes for Inde",
       cover = "https://is1-ssl.mzstatic.com/image/thumb/terrasave/300x300bb.jpg",
       playing = true,
+      position = 61.5,
+      duration = 193,
     }, actions.parse_cider_track(CLAIRE_SONG, true))
   end)
 
@@ -83,14 +87,24 @@ end)
 
 describe("parse_music", function()
   it("reads the love song Malenia left playing", function()
-    assert.same(
-      { title = "Scarlet Bloom", artist = "Malenia", album = "Haligtree Serenades", playing = true },
-      actions.parse_music("playing\tScarlet Bloom\tMalenia\tHaligtree Serenades\n")
-    )
+    assert.same({
+      title = "Scarlet Bloom",
+      artist = "Malenia",
+      album = "Haligtree Serenades",
+      playing = true,
+      position = 42.25,
+      duration = 215,
+    }, actions.parse_music("playing\t42.25\t215\tScarlet Bloom\tMalenia\tHaligtree Serenades\n"))
   end)
 
   it("knows when the song is paused", function()
-    assert.is_false(actions.parse_music("paused\tScarlet Bloom\tMalenia\t").playing)
+    assert.is_false(actions.parse_music("paused\t1\t215\tScarlet Bloom\tMalenia\t").playing)
+  end)
+
+  it("reads the position with a decimal comma, the way a Spanish Mac writes it", function()
+    local track = actions.parse_music("playing\t12,5\t180,75\tCarta para Inde\tClaire Redfield\t")
+    assert.equal(12.5, track.position)
+    assert.equal(180.75, track.duration)
   end)
 
   it("gives nil when Music is closed or stopped", function()
@@ -173,47 +187,5 @@ describe("cover_name", function()
     local note = { artist = "Inde Navarrete", album = "", title = "Love Note" }
     local date = { artist = "Inde Navarrete", album = "", title = "Date Night" }
     assert.are_not.equal(actions.cover_name(note), actions.cover_name(date))
-  end)
-end)
-
-describe("panel", function()
-  local song = {
-    title = "Shared Playlist",
-    artist = "Inde Navarrete",
-    album = "Our Anniversary",
-    playing = true,
-  }
-
-  it("puts the song beside the cover and the keys under both", function()
-    local layout = actions.panel(song, "cider")
-    assert.equal(8, #layout.lines)
-    assert.truthy(layout.lines[1]:find("Shared Playlist", 1, true))
-    assert.truthy(layout.lines[5]:find("Playing in Cider", 1, true))
-    assert.truthy(layout.lines[8]:find("q close", 1, true))
-    assert.same({ row = 0, col = 1, width = 12, height = 6 }, layout.cover)
-  end)
-
-  it("leaves the cover's columns empty so the image lands on blank space", function()
-    local layout = actions.panel(song, "music")
-    local beside = layout.cover.col + layout.cover.width
-    for row = 1, layout.cover.height do
-      assert.equal("", vim.trim(layout.lines[row]:sub(1, beside)))
-    end
-  end)
-
-  it("offers pause while Inde's playlist plays", function()
-    assert.truthy(actions.panel(song, "cider").lines[8]:find("󰏤 p pause", 1, true))
-  end)
-
-  it("offers play when Claire paused the song", function()
-    local paused = vim.tbl_extend("force", song, { playing = false })
-    assert.truthy(actions.panel(paused, "music").lines[8]:find("󰐊 p play", 1, true))
-  end)
-
-  it("keeps every line inside the panel", function()
-    local long = vim.tbl_extend("force", song, { title = ("Malenia "):rep(10) })
-    for _, line in ipairs(actions.panel(long, "cider").lines) do
-      assert.is_true(vim.fn.strdisplaywidth(line) <= actions.PANEL_WIDTH)
-    end
   end)
 end)

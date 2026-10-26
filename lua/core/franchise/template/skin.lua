@@ -15,6 +15,12 @@ return {
   dashboard = "roundtable",
   -- style: "shimmer" or "drip"
   title = { text = "__title__", subtitle = "press any key", color = "#D8B45A", style = "shimmer" },
+  -- the now playing panel: progress bar, dividers around the lyrics, marks around the sung line
+  music = {
+    bar = { done = "━", head = "◈", left = "─" },
+    divider = { line = "─", gem = "◈" },
+    sung = { "▸ ", " ◂" },
+  },
   -- ghostty takes any Ghostty config keys, written to ~/.config/ghostty/eldentree
   terminal = {
     iterm_profile = "Eldentree __title__",

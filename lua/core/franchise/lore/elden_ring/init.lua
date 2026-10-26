@@ -34,6 +34,14 @@ return {
     },
   },
 
+  -- the now playing panel's title and what its lyrics say while they are not there
+  music = {
+    title = "Song of Grace",
+    loading = "Seeking the verses…",
+    missing = "No verses survive for this song",
+    instrumental = "A hymn without words",
+  },
+
   -- who guards each region when errors pile up
   bosses = {
     leyndell = "Morgott, the Omen King",

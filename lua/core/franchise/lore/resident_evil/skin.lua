@@ -20,13 +20,20 @@ return {
     color = "#C8202C",
     style = "drip",
   },
+  -- the now playing panel: the progress bar runs like a tape counter, dividers frame the lyrics
+  -- and the marks wrap the sung line
+  music = {
+    bar = { done = "▰", head = "▶", left = "▱" },
+    divider = { line = "═", gem = "■" },
+    sung = { "▶ ", " ◀" },
+  },
   terminal = {
     iterm_profile = "Eldentree Resident Evil",
     kitty_opacity = 1.0,
     ghostty = {
       ["font-family"] = "JetBrainsMono Nerd Font Mono",
       ["font-style"] = "SemiBold",
-      ["font-size"] = 14,
+      ["font-size"] = 16,
       ["background-opacity"] = 1,
       ["background-blur"] = false,
     },
