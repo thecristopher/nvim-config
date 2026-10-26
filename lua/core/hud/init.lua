@@ -603,6 +603,19 @@ local function watch(buf)
       M.refresh()
     end,
   })
+  -- a split or the zoom shows the same buffer in another window, the layout and the portrait go with the cursor
+  vim.api.nvim_create_autocmd("WinEnter", {
+    group = group,
+    buffer = buf,
+    callback = function()
+      local win = vim.api.nvim_get_current_win()
+      if state and actions.follows(state.win, state.buf, win, vim.api.nvim_win_get_buf(win)) then
+        state.win = win
+        window_options(win)
+        M.refresh()
+      end
+    end,
+  })
   vim.api.nvim_create_autocmd({ "VimResized", "WinResized" }, {
     group = group,
     callback = function()

@@ -129,3 +129,18 @@ describe("byte_col", function()
     assert.equal(6, hud.byte_col("╔═x", 2))
   end)
 end)
+
+describe("follows", function()
+  -- Malenia opens the HUD in window 1000 (buffer 7) and Claire zooms it into window 1001
+  it("moves to a zoom float showing the HUD", function()
+    assert.is_true(hud.follows(1000, 7, 1001, 7))
+  end)
+
+  it("stays when the window is the one it is laid out for", function()
+    assert.is_false(hud.follows(1000, 7, 1000, 7))
+  end)
+
+  it("ignores windows showing Inde's love letter instead", function()
+    assert.is_false(hud.follows(1000, 7, 1001, 12))
+  end)
+end)

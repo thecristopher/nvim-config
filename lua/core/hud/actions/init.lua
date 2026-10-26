@@ -282,4 +282,14 @@ function M.byte_col(line, display_col)
   return #line
 end
 
+--- Tells whether the HUD should move to the window just entered, like the zoom float or a split of it.
+---@param hud_win integer window the HUD is laid out for
+---@param hud_buf integer the HUD buffer
+---@param win integer window just entered
+---@param buf integer buffer that window shows
+---@return boolean
+function M.follows(hud_win, hud_buf, win, buf)
+  return buf == hud_buf and win ~= hud_win
+end
+
 return M
