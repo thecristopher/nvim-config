@@ -129,6 +129,22 @@ function M.body_groups(highlights)
   return names
 end
 
+--- Lists the other nvims still dressing the terminal, from the pid files they left.
+---@param names string[] file names in the instances folder, each one a pid
+---@param own integer this nvim's pid
+---@param is_alive fun(pid: integer): boolean
+---@return integer[] pids
+function M.others_alive(names, own, is_alive)
+  local alive = {}
+  for _, name in ipairs(names) do
+    local pid = tonumber(name)
+    if pid and pid ~= own and is_alive(pid) then
+      alive[#alive + 1] = pid
+    end
+  end
+  return alive
+end
+
 --- AppleScript that makes Ghostty read its config again. Any terminal works as the target,
 --- reload_config applies to the whole app.
 ---@return string

@@ -112,10 +112,60 @@ local function wants_ghostty()
   return M.name() == "ghostty" and vim.g.eldentree_ghostty_config and vim.fn.has("mac") == 1
 end
 
+-- every nvim dressing Ghostty leaves its pid here, so only the last one to leave undresses it
+local INSTANCES_DIR = vim.fn.stdpath("state") .. "/eldentree_ghostty"
+
+local function own_pid()
+  return vim.fn.getpid()
+end
+
+local function register_instance()
+  vim.fn.mkdir(INSTANCES_DIR, "p")
+  pcall(vim.fn.writefile, {}, INSTANCES_DIR .. "/" .. own_pid())
+end
+
+local function is_alive(pid)
+  local ok, result = pcall(vim.uv.kill, pid, 0)
+  return ok and result == 0
+end
+
+-- forgets this nvim and any that died without saying goodbye, then lists who is still around
+local function unregister_instance()
+  pcall(vim.fn.delete, INSTANCES_DIR .. "/" .. own_pid())
+  local ok, names = pcall(vim.fn.readdir, INSTANCES_DIR)
+  local alive = actions.others_alive(ok and names or {}, own_pid(), is_alive)
+  for _, name in ipairs(ok and names or {}) do
+    if not vim.tbl_contains(alive, tonumber(name)) then
+      pcall(vim.fn.delete, INSTANCES_DIR .. "/" .. name)
+    end
+  end
+  return alive
+end
+
+-- Ghostty applies the new config a moment after AppleScript returns, so the settle waits a little more
+local SETTLE_MS = 300
+
+-- tells everyone the terminal finished reloading, images drawn before it may need drawing again
+local function settled()
+  vim.defer_fn(function()
+    vim.api.nvim_exec_autocmds("User", { pattern = "EldentreeTerminalSettled", modeline = false })
+  end, SETTLE_MS)
+end
+
+-- writes and reloads only when the file changes, every reload makes Ghostty lay out its fonts again
 local function write_ghostty(settings)
+  local lines = actions.ghostty_config(settings)
+  local ok, current = pcall(vim.fn.readfile, GHOSTTY_FILE)
+  if ok and vim.deep_equal(current, lines) then
+    return nil
+  end
   vim.fn.mkdir(vim.fs.dirname(GHOSTTY_FILE), "p")
-  vim.fn.writefile(actions.ghostty_config(settings), GHOSTTY_FILE)
-  return vim.system({ "osascript", "-e", actions.ghostty_reload_script() })
+  vim.fn.writefile(lines, GHOSTTY_FILE)
+  return vim.system(
+    { "osascript", "-e", actions.ghostty_reload_script() },
+    {},
+    vim.schedule_wrap(settled)
+  )
 end
 
 local function apply_ghostty()
@@ -132,6 +182,7 @@ local function apply_ghostty()
     return
   end
   worn.ghostty = written
+  register_instance()
   write_ghostty(settings)
 end
 
@@ -236,9 +287,13 @@ local function restore()
   if M.name() == "iterm" and vim.g.eldentree_iterm_profiles then
     send(actions.iterm_profile(vim.g.eldentree_iterm_default_profile or "Default"))
   end
-  -- waits so the reload is not cut off when nvim exits right after
-  if wants_ghostty() and worn.ghostty then
-    write_ghostty(nil):wait(2000)
+  -- other nvims still wear the skin, so only the last one to leave hands Ghostty its own look back
+  if wants_ghostty() and worn.ghostty and #unregister_instance() == 0 then
+    local reloading = write_ghostty(nil)
+    -- waits so the reload is not cut off when nvim exits right after
+    if reloading then
+      reloading:wait(2000)
+    end
   end
   -- the terminal is back to its own look, so the next apply has to send everything again
   worn = {}

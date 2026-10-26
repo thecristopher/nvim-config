@@ -81,7 +81,18 @@ local function draw_with_chafa(view, file, anchor)
   )
 end
 
-local function draw_with_pixels(view, file, anchor)
+-- snacks sends each image to the terminal once, so after the terminal reloads it has to be told
+-- to send it again instead of pointing at a picture the terminal may have dropped
+local function send_again(file)
+  pcall(function()
+    Snacks.image.image.new(file).sent = false
+  end)
+end
+
+local function draw_with_pixels(view, file, anchor, fresh)
+  if fresh then
+    send_again(file)
+  end
   local blank = {}
   for row = 1, anchor.height do
     blank[row] = (" "):rep(anchor.width)
@@ -117,8 +128,10 @@ end
 ---@param file string image path
 ---@param anchor { row: integer, col: integer, width: integer, height: integer } zero based, in the parent window
 ---@param slot string|nil defaults to "hud"
-function M.show(parent, file, anchor, slot)
+---@param opts { fresh: boolean|nil }|nil fresh sends the image to the terminal again
+function M.show(parent, file, anchor, slot, opts)
   slot = slot or "hud"
+  opts = opts or {}
   local key = ("%s|%d:%d|%d"):format(cache_key(file, anchor), anchor.row, anchor.col, parent)
   local shown = views[slot]
   if shown and shown.key == key and vim.api.nvim_win_is_valid(shown.win) then
@@ -129,7 +142,11 @@ function M.show(parent, file, anchor, slot)
     return
   end
   local view = open_view(parent, anchor, key, slot)
-  if require("core.terminal").can_draw(file) and draw_with_pixels(view, file, anchor) then
+  view.drawn = { parent = parent, file = file, anchor = anchor }
+  if
+    require("core.terminal").can_draw(file) and draw_with_pixels(view, file, anchor, opts.fresh)
+  then
+    view.pixels = true
     return
   end
   if vim.fn.executable("chafa") == 0 then
@@ -142,5 +159,26 @@ function M.show(parent, file, anchor, slot)
   end
   draw_with_chafa(view, file, anchor)
 end
+
+-- a terminal reload can drop the pictures it was showing, so every pixel image is drawn again
+local function redraw_pixels()
+  local slots = {}
+  for slot, view in pairs(views) do
+    if view.pixels then
+      slots[#slots + 1] = slot
+    end
+  end
+  for _, slot in ipairs(slots) do
+    local drawn = views[slot].drawn
+    M.close(slot)
+    M.show(drawn.parent, drawn.file, drawn.anchor, slot, { fresh = true })
+  end
+end
+
+vim.api.nvim_create_autocmd("User", {
+  group = vim.api.nvim_create_augroup("eldentree_portrait", { clear = true }),
+  pattern = "EldentreeTerminalSettled",
+  callback = redraw_pixels,
+})
 
 return M

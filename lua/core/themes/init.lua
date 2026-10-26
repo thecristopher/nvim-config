@@ -1,4 +1,4 @@
--- Region switcher: remembers your region, recolors catppuccin, and lets you
+-- Region switcher: one region per day, recolors catppuccin, and lets you
 -- browse regions live with <leader>ut. Everything else follows the ColorScheme event.
 local actions = require("core.themes.actions")
 local motion = require("core.motion")
@@ -8,51 +8,26 @@ local M = {}
 
 local state_file = vim.fn.stdpath("state") .. "/eldentree_region"
 
-local function read_saved()
+local function today()
+  return os.date("%Y-%m-%d")
+end
+
+-- the region picked today, nil when nothing was picked or the pick belongs to another day
+local function read_choice()
   local ok, lines = pcall(vim.fn.readfile, state_file, "", 1)
-  return ok and lines[1] or nil
+  return actions.choice_for(ok and lines[1] or nil, today())
 end
 
 local function save(name)
-  pcall(vim.fn.writefile, { name }, state_file)
+  pcall(vim.fn.writefile, { actions.encode_choice(today(), name) }, state_file)
 end
 
--- each franchise remembers its own picks, Elden Ring keeps the file it always had
-local function projects_file()
-  local name = require("core.franchise").name()
-  local suffix = name == "elden_ring" and "" or "_" .. name
-  return vim.fn.stdpath("state") .. "/eldentree_project_regions" .. suffix .. ".json"
-end
-
-local function read_projects()
-  local ok, lines = pcall(vim.fn.readfile, projects_file())
-  if not ok then
-    return {}
-  end
-  local decoded_ok, decoded = pcall(vim.json.decode, table.concat(lines, "\n"))
-  return (decoded_ok and type(decoded) == "table") and decoded or {}
-end
-
--- the repo you are standing in, nil outside of one or with vim.g.eldentree_region_per_project = false
-local function project_root()
-  if vim.g.eldentree_region_per_project == false then
-    return nil
-  end
-  return require("core.repos").root()
-end
-
-local function remember_for_project(name)
-  local root = project_root()
-  if not root then
-    return
-  end
-  local chosen = read_projects()
-  chosen[root] = name
-  pcall(vim.fn.writefile, { vim.json.encode(chosen) }, projects_file())
+local function of_the_day()
+  return actions.of_the_day(today(), require("core.franchise").name(), actions.names())
 end
 
 function M.current()
-  return actions.resolve(vim.g.eldentree_region or read_saved())
+  return actions.resolve(vim.g.eldentree_region or read_choice() or of_the_day())
 end
 
 function M.palette()
@@ -102,17 +77,14 @@ local function fade_into(region, duration)
   })
 end
 
--- opts.save = false previews without remembering, opts.remember also ties the region to this project,
--- opts.announce shows the region banner
+-- opts.save = false previews without keeping it for the rest of the day, opts.announce shows the
+-- region banner
 function M.apply(name, opts)
   opts = opts or {}
   local region = actions.resolve(name)
   vim.g.eldentree_region = region.name
   if opts.save ~= false then
     save(region.name)
-  end
-  if opts.remember then
-    remember_for_project(region.name)
   end
 
   if not M.painted then
@@ -129,7 +101,7 @@ function M.apply(name, opts)
 end
 
 function M.cycle()
-  M.apply(actions.next_name(M.current().name), { announce = true, remember = true })
+  M.apply(actions.next_name(M.current().name), { announce = true })
 end
 
 function M.pick()
@@ -166,7 +138,7 @@ function M.pick()
       confirmed = true
       picker:close()
       if item then
-        M.apply(item.region.name, { announce = item.region.name ~= original, remember = true })
+        M.apply(item.region.name, { announce = item.region.name ~= original })
       end
     end,
     on_close = function()
@@ -179,18 +151,12 @@ function M.pick()
   })
 end
 
--- a repo always wears its own region, anywhere else a fresh roll every launch tells terminals apart,
--- and setting vim.g.eldentree_region pins one everywhere
+-- one region all day: the one picked today, or the day's own, and vim.g.eldentree_region pins one
 local function starting_region()
   if M.pinned then
     return vim.g.eldentree_region
   end
-  local root = project_root()
-  if root then
-    return actions.project_region(root, read_projects())
-  end
-  math.randomseed(vim.uv.hrtime() % 2 ^ 31)
-  return actions.random_name(read_saved(), math.random)
+  return read_choice() or of_the_day()
 end
 
 --- Moves into the new franchise's world after :Franchise, announcing where you landed.
@@ -201,14 +167,14 @@ end
 function M.setup(base_opts)
   M.base_opts = base_opts
   M.pinned = vim.g.eldentree_region ~= nil
-  -- the region you start in stays for the whole session, traveling between repos never changes it
+  -- the day's region stays for the whole session, traveling between repos never changes it
   M.apply(starting_region())
 
   vim.api.nvim_create_user_command("Region", function(cmd)
     if cmd.args == "" then
       return M.pick()
     end
-    M.apply(cmd.args, { announce = true, remember = true })
+    M.apply(cmd.args, { announce = true })
   end, {
     nargs = "?",
     complete = function()

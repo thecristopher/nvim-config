@@ -29,14 +29,6 @@ function M.resolve(name)
   return M.find(name) or M.regions()[1]
 end
 
--- any region but the last one, so two terminals opened back to back never look alike
-function M.random_name(previous, rand)
-  local choices = vim.tbl_filter(function(name)
-    return name ~= previous
-  end, M.names())
-  return choices[rand(#choices)]
-end
-
 -- the region after this one, wrapping around, for quick cycling
 function M.next_name(name)
   local names = M.names()
@@ -48,18 +40,34 @@ function M.next_name(name)
   return names[1]
 end
 
---- Returns the region a project wears: the one chosen there before, or one derived from its folder name.
----@param root string project root
----@param chosen table<string, string>|nil regions picked per project root
+--- Returns the region of the day, the same all day long in every repo and every launch.
+---@param day string date as YYYY-MM-DD
+---@param franchise string franchise in use, so each world rolls its own region
+---@param names string[] region names
 ---@return string region name
-function M.project_region(root, chosen)
-  local picked = chosen and chosen[root]
-  if picked and M.find(picked) then
-    return picked
+function M.of_the_day(day, franchise, names)
+  -- the hash is stable across machines, so a day looks the same everywhere
+  return names[require("core.utils").hash(day .. franchise) % #names + 1]
+end
+
+--- Writes a pick so it only holds for the day it was made.
+---@param day string date as YYYY-MM-DD
+---@param name string region name
+---@return string
+function M.encode_choice(day, name)
+  return day .. " " .. name
+end
+
+--- Reads a saved pick back, nil when it was made another day or names no region of this franchise.
+---@param line string|nil what the state file holds
+---@param day string today as YYYY-MM-DD
+---@return string|nil region name
+function M.choice_for(line, day)
+  local saved_day, name = (line or ""):match("^(%S+)%s+(%S+)$")
+  if saved_day ~= day or not M.find(name) then
+    return nil
   end
-  local names = M.names()
-  -- the hash is stable across machines, so a project keeps its region everywhere
-  return names[require("core.utils").hash(vim.fs.basename(root)) % #names + 1]
+  return name
 end
 
 local function to_rgb(hex)

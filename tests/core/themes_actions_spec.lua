@@ -233,35 +233,6 @@ describe("mode_look", function()
   end)
 end)
 
-describe("random_name", function()
-  local function first()
-    return 1
-  end
-  local function last(count)
-    return count
-  end
-
-  it("never rolls the region Radahn just left", function()
-    for roll = 1, #actions.regions() - 1 do
-      assert.are_not.equal(
-        "caelid",
-        actions.random_name("caelid", function()
-          return roll
-        end)
-      )
-    end
-  end)
-
-  it("can land on any of the others", function()
-    assert.equal("haligtree", actions.random_name("leyndell", first))
-    assert.equal("farum_azula", actions.random_name("leyndell", last))
-  end)
-
-  it("uses every region when nothing was saved yet", function()
-    assert.equal("farum_azula", actions.random_name(nil, last))
-  end)
-end)
-
 describe("characters", function()
   it("gives every region a champion and names its portrait file", function()
     for _, region in ipairs(actions.regions()) do
@@ -324,34 +295,49 @@ describe("guicursor", function()
   end)
 end)
 
-describe("project_region", function()
-  it("keeps the region Claire chose for her project", function()
-    local chosen = { ["/raccoon/terrasave"] = "haligtree" }
-    assert.equal("haligtree", actions.project_region("/raccoon/terrasave", chosen))
-  end)
+describe("of_the_day", function()
+  local names = { "limgrave", "caelid", "haligtree", "leyndell" }
 
-  it("derives the same region every time for a project nobody chose for", function()
-    local first = actions.project_region("/love/inde-and-malenia", {})
-    assert.equal(first, actions.project_region("/love/inde-and-malenia", nil))
-  end)
-
-  it("follows the folder name, so a fresh clone looks the same", function()
+  it("keeps Malenia in the same region all day", function()
     assert.equal(
-      actions.project_region("/home/claire/anniversary"),
-      actions.project_region("/tmp/anniversary")
+      actions.of_the_day("2026-10-26", "elden_ring", names),
+      actions.of_the_day("2026-10-26", "elden_ring", names)
     )
   end)
 
-  it("ignores a saved region that no longer exists", function()
-    local chosen = { ["/raccoon/terrasave"] = "raccoon_city" }
-    assert.is_truthy(actions.find(actions.project_region("/raccoon/terrasave", chosen)))
+  it("always lands on a real region", function()
+    assert.is_true(vim.tbl_contains(names, actions.of_the_day("2026-02-14", "elden_ring", names)))
   end)
 
-  it("spreads projects across more than one region", function()
+  it("moves through more than one region over Claire and Inde's week", function()
     local seen = {}
-    for _, name in ipairs({ "leon", "ada", "jill", "chris", "rebecca", "carlos", "ashley", "hunk" }) do
-      seen[actions.project_region("/re/" .. name)] = true
+    for day = 20, 26 do
+      seen[actions.of_the_day("2026-10-" .. day, "resident_evil", names)] = true
     end
-    assert.is_true(vim.tbl_count(seen) > 2)
+    assert.is_true(vim.tbl_count(seen) > 1)
+  end)
+end)
+
+describe("choice_for", function()
+  it("keeps the region Malenia picked this morning", function()
+    assert.equal("haligtree", actions.choice_for("2026-10-26 haligtree", "2026-10-26"))
+  end)
+
+  it("lets yesterday's pick go at midnight", function()
+    assert.is_nil(actions.choice_for("2026-10-25 haligtree", "2026-10-26"))
+  end)
+
+  it("ignores a region Wesker made up", function()
+    assert.is_nil(actions.choice_for("2026-10-26 umbrella_hq", "2026-10-26"))
+  end)
+
+  it("ignores the old file that held only a name", function()
+    assert.is_nil(actions.choice_for("caelid", "2026-10-26"))
+  end)
+end)
+
+describe("encode_choice", function()
+  it("writes Inde's pick with its day", function()
+    assert.equal("2026-10-26 caelid", actions.encode_choice("2026-10-26", "caelid"))
   end)
 end)

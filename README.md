@@ -75,7 +75,7 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 | `core/title` | A title screen in big block letters once a day per franchise and on every switch, `:Title` shows it again |
 | `core/terminal` | Paints the terminal around nvim with the region's background, and switches iTerm profiles, Kitty opacity or the Ghostty font and opacity per franchise. `:Opacity [90|skin]` or `<leader>uo` picks your own opacity, kept until set back to `skin` |
 | `core/sound` | Plays your own sounds from `sounds/<franchise>/` for titles, doors, deaths and the merchant |
-| `core/themes` | Region palettes from the franchise in use (eleven in Elden Ring, seven in Resident Evil). Launching inside a repo starts in its region (the one you picked there, or one derived from its name), outside a repo each launch rolls a new one. The region stays for the whole session, traveling between repos never changes it. Pin one with `vim.g.eldentree_region` |
+| `core/themes` | Region palettes from the franchise in use (eleven in Elden Ring, seven in Resident Evil). One region per day, the same in every repo and every launch. Picking another with `<leader>ut` holds until midnight, and traveling between repos never changes it. Pin one with `vim.g.eldentree_region` |
 | `core/phantom` | `<leader>gw` shows who last wrote the line as a phantom: blue for others, gold for your past self |
 | `core/music`  | The song playing in Cider (macOS, Windows, Linux) or Music.app (macOS) sits in the statusline. `<leader>o` or a click on it opens a now playing panel with the album cover, `p` plays or pauses, `n` and `b` skip. Cider needs its API on in Settings > Connectivity, and `vim.g.eldentree_cider_token` when it asks for a token. `vim.g.eldentree_music = false` turns it off |
 | `core/zones`  | The first time you walk into a folder each session, it is announced like a new area of the Lands Between |
@@ -102,7 +102,7 @@ Copilot suggestions come through blink as one more source, and the top item prev
 
 A few classics from ThePrimeagen's setup live here too: cloak.nvim masks `.env` values so secrets never show on a shared screen or a snapshot, `<leader>rw` replaces the word under the cursor across the file, `<leader>cx` makes the file executable, `:VimBeGood` trains your motions, and `<leader>ur` makes it rain. Dying makes it rain on its own, `vim.g.eldentree_rain = false` keeps the code standing.
 
-Traveling to a Site of Grace keeps the session of the repo you leave and restores the one you arrive at. Files with unsaved changes are never closed. Turn it off with `vim.g.eldentree_project_sessions = false`, and per project regions with `vim.g.eldentree_region_per_project = false`.
+Traveling to a Site of Grace keeps the session of the repo you leave and restores the one you arrive at. Files with unsaved changes are never closed. Turn it off with `vim.g.eldentree_project_sessions = false`.
 
 Portraits in `images/portraits/` are 276x336 crops of the originals in `images/`, with contrast, color and sharpness lifted so they survive half block rendering. A region whose portrait is missing simply shows the HUD without art.
 
@@ -116,7 +116,7 @@ Everything works in iTerm. Two extras are worth turning on:
   ln -s ~/.config/nvim/terminal/iterm/Eldentree.json ~/Library/Application\ Support/iTerm2/DynamicProfiles/
   ```
 
-- **Fonts per franchise in Ghostty.** nvim writes the franchise's font, opacity and blur to `~/.config/ghostty/eldentree` and asks Ghostty to reload it (macOS, through AppleScript). Include it once from your Ghostty config, the `?` keeps Ghostty quiet while the file does not exist yet. Reloading applies to every Ghostty window, and leaving nvim empties the file so Ghostty goes back to its own look. `vim.g.eldentree_ghostty_config = false` turns it off.
+- **Fonts per franchise in Ghostty.** nvim writes the franchise's font, opacity and blur to `~/.config/ghostty/eldentree` and asks Ghostty to reload it (macOS, through AppleScript). Include it once from your Ghostty config, the `?` keeps Ghostty quiet while the file does not exist yet. Reloading applies to every Ghostty window, and leaving the last nvim empties the file so Ghostty goes back to its own look, while other nvims still open keep it. `vim.g.eldentree_ghostty_config = false` turns it off.
 
   ```
   config-file = ?~/.config/ghostty/eldentree
@@ -171,6 +171,8 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>gw` | Who wrote this line (phantom)   |
 | `<leader>cp` | Snapshot the buffer or selection as a PNG |
 | `<leader>o`  | Now playing panel with the album cover |
+| `<leader>to` | Open the last link a terminal printed, like the dev server's localhost |
+| `<C-LeftMouse>` | In a terminal, open the link under the mouse |
 | `<leader>xQ` | Toggle the quickfix list, editable (quicker) |
 | `[y` / `]y`  | Right after a paste, swap it for the older or newer yank |
 | `<leader>fy` | Yank history                    |
