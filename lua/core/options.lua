@@ -115,6 +115,8 @@ vim.g.loaded_netrwPlugin = 1
 
 -- iTerm switches to the franchise's profile (terminal/iterm/Eldentree.json, linked into DynamicProfiles)
 vim.g.eldentree_iterm_profiles = true
+-- Ghostty reloads ~/.config/ghostty/eldentree with the franchise's font and opacity
+vim.g.eldentree_ghostty_config = true
 
 -- the Claude native installer drops claude.exe here but often never makes it onto PATH
 if vim.fn.has("win32") == 1 then

@@ -73,7 +73,7 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 | `core/skin`  | Dresses components per franchise: float borders, gutter signs, statusline separators and tabs. Elden Ring is rounded and ornate, Resident Evil wears the inventory's double frames |
 | `core/hud`   | The start screen is a playable inventory. Elden Ring shows category tabs with the Inventory and the Chest side by side, Resident Evil a STATUS panel with the CONDITION monitor, plate tabs and the COMMAND menu. hjkl walks the slots, Tab changes category, Enter uses, K checks, C combines. `:Hud` or `<leader>uh` reopens it |
 | `core/title` | A title screen in big block letters once a day per franchise and on every switch, `:Title` shows it again |
-| `core/terminal` | Paints the terminal around nvim with the region's background, and switches iTerm profiles or Kitty opacity per franchise |
+| `core/terminal` | Paints the terminal around nvim with the region's background, and switches iTerm profiles, Kitty opacity or the Ghostty font and opacity per franchise |
 | `core/sound` | Plays your own sounds from `sounds/<franchise>/` for titles, doors, deaths and the merchant |
 | `core/themes` | Region palettes from the franchise in use (eleven in Elden Ring, seven in Resident Evil). Launching inside a repo starts in its region (the one you picked there, or one derived from its name), outside a repo each launch rolls a new one. The region stays for the whole session, traveling between repos never changes it. Pin one with `vim.g.eldentree_region` |
 | `core/phantom` | `<leader>gw` shows who last wrote the line as a phantom: blue for others, gold for your past self |
@@ -116,7 +116,13 @@ Everything works in iTerm. Two extras are worth turning on:
   ln -s ~/.config/nvim/terminal/iterm/Eldentree.json ~/Library/Application\ Support/iTerm2/DynamicProfiles/
   ```
 
-- **Real image portraits.** Ghostty, Kitty and WezTerm speak the kitty graphics protocol, so the HUD shows the portraits as actual pictures instead of chafa's half blocks. Ghostty is the closest to iTerm in feel: `brew install --cask ghostty`.
+- **Fonts per franchise in Ghostty.** nvim writes the franchise's font, opacity and blur to `~/.config/ghostty/eldentree` and asks Ghostty to reload it (macOS, through AppleScript). Include it once from your Ghostty config, the `?` keeps Ghostty quiet while the file does not exist yet. Reloading applies to every Ghostty window, and leaving nvim empties the file so Ghostty goes back to its own look. `vim.g.eldentree_ghostty_config = false` turns it off.
+
+  ```
+  config-file = ?~/.config/ghostty/eldentree
+  ```
+
+- **Real image portraits.** Ghostty, Kitty and WezTerm speak the kitty graphics protocol, so the HUD shows the portraits as actual pictures instead of chafa's half blocks. The portraits are JPEG, so snacks needs ImageMagick to convert them (`brew install imagemagick`), without it they stay in chafa. Ghostty is the closest to iTerm in feel: `brew install --cask ghostty`.
 
 ### Sounds
 

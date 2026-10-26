@@ -1,5 +1,6 @@
 -- Restyles the terminal around nvim with the franchise: the background follows the region,
--- iTerm can switch to a profile per franchise (fonts live there), and Kitty takes its opacity.
+-- iTerm can switch to a profile per franchise (fonts live there), Kitty takes its opacity, and
+-- Ghostty reloads a config file written from the skin.
 -- vim.g.eldentree_terminal_background = false leaves the terminal alone.
 local actions = require("core.terminal.actions")
 
@@ -24,6 +25,18 @@ function M.supports_images()
     return supported == true
   end
   return actions.images(M.name())
+end
+
+--- Tells whether this file can be drawn as real pixels, so anything else falls back to chafa
+--- instead of leaving a blank space.
+---@param file string image path
+---@return boolean
+function M.can_draw(file)
+  if not M.supports_images() then
+    return false
+  end
+  local has_magick = vim.fn.executable("magick") == 1 or vim.fn.executable("convert") == 1
+  return actions.pixels_for(file, has_magick)
 end
 
 local function send(sequence)
@@ -77,17 +90,48 @@ local function apply_opacity()
   vim.system({ "kitty", "@", "set-background-opacity", tostring(worn.opacity) })
 end
 
+-- Ghostty includes this file from its own config with `config-file = ?~/.config/ghostty/eldentree`
+local GHOSTTY_FILE = vim.fs.joinpath(vim.env.HOME or "", ".config", "ghostty", "eldentree")
+
+-- reloading only works on macOS, where Ghostty takes AppleScript
+local function wants_ghostty()
+  return M.name() == "ghostty" and vim.g.eldentree_ghostty_config and vim.fn.has("mac") == 1
+end
+
+local function write_ghostty(settings)
+  vim.fn.mkdir(vim.fs.dirname(GHOSTTY_FILE), "p")
+  vim.fn.writefile(actions.ghostty_config(settings), GHOSTTY_FILE)
+  return vim.system({ "osascript", "-e", actions.ghostty_reload_script() })
+end
+
+local function apply_ghostty()
+  if not wants_ghostty() then
+    return
+  end
+  local settings = skin().ghostty
+  if not settings or worn.ghostty == settings then
+    return
+  end
+  worn.ghostty = settings
+  write_ghostty(settings)
+end
+
 --- Dresses the terminal for the franchise in use.
 function M.apply()
   paint_background()
   apply_profile()
   apply_opacity()
+  apply_ghostty()
 end
 
 local function restore()
   send(actions.reset_background())
   if M.name() == "iterm" and vim.g.eldentree_iterm_profiles then
     send(actions.iterm_profile(vim.g.eldentree_iterm_default_profile or "Default"))
+  end
+  -- waits so the reload is not cut off when nvim exits right after
+  if wants_ghostty() and worn.ghostty then
+    write_ghostty(nil):wait(2000)
   end
   -- the terminal is back to its own look, so the next apply has to send everything again
   worn = {}

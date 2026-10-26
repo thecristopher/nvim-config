@@ -28,6 +28,20 @@ describe("images", function()
   end)
 end)
 
+describe("pixels_for", function()
+  it("draws Inde's PNG valentine without ImageMagick", function()
+    assert.is_true(actions.pixels_for("inde_valentine.png", false))
+  end)
+
+  it("leaves Claire's JPEG portrait to chafa without ImageMagick", function()
+    assert.is_false(actions.pixels_for("claire.jpg", false))
+  end)
+
+  it("draws Malenia's JPEG once ImageMagick can convert it", function()
+    assert.is_true(actions.pixels_for("malenia.jpg", true))
+  end)
+end)
+
 describe("sequences", function()
   it("paints the terminal background with OSC 11", function()
     assert.equal("\27]11;#0E0908\7", actions.background("#0E0908"))
@@ -42,6 +56,27 @@ describe("sequences", function()
       "\27]1337;SetProfile=Eldentree Resident Evil\7",
       actions.iterm_profile("Eldentree Resident Evil")
     )
+  end)
+end)
+
+describe("ghostty_config", function()
+  it("writes Malenia's font and opacity sorted by key", function()
+    assert.same({
+      "# written by Eldentree from the franchise skin, edits here are overwritten",
+      "background-opacity = 0.94",
+      "font-style = Light",
+    }, actions.ghostty_config({ ["font-style"] = "Light", ["background-opacity"] = 0.94 }))
+  end)
+
+  it("turns Claire's blur off with a plain false", function()
+    assert.equal(
+      "background-blur = false",
+      actions.ghostty_config({ ["background-blur"] = false })[2]
+    )
+  end)
+
+  it("leaves only the header when there is nothing to wear", function()
+    assert.equal(1, #actions.ghostty_config(nil))
   end)
 end)
 

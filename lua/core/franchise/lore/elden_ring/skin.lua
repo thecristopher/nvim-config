@@ -21,5 +21,15 @@ return {
     color = "#D8B45A",
     style = "shimmer",
   },
-  terminal = { iterm_profile = "Eldentree Elden Ring", kitty_opacity = 0.97 },
+  terminal = {
+    iterm_profile = "Eldentree Elden Ring",
+    kitty_opacity = 0.97,
+    ghostty = {
+      ["font-family"] = "JetBrainsMono Nerd Font Mono",
+      ["font-style"] = "Light",
+      ["font-size"] = 14,
+      ["background-opacity"] = 0.94,
+      ["background-blur"] = 8,
+    },
+  },
 }

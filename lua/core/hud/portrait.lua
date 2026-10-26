@@ -100,6 +100,8 @@ local function open_view(parent, anchor, key, slot)
   local view = { key = key, buf = vim.api.nvim_create_buf(false, true) }
   vim.bo[view.buf].bufhidden = "wipe"
   view.win = open_float(parent, anchor, view.buf)
+  -- snacks encodes which image goes in each cell in its color, any blend scrambles it into black
+  vim.wo[view.win].winblend = 0
   views[slot] = view
   return view
 end
@@ -127,7 +129,7 @@ function M.show(parent, file, anchor, slot)
     return
   end
   local view = open_view(parent, anchor, key, slot)
-  if require("core.terminal").supports_images() and draw_with_pixels(view, file, anchor) then
+  if require("core.terminal").can_draw(file) and draw_with_pixels(view, file, anchor) then
     return
   end
   if vim.fn.executable("chafa") == 0 then
