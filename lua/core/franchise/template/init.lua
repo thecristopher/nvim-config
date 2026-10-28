@@ -21,9 +21,9 @@ return {
   -- back-to-basics: the persona that coaches the daily drills (btb persona list) and the HUD names
   coach = { persona = "", training = "Training", lessons = "Lessons" },
 
-  -- Claude Code's statusline: context left, the 5 hour limit and the weekly one, plus spinner verbs
+  -- Claude Code's statusline: the 5 hour limit and the weekly one, plus spinner verbs
   claude = {
-    bars = { context = "HP", five_hour = "MP", seven_day = "ST" },
+    bars = { five_hour = "MP", seven_day = "ST" },
     verbs = { "Exploring __title__" },
   },
 
