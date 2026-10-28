@@ -22,7 +22,7 @@ end)
 describe("status_command", function()
   it("answers in the tab separated shape parse_music reads", function()
     local script = script_of(windows.status_command())
-    assert.truthy(script:find("$media.AlbumTitle) -join \"`t\"", 1, true))
+    assert.truthy(script:find('$media.AlbumTitle) -join "`t"', 1, true))
   end)
 end)
 
