@@ -1,12 +1,11 @@
--- Claude Code's statusline in the franchise's colors: the branch, model and song on top, and below
--- them the context left plus both usage limits drawn as the game's own bars (HP, FP and stamina in
--- the Lands Between, CONDITION, AMMO and HERBS in Raccoon City). The region and the runes stay in
--- the editor's statusline under it. Pure logic only.
+-- Claude Code's statusline in the franchise's colors: the model on top, and below it both usage
+-- limits drawn as the game's own bars (FP and stamina in the Lands Between, AMMO and HERBS in
+-- Raccoon City). The branch, the song, the region and the runes stay in the editor's statusline
+-- under it, so the agent keeps its room. Pure logic only.
 
 local M = {}
 
 M.BAR_WIDTH = 10
-M.SONG_WIDTH = 32
 local RESET = "\27[0m"
 local SEPARATOR = "  "
 
@@ -45,27 +44,12 @@ local function remaining_of(limit)
   return 100 - limit.used_percentage
 end
 
-local function context_left(data)
-  local window = data.context_window
-  if type(window) ~= "table" then
-    return nil
-  end
-  return window.remaining_percentage
-end
-
 local function header(data, ctx)
   local p = ctx.region.palette
-  local parts = {}
-  if ctx.branch and ctx.branch ~= "" then
-    table.insert(parts, M.paint(p.subtext0, " " .. ctx.branch))
+  if type(data.model) ~= "table" or not data.model.display_name then
+    return ""
   end
-  if type(data.model) == "table" and data.model.display_name then
-    table.insert(parts, M.paint(p.lavender or p.text, "󰚩 " .. data.model.display_name))
-  end
-  if ctx.song and ctx.song ~= "" then
-    table.insert(parts, M.paint(p.mauve or p.text, ctx.song))
-  end
-  return table.concat(parts, SEPARATOR)
+  return M.paint(p.lavender or p.text, "󰚩 " .. data.model.display_name)
 end
 
 local function meter(label, remaining, color, p)
@@ -80,10 +64,6 @@ end
 local function meters(data, ctx)
   local p, bars = ctx.region.palette, ctx.lore.claude.bars
   local parts = {}
-  local context = context_left(data)
-  if context then
-    table.insert(parts, meter(bars.context, context, p.red, p))
-  end
   local rate_limits = data.rate_limits or {}
   local five_hour = remaining_of(rate_limits.five_hour)
   if five_hour then
@@ -98,7 +78,7 @@ end
 
 --- Renders the statusline rows Claude Code prints, one string per row.
 ---@param data table the JSON Claude Code sends on stdin
----@param ctx { lore: table, region: table, branch: string|nil, song: string|nil }
+---@param ctx { lore: table, region: table }
 ---@return string[]
 function M.render(data, ctx)
   local rows = {}

@@ -22,7 +22,7 @@ return {
 
   -- Claude Code's statusline bars and spinner (claude/install.lua merges the verbs into settings)
   claude = {
-    bars = { context = "HP", five_hour = "FP", seven_day = "ST" },
+    bars = { five_hour = "FP", seven_day = "ST" },
     verbs = {
       "Seeking grace",
       "Two-handing the bug",

@@ -75,35 +75,32 @@ describe("render", function()
     return vim.tbl_extend("force", { lore = lore, region = lore.regions[1] }, extra or {})
   end
 
-  it("shows the branch, model and song on the first row", function()
-    local rows = statusline.render(
-      MALENIA_SESSION,
-      ctx(elden, { branch = "feature/love-letter", song = "󰎈 Inde · Shared Playlist" })
-    )
-    local top = plain(rows[1])
-    assert.truthy(top:find("feature/love-letter", 1, true))
-    assert.truthy(top:find("Opus 5.5", 1, true))
-    assert.truthy(top:find("Inde · Shared Playlist", 1, true))
+  it("shows only the model on the first row", function()
+    local top = plain(statusline.render(MALENIA_SESSION, ctx(elden))[1])
+    assert.equal("󰚩 Opus 5.5", top)
   end)
 
-  it("leaves the region and the runes to the editor's statusline", function()
-    local top = plain(statusline.render(MALENIA_SESSION, ctx(elden))[1])
+  it("leaves the branch, the song, the region and the runes to the editor's statusline", function()
+    local extra = { branch = "feature/love-letter", song = "Inde · Shared Playlist" }
+    local top = plain(statusline.render(MALENIA_SESSION, ctx(elden, extra))[1])
+    assert.falsy(top:find("feature/love-letter", 1, true))
+    assert.falsy(top:find("Shared Playlist", 1, true))
     assert.falsy(top:find(haligtree.title, 1, true))
     assert.falsy(top:find("◈", 1, true))
   end)
 
-  it("draws HP, FP and stamina in the Lands Between", function()
+  it("draws FP and stamina in the Lands Between, with no HP bar", function()
     local bottom = plain(statusline.render(MALENIA_SESSION, ctx(elden))[2])
-    assert.truthy(bottom:find("HP ██████░░░░  62%", 1, true))
     assert.truthy(bottom:find("FP ████░░░░░░  40%", 1, true))
     assert.truthy(bottom:find("ST █████████░  88%", 1, true))
+    assert.falsy(bottom:find("HP", 1, true))
   end)
 
-  it("draws Claire's CONDITION as a plain bar, the ECG stays in the editor", function()
+  it("draws Claire's AMMO and HERBS without CONDITION, the ECG stays in the editor", function()
     local bottom = plain(statusline.render(MALENIA_SESSION, ctx(raccoon))[2])
-    assert.truthy(bottom:find("CONDITION ██████░░░░  62%", 1, true))
-    assert.falsy(bottom:find("Fine", 1, true))
+    assert.falsy(bottom:find("CONDITION", 1, true))
     assert.truthy(bottom:find("AMMO", 1, true))
+    assert.truthy(bottom:find("HERBS", 1, true))
   end)
 
   it("leaves out the bars a session does not report yet", function()

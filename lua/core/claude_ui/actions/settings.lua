@@ -4,7 +4,7 @@
 local M = {}
 
 M.HOOK_EVENTS = { "Stop", "StopFailure", "PermissionRequest" }
--- the song changes on its own, so the statusline also refreshes on a timer
+-- the usage limits move on their own, so the statusline also refreshes on a timer
 M.REFRESH_SECONDS = 10
 
 -- every Eldentree hook runs this script, wherever the repo or nvim live

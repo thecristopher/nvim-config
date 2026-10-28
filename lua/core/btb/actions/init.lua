@@ -2,14 +2,15 @@
 -- of a solve and how a lesson reads as a HUD item.
 local M = {}
 
--- the coach reuses sounds the franchise already has, a moment with no match stays quiet
+-- the coach reuses sounds the franchise already has, first match wins, a moment with no match
+-- stays quiet. Opening the stage rings the spirit calling bell where there is one: the coach is summoned
 M.SOUNDS = {
-  coach_open = "hud_open",
-  ready = "hud_select",
-  hint = "hud_select",
-  failed = "hud_back",
-  failed_again = "hud_back",
-  skip = "hud_close",
+  coach_open = { "summon", "hud_open" },
+  ready = { "hud_select" },
+  hint = { "hud_select" },
+  failed = { "hud_back" },
+  failed_again = { "hud_back" },
+  skip = { "hud_close" },
 }
 
 local STATE_ICONS = { mastered = "★", due = "↻", solved = "✓", started = "~", new = "·" }
@@ -25,9 +26,9 @@ function M.persona_of(lore)
   return persona
 end
 
----The franchise sound that plays for a coach event.
+---The franchise sounds that may play for a coach event, in order of preference.
 ---@param event string "coach_open" or a moment like "failed"
----@return string|nil
+---@return string[]|nil
 function M.sound_for(event)
   return M.SOUNDS[event]
 end
@@ -69,6 +70,25 @@ function M.portrait_file(config_dir, persona)
     return nil
   end
   return config_dir .. "/images/portraits/" .. persona.portrait
+end
+
+-- the portraits are 276x336 and a terminal cell is about twice as tall as it is wide
+M.PORTRAIT_COLUMNS_PER_ROW = 1.64
+
+---Where the portrait sits inside the stage's portrait window: as big as fits without stretching,
+---centered, so it reads the same on a laptop split or a wide monitor.
+---@param width integer columns of the window
+---@param height integer rows of the window
+---@return { row: integer, col: integer, width: integer, height: integer }
+function M.portrait_anchor(width, height)
+  local fit_width = math.min(width, math.floor(height * M.PORTRAIT_COLUMNS_PER_ROW + 0.5))
+  local fit_height = math.min(height, math.floor(fit_width / M.PORTRAIT_COLUMNS_PER_ROW + 0.5))
+  return {
+    row = math.floor((height - fit_height) / 2),
+    col = math.floor((width - fit_width) / 2),
+    width = math.max(1, fit_width),
+    height = math.max(1, fit_height),
+  }
 end
 
 ---How a lesson reads in the HUD: icon by state, title, level and concepts.

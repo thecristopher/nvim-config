@@ -143,7 +143,7 @@ Everything works in iTerm. Two extras are worth turning on:
 
 Every sound is made from scratch by `python3 scripts/sounds.py`: synthesized tones and noise, spoken lines from [Piper](https://github.com/OHF-Voice/piper1-gpl) (a local neural voice) with macOS `say` as the fallback, and ffmpeg for the echo and pitch, nothing sampled from the games. Run `python3 scripts/sounds.py --setup-voices` once to install Piper and its voices in `~/.local/share/eldentree`. Run it again after tweaking a recipe, or pass a franchise to rebuild only that one. `:Sound died` previews any of them.
 
-To use your own instead, drop audio files into `sounds/elden_ring/` or `sounds/resident_evil/`, named after the moment they belong to: `title`, `door`, `fog`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`, `zone`, `phantom`, `continue`, and the inventory HUD's `hud_open`, `hud_close`, `hud_move`, `hud_select`, `hud_back`. Variants like `died_2.wav` take turns. Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
+To use your own instead, drop audio files into `sounds/elden_ring/` or `sounds/resident_evil/`, named after the moment they belong to: `title`, `door`, `fog`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`, `zone`, `phantom`, `continue`, `summon` (the spirit calling bell that opens back-to-basics' coach stage), and the inventory HUD's `hud_open`, `hud_close`, `hud_move`, `hud_select`, `hud_back`. Variants like `died_2.wav` take turns. Every sound plays at 60% volume (`VOLUME` in `core/sound/actions`). Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
 
 ### Voice credits
 
@@ -284,12 +284,12 @@ nvim -l claude/install.lua --dry-run   # list what would change
 nvim -l claude/install.lua
 ```
 
-- **Statusline**: the branch, model and the song playing on top, and below them the context left plus both usage limits as the game's bars (HP, FP and stamina in the Lands Between, CONDITION, AMMO and HERBS in Raccoon City). The region, the runes and the ECG stay in the editor's statusline right under it
+- **Statusline**: the model on top and both usage limits below it as the game's bars (FP and stamina in the Lands Between, AMMO and HERBS in Raccoon City). The branch, the song, the region, the runes and the ECG stay in the editor's statusline right under it, so Claude Code keeps its room
 - **Theme**: nvim rewrites `~/.claude/themes/eldentree.json` from the region's palette on every region or franchise change, and Claude Code reloads it on the spot. Restart Claude Code once after the first install so it sees the new themes folder
 - **Spinner verbs**: every franchise's `claude.verbs`, like "Seeking grace" or "Combining herbs"
 - **Sounds**: grace when Claude finishes, died when it fails, the fog wall or the door when it asks for permission
 
-`ELDENTREE_CLAUDE_SOUND=0` mutes the sounds, `ELDENTREE_CLAUDE_MUSIC=0` drops the song from the statusline, `ELDENTREE_CIDER_TOKEN` carries Cider's token there, and `vim.g.eldentree_claude_ui = false` stops nvim from touching the theme. Organizations that set `allowManagedHooksOnly` keep the sound hooks from running, the rest still works.
+`ELDENTREE_CLAUDE_SOUND=0` mutes the sounds, and `vim.g.eldentree_claude_ui = false` stops nvim from touching the theme. Organizations that set `allowManagedHooksOnly` keep the sound hooks from running, the rest still works.
 
 ## Tests
 

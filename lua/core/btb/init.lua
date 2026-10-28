@@ -24,12 +24,8 @@ local function draw_portrait(win, file)
   if stage_win ~= win or not vim.api.nvim_win_is_valid(win) then
     return
   end
-  local anchor = {
-    row = 0,
-    col = 0,
-    width = vim.api.nvim_win_get_width(win),
-    height = vim.api.nvim_win_get_height(win),
-  }
+  local anchor =
+    actions.portrait_anchor(vim.api.nvim_win_get_width(win), vim.api.nvim_win_get_height(win))
   require("core.hud.portrait").show(win, file, anchor, "btb")
 end
 
@@ -74,9 +70,9 @@ end
 ---Plays the franchise sound that fits a coach event.
 ---@param event string
 function M.sound(event)
-  local sound = actions.sound_for(event)
-  if sound then
-    require("core.sound").play(sound)
+  local sounds = actions.sound_for(event)
+  if sounds then
+    require("core.sound").play_first(sounds)
   end
 end
 
