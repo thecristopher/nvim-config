@@ -1,6 +1,8 @@
 -- Album covers for the now playing panel: downloaded from Cider's artwork URL or saved out of
--- Music.app, once per album, into nvim's cache.
+-- Apple Music, once per album, into nvim's cache.
 local actions = require("core.music.actions")
+
+local apple = actions.apple_music(require("core.utils").platform())
 
 local M = {}
 
@@ -41,10 +43,13 @@ local function from_cider(track, base, on_done)
 end
 
 local function from_music(base, on_done)
-  -- AppleScript tells the format only after writing, so the bytes land first and get named after
+  if not apple then
+    return on_done(nil)
+  end
+  -- the player tells the format only after writing, so the bytes land first and get named after
   local partial = base .. ".part"
   vim.system(
-    actions.music_cover_command(partial),
+    apple.cover(partial),
     { text = true },
     vim.schedule_wrap(function(result)
       local extension = result.code == 0 and actions.cover_extension(result.stdout)

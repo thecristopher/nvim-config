@@ -3,12 +3,10 @@
 -- and C combines it. The hub's ambient life (shimmer, weather, the quill) runs on top of it.
 local actions = require("core.hud.actions")
 local items = require("core.hud.items")
-local motion = require("core.motion")
 
 local M = {}
 
 local ns = vim.api.nvim_create_namespace("eldentree_hud")
-local ecg_ns = vim.api.nvim_create_namespace("eldentree_hud_ecg")
 local state
 local stdin_given = false
 
@@ -63,9 +61,6 @@ local function define_highlights()
   }
   for name, look in pairs(groups) do
     vim.api.nvim_set_hl(0, name, look)
-  end
-  for _, look in pairs(require("core.ecg.actions").CONDITIONS) do
-    vim.api.nvim_set_hl(0, "EldenHudEcg" .. look.label, { fg = p[look.color], bold = true })
   end
 end
 
@@ -155,20 +150,6 @@ end
 
 -- drawing --------------------------------------------------------------------------------
 
-local function draw_ecg()
-  if not valid() or not state.anchors.ecg then
-    return
-  end
-  local anchor = state.anchors.ecg
-  local trace, label = require("core.ecg").reading()
-  vim.api.nvim_buf_clear_namespace(state.buf, ecg_ns, 0, -1)
-  vim.api.nvim_buf_set_extmark(state.buf, ecg_ns, anchor.row, 0, {
-    virt_text = { { trace, "EldenHudEcg" .. label }, { "  " .. label, "EldenHudEcg" .. label } },
-    virt_text_win_col = anchor.col,
-    priority = 250,
-  })
-end
-
 -- the stage sits in the middle of the window, the weather drifts through the margins around it
 local function frame_vertically(drawn, height)
   local top = math.max(0, math.floor((height - #drawn.lines) / 2))
@@ -253,7 +234,6 @@ function M.refresh(reload)
   else
     require("core.hud.portrait").close()
   end
-  draw_ecg()
 end
 
 -- moving around --------------------------------------------------------------------------
@@ -586,9 +566,6 @@ local function cleanup()
   if not state then
     return
   end
-  if state.monitor then
-    state.monitor:stop()
-  end
   require("core.hud.portrait").close()
   require("core.hub").stop()
   state = nil
@@ -687,16 +664,6 @@ function M.open()
   sound("hud_open")
   M.refresh(true)
   require("core.hub").start(buf)
-  -- the CONDITION monitor beats on its own, the rest of the HUD only redraws when something moves
-  state.monitor = motion.loop({
-    interval = 120,
-    on_tick = function()
-      if not valid() then
-        return false
-      end
-      draw_ecg()
-    end,
-  })
 end
 
 -- an empty start, no files and nothing piped in, opens the HUD instead of a blank buffer

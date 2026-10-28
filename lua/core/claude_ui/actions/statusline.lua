@@ -1,7 +1,7 @@
--- Claude Code's statusline in the franchise's colors: the region, branch, model, runes and song on
--- top, and below them the context left plus both usage limits drawn as the game's own bars
--- (HP, FP and stamina in the Lands Between, the CONDITION monitor in Raccoon City). Pure logic only.
-local ecg = require("core.ecg.actions")
+-- Claude Code's statusline in the franchise's colors: the branch, model and song on top, and below
+-- them the context left plus both usage limits drawn as the game's own bars (HP, FP and stamina in
+-- the Lands Between, CONDITION, AMMO and HERBS in Raccoon City). The region and the runes stay in
+-- the editor's statusline under it. Pure logic only.
 
 local M = {}
 
@@ -38,28 +38,6 @@ function M.bar(percent, width)
   return ("█"):rep(filled) .. ("░"):rep(width - filled)
 end
 
---- Reads how healthy a session is from the context it has left.
----@param remaining number percent of the context window still free
----@return string condition: fine, caution or danger
-function M.condition(remaining)
-  if remaining > 50 then
-    return "fine"
-  end
-  if remaining > 25 then
-    return "caution"
-  end
-  return "danger"
-end
-
---- Writes a number with thousands separators, like 161,150.
----@param value number
----@return string
-function M.thousands(value)
-  local text = tostring(math.floor(value))
-  local formatted = text:reverse():gsub("(%d%d%d)", "%1,"):reverse()
-  return (formatted:gsub("^,", ""))
-end
-
 local function remaining_of(limit)
   if type(limit) ~= "table" or type(limit.used_percentage) ~= "number" then
     return nil
@@ -77,15 +55,12 @@ end
 
 local function header(data, ctx)
   local p = ctx.region.palette
-  local parts = { M.paint(p.yellow, "✦ " .. ctx.region.title) }
+  local parts = {}
   if ctx.branch and ctx.branch ~= "" then
     table.insert(parts, M.paint(p.subtext0, " " .. ctx.branch))
   end
   if type(data.model) == "table" and data.model.display_name then
     table.insert(parts, M.paint(p.lavender or p.text, "󰚩 " .. data.model.display_name))
-  end
-  if ctx.runes then
-    table.insert(parts, M.paint(p.yellow, ctx.lore.currency.glyph .. " " .. M.thousands(ctx.runes)))
   end
   if ctx.song and ctx.song ~= "" then
     table.insert(parts, M.paint(p.mauve or p.text, ctx.song))
@@ -102,24 +77,11 @@ local function meter(label, remaining, color, p)
     .. M.paint(p.text, value)
 end
 
-local function heartbeat(label, remaining, p, now_ms)
-  local condition = M.condition(remaining)
-  local look = ecg.CONDITIONS[condition]
-  local color = p[look.color] or p.text
-  return M.paint(p.subtext0, label)
-    .. " "
-    .. M.paint(color, ecg.trace(condition, now_ms, M.BAR_WIDTH))
-    .. " "
-    .. M.paint(color, look.label)
-end
-
 local function meters(data, ctx)
   local p, bars = ctx.region.palette, ctx.lore.claude.bars
   local parts = {}
   local context = context_left(data)
-  if context and ctx.ecg then
-    table.insert(parts, heartbeat(bars.context, context, p, ctx.now_ms))
-  elseif context then
+  if context then
     table.insert(parts, meter(bars.context, context, p.red, p))
   end
   local rate_limits = data.rate_limits or {}
@@ -136,13 +98,14 @@ end
 
 --- Renders the statusline rows Claude Code prints, one string per row.
 ---@param data table the JSON Claude Code sends on stdin
----@param ctx { lore: table, region: table, ecg: boolean, now_ms: number, branch: string|nil, runes: number|nil, song: string|nil }
+---@param ctx { lore: table, region: table, branch: string|nil, song: string|nil }
 ---@return string[]
 function M.render(data, ctx)
-  local rows = { header(data, ctx) }
-  local bottom = meters(data, ctx)
-  if bottom ~= "" then
-    table.insert(rows, bottom)
+  local rows = {}
+  for _, row in ipairs({ header(data, ctx), meters(data, ctx) }) do
+    if row ~= "" then
+      table.insert(rows, row)
+    end
   end
   return rows
 end

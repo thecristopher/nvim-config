@@ -19,4 +19,16 @@ function M.executable_perm(perm)
   return (perm:gsub("r(.)%-", "r%1x"))
 end
 
+--- Names the OS nvim runs on, the way modules that shell out to it choose their commands.
+---@return "mac"|"windows"|"linux"
+function M.platform()
+  if vim.fn.has("mac") == 1 then
+    return "mac"
+  end
+  if vim.fn.has("win32") == 1 then
+    return "windows"
+  end
+  return "linux"
+end
+
 return M

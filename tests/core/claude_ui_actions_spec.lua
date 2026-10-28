@@ -70,49 +70,26 @@ describe("bar", function()
   end)
 end)
 
-describe("condition", function()
-  it("reads Claire as fine with most of the context left", function()
-    assert.equal("fine", statusline.condition(80))
-  end)
-
-  it("turns to caution and then danger as the context runs out", function()
-    assert.equal("caution", statusline.condition(40))
-    assert.equal("danger", statusline.condition(10))
-  end)
-end)
-
-describe("thousands", function()
-  it("groups Inde's runes by thousands", function()
-    assert.equal("161,150", statusline.thousands(161150))
-    assert.equal("999", statusline.thousands(999))
-    assert.equal("1,000,000", statusline.thousands(1000000))
-  end)
-end)
-
 describe("render", function()
   local function ctx(lore, extra)
-    return vim.tbl_extend("force", {
-      lore = lore,
-      region = lore.regions[1],
-      ecg = lore.mechanics.status == "ecg",
-      now_ms = 0,
-    }, extra or {})
+    return vim.tbl_extend("force", { lore = lore, region = lore.regions[1] }, extra or {})
   end
 
-  it("shows the region, branch, model, runes and song on the first row", function()
+  it("shows the branch, model and song on the first row", function()
     local rows = statusline.render(
       MALENIA_SESSION,
-      ctx(
-        elden,
-        { branch = "feature/love-letter", runes = 161150, song = "󰎈 Inde · Shared Playlist" }
-      )
+      ctx(elden, { branch = "feature/love-letter", song = "󰎈 Inde · Shared Playlist" })
     )
     local top = plain(rows[1])
-    assert.truthy(top:find(haligtree.title, 1, true))
     assert.truthy(top:find("feature/love-letter", 1, true))
     assert.truthy(top:find("Opus 5.5", 1, true))
-    assert.truthy(top:find("◈ 161,150", 1, true))
     assert.truthy(top:find("Inde · Shared Playlist", 1, true))
+  end)
+
+  it("leaves the region and the runes to the editor's statusline", function()
+    local top = plain(statusline.render(MALENIA_SESSION, ctx(elden))[1])
+    assert.falsy(top:find(haligtree.title, 1, true))
+    assert.falsy(top:find("◈", 1, true))
   end)
 
   it("draws HP, FP and stamina in the Lands Between", function()
@@ -122,10 +99,10 @@ describe("render", function()
     assert.truthy(bottom:find("ST █████████░  88%", 1, true))
   end)
 
-  it("puts Claire's CONDITION monitor in Raccoon City", function()
+  it("draws Claire's CONDITION as a plain bar, the ECG stays in the editor", function()
     local bottom = plain(statusline.render(MALENIA_SESSION, ctx(raccoon))[2])
-    assert.truthy(bottom:find("CONDITION", 1, true))
-    assert.truthy(bottom:find("Fine", 1, true))
+    assert.truthy(bottom:find("CONDITION ██████░░░░  62%", 1, true))
+    assert.falsy(bottom:find("Fine", 1, true))
     assert.truthy(bottom:find("AMMO", 1, true))
   end)
 

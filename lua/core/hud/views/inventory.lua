@@ -1,5 +1,5 @@
 -- The Resident Evil hub: the STATUS panel with the survivor's portrait standing tall over their name
--- and the CONDITION monitor, the item grid under plate tabs with the COMMAND menu, the DATA of the
+-- and area, the item grid under plate tabs with the COMMAND menu, the DATA of the
 -- quest you left open, and the selected item's name across the bottom like the old item banners.
 -- Everything sits centered on screen at any size. Pure: model in, rows out.
 local hud = require("core.hud.actions")
@@ -16,9 +16,8 @@ M.STATUS_MIN = 42
 M.COLUMNS = { min = 2, max = 4 }
 M.GRID_ROWS = { min = 1, max = 4 }
 M.PORTRAIT = { min = 8, max = 32 }
-M.ECG_WIDTH = 24
--- the STATUS frame around the portrait: borders, gaps, the name, the area and the CONDITION box
-M.STATUS_ROWS = 10
+-- the STATUS frame around the portrait: borders, gaps, the name and the area
+M.STATUS_ROWS = 7
 -- under the stage: a gap, the banner, two lines of description, the hints, a gap and the message
 M.FOOTER_ROWS = 7
 M.DATA_ROWS = 5
@@ -121,33 +120,12 @@ local function boxed(title, body, width, lit)
   return rows
 end
 
--- the CONDITION box leaves its inside blank, the HUD draws the live ECG over the spot
-local function condition_box(width)
-  local inner = width - 2
-  local label = "─ CONDITION "
-  return {
-    {
-      {
-        "┌" .. label .. ("─"):rep(inner - vim.api.nvim_strwidth(label)) .. "┐",
-        "EldenHudFrame",
-      },
-    },
-    {
-      { "│ ", "EldenHudFrame" },
-      { (" "):rep(inner - 1), spot = "ecg" },
-      { "│", "EldenHudFrame" },
-    },
-    { { "└" .. ("─"):rep(inner) .. "┘", "EldenHudFrame" } },
-  }
-end
-
--- a narrow screen keeps the survivor as one line over the items, with the monitor beating in it
+-- a narrow screen keeps the survivor as one line over the items
 local function status_line(model, plan)
   local status = model.status or {}
   local name = {
     { status.character and status.character:upper() or "", "EldenHudBanner" },
-    { "  ·  " .. (status.area or "") .. "   ", "EldenHudSection" },
-    { (" "):rep(M.ECG_WIDTH + 8), spot = "ecg" },
+    { "  ·  " .. (status.area or ""), "EldenHudSection" },
   }
   return { hud.center(hud.clip(name, plan.status_width), plan.status_width), {} }
 end
@@ -179,7 +157,6 @@ local function status_panel(model, plan)
     body,
     hud.center({ { hud.fit(status.area or "", inner - 2), "EldenHudSection" } }, inner)
   )
-  vim.list_extend(body, hud.indent(condition_box(inner - 2), 1))
   return boxed("STATUS", body, plan.status_width)
 end
 
@@ -395,10 +372,6 @@ function M.render(model)
 
   local cursor = spots.cursor or spots.fallback
   local anchors = {}
-  if spots.ecg then
-    anchors.ecg =
-      vim.tbl_extend("force", spots.ecg, { width = math.min(M.ECG_WIDTH, plan.status_width - 16) })
-  end
   if plan.portrait and spots.portrait then
     anchors.portrait = vim.tbl_extend("force", spots.portrait, plan.portrait)
   end

@@ -15,10 +15,17 @@ local CLAIRE_SONG = vim.json.encode({
 describe("cider_command", function()
   it("asks Cider what is playing without a token when auth is off", function()
     local cmd = actions.cider_command("now-playing", "GET", nil)
-    assert.same(
-      { "curl", "-s", "--max-time", "1", "-X", "GET", actions.CIDER_URL .. "/now-playing" },
-      cmd
-    )
+    assert.same({
+      "curl",
+      "-s",
+      "--max-time",
+      "1",
+      "-X",
+      "GET",
+      "-w",
+      "\n%{http_code}",
+      actions.CIDER_URL .. "/now-playing",
+    }, cmd)
   end)
 
   it("sends Inde's token in both header spellings", function()
@@ -26,6 +33,34 @@ describe("cider_command", function()
     assert.is_true(vim.tbl_contains(cmd, "apptoken: inde-loves-claire"))
     assert.is_true(vim.tbl_contains(cmd, "apitoken: inde-loves-claire"))
     assert.equal(actions.CIDER_URL .. "/next", cmd[#cmd])
+  end)
+end)
+
+describe("cider_answer", function()
+  it("hands over the body when Cider plays Claire's song", function()
+    local body, status = actions.cider_answer('{"status":"ok","is_playing":true}\n200')
+    assert.equal('{"status":"ok","is_playing":true}', body)
+    assert.equal(200, status)
+  end)
+
+  it("keeps the status but drops the body when Cider turns Wesker away", function()
+    local body, status = actions.cider_answer("Unauthorized\n403")
+    assert.is_nil(body)
+    assert.equal(403, status)
+  end)
+
+  it("gives nothing when Cider is closed", function()
+    assert.is_nil(actions.cider_answer(nil))
+    assert.is_nil(select(2, actions.cider_answer("\n000")))
+  end)
+end)
+
+describe("cider_refused", function()
+  it("tells a missing token from a closed Cider", function()
+    assert.is_true(actions.cider_refused(401))
+    assert.is_true(actions.cider_refused(403))
+    assert.is_false(actions.cider_refused(nil))
+    assert.is_false(actions.cider_refused(200))
   end)
 end)
 
@@ -163,6 +198,11 @@ describe("cover_extension", function()
     assert.equal("jpg", actions.cover_extension("JPEG picture"))
   end)
 
+  it("names the content types Windows reports", function()
+    assert.equal("png", actions.cover_extension("image/png"))
+    assert.equal("jpg", actions.cover_extension("image/jpeg"))
+  end)
+
   it("gives nil when the song has no cover", function()
     assert.is_nil(actions.cover_extension(""))
     assert.is_nil(actions.cover_extension(nil))
@@ -173,6 +213,20 @@ describe("music_cover_command", function()
   it("writes the cover where it is told, with quotes escaped", function()
     local script = actions.music_cover_command('/tmp/inde "mixtape"')[3]
     assert.truthy(script:find('POSIX file "/tmp/inde \\"mixtape\\""', 1, true))
+  end)
+end)
+
+describe("apple_music", function()
+  it("reaches Apple Music with AppleScript on macOS", function()
+    assert.equal("osascript", actions.apple_music("mac").status()[1])
+  end)
+
+  it("reaches Apple Music through PowerShell on Windows", function()
+    assert.equal("powershell.exe", actions.apple_music("windows").status()[1])
+  end)
+
+  it("gives nil on Linux, where only Cider plays", function()
+    assert.is_nil(actions.apple_music("linux"))
   end)
 end)
 
