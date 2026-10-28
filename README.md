@@ -30,6 +30,20 @@ And whatever Music.app or Cider is playing sits in the statusline, with the cove
 
 ![Now playing panel](images/demo/music.gif)
 
+Daily drills come from [back-to-basics](https://github.com/thecristopher/back-to-basics), coached by the franchise of the day. On Resident Evil days Claire briefs the exercise, a Bedrock one here, and every name and place in it stays in Raccoon City.
+
+![Claire briefs a Bedrock exercise](images/demo/btb_re_coach.png)
+
+Then the fight opens by hand, with the statement beside it and completion off.
+
+![The Bedrock exercise beside its statement](images/demo/btb_re_exercise.png)
+
+On Elden Ring days it is Malenia, and the exercises live in the Lands Between.
+
+![Malenia briefs a Python exercise](images/demo/btb_coach.png)
+
+![The Python exercise beside its statement](images/demo/btb_exercise.png)
+
 ## Requirements
 
 - Neovim 0.11 or newer (0.12 recommended)
@@ -289,11 +303,12 @@ CI runs them on Linux and macOS for every PR, and checks the format with `stylua
 
 ## Demos
 
-The GIFs above are recorded with [vhs](https://github.com/charmbracelet/vhs) from the tapes in `docs/tapes/`. The script builds a sandbox of made up repos so no real project shows up, then records every tape, or only the ones you name.
+The GIFs and screenshots above are recorded with [vhs](https://github.com/charmbracelet/vhs) from the tapes in `docs/tapes/`. The script builds a sandbox of made up repos so no real project shows up, plus a made up back-to-basics world (a drawn path, a forged exercise and the coach's briefing, with a fake Claude) when the clone is in `~/Documents/GitHub/back-to-basics` or `$BTB_DIR`, then records every tape, or only the ones you name.
 
 ```sh
 ./scripts/record.sh
 ./scripts/record.sh music hud
+./scripts/record.sh btb btb_re
 ```
 
 The music tape needs a song playing in Music.app or Cider while it records.

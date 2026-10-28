@@ -49,7 +49,6 @@ every session in this repo (see the style section below).
 - `lua/core/runes/`: statusline rune tally (saves and banners pay out, YOU DIED leaves a bloodstain) plus the breathing grace glyph
 - `lua/core/rest/`: after 5 idle minutes in normal mode the editor rests at a Site of Grace (`:Rest`, `vim.g.eldentree_rest_after`), any key wakes it and is swallowed
 - `lua/plugins/debug.lua`: nvim-dap with dap-view, F5/F9/F10/F11 plus `<leader>D`, js-debug and debugpy come from mason
-- `lua/plugins/back-to-basics.lua`: loads the back-to-basics plugin from `~/Documents/back-to-basics` (skipped when the clone is missing), daily drills under `<leader>k`. `User BtbResult` fires `felled` on a solve and `great` on a level up, never `died` since it closes the solution window, and `User BtbFocus` detaches Copilot
 - `lua/plugins/test.lua`: neotest (vitest, jest, pytest, plenary) under `<leader>T`, `:Trial` still owns the whole suite verdict
 - Cursor colors follow the mode through `guicursor` and the `EldenCursor*` groups, smear-cursor follows them too
 - `lua/core/lint/`: decides which nvim-lint linters can run (installed, and selene only with a `selene.toml`)
@@ -60,7 +59,7 @@ every session in this repo (see the style section below).
 - Tests: `./scripts/test.sh` (plenary busted, specs in `tests/`)
 - CI (`.github/workflows/ci.yml`) runs the specs on Linux and macOS and `stylua --check lua tests init.lua`, so run `stylua lua tests init.lua` after editing Lua
 - `.luarc.json` gives lua_ls outside nvim the same globals as `lua/plugins/lsp.lua`, keep both lists in sync
-- README GIFs: `./scripts/record.sh [tape...]` records `docs/tapes/*.tape` with vhs into `images/demo/`, inside a sandbox of made up repos (`docs/tapes/demo.lua` pins the franchise and silences sound). Never record with real repos, the repo is public
+- README GIFs: `./scripts/record.sh [tape...]` records `docs/tapes/*.tape` with vhs into `images/demo/`, inside a sandbox of made up repos (`docs/tapes/demo.lua` pins the franchise and silences sound), and a back-to-basics world built by `scripts/demo-sandbox.mjs` in the clone that `btb` and `btb_re` record with). Never record with real repos, the repo is public
 
 ---
 

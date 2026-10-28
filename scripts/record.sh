@@ -26,11 +26,19 @@ make_repo() {
   git -C "$dir" -c user.name="Malenia" -c user.email="malenia@haligtree.co" commit -q -m "Plant the first seed"
 }
 
-make_repo haligtree "write Inde a love note before the anniversary"
+make_repo haligtree "write Malenia a love note before the anniversary"
 make_repo raccoon-city "Claire still needs the shared playlist"
 make_repo stormveil "find a better gate than the front one"
 make_repo spencer-mansion "file the crest keys by room"
 make_repo leyndell "polish the golden tree"
+
+# back-to-basics gets its own made up world too: a drawn path, a forged exercise and the coach's
+# briefing, with a fake Claude, so no real progress shows up and nothing calls Claude
+btb_dir="${BTB_DIR:-$HOME/Documents/GitHub/back-to-basics}"
+if [ -f "$btb_dir/scripts/demo-sandbox.mjs" ]; then
+  export DEMO_BTB_RE=$(node "$btb_dir/scripts/demo-sandbox.mjs" "$sandbox/btb/re" claire llm throttled-converse)
+  export DEMO_BTB_ER=$(node "$btb_dir/scripts/demo-sandbox.mjs" "$sandbox/btb/er" malenia python word-frequency)
+fi
 
 export DEMO_ROOTS="$sandbox/repos"
 export DEMO_REPO="$sandbox/repos/haligtree"
