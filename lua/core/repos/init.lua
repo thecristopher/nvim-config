@@ -117,6 +117,10 @@ end
 function M.scan(on_done)
   local roots = M.roots()
   if #roots == 0 then
+    -- whoever waits on the scan still hears back, so a progress bar never spins forever
+    if on_done then
+      on_done({})
+    end
     return
   end
 
@@ -410,8 +414,13 @@ function M.setup()
     { desc = "Open a folder with the tree" }
   )
   vim.api.nvim_create_user_command("ReposRescan", function()
+    local task = require("core.progress").start({
+      id = "eldentree_repos",
+      title = "Repos",
+      message = "Scanning for repositories…",
+    })
     M.scan(function(repos)
-      vim.notify(("Found %d repositories"):format(#repos), vim.log.levels.INFO)
+      task:done(("Found %d repositories"):format(#repos))
     end)
   end, { desc = "Rescan repository folders" })
 end

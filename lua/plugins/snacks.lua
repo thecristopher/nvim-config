@@ -9,6 +9,9 @@ return {
       -- the start screen is the inventory HUD (core/hud), this stays off so the two never fight
       dashboard = { enabled = false },
 
+      -- long messages wrap inside the notification instead of running off its edge
+      styles = { notification = { wo = { wrap = true } } },
+
       -- ── Notifications ──────────────────────────────────────────────
       notifier = {
         enabled = true,

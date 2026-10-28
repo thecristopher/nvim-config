@@ -220,6 +220,9 @@ end
 
 --- Redraws the HUD, and gathers its items again first when reload is true.
 ---@param reload boolean|nil
+-- another float can ask for the portrait to step aside, the terminal paints images over every window
+local portrait_hidden = false
+
 function M.refresh(reload)
   if not valid() then
     return
@@ -245,7 +248,7 @@ function M.refresh(reload)
   end
   paint(drawn.lines, drawn.marks)
   place_cursor(drawn.lines, drawn.cursor)
-  if drawn.anchors.portrait then
+  if drawn.anchors.portrait and not portrait_hidden then
     require("core.hud.portrait").show(state.win, portrait_file(), drawn.anchors.portrait)
   else
     require("core.hud.portrait").close()
@@ -538,6 +541,7 @@ local function map_keys(buf)
     "m",
     "q",
     "a",
+    "b",
     "1",
     "2",
     "3",
@@ -644,6 +648,15 @@ local function watch(buf)
       end)
     end,
   })
+end
+
+--- Hides the champion's portrait while something else is drawn over the HUD, and brings it back.
+---@param hidden boolean
+function M.hide_portrait(hidden)
+  portrait_hidden = hidden
+  if valid() then
+    M.refresh()
+  end
 end
 
 --- Opens the HUD in the current window.

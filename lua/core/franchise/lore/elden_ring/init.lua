@@ -17,6 +17,9 @@ return {
 
   currency = { glyph = "◈", stain = "󰈸" },
 
+  -- back-to-basics: who coaches the daily drills and what the HUD calls them
+  coach = { persona = "malenia", training = "Sparring", lessons = "Battle Notes" },
+
   -- Claude Code's statusline bars and spinner (claude/install.lua merges the verbs into settings)
   claude = {
     bars = { context = "HP", five_hour = "FP", seven_day = "ST" },

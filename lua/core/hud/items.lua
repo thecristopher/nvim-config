@@ -464,12 +464,19 @@ function M.exit()
   }
 end
 
+--- The back-to-basics lessons fought so far, empty when the plugin is not around.
+---@return table[]
+function M.lessons()
+  local ok, btb = pcall(require, "core.btb")
+  return ok and btb.hud_items() or {}
+end
+
 --- Builds the tabs a HUD style shows.
 ---@param style string "roundtable" or "inventory"
 ---@return table[] tabs, table|nil chest
 function M.tabs(style)
   if style == "inventory" then
-    local files = vim.list_extend(M.recent(18), M.messages())
+    local files = vim.list_extend(vim.list_extend(M.recent(18), M.messages()), M.lessons())
     return {
       { title = "ITEM", items = M.actions() },
       { title = "KEYS", items = M.git() },
@@ -486,6 +493,11 @@ function M.tabs(style)
     { title = "Key Items", icon = "󰌆", items = M.git() },
     { title = "Messages", icon = "✎", items = M.messages() },
     { title = "Regions", icon = "◈", items = M.regions() },
+    {
+      title = require("core.franchise").current().coach.lessons,
+      icon = "󰂺",
+      items = M.lessons(),
+    },
   }, { title = words().sites, items = M.projects() }
 end
 

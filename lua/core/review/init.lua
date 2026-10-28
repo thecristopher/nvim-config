@@ -57,62 +57,53 @@ local function open_report(pr, analysis)
   end, { buffer = buf, desc = "Open PR diff" })
 end
 
-local function analyze(pr, diff)
-  notify(("Claude is reading PR #%d…"):format(pr.number))
-  local start = vim.uv.now()
-  local timer = vim.uv.new_timer()
-  timer:start(
-    6000,
-    6000,
-    vim.schedule_wrap(function()
-      notify(
-        ("Claude is reading PR #%d… (%ds)"):format(
-          pr.number,
-          math.floor((vim.uv.now() - start) / 1000)
-        )
-      )
-    end)
-  )
-
+local function analyze(pr, diff, task)
+  task:update(("Claude is reading PR #%d…"):format(pr.number))
   local prompt = actions.build_prompt(pr, diff, vim.g.eldentree_review_lang)
   require("core.claude").run(prompt, function(res)
-    timer:stop()
-    timer:close()
     if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
-      return notify(
-        "Claude could not analyze the PR: " .. vim.trim(res.stderr or "unknown error"),
-        vim.log.levels.ERROR
+      return task:fail(
+        "Claude could not analyze the PR: " .. vim.trim(res.stderr or "unknown error")
       )
     end
-    notify(("PR #%d analyzed"):format(pr.number))
+    task:done(("PR #%d analyzed"):format(pr.number))
     open_report(pr, res.stdout)
   end)
 end
 
 function M.review(number)
-  notify(("Fetching PR #%d…"):format(number))
+  local task = require("core.progress").start({
+    id = "eldentree_review",
+    title = "Review",
+    message = ("Fetching PR #%d…"):format(number),
+  })
   gh({ "pr", "view", tostring(number), "--json", PR_FIELDS }, function(view)
     if view.code ~= 0 then
-      return notify(vim.trim(view.stderr or "gh pr view failed"), vim.log.levels.ERROR)
+      return task:fail(vim.trim(view.stderr or "gh pr view failed"))
     end
     local ok, pr = pcall(vim.json.decode, view.stdout)
     if not ok or type(pr) ~= "table" then
-      return notify("Could not read the PR details from gh", vim.log.levels.ERROR)
+      return task:fail("Could not read the PR details from gh")
     end
 
+    task:update(("Fetching the diff of PR #%d…"):format(number))
     gh({ "pr", "diff", tostring(number), "--color=never" }, function(diff)
       if diff.code ~= 0 or vim.trim(diff.stdout or "") == "" then
-        return notify(
-          vim.trim(diff.stderr or "") ~= "" and vim.trim(diff.stderr) or "This PR has no diff",
-          vim.log.levels.ERROR
+        return task:fail(
+          vim.trim(diff.stderr or "") ~= "" and vim.trim(diff.stderr) or "This PR has no diff"
         )
       end
-      analyze(pr, diff.stdout)
+      analyze(pr, diff.stdout, task)
     end)
   end)
 end
 
 local function pick_pr()
+  local task = require("core.progress").start({
+    id = "eldentree_review",
+    title = "Review",
+    message = "Looking for open PRs…",
+  })
   gh({
     "pr",
     "list",
@@ -124,13 +115,15 @@ local function pick_pr()
     "number,title,author,headRefName",
   }, function(res)
     if res.code ~= 0 then
-      return notify(vim.trim(res.stderr or "gh pr list failed"), vim.log.levels.ERROR)
+      return task:fail(vim.trim(res.stderr or "gh pr list failed"))
     end
     local ok, prs = pcall(vim.json.decode, res.stdout)
     local items = actions.picker_items(ok and prs or {})
     if #items == 0 then
-      return notify("No open PRs in this repo", vim.log.levels.WARN)
+      task:done("No open PRs in this repo")
+      return
     end
+    task:done(("%d open PRs"):format(#items))
 
     require("snacks").picker.pick({
       title = "Review which PR?",

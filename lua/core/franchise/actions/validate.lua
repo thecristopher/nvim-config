@@ -40,6 +40,8 @@ M.SKIN = { "border", "ornament", "statusline", "tabs", "signs", "dashboard", "ti
 M.MUSIC_SKIN = { "bar", "divider", "sung" }
 M.MUSIC_WORDS = { "title", "loading", "missing", "instrumental" }
 M.LISTS = { "hub_messages", "message_templates", "places", "item_categories" }
+-- back-to-basics reads the coach's persona and the names the HUD gives the drills
+M.COACH = { "persona", "training", "lessons" }
 
 M.WORDS = {
   "traveler",
@@ -168,6 +170,7 @@ function M.problems(lore, portrait_exists)
   missing_keys(lore.mechanics, M.MECHANICS, "mechanics", problems)
   missing_keys(lore.skin, M.SKIN, "skin", problems)
   missing_keys(lore, M.LISTS, "lore", problems)
+  missing_keys(lore.coach, M.COACH, "coach", problems)
   check_words(lore, problems)
   check_music(lore, problems)
   check_regions(lore, portrait_exists, problems)

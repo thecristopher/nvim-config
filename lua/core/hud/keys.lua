@@ -95,6 +95,15 @@ function M.keys()
       end,
       slot = "Config",
     },
+    {
+      icon = "󰑮 ",
+      key = "b",
+      desc = require("core.franchise").current().coach.training,
+      action = function()
+        require("back-to-basics").lesson()
+      end,
+      slot = "Training",
+    },
     { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", slot = "Lazy" },
     { icon = "󰏗 ", key = "m", desc = "Mason", action = ":Mason", slot = "Mason" },
     { icon = "󰐥 ", key = "q", desc = "Quit", action = ":qa", slot = "Quit" },

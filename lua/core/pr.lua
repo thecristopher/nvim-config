@@ -57,37 +57,40 @@ local function unpushed_count()
   return tonumber(vim.trim(out)) or 0
 end
 
-local function commit_log(base_r, branch)
-  local out =
-    vim.fn.system({ "git", "log", "--reverse", "--format=- %s", base_r .. ".." .. branch })
-  if vim.v.shell_error ~= 0 then
-    return ""
-  end
-  return vim.trim(out)
+-- runs a command off the main loop and hands back its stdout, nil when it failed
+local function output_of(cmd, cb)
+  vim.system(
+    cmd,
+    { text = true },
+    vim.schedule_wrap(function(res)
+      cb(res.code == 0 and res.stdout or nil)
+    end)
+  )
 end
 
-local function diff_context(base_r, branch)
-  local diff = vim.fn.system({ "git", "diff", base_r .. "..." .. branch })
-  if vim.v.shell_error ~= 0 then
-    return ""
-  end
-  if #diff > MAX_DIFF then
-    local stat = vim.fn.system({ "git", "diff", base_r .. "..." .. branch, "--stat" })
-    return vim.trim(stat) .. "\n\n[diff too large to include in full; showing stat only]"
-  end
-  return diff
+local function commit_log(base_r, branch, cb)
+  output_of({ "git", "log", "--reverse", "--format=- %s", base_r .. ".." .. branch }, function(out)
+    cb(vim.trim(out or ""))
+  end)
 end
 
-local function existing_pr(branch)
-  local out = vim.fn.system({ "gh", "pr", "view", branch, "--json", "number,url" })
-  if vim.v.shell_error ~= 0 then
-    return nil
-  end
-  local ok, decoded = pcall(vim.json.decode, out)
-  if not ok or type(decoded) ~= "table" then
-    return nil
-  end
-  return decoded
+local function diff_context(base_r, branch, cb)
+  output_of({ "git", "diff", base_r .. "..." .. branch }, function(diff)
+    if not diff or #diff <= MAX_DIFF then
+      return cb(diff or "")
+    end
+    output_of({ "git", "diff", base_r .. "..." .. branch, "--stat" }, function(stat)
+      cb(vim.trim(stat or "") .. "\n\n[diff too large to include in full; showing stat only]")
+    end)
+  end)
+end
+
+-- asks GitHub, the slow one of the three, whether this branch already has a PR
+local function existing_pr(branch, cb)
+  output_of({ "gh", "pr", "view", branch, "--json", "number,url" }, function(out)
+    local ok, decoded = pcall(vim.json.decode, out or "")
+    cb(ok and type(decoded) == "table" and decoded or nil)
+  end)
 end
 
 -- ── Branch/preview pickers (Snacks) ─────────────────────────────────────────
@@ -192,20 +195,17 @@ end
 -- ── Claude draft (async — this is the slow step) ────────────────────────────
 
 local function draft_via_claude(prompt, cb)
-  notify_info("Drafting PR description with Claude…")
-  local start = vim.uv.now()
-  local timer = vim.uv.new_timer()
-  timer:start(
-    6000,
-    6000,
-    vim.schedule_wrap(function()
-      local secs = math.floor((vim.uv.now() - start) / 1000)
-      notify_info(("Drafting PR description with Claude… (%ds elapsed)"):format(secs))
-    end)
-  )
+  local task = require("core.progress").start({
+    id = "pr_helper",
+    title = "PR Helper",
+    message = "Drafting PR description with Claude…",
+  })
   require("core.claude").run(prompt, function(res)
-    timer:stop()
-    timer:close()
+    if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
+      task:fail("Claude could not draft the PR")
+    else
+      task:done("Draft ready")
+    end
     cb(res)
   end)
 end
@@ -265,6 +265,89 @@ end
 
 -- ── Submit: push if needed, then gh pr create/edit ──────────────────────────
 
+-- runs a step without blocking the editor, so the progress bar keeps moving
+local function step(cmd, on_ok, on_fail)
+  vim.system(
+    cmd,
+    { text = true },
+    vim.schedule_wrap(function(res)
+      if res.code ~= 0 then
+        return on_fail(vim.trim((res.stderr or "") .. (res.stdout or "")))
+      end
+      on_ok(vim.trim(res.stdout or ""))
+    end)
+  )
+end
+
+-- the push this branch needs before GitHub can see it, nil when it is already there
+local function push_plan(branch)
+  if not has_upstream() then
+    local asked = ("Branch '%s' has no upstream. Push to origin now?"):format(branch)
+    return { "git", "push", "-u", "origin", branch }, asked
+  end
+  local ahead = unpushed_count()
+  if ahead == 0 then
+    return nil
+  end
+  return { "git", "push" },
+    ("Push %d unpushed commit(s) on '%s' to origin now?"):format(ahead, branch)
+end
+
+local function gh_command(ctx, title, body_file)
+  if ctx.pr then
+    return {
+      "gh",
+      "pr",
+      "edit",
+      tostring(ctx.pr.number),
+      "--title",
+      title,
+      "--body-file",
+      body_file,
+    }
+  end
+  return {
+    "gh",
+    "pr",
+    "create",
+    "--title",
+    title,
+    "--body-file",
+    body_file,
+    "--base",
+    ctx.base,
+    "--head",
+    ctx.branch,
+  }
+end
+
+local function published(buf, ctx, title, url)
+  vim.bo[buf].modified = false
+  require("core.banner").show("great", { subtitle = title })
+  vim.schedule(function()
+    pcall(vim.api.nvim_win_close, 0, true)
+    pcall(vim.api.nvim_buf_delete, buf, { force = true })
+  end)
+  return ctx.pr and ("Updated PR #%d: %s"):format(ctx.pr.number, url)
+    or ("Created PR: %s"):format(url)
+end
+
+local function publish(buf, ctx, title, body, task)
+  task:update(
+    ctx.pr and ("Updating PR #%d on GitHub…"):format(ctx.pr.number) or "Creating PR on GitHub…"
+  )
+  local tmp = vim.fn.tempname()
+  vim.fn.writefile(vim.split(body, "\n", { plain = true }), tmp)
+  step(gh_command(ctx, title, tmp), function(out)
+    vim.fn.delete(tmp)
+    task:done(published(buf, ctx, title, ctx.pr and ctx.pr.url or out))
+  end, function(err)
+    vim.fn.delete(tmp)
+    task:fail(("gh pr %s failed:\n%s"):format(ctx.pr and "edit" or "create", err))
+    require("core.banner").show("died", { subtitle = "the pull request did not survive" })
+  end)
+end
+
 function M.submit(buf)
   local ctx = drafts[buf]
   if not ctx then
@@ -277,101 +360,24 @@ function M.submit(buf)
     notify_err("PR title can't be empty.")
     return
   end
-  local body_lines = {}
-  for i = 3, #lines do
-    body_lines[#body_lines + 1] = lines[i]
-  end
-  local body = vim.trim(table.concat(body_lines, "\n"))
+  local body = vim.trim(table.concat(vim.list_slice(lines, 3), "\n"))
 
-  if not has_upstream() then
-    if
-      vim.fn.confirm(
-        ("Branch '%s' has no upstream. Push to origin now?"):format(ctx.branch),
-        "&Yes\n&Cancel",
-        1
-      ) ~= 1
-    then
-      return
-    end
-    notify_info(("Pushing '%s' to origin…"):format(ctx.branch))
-    if not git_ok({ "push", "-u", "origin", ctx.branch }) then
-      notify_err("git push failed.")
-      return
-    end
-    notify_info("Push complete.")
-  else
-    local ahead = unpushed_count()
-    if ahead > 0 then
-      if
-        vim.fn.confirm(
-          ("Push %d unpushed commit(s) on '%s' to origin now?"):format(ahead, ctx.branch),
-          "&Yes\n&Cancel",
-          1
-        ) ~= 1
-      then
-        return
-      end
-      notify_info(("Pushing %d commit(s) to origin…"):format(ahead))
-      if not git_ok({ "push" }) then
-        notify_err("git push failed.")
-        return
-      end
-      notify_info("Push complete.")
-    end
-  end
-
-  notify_info(
-    ctx.pr and ("Updating PR #%d on GitHub…"):format(ctx.pr.number) or "Creating PR on GitHub…"
-  )
-  local tmp = vim.fn.tempname()
-  vim.fn.writefile(vim.split(body, "\n", { plain = true }), tmp)
-
-  local out
-  if ctx.pr then
-    out = vim.fn.system({
-      "gh",
-      "pr",
-      "edit",
-      tostring(ctx.pr.number),
-      "--title",
-      title,
-      "--body-file",
-      tmp,
-    })
-  else
-    out = vim.fn.system({
-      "gh",
-      "pr",
-      "create",
-      "--title",
-      title,
-      "--body-file",
-      tmp,
-      "--base",
-      ctx.base,
-      "--head",
-      ctx.branch,
-    })
-  end
-  local ok = vim.v.shell_error == 0
-  vim.fn.delete(tmp)
-
-  if not ok then
-    notify_err(("gh pr %s failed:\n%s"):format(ctx.pr and "edit" or "create", out))
-    require("core.banner").show("died", { subtitle = "the pull request did not survive" })
+  local push, question = push_plan(ctx.branch)
+  if push and vim.fn.confirm(question, "&Yes\n&Cancel", 1) ~= 1 then
     return
   end
-
-  vim.bo[buf].modified = false
-  local url = ctx.pr and ctx.pr.url or vim.trim(out)
-  notify_info(
-    ctx.pr and ("Updated PR #%d: %s"):format(ctx.pr.number, url) or ("Created PR: %s"):format(url)
-  )
-  require("core.banner").show("great", { subtitle = title })
-
-  vim.schedule(function()
-    pcall(vim.api.nvim_win_close, 0, true)
-    pcall(vim.api.nvim_buf_delete, buf, { force = true })
+  local task = require("core.progress").start({
+    id = "pr_helper",
+    title = "PR Helper",
+    message = push and ("Pushing '%s' to origin…"):format(ctx.branch) or "Talking to GitHub…",
+  })
+  if not push then
+    return publish(buf, ctx, title, body, task)
+  end
+  step(push, function()
+    publish(buf, ctx, title, body, task)
+  end, function(err)
+    task:fail("git push failed:\n" .. err)
   end)
 end
 
@@ -424,22 +430,37 @@ end
 
 -- Runs once source + destination are both chosen: prepares context, shows the
 -- diff preview, asks for an optional vibe, then hands off to do_draft.
-local function proceed(branch, base)
-  local base_r = base_ref(base)
-  notify_info("Preparing diff context…")
-  local log = commit_log(base_r, branch)
-  if log == "" then
-    return notify_err(("No commits ahead of '%s'."):format(base))
-  end
-  local diff = diff_context(base_r, branch)
-  local pr = existing_pr(branch)
-
+local function ask_vibe_and_draft(branch, base, base_r, log, diff, pr)
   preview_diff(base_r, branch, base, function()
     vim.ui.input({ prompt = "Vibe? (optional, Enter to skip): " }, function(vibe)
       if vibe == nil then
         return
       end
       do_draft(branch, base, log, diff, pr, vim.trim(vibe))
+    end)
+  end)
+end
+
+local function proceed(branch, base)
+  local base_r = base_ref(base)
+  local task = require("core.progress").start({
+    id = "pr_helper",
+    title = "PR Helper",
+    message = "Reading the commits…",
+    fraction = 0,
+  })
+  commit_log(base_r, branch, function(log)
+    if log == "" then
+      return task:fail(("No commits ahead of '%s'."):format(base))
+    end
+    task:update("Reading the diff…", 1 / 3)
+    diff_context(base_r, branch, function(diff)
+      task:update("Asking GitHub for an open PR…", 2 / 3)
+      existing_pr(branch, function(pr)
+        task:update(nil, 1)
+        task:done("Diff context ready")
+        ask_vibe_and_draft(branch, base, base_r, log, diff, pr)
+      end)
     end)
   end)
 end
