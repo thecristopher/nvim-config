@@ -24,13 +24,17 @@ local function branch(dir)
   return stdout and vim.trim(stdout) or nil
 end
 
-local function cider_track()
+local function cider(route)
   local token = vim.env.ELDENTREE_CIDER_TOKEN
-  local playing = music.parse_cider_playing(output(music.cider_command("is-playing", "GET", token)))
+  return music.cider_answer(output(music.cider_command(route, "GET", token)))
+end
+
+local function cider_track()
+  local playing = music.parse_cider_playing(cider("is-playing"))
   if playing == nil then
     return nil
   end
-  return music.parse_cider_track(output(music.cider_command("now-playing", "GET", token)), playing)
+  return music.parse_cider_track(cider("now-playing"), playing)
 end
 
 local function song()
@@ -39,8 +43,9 @@ local function song()
   end
   ---@type table|nil
   local track = cider_track()
-  if not track and vim.fn.has("mac") == 1 then
-    track = music.parse_music(output(music.music_status_command()))
+  local apple = music.apple_music(require("core.utils").platform())
+  if not track and apple then
+    track = music.parse_music(output(apple.status()))
   end
   return track and music.label(track, require("core.claude_ui.actions.statusline").SONG_WIDTH)
     or nil

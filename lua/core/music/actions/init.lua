@@ -1,6 +1,6 @@
--- Music: what is playing in Cider (any OS, through its local REST API) or Music.app (macOS, through
--- AppleScript), and the commands that drive them. Pure building and parsing only, so it can be
--- tested headless without either player open.
+-- Music: what is playing in Cider (any OS, through its local REST API) or Apple Music (AppleScript
+-- on macOS, the system media controls on Windows), and the commands that drive them. Pure building
+-- and parsing only, so it can be tested headless without either player open.
 local M = {}
 
 M.CIDER_URL = "http://localhost:10767/api/v1/playback"
@@ -25,8 +25,32 @@ function M.cider_command(route, method, token)
     -- the docs say apptoken and some clients send apitoken, both cost nothing
     vim.list_extend(cmd, { "-H", "apptoken: " .. token, "-H", "apitoken: " .. token })
   end
-  table.insert(cmd, M.CIDER_URL .. "/" .. route)
+  -- the status code goes on its own last line, so a refused token can be told from a closed Cider
+  vim.list_extend(cmd, { "-w", "\n%{http_code}", M.CIDER_URL .. "/" .. route })
   return cmd
+end
+
+--- Splits what curl printed for a Cider route into the body and the HTTP status.
+---@param stdout string|nil
+---@return string|nil body, nil unless Cider answered with a 2xx
+---@return integer|nil status, nil when Cider did not answer at all
+function M.cider_answer(stdout)
+  local body, status = (stdout or ""):match("^(.*)\n(%d%d%d)%s*$")
+  status = tonumber(status)
+  if not status or status == 0 then
+    return nil, nil
+  end
+  if status < 200 or status > 299 then
+    return nil, status
+  end
+  return body, status
+end
+
+--- Tells whether Cider turned the request away for a missing or wrong token.
+---@param status integer|nil from cider_answer
+---@return boolean
+function M.cider_refused(status)
+  return status == 401 or status == 403
 end
 
 --- Fills the size placeholders Apple Music leaves in artwork URLs.
@@ -165,6 +189,29 @@ function M.music_cover_command(path)
   return { "osascript", "-e", MUSIC_COVER:format(quoted) }
 end
 
+--- Picks the commands that reach Apple Music on this OS: AppleScript on macOS, the system media
+--- controls on Windows.
+---@param platform string from core.utils.platform
+---@return { status: fun(): string[], control: fun(control: string): string[]|nil, cover: fun(path: string): string[] }|nil apple, nil where Apple Music cannot be reached
+function M.apple_music(platform)
+  if platform == "mac" then
+    return {
+      status = M.music_status_command,
+      control = M.music_control_command,
+      cover = M.music_cover_command,
+    }
+  end
+  if platform == "windows" then
+    local windows = require("core.music.actions.windows")
+    return {
+      status = windows.status_command,
+      control = windows.control_command,
+      cover = windows.cover_command,
+    }
+  end
+  return nil
+end
+
 --- Reads the image extension at the end of a cover URL.
 ---@param url string
 ---@return string jpg when the URL does not say
@@ -173,8 +220,8 @@ function M.url_extension(url)
   return extension and extension:lower() or "jpg"
 end
 
---- Turns the format AppleScript reports for a cover into a file extension.
----@param format string|nil like "«class PNG »" or "JPEG picture"
+--- Turns the format a player reports for a cover into a file extension.
+---@param format string|nil like "«class PNG »", "JPEG picture" or "image/png"
 ---@return string|nil
 function M.cover_extension(format)
   format = (format or ""):upper()

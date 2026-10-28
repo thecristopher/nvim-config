@@ -26,7 +26,7 @@ Banners land on commits, PRs, test runs and felled bosses. When you die, the cod
 
 ![Banners](images/demo/banner.gif)
 
-And whatever Music.app or Cider is playing sits in the statusline, with the cover a keypress away.
+And whatever Apple Music or Cider is playing sits in the statusline, with the cover a keypress away.
 
 ![Now playing panel](images/demo/music.gif)
 
@@ -91,7 +91,7 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 | `core/sound`     | Plays your own sounds from `sounds/<franchise>/` for titles, doors, deaths and the merchant                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `core/themes`    | Region palettes from the franchise in use (eleven in Elden Ring, seven in Resident Evil). One region per day, the same in every repo and every launch. Picking another with `<leader>ut` holds until midnight, and traveling between repos never changes it. Pin one with `vim.g.eldentree_region`                                                                                                                                                                                                                                                                                   |
 | `core/phantom`   | `<leader>gw` shows who last wrote the line as a phantom: blue for others, gold for your past self                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `core/music`     | The song playing in Cider (macOS, Windows, Linux) or Music.app (macOS) sits in the statusline. `<leader>o` or a click on it opens a now playing panel with the album cover, `p` plays or pauses, `n` and `b` skip. Cider needs its API on in Settings > Connectivity, and `vim.g.eldentree_cider_token` when it asks for a token. `vim.g.eldentree_music = false` turns it off                                                                                                                                                                                                       |
+| `core/music`     | The song playing in Cider (macOS, Windows, Linux) or Apple Music (macOS, Windows) sits in the statusline. `<leader>o` or a click on it opens a now playing panel with the album cover, `p` plays or pauses, `n` and `b` skip. Cider needs its API on in Settings > Connectivity, and `vim.g.eldentree_cider_token` when it asks for a token (nvim warns once when Cider refuses it). On Windows, Apple Music is read through the system media controls with Windows PowerShell. `vim.g.eldentree_music = false` turns it off                                                                    |
 | `core/btb`       | Brings [back-to-basics](https://github.com/thecristopher/back-to-basics) in: daily drills by hand, coached by the franchise (Claire in Resident Evil, Malenia in Elden Ring) on a stage with their portrait. Clean solves fell the enemy, level ups bring the great banner, XP pays runes, and the lessons you fought fill the HUD. `b` on the HUD or `<leader>kk` starts the lesson. Needs the clone in `~/Documents/GitHub/back-to-basics` or `vim.g.eldentree_btb_dir`                                                                                                            |
 | `core/zones`     | The first time you walk into a folder each session, it is announced like a new area of the Lands Between                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `core/snapshot`  | `<leader>cp` / `:Snapshot` saves the buffer or selection as a framed PNG in the region's colors and copies it                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
@@ -268,7 +268,7 @@ On macOS, F11 shows the desktop unless "Use F1, F2, etc. keys as standard functi
 | `:Boss`                                        | Toggle boss fights                       |
 | `:Phantom`                                     | Who wrote the line under the cursor      |
 | `:Snapshot`                                    | Save a framed PNG of the buffer or range |
-| `:Music [playpause\|next\|previous]`           | Control Cider or Music without the panel |
+| `:Music [playpause\|next\|previous]`           | Control Cider or Apple Music without the panel |
 | `:Copilot auth`                                | Sign in to GitHub Copilot once           |
 | `:VimBeGood`                                   | Practice vim motions as a game           |
 | `:GrugFar`                                     | Find and replace across the project      |
@@ -311,4 +311,4 @@ The GIFs and screenshots above are recorded with [vhs](https://github.com/charmb
 ./scripts/record.sh btb btb_re
 ```
 
-The music tape needs a song playing in Music.app or Cider while it records.
+The music tape needs a song playing in Apple Music or Cider while it records.

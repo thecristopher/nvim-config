@@ -1,7 +1,7 @@
--- The soundtrack of the run: shows what Cider or Music.app is playing in the statusline and drives
+-- The soundtrack of the run: shows what Cider or Apple Music plays in the statusline and drives
 -- play/pause, next and previous from a panel with the album cover. Cider is asked first because it
--- runs on every OS, Music.app only on macOS. `vim.g.eldentree_music = false` turns it off,
--- `vim.g.eldentree_cider_token` carries Cider's API token when its auth is on.
+-- runs on every OS, Apple Music after it on macOS and Windows. `vim.g.eldentree_music = false`
+-- turns it off, `vim.g.eldentree_cider_token` carries Cider's API token when its auth is on.
 local actions = require("core.music.actions")
 local panel = require("core.music.panel")
 
@@ -9,11 +9,12 @@ local M = {}
 
 local POLL_MS = 3000
 local MAX_TEXT = 40
-local is_mac = vim.fn.has("mac") == 1
+local apple = actions.apple_music(require("core.utils").platform())
 
 local timer
 local polling = false
 local now = { source = nil, track = nil, label = "", polled_at = 0 }
+local warned_token = false
 
 local function enabled()
   return vim.g.eldentree_music ~= false
@@ -35,7 +36,7 @@ local function run(cmd, on_done)
       on_done(result.code == 0 and result.stdout or nil)
     end)
   )
-  -- curl or osascript missing on this machine reads as a closed player
+  -- curl, osascript or powershell missing on this machine reads as a closed player
   if not ok then
     on_done(nil)
   end
@@ -58,26 +59,41 @@ local function show(source, track, asked_at)
 end
 
 local function ask_music()
-  if not is_mac then
+  if not apple then
     return show(nil, nil)
   end
   local asked_at = vim.uv.now()
-  run(actions.music_status_command(), function(stdout)
+  run(apple.status(), function(stdout)
     local track = actions.parse_music(stdout)
     show(track and "music" or nil, track, asked_at)
   end)
 end
 
+-- a refused token looks just like a closed Cider from the statusline, so it gets said once
+local function warn_refused(status)
+  if warned_token or not actions.cider_refused(status) then
+    return
+  end
+  warned_token = true
+  vim.notify(
+    "Cider refused the token, set vim.g.eldentree_cider_token or turn its auth off",
+    vim.log.levels.WARN,
+    { title = "Music" }
+  )
+end
+
 local function ask_cider()
   local token = vim.g.eldentree_cider_token
-  run(actions.cider_command("is-playing", "GET", token), function(body)
+  run(actions.cider_command("is-playing", "GET", token), function(stdout)
+    local body, status = actions.cider_answer(stdout)
+    warn_refused(status)
     local playing = actions.parse_cider_playing(body)
     if playing == nil then
       return ask_music()
     end
     local asked_at = vim.uv.now()
-    run(actions.cider_command("now-playing", "GET", token), function(track_body)
-      local track = actions.parse_cider_track(track_body, playing)
+    run(actions.cider_command("now-playing", "GET", token), function(track_stdout)
+      local track = actions.parse_cider_track(actions.cider_answer(track_stdout), playing)
       if not track then
         return ask_music()
       end
@@ -108,15 +124,15 @@ function M.control(control)
   local function poll_soon()
     vim.defer_fn(M.poll, 400)
   end
-  if now.source == "music" then
-    return run(actions.music_control_command(control), poll_soon)
+  if now.source == "music" and apple then
+    return run(apple.control(control), poll_soon)
   end
 
-  run(actions.cider_command(control, "POST", vim.g.eldentree_cider_token), function(body)
-    if body or not is_mac then
+  run(actions.cider_command(control, "POST", vim.g.eldentree_cider_token), function(stdout)
+    if actions.cider_answer(stdout) or not apple then
       return poll_soon()
     end
-    run(actions.music_control_command(control), poll_soon)
+    run(apple.control(control), poll_soon)
   end)
 end
 
@@ -124,7 +140,7 @@ end
 function M.open()
   if not now.track then
     return vim.notify(
-      "Nothing is playing in Cider or Music",
+      "Nothing is playing in Cider or Apple Music",
       vim.log.levels.INFO,
       { title = "Music" }
     )
@@ -179,7 +195,7 @@ function M.setup()
     complete = function()
       return actions.CONTROLS
     end,
-    desc = "Play/pause, next or previous in Cider or Music",
+    desc = "Play/pause, next or previous in Cider or Apple Music",
   })
 end
 
