@@ -18,8 +18,8 @@ describe("persona_of", function()
 end)
 
 describe("sound_for", function()
-  it("opens the stage with the HUD's own sound", function()
-    assert.are.equal("hud_open", actions.sound_for("coach_open"))
+  it("summons Malenia with the spirit calling bell, Claire with the HUD's own sound", function()
+    assert.are.same({ "summon", "hud_open" }, actions.sound_for("coach_open"))
   end)
 
   it("stays quiet on a clean solve, the banner already sings", function()
@@ -104,5 +104,19 @@ describe("hud lessons", function()
       lesson({ id = "b", state = "solved" }),
     }
     assert.are.equal(1, #actions.hud_lessons(entries, 1))
+  end)
+end)
+
+describe("portrait_anchor", function()
+  it("fills a stage window shaped like Claire's portrait", function()
+    assert.are.same({ row = 0, col = 0, width = 33, height = 20 }, actions.portrait_anchor(33, 20))
+  end)
+
+  it("centers Malenia in a narrow window instead of stretching her", function()
+    assert.are.same({ row = 5, col = 0, width = 16, height = 10 }, actions.portrait_anchor(16, 20))
+  end)
+
+  it("centers Inde's coach in a short, wide window", function()
+    assert.are.same({ row = 0, col = 4, width = 16, height = 10 }, actions.portrait_anchor(24, 10))
   end)
 end)
