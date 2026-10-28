@@ -29,18 +29,28 @@ end
 ---Runs git in the background and calls on_ok with stdout when it succeeds.
 ---@param args string[] git arguments
 ---@param on_ok fun(stdout: string)
-local function run(args, on_ok)
+---@param task? EldenProgress the progress bar that reports the failure, a plain notification otherwise
+local function run(args, on_ok, task)
   vim.system(
     vim.list_extend({ "git" }, args),
     { text = true },
     vim.schedule_wrap(function(result)
       if result.code ~= 0 then
         local output = vim.trim((result.stderr or "") .. "\n" .. (result.stdout or ""))
-        return notify("git " .. args[1] .. " failed:\n" .. output, vim.log.levels.ERROR)
+        local message = "git " .. args[1] .. " failed:\n" .. output
+        if task then
+          return task:fail(message)
+        end
+        return notify(message, vim.log.levels.ERROR)
       end
       on_ok(result.stdout or "")
     end)
   )
+end
+
+-- the network can take a while, so these steps show the moving bar until git answers
+local function progress(message)
+  return require("core.progress").start({ id = "eldentree_git", title = "Git", message = message })
 end
 
 local function in_repo()
@@ -155,10 +165,10 @@ function M.pull()
   if not in_repo() then
     return
   end
-  notify("Pulling…")
+  local task = progress("Pulling…")
   run({ "pull" }, function(out)
-    notify("Pulled: " .. last_line(out))
-  end)
+    task:done("Pulled: " .. last_line(out))
+  end, task)
 end
 
 ---Pushes the current branch, setting the upstream on the first push. Never forces.
@@ -167,10 +177,10 @@ function M.push()
     return
   end
   local branch = M.current_branch()
-  notify("Pushing " .. branch .. "…")
+  local task = progress("Pushing " .. branch .. "…")
   run(actions.push_args(M.has_upstream()), function()
-    notify("Pushed " .. branch)
-  end)
+    task:done("Pushed " .. branch)
+  end, task)
 end
 
 ---Fetches the base branch and merges it into the current one.
@@ -182,12 +192,13 @@ function M.sync()
   if not base then
     return notify("Could not find a base branch.", vim.log.levels.WARN)
   end
-  notify("Bringing in origin/" .. base .. "…")
+  local task = progress("Bringing in origin/" .. base .. "…")
   run({ "fetch", "origin", base }, function()
+    task:update("Merging origin/" .. base .. "…")
     run({ "merge", "--no-edit", "origin/" .. base }, function(out)
-      notify("Merged origin/" .. base .. ": " .. last_line(out))
-    end)
-  end)
+      task:done("Merged origin/" .. base .. ": " .. last_line(out))
+    end, task)
+  end, task)
 end
 
 ---Switches to the base branch and pulls it.
@@ -199,11 +210,13 @@ function M.home()
   if not base then
     return notify("Could not find a base branch.", vim.log.levels.WARN)
   end
+  local task = progress("Switching to " .. base .. "…")
   run({ "switch", base }, function()
+    task:update("Pulling " .. base .. "…")
     run({ "pull" }, function(out)
-      notify("On " .. base .. ": " .. last_line(out))
-    end)
-  end)
+      task:done("On " .. base .. ": " .. last_line(out))
+    end, task)
+  end, task)
 end
 
 ---Stashes every change, untracked files included.

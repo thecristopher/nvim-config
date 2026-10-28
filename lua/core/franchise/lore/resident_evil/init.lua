@@ -18,6 +18,9 @@ return {
   -- pesetas, and what you drop when you die is still yours to reclaim
   currency = { glyph = "₧", stain = "☣" },
 
+  -- back-to-basics: who coaches the daily drills and what the HUD calls them
+  coach = { persona = "claire", training = "Training Room", lessons = "Lesson Files" },
+
   -- Claude Code's statusline bars and spinner (claude/install.lua merges the verbs into settings)
   claude = {
     bars = { context = "CONDITION", five_hour = "AMMO", seven_day = "HERBS" },

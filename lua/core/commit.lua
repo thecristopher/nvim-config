@@ -43,20 +43,17 @@ local function branch_name()
 end
 
 local function draft_via_claude(prompt, cb)
-  notify_info("Drafting commit message with Claude…")
-  local start = vim.uv.now()
-  local timer = vim.uv.new_timer()
-  timer:start(
-    4000,
-    4000,
-    vim.schedule_wrap(function()
-      local secs = math.floor((vim.uv.now() - start) / 1000)
-      notify_info(("Drafting… (%ds)"):format(secs))
-    end)
-  )
+  local task = require("core.progress").start({
+    id = "commit_claude",
+    title = "Commit",
+    message = "Drafting commit message with Claude…",
+  })
   require("core.claude").run(prompt, function(res)
-    timer:stop()
-    timer:close()
+    if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
+      task:fail("Claude could not draft the commit")
+    else
+      task:done("Draft ready")
+    end
     cb(res)
   end)
 end

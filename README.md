@@ -30,6 +30,20 @@ And whatever Music.app or Cider is playing sits in the statusline, with the cove
 
 ![Now playing panel](images/demo/music.gif)
 
+Daily drills come from [back-to-basics](https://github.com/thecristopher/back-to-basics), coached by the franchise of the day. On Resident Evil days Claire briefs the exercise, a Bedrock one here, and every name and place in it stays in Raccoon City.
+
+![Claire briefs a Bedrock exercise](images/demo/btb_re_coach.png)
+
+Then the fight opens by hand, with the statement beside it and completion off.
+
+![The Bedrock exercise beside its statement](images/demo/btb_re_exercise.png)
+
+On Elden Ring days it is Malenia, and the exercises live in the Lands Between.
+
+![Malenia briefs a Python exercise](images/demo/btb_coach.png)
+
+![The Python exercise beside its statement](images/demo/btb_exercise.png)
+
 ## Requirements
 
 - Neovim 0.11 or newer (0.12 recommended)
@@ -78,6 +92,7 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 | `core/themes`    | Region palettes from the franchise in use (eleven in Elden Ring, seven in Resident Evil). One region per day, the same in every repo and every launch. Picking another with `<leader>ut` holds until midnight, and traveling between repos never changes it. Pin one with `vim.g.eldentree_region`                                                                                                                                                                                                                                                                                   |
 | `core/phantom`   | `<leader>gw` shows who last wrote the line as a phantom: blue for others, gold for your past self                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `core/music`     | The song playing in Cider (macOS, Windows, Linux) or Music.app (macOS) sits in the statusline. `<leader>o` or a click on it opens a now playing panel with the album cover, `p` plays or pauses, `n` and `b` skip. Cider needs its API on in Settings > Connectivity, and `vim.g.eldentree_cider_token` when it asks for a token. `vim.g.eldentree_music = false` turns it off                                                                                                                                                                                                       |
+| `core/btb`       | Brings [back-to-basics](https://github.com/thecristopher/back-to-basics) in: daily drills by hand, coached by the franchise (Claire in Resident Evil, Malenia in Elden Ring) on a stage with their portrait. Clean solves fell the enemy, level ups bring the great banner, XP pays runes, and the lessons you fought fill the HUD. `b` on the HUD or `<leader>kk` starts the lesson. Needs the clone in `~/Documents/GitHub/back-to-basics` or `vim.g.eldentree_btb_dir`                                                                                                            |
 | `core/zones`     | The first time you walk into a folder each session, it is announced like a new area of the Lands Between                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `core/snapshot`  | `<leader>cp` / `:Snapshot` saves the buffer or selection as a framed PNG in the region's colors and copies it                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `core/hub`       | The HUD's ambient life: shimmering gold, the region's weather and a typed player message                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -166,6 +181,8 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>fM`                | Project map                                                                        |
 | `<leader>um`                | Toggle animations                                                                  |
 | `<leader>cT`                | Run tests (Trial)                                                                  |
+| `<leader>kk`                | Lesson with the coach (back-to-basics)                                             |
+| `<leader>kb`                | Lesson library (back-to-basics)                                                    |
 | `<leader>uB`                | Toggle boss fights                                                                 |
 | `<leader>gw`                | Who wrote this line (phantom)                                                      |
 | `<leader>cp`                | Snapshot the buffer or selection as a PNG                                          |
@@ -286,11 +303,12 @@ CI runs them on Linux and macOS for every PR, and checks the format with `stylua
 
 ## Demos
 
-The GIFs above are recorded with [vhs](https://github.com/charmbracelet/vhs) from the tapes in `docs/tapes/`. The script builds a sandbox of made up repos so no real project shows up, then records every tape, or only the ones you name.
+The GIFs and screenshots above are recorded with [vhs](https://github.com/charmbracelet/vhs) from the tapes in `docs/tapes/`. The script builds a sandbox of made up repos so no real project shows up, plus a made up back-to-basics world (a drawn path, a forged exercise and the coach's briefing, with a fake Claude) when the clone is in `~/Documents/GitHub/back-to-basics` or `$BTB_DIR`, then records every tape, or only the ones you name.
 
 ```sh
 ./scripts/record.sh
 ./scripts/record.sh music hud
+./scripts/record.sh btb btb_re
 ```
 
 The music tape needs a song playing in Music.app or Cider while it records.

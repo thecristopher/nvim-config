@@ -97,6 +97,11 @@ end
 local function render(svg, png, clipboard)
   local svg_path = vim.fn.tempname() .. ".svg"
   vim.fn.writefile(vim.split(svg, "\n"), svg_path)
+  local task = require("core.progress").start({
+    id = "eldentree_snapshot",
+    title = "Snapshot",
+    message = "Rendering the snapshot…",
+  })
   -- twice the size keeps the text crisp on retina screens and in chat previews
   vim.system(
     { "rsvg-convert", "--zoom", "2", "-o", png, svg_path },
@@ -104,18 +109,10 @@ local function render(svg, png, clipboard)
     vim.schedule_wrap(function(result)
       vim.fn.delete(svg_path)
       if result.code ~= 0 then
-        return vim.notify(
-          "rsvg-convert failed: " .. (result.stderr or ""),
-          vim.log.levels.ERROR,
-          { title = "Snapshot" }
-        )
+        return task:fail("rsvg-convert failed: " .. (result.stderr or ""))
       end
       local copied = clipboard and copy_to_clipboard(png) and ", copied to the clipboard" or ""
-      vim.notify(
-        ("Saved %s%s"):format(vim.fn.fnamemodify(png, ":~"), copied),
-        vim.log.levels.INFO,
-        { title = "Snapshot" }
-      )
+      task:done(("Saved %s%s"):format(vim.fn.fnamemodify(png, ":~"), copied))
     end)
   )
 end

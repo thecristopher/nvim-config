@@ -34,6 +34,8 @@ every session in this repo (see the style section below).
 - `lua/core/folds/`: the closed fold text nvim-ufo shows (first line plus a hidden line tally)
 - `lua/core/review/`: `:Review [number|url]` / `<leader>pr` has Claude (headless, subscription) analyze a PR's diff into a float, `d` opens the diff per file
 - `lua/core/git/`: quick git keys under `<leader>g` (`N` new branch, `j` pull, `k` push, `m`/`M` base branch, `z`/`Z` stash, `u` undo commit) and the related change staging `<leader>pc` runs first. `QUICK_KEYS` in its actions is the one list behind the keymaps and the toggleterm winbar hint. Keep `<leader>g` maps at two keys so none waits on a timeout
+- `lua/core/btb/` and `lua/plugins/btb.lua`: back-to-basics (the clone in `~/Documents/GitHub/back-to-basics`, or `vim.g.eldentree_btb_dir`). The coach follows the franchise through `coach.persona` in each lore (Claire in Resident Evil, Malenia in Elden Ring), with `coach.training` and `coach.lessons` naming the hub key and the HUD tab. The stage draws the coach with `core/hud/portrait.lua` in its own `btb` slot, coach moments reuse the HUD sounds, and every `User BtbResult` fires `felled` on a clean solve or `great` on a level up and pays the XP in runes (a redo pays nothing). `b` on the HUD starts the lesson, the lessons fought so far live in the FILE tab (RE) or their own tab (Elden Ring). `<leader>kk` lesson, `<leader>kb` library, the rest of `<leader>k` comes from the plugin
+- `lua/core/progress/`: the one way to report a wait. `require("core.progress").start({ id, title, message })` keeps a notification on screen with a bar in the skin's `music.bar` style and the elapsed time, redrawn until `task:done(message)` or `task:fail(message)`, and `task:update(message, fraction)` changes the text or fills the bar. Anything slow (Claude, git over the network, gh, test runs, back-to-basics) uses it and runs async, so the bar never freezes and no status message expires halfway
 - `lua/core/trial/`: `:Trial` / `<leader>cT` runs the project's tests in the background and announces the verdict
 - `lua/core/boss/`: boss health bar for buffers where 3+ errors linger 8 seconds, the region's boss (`bosses` in the franchise lore) takes a hit per fix and the last one fires the `felled` banner (`:Boss`, `<leader>uB` or `vim.g.eldentree_boss = false`)
 - `lua/core/phantom/`: `<leader>gw` / `:Phantom` blames the buffer through stdin and shows the last author as a phantom float
@@ -47,7 +49,6 @@ every session in this repo (see the style section below).
 - `lua/core/runes/`: statusline rune tally (saves and banners pay out, YOU DIED leaves a bloodstain) plus the breathing grace glyph
 - `lua/core/rest/`: after 5 idle minutes in normal mode the editor rests at a Site of Grace (`:Rest`, `vim.g.eldentree_rest_after`), any key wakes it and is swallowed
 - `lua/plugins/debug.lua`: nvim-dap with dap-view, F5/F9/F10/F11 plus `<leader>D`, js-debug and debugpy come from mason
-- `lua/plugins/back-to-basics.lua`: loads the back-to-basics plugin from `~/Documents/back-to-basics` (skipped when the clone is missing), daily drills under `<leader>k`. `User BtbResult` fires `felled` on a solve and `great` on a level up, never `died` since it closes the solution window, and `User BtbFocus` detaches Copilot
 - `lua/plugins/test.lua`: neotest (vitest, jest, pytest, plenary) under `<leader>T`, `:Trial` still owns the whole suite verdict
 - Cursor colors follow the mode through `guicursor` and the `EldenCursor*` groups, smear-cursor follows them too
 - `lua/core/lint/`: decides which nvim-lint linters can run (installed, and selene only with a `selene.toml`)
@@ -58,7 +59,7 @@ every session in this repo (see the style section below).
 - Tests: `./scripts/test.sh` (plenary busted, specs in `tests/`)
 - CI (`.github/workflows/ci.yml`) runs the specs on Linux and macOS and `stylua --check lua tests init.lua`, so run `stylua lua tests init.lua` after editing Lua
 - `.luarc.json` gives lua_ls outside nvim the same globals as `lua/plugins/lsp.lua`, keep both lists in sync
-- README GIFs: `./scripts/record.sh [tape...]` records `docs/tapes/*.tape` with vhs into `images/demo/`, inside a sandbox of made up repos (`docs/tapes/demo.lua` pins the franchise and silences sound). Never record with real repos, the repo is public
+- README GIFs: `./scripts/record.sh [tape...]` records `docs/tapes/*.tape` with vhs into `images/demo/`, inside a sandbox of made up repos (`docs/tapes/demo.lua` pins the franchise and silences sound), and a back-to-basics world built by `scripts/demo-sandbox.mjs` in the clone that `btb` and `btb_re` record with). Never record with real repos, the repo is public
 
 ---
 
