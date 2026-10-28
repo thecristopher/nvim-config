@@ -191,12 +191,6 @@ def re_great():
     return mix(*layers), HALL
 
 
-def re_grace():
-    # the safe room: a calm major seventh breathing in, nothing chasing you here
-    pad = lowpass(chord([261.63, 329.63, 392.0, 493.88], 2.6, "triangle", detune=0.003), 1600)
-    return envelope(pad, attack=0.7, release=1.2), HALL
-
-
 def re_cleansed():
     # containment: a filter sweep falling away, then a clean confirm chime
     sweep = envelope(lowpass(noise(1.0, seed=21), lambda index: 3000 * math.exp(-index / 12000.0) + 120), 0.02, 0.4)
@@ -223,16 +217,6 @@ def er_great():
     return mix((timpani, 0.9, 0.0), (swell, 0.9, 0.1), (timpani, 0.6, 0.45)), HALL
 
 
-def er_grace():
-    # golden motes: bell tones from a pentatonic scale over a soft bed
-    rng = random.Random(9)
-    scale = [783.99, 880.0, 1046.5, 1174.66, 1318.51, 1567.98]
-    layers = [(bell(rng.choice(scale), 1.4), 0.22, index * 0.17) for index in range(9)]
-    bed = envelope(lowpass(chord([261.63, 392.0], 2.6, "triangle"), 900), 0.6, 1.0)
-    layers.append((bed, 0.5, 0.0))
-    return mix(*layers), HALL
-
-
 def er_cleansed():
     whoosh = envelope(lowpass(noise(1.2, seed=31), lambda index: 300 + 4000 * index / (1.2 * RATE)), 0.5, 0.4)
     return mix((whoosh, 0.6, 0.0), (bell(1046.5, 1.4), 0.4, 0.8)), HALL
@@ -257,14 +241,14 @@ def er_region():
 
 
 RECIPES = {
-    # title, door, rest, continue and the hud_ inventory sounds are clips from the game, so they are not built here
+    # title, door, rest, continue, grace (the typewriter saving) and the hud_ inventory sounds are clips from the game, so they are not built here
     "resident_evil": {
-        "died": re_died, "merchant": re_merchant, "boss": re_boss, "felled": re_felled, "great": re_great, "grace": re_grace, "cleansed": re_cleansed,
+        "died": re_died, "merchant": re_merchant, "boss": re_boss, "felled": re_felled, "great": re_great, "cleansed": re_cleansed,
         "region": re_region,
     },
-    # title, died, felled, rest, zone, merchant, phantom and continue are clips from the game, so they are not built here
+    # title, died, felled, grace, rest, zone, merchant, phantom and continue are clips from the game, so they are not built here
     "elden_ring": {
-        "great": er_great, "grace": er_grace, "cleansed": er_cleansed,
+        "great": er_great, "cleansed": er_cleansed,
         "fog": er_fog, "boss": er_boss, "region": er_region,
     },
 }

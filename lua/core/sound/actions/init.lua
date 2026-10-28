@@ -3,6 +3,9 @@ local M = {}
 
 M.EXTENSIONS = { wav = true, mp3 = true, aiff = true, m4a = true, ogg = true }
 
+-- every player plays at this share of full volume, so a sound keeps you company and never startles
+M.VOLUME = 0.6
+
 -- every moment that can make a sound, the file name is the event, variants add _1, _2...
 M.EVENTS = {
   "title",
@@ -20,6 +23,7 @@ M.EVENTS = {
   "zone",
   "phantom",
   "continue",
+  "summon",
   "hud_open",
   "hud_close",
   "hud_move",
@@ -70,19 +74,34 @@ function M.pick(files, event, rand)
   return candidates[rand(#candidates)]
 end
 
+--- The first event with at least one file, nil when none of them has any.
+---@param files string[] file names in the franchise's sound folder
+---@param events string[] in order of preference
+---@return string|nil
+function M.first_available(files, events)
+  for _, event in ipairs(events) do
+    if #M.candidates(files, event) > 0 then
+      return event
+    end
+  end
+  return nil
+end
+
 --- Builds the command that plays a file with the first player found.
 ---@param file string absolute path
 ---@param executable fun(name: string): boolean
 ---@return string[]|nil command, nil when no player is installed
 function M.command(file, executable)
   if executable("afplay") then
-    return { "afplay", file }
+    return { "afplay", "-v", tostring(M.VOLUME), file }
   end
   if executable("paplay") then
-    return { "paplay", file }
+    -- paplay counts volume from 0 to 65536
+    return { "paplay", "--volume=" .. math.floor(65536 * M.VOLUME), file }
   end
   if executable("ffplay") then
-    return { "ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", file }
+    local volume = tostring(math.floor(100 * M.VOLUME))
+    return { "ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", "-volume", volume, file }
   end
   return nil
 end

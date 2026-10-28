@@ -61,12 +61,35 @@ describe("debounce_ms", function()
   end)
 end)
 
+describe("first_available", function()
+  local files = { "summon.wav", "hud_open.wav", "grace.wav" }
+
+  it("rings the bell when Malenia's folder has one", function()
+    assert.equal("summon", actions.first_available(files, { "summon", "hud_open" }))
+  end)
+
+  it("falls back to the next event Claire's folder does have", function()
+    assert.equal("hud_open", actions.first_available({ "hud_open.wav" }, { "summon", "hud_open" }))
+  end)
+
+  it("stays quiet when no event has a file", function()
+    assert.is_nil(actions.first_available({ "grace.wav" }, { "summon", "hud_open" }))
+  end)
+end)
+
 describe("command", function()
+  it("plays every sound below full volume so nothing startles", function()
+    assert.is_true(actions.VOLUME > 0 and actions.VOLUME < 1)
+  end)
+
   it("uses afplay on macOS", function()
     local function only_afplay(name)
       return name == "afplay"
     end
-    assert.same({ "afplay", "/love/inde.wav" }, actions.command("/love/inde.wav", only_afplay))
+    assert.same(
+      { "afplay", "-v", tostring(actions.VOLUME), "/love/inde.wav" },
+      actions.command("/love/inde.wav", only_afplay)
+    )
   end)
 
   it("falls back to ffplay with no window", function()

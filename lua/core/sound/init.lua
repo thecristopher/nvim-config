@@ -42,6 +42,18 @@ function M.play(event)
   return started and playing or nil
 end
 
+--- Plays the first of the events the franchise has a file for, so each franchise can bring its own.
+---@param events string[] in order of preference
+---@return vim.SystemObj|nil playing
+function M.play_first(events)
+  local ok, files = pcall(vim.fn.readdir, folder())
+  if not ok then
+    return
+  end
+  local event = actions.first_available(files, events)
+  return event and M.play(event) or nil
+end
+
 function M.setup()
   vim.api.nvim_create_user_command("Sound", function(cmd)
     -- a preview, so it plays even right after the same event fired
