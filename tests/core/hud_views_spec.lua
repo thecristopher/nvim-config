@@ -246,7 +246,11 @@ describe("inventory", function()
     assert.is_truthy(
       text(view):find("C  L  A  I  R  E", 1, true) or text(view):find("C L A I R E", 1, true)
     )
-    assert.is_truthy(text(view):find("CONDITION", 1, true))
+    assert.is_truthy(text(view):find("Raccoon City", 1, true))
+  end)
+
+  it("leaves the CONDITION monitor to the statusline", function()
+    assert.is_falsy(text(view):find("CONDITION", 1, true))
   end)
 
   it("raises the selected item's name in the banner", function()
@@ -273,11 +277,6 @@ describe("inventory", function()
     assert.equal("◈", vim.fn.strcharpart(line, view.cursor.col, 1))
   end)
 
-  it("points the ECG monitor inside the CONDITION box", function()
-    local line = view.lines[view.anchors.ecg.row + 1]
-    assert.equal("│", vim.fn.strcharpart(line, view.anchors.ecg.col - 2, 1))
-  end)
-
   it("reserves the portrait's cells inside the STATUS frame", function()
     local framed = inventory.render(model({ portrait = true }))
     local portrait = framed.anchors.portrait
@@ -292,7 +291,6 @@ describe("inventory", function()
     local narrow = inventory.render(model({ width = 80, portrait = true }))
     assert.is_nil(narrow.anchors.portrait)
     assert.is_truthy(text(narrow):find("CLAIRE REDFIELD", 1, true))
-    assert.is_truthy(narrow.anchors.ecg)
   end)
 
   behaves_on_any_screen(inventory.render)

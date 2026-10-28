@@ -50,13 +50,6 @@ local function beat(elapsed)
   refresh_statusline()
 end
 
---- Returns the current trace and condition label, plain text for panels that color it themselves.
----@return string trace, string label
-function M.reading()
-  condition = read_condition()
-  return trace, actions.CONDITIONS[condition].label
-end
-
 --- Returns the statusline piece: the trace and the condition, in the condition's color.
 ---@return string
 function M.statusline()
