@@ -126,6 +126,8 @@ return {
           map("t", "<C-j>", [[<C-\><C-n><C-w>j]], { buffer = args.buf, desc = "Window down" })
           map("t", "<C-k>", [[<C-\><C-n><C-w>k]], { buffer = args.buf, desc = "Window up" })
           map("t", "<C-l>", [[<C-\><C-n><C-w>l]], { buffer = args.buf, desc = "Window right" })
+          -- Ctrl+click opens the urls and file:line references Claude prints
+          require("core.links").attach(args.buf)
         end,
       })
     end,
