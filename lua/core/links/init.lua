@@ -1,6 +1,7 @@
 -- Opens the links terminals print. The terminal never sends Cmd to nvim, so Ctrl+click opens the
 -- link under the mouse, and <leader>to opens the last one printed in any terminal buffer.
--- Hovering a link underlines it, so you know it can be clicked.
+-- Hovering a link underlines it, so you know it can be clicked. A file:line like the ones Claude
+-- Code prints opens in the editor at that line, the way it does in a terminal outside nvim.
 local actions = require("core.links.actions")
 
 local M = {}
@@ -18,6 +19,47 @@ local function open(url)
   vim.ui.open(url)
 end
 
+-- the window the file opens in: the last one used outside a terminal, or a new split
+local function editor_window()
+  local previous = vim.fn.win_getid(vim.fn.winnr("#"))
+  local candidates = vim.list_extend({ previous }, vim.api.nvim_tabpage_list_wins(0))
+  for _, win in ipairs(candidates) do
+    local buf = vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win)
+    if buf and vim.bo[buf].buftype == "" and vim.api.nvim_win_get_config(win).relative == "" then
+      return win
+    end
+  end
+  vim.cmd("leftabove vsplit")
+  return vim.api.nvim_get_current_win()
+end
+
+local function open_file(link)
+  vim.cmd.stopinsert()
+  vim.api.nvim_set_current_win(editor_window())
+  vim.cmd.edit(vim.fn.fnameescape(link.file))
+  if link.row then
+    local last = vim.api.nvim_buf_line_count(0)
+    pcall(
+      vim.api.nvim_win_set_cursor,
+      0,
+      { math.min(link.row, last), math.max((link.col or 1) - 1, 0) }
+    )
+    vim.cmd("normal! zz")
+  end
+end
+
+-- a file reference only counts when the file is there, so a word with a dot is not a link
+local function on_disk(link)
+  if link.url then
+    return link
+  end
+  local file = actions.resolve(link.path, vim.fn.getcwd())
+  if vim.uv.fs_stat(file) then
+    return vim.tbl_extend("force", link, { file = file })
+  end
+  return nil
+end
+
 -- the link the mouse rests on, only inside terminal buffers
 local function link_under_mouse()
   local mouse = vim.fn.getmousepos()
@@ -30,12 +72,16 @@ local function link_under_mouse()
   end
   local line = vim.api.nvim_buf_get_lines(buf, mouse.line - 1, mouse.line, false)[1]
   local link = line and actions.link_at(line, mouse.column)
+  link = link and on_disk(link)
   return link and { buf = buf, row = mouse.line - 1, link = link }
 end
 
 --- Opens the link under the mouse.
 function M.open_under_mouse()
   local target = link_under_mouse()
+  if target and target.link.file then
+    return open_file(target.link)
+  end
   open(target and target.link.url)
 end
 
