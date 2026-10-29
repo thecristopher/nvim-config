@@ -13,6 +13,9 @@ M.SOUNDS = {
   skip = { "hud_close" },
 }
 
+-- what the statusline shows while the next exercise gets ready in the background
+local AHEAD_ICONS = { forge = "󰈸", brief = "󰭹" }
+
 local STATE_ICONS = { mastered = "★", due = "↻", solved = "✓", started = "~", new = "·" }
 
 ---The persona that coaches in a franchise, nil when the lore names none.
@@ -115,6 +118,17 @@ function M.hud_lessons(entries, limit)
     return (a.solvedAt or "") > (b.solvedAt or "")
   end)
   return vim.list_slice(fought, 1, limit)
+end
+
+---The statusline piece for the work btb does ahead, empty once it is done or failed.
+---@param ahead table|nil the data of the last User BtbAhead
+---@return string
+function M.ahead_text(ahead)
+  local icon = ahead and AHEAD_ICONS[ahead.step]
+  if not icon then
+    return ""
+  end
+  return ahead.label and (icon .. " " .. ahead.label) or icon
 end
 
 return M

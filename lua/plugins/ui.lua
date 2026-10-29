@@ -61,6 +61,16 @@ return {
             },
           },
           lualine_x = {
+            -- the next back-to-basics exercise getting ready, small enough to not cover the statement
+            {
+              function()
+                local ok, btb = pcall(require, "core.btb")
+                return ok and btb.statusline() or ""
+              end,
+              color = function()
+                return { fg = palette().peach }
+              end,
+            },
             {
               function()
                 return require("core.music").statusline()

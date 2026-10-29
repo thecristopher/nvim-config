@@ -5,6 +5,8 @@ local actions = require("core.btb.actions")
 local M = {}
 
 local lessons = {}
+-- the last User BtbAhead, what btb gets ready in the background for the statusline
+local ahead = nil
 -- the stage window showing the coach, so a stage closing right before the next one opens
 -- does not bring the HUD's portrait back in between
 local stage_win = nil
@@ -110,6 +112,19 @@ function M.hud_items(limit)
   end, actions.hud_lessons(lessons, limit or 12))
 end
 
+---The statusline piece for the next exercise getting ready, empty when nothing is.
+---@return string
+function M.statusline()
+  return actions.ahead_text(ahead)
+end
+
+local function refresh_statusline()
+  local ok, lualine = pcall(require, "lualine")
+  if ok then
+    lualine.refresh({ place = { "statusline" } })
+  end
+end
+
 local function celebrate(result)
   local fanfare = actions.celebration(result)
   if fanfare.banner then
@@ -120,7 +135,7 @@ local function celebrate(result)
   end
 end
 
----Celebrates every solve and keeps the HUD's lessons fresh.
+---Celebrates every solve, keeps the HUD's lessons fresh and the statusline on what gets ready ahead.
 function M.setup()
   local group = vim.api.nvim_create_augroup("eldentree_btb", { clear = true })
   vim.api.nvim_create_autocmd("User", {
@@ -129,6 +144,14 @@ function M.setup()
     callback = function(event)
       celebrate(event.data)
       M.refresh()
+    end,
+  })
+  vim.api.nvim_create_autocmd("User", {
+    group = group,
+    pattern = "BtbAhead",
+    callback = function(event)
+      ahead = event.data
+      refresh_statusline()
     end,
   })
   M.refresh()
