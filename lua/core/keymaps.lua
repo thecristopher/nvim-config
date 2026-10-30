@@ -75,7 +75,8 @@ end, { desc = "Prev diagnostic" })
 map("n", "]d", function()
   vim.diagnostic.jump({ count = 1, float = true })
 end, { desc = "Next diagnostic" })
-map("n", "<leader>e", vim.diagnostic.open_float, { desc = "Diagnostic float" })
+-- <leader>e reveals the file in the tree, so the float lives with the other diagnostics
+map("n", "<leader>xd", vim.diagnostic.open_float, { desc = "Diagnostic float" })
 
 -- ── UI toggles ───────────────────────────────────────────────────────────────
 map("n", "<leader>un", function()
@@ -156,6 +157,11 @@ end, { desc = "Erase message" })
 map("n", "<leader>ml", function()
   require("core.messages").pick()
 end, { desc = "List messages" })
+
+-- ── Command palette ─────────────────────────────────────────────────────────
+map("n", "<leader><leader>", function()
+  require("core.palette").open()
+end, { desc = "Command palette" })
 
 -- ── Music ───────────────────────────────────────────────────────────────────
 map("n", "<leader>o", function()

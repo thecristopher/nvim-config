@@ -5,6 +5,8 @@ local actions = require("core.btb.actions")
 local M = {}
 
 local lessons = {}
+-- what is left of today's training, for the HUD's training key
+local day = nil
 -- the last User BtbAhead, what btb gets ready in the background for the statusline
 local ahead = nil
 -- the stage window showing the coach, so a stage closing right before the next one opens
@@ -87,6 +89,17 @@ function M.refresh()
   btb.btb({ "lessons" }, function(data)
     lessons = data.lessons or {}
   end)
+  btb.btb({ "today" }, function(data)
+    day = actions.day_status(data)
+    require("core.hud").refresh(true)
+  end)
+end
+
+---What is left of today's training as the HUD reads it, and whether something still waits.
+---@return string|nil line nil until btb answers
+---@return boolean pending
+function M.day()
+  return actions.day_line(day), day ~= nil and not day.done
 end
 
 local function read_lesson(file)
@@ -119,10 +132,7 @@ function M.statusline()
 end
 
 local function refresh_statusline()
-  local ok, lualine = pcall(require, "lualine")
-  if ok then
-    lualine.refresh({ place = { "statusline" } })
-  end
+  require("core.utils").refresh_statusline()
 end
 
 local function celebrate(result)
@@ -133,6 +143,69 @@ local function celebrate(result)
   if fanfare.runes > 0 then
     require("core.runes").award(fanfare.runes)
   end
+end
+
+local path_ns = vim.api.nvim_create_namespace("eldentree_btb_path")
+
+local function show_path(status)
+  local lines, marks = actions.path_map(status)
+  local width = 0
+  for _, line in ipairs(lines) do
+    width = math.max(width, vim.api.nvim_strwidth(line) + 2)
+  end
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].bufhidden = "wipe"
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  for _, mark in ipairs(marks) do
+    vim.api.nvim_buf_set_extmark(buf, path_ns, mark.row, mark.col, {
+      end_col = mark.end_col,
+      hl_group = mark.group,
+    })
+  end
+  vim.bo[buf].modifiable = false
+  local footer = ("streak %d · %d XP · %d mastered"):format(
+    status.streak or 0,
+    status.xp or 0,
+    status.mastered or 0
+  )
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    style = "minimal",
+    border = require("core.skin").border(),
+    width = math.min(math.max(width, #footer + 4), vim.o.columns - 4),
+    height = math.min(#lines, vim.o.lines - 6),
+    row = 2,
+    col = math.floor((vim.o.columns - width) / 2),
+    title = " "
+      .. require("core.skin").title(require("core.franchise").current().coach.training)
+      .. " ",
+    title_pos = "center",
+    footer = " " .. footer .. " ",
+    footer_pos = "center",
+  })
+  for _, key in ipairs({ "q", "<Esc>" }) do
+    vim.keymap.set("n", key, function()
+      pcall(vim.api.nvim_win_close, win, true)
+    end, { buffer = buf, nowait = true })
+  end
+  vim.keymap.set("n", "<CR>", function()
+    pcall(vim.api.nvim_win_close, win, true)
+    require("back-to-basics").lesson()
+  end, { buffer = buf, nowait = true })
+end
+
+---Opens the path map: every track as a chain of levels, Enter starts the lesson.
+function M.path()
+  local btb = plugin()
+  if not btb then
+    return vim.notify("back-to-basics is not installed", vim.log.levels.WARN, { title = "btb" })
+  end
+  btb.btb({ "status" }, function(data)
+    if data.error then
+      return vim.notify(data.error, vim.log.levels.ERROR, { title = "btb" })
+    end
+    show_path(data)
+  end)
 end
 
 ---Celebrates every solve, keeps the HUD's lessons fresh and the statusline on what gets ready ahead.
@@ -154,6 +227,8 @@ function M.setup()
       refresh_statusline()
     end,
   })
+  vim.api.nvim_create_user_command("BtbPath", M.path, { desc = "The back-to-basics path as a map" })
+  vim.keymap.set("n", "<leader>km", M.path, { desc = "Path map" })
   M.refresh()
 end
 

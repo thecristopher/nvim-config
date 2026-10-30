@@ -111,25 +111,26 @@ function M.attach(buf)
   vim.keymap.set("i", "<C-k>", function()
     vim.lsp.buf.signature_help({ border = require("core.skin").border() })
   end, { buffer = buf, desc = "LSP: Signature help" })
-  vim.keymap.set("n", "<leader>uh", function()
+  -- <leader>uh opens the HUD everywhere, a buffer map there would hide it in every LSP buffer
+  vim.keymap.set("n", "<leader>ui", function()
     vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = buf }), { bufnr = buf })
   end, { buffer = buf, desc = "Toggle inlay hints" })
 
-  local tb = function(method)
+  local picker = function(source)
     return function()
-      require("telescope.builtin")[method]()
+      Snacks.picker[source]()
     end
   end
   vim.keymap.set(
     "n",
     "<leader>ci",
-    tb("lsp_incoming_calls"),
+    picker("lsp_incoming_calls"),
     { buffer = buf, desc = "LSP: Incoming calls" }
   )
   vim.keymap.set(
     "n",
     "<leader>co",
-    tb("lsp_outgoing_calls"),
+    picker("lsp_outgoing_calls"),
     { buffer = buf, desc = "LSP: Outgoing calls" }
   )
   vim.keymap.set("n", "<leader>cs", function()

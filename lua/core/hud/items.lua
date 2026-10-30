@@ -52,12 +52,17 @@ local ACTION_DESCRIPTIONS = {
 ---@return table[]
 function M.actions()
   return vim.tbl_map(function(key)
+    local line, pending = nil, false
+    if key.status then
+      line, pending = key.status()
+    end
     return {
       icon = key.icon,
+      icon_hl = pending and "DiagnosticWarn" or nil,
       name = key.desc,
       slot = key.slot,
       key = key.key,
-      desc = ACTION_DESCRIPTIONS[key.key] or key.desc,
+      desc = line or ACTION_DESCRIPTIONS[key.key] or key.desc,
       use = function()
         run(key.action)
       end,

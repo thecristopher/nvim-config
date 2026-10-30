@@ -69,7 +69,8 @@ return {
       require("dropbar").setup({
         bar = {
           enable = function(buf, win, info)
-            if vim.bo[buf].filetype == "bigfile" then
+            -- a back-to-basics solution wears its own winbar with the clock and the tests
+            if vim.bo[buf].filetype == "bigfile" or vim.b[buf].btb_exercise then
               return false
             end
             return default_enable(buf, win, info)

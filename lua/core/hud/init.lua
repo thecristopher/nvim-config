@@ -115,6 +115,11 @@ local function portrait_available()
 end
 
 local function model()
+  -- the items may have changed since the HUD was left, the cursor never points past them
+  state.cursor.items =
+    actions.clamp(state.cursor.items, 1, math.max(1, #state.tabs[state.tab].items))
+  state.cursor.chest =
+    actions.clamp(state.cursor.chest, 1, math.max(1, #(state.chest and state.chest.items or {})))
   local quest_status = status()
   state.quest = items.quest_items(quest_status)
   -- the changes arrive and leave with git, the cursor never points past them
@@ -203,6 +208,8 @@ end
 ---@param reload boolean|nil
 -- another float can ask for the portrait to step aside, the terminal paints images over every window
 local portrait_hidden = false
+-- where the HUD was left, so opening it again lands on the same tab and slot
+local last_place = nil
 
 function M.refresh(reload)
   if not valid() then
@@ -486,6 +493,9 @@ local function map_keys(buf)
       end)
     end
   end
+  map("?", function()
+    require("core.palette").open()
+  end)
   map("<Tab>", function()
     switch_tab(1)
   end)
@@ -568,6 +578,7 @@ local function cleanup()
   end
   require("core.hud.portrait").close()
   require("core.hub").stop()
+  last_place = { style = state.style, tab = state.tab, cursor = state.cursor }
   state = nil
 end
 
@@ -648,12 +659,14 @@ function M.open()
   vim.api.nvim_win_set_buf(0, buf)
   vim.bo[buf].filetype = "eldentree_hud"
   window_options(0)
+  local tab, cursor = actions.resume_place(last_place, style())
   state = {
     buf = buf,
     win = vim.api.nvim_get_current_win(),
-    tab = 1,
+    style = style(),
+    tab = tab,
     focus = "items",
-    cursor = { items = 1, chest = 1, quest = 1 },
+    cursor = cursor,
     offset = { items = 0, chest = 0, quest = 0 },
     grids = {},
     anchors = {},

@@ -207,15 +207,6 @@ function M.returning(visits, root)
   return root ~= nil and vim.tbl_contains(visits or {}, root)
 end
 
--- typed paths arrive with stray spaces, tildes and trailing slashes
-function M.folder_from_input(input)
-  local trimmed = vim.trim(input or "")
-  if trimmed == "" then
-    return nil
-  end
-  return vim.fs.normalize(vim.fn.expand(trimmed))
-end
-
 function M.is_inside(path, dir)
   if not path or not dir then
     return false
@@ -223,15 +214,47 @@ function M.is_inside(path, dir)
   return path == dir or path:sub(1, #dir + 1) == dir .. "/"
 end
 
--- start typing from the dev folder you are in, or the first one that exists
-function M.browse_start(roots, cwd, home)
+--- Where the folder browser starts: the dev folder you are in, the first one that exists, or home.
+---@param roots string[] expanded dev folders
+---@param cwd string|nil
+---@param home string
+---@return string
+function M.browse_root(roots, cwd, home)
   for _, root in ipairs(roots or {}) do
     if M.is_inside(cwd, root) then
-      return M.display_path(root, home) .. "/"
+      return root
     end
   end
-  local fallback = (roots or {})[1] or cwd or ""
-  return M.display_path(fallback, home) .. "/"
+  return (roots or {})[1] or home
+end
+
+--- The folders worth browsing into, sorted by name, hidden ones left out.
+---@param entries { name: string, type: string }[] what vim.fs.dir lists
+---@return string[] names
+function M.subfolders(entries)
+  local names = {}
+  for _, entry in ipairs(entries or {}) do
+    local is_dir = entry.type == "directory" or entry.type == "link"
+    if is_dir and entry.name:sub(1, 1) ~= "." then
+      table.insert(names, entry.name)
+    end
+  end
+  table.sort(names, function(a, b)
+    return a:lower() < b:lower()
+  end)
+  return names
+end
+
+--- The picker that opens once you arrive at a repo: the one you asked for, or the files picker
+--- on a first visit so there is something to open.
+---@param first_visit boolean
+---@param chosen? "files"|"grep"|"recent"
+---@return string|nil
+function M.after_travel(first_visit, chosen)
+  if chosen then
+    return chosen
+  end
+  return first_visit and "files" or nil
 end
 
 -- jumping into a plugin or dependency source should not drag the cwd along

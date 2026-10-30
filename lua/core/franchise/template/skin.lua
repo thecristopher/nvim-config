@@ -11,6 +11,10 @@ return {
   -- bufferline separator_style: "slant", "slope", "thick", "thin" or "padded_slant"
   tabs = "slant",
   signs = { error = "●", warn = "▲", hint = "◆", info = "◇" },
+  -- the snacks picker layout, see lua/plugins/snacks.lua: "grace", "inventory" or "default"
+  picker = "default",
+  -- the command line popup's glyphs
+  cmdline = { icon = "", search = "󰍉" },
   -- the HUD style, see core/hud/views: "roundtable" or "inventory"
   dashboard = "roundtable",
   -- style: "shimmer" or "drip"

@@ -12,6 +12,10 @@ return {
   tabs = "slant",
   -- the gutter stays empty, tiny-inline-diagnostic speaks for the errors
   signs = { error = " ", warn = " ", hint = " ", info = " " },
+  -- the snacks picker layout, see lua/plugins/snacks.lua: results over the prompt like a grace menu
+  picker = "grace",
+  -- the command line popup's glyphs
+  cmdline = { icon = "✦", search = "◎" },
   -- which inventory the HUD draws, see core/hud/views
   dashboard = "roundtable",
   -- the title screen keeps the franchise's own colors whatever region you stand in

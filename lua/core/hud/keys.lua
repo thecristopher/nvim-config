@@ -103,6 +103,10 @@ function M.keys()
         require("back-to-basics").lesson()
       end,
       slot = "Training",
+      -- the day left to train reads in the description, and the icon calls out while it waits
+      status = function()
+        return require("core.btb").day()
+      end,
     },
     { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", slot = "Lazy" },
     { icon = "󰏗 ", key = "m", desc = "Mason", action = ":Mason", slot = "Mason" },

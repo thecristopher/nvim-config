@@ -99,7 +99,7 @@ return {
     opts = {
       check_ts = true,
       ts_config = { lua = { "string" }, javascript = { "template_string" } },
-      disable_filetype = { "TelescopePrompt", "spectre_panel" },
+      disable_filetype = { "snacks_picker_input", "spectre_panel" },
       fast_wrap = {
         map = "<M-e>",
         chars = { "{", "[", "(", '"', "'" },
@@ -274,7 +274,7 @@ return {
     "folke/todo-comments.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
     event = { "BufReadPost", "BufNewFile" },
-    cmd = { "TodoTrouble", "TodoTelescope" },
+    cmd = { "TodoTrouble" },
     keys = {
       {
         "]t",
@@ -300,7 +300,13 @@ return {
         "<cmd>Trouble todo toggle filter = {tag = {TODO,FIX,FIXME}}<cr>",
         desc = "Todo/Fix/Fixme",
       },
-      { "<leader>ft", "<cmd>TodoTelescope<cr>", desc = "Find todos" },
+      {
+        "<leader>ft",
+        function()
+          Snacks.picker.todo_comments()
+        end,
+        desc = "Find todos",
+      },
     },
     opts = function()
       local p = require("core.themes").palette()

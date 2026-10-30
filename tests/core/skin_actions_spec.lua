@@ -1,18 +1,5 @@
 local actions = require("core.skin.actions")
 
-describe("border_chars", function()
-  it("gives telescope the double frame of the inventory", function()
-    assert.same(
-      { "═", "║", "═", "║", "╔", "╗", "╝", "╚" },
-      actions.border_chars("double")
-    )
-  end)
-
-  it("falls back to rounded for a border it does not know", function()
-    assert.same(actions.BORDER_CHARS.rounded, actions.border_chars("shadow"))
-  end)
-end)
-
 describe("toggleterm_border", function()
   it("calls rounded curved, the way toggleterm does", function()
     assert.equal("curved", actions.toggleterm_border("rounded"))

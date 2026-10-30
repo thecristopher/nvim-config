@@ -127,3 +127,16 @@ describe("terminal_hint", function()
     assert.truthy(pull and push and pull < push)
   end)
 end)
+
+describe("checkout_args", function()
+  it("switches to Claire's local branch as is", function()
+    assert.same({ "switch", "feature/love-notes" }, actions.checkout_args("feature/love-notes"))
+  end)
+
+  it("tracks Malenia's remote branch under its own name", function()
+    assert.same(
+      { "switch", "-c", "feature/haligtree", "--track", "origin/feature/haligtree" },
+      actions.checkout_args("remotes/origin/feature/haligtree")
+    )
+  end)
+end)

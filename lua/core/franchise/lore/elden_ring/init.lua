@@ -54,7 +54,6 @@ return {
     mohgwyn = "Mohg, Lord of Blood",
     ordina = "Commander Niall",
     limgrave = "Margit, the Fell Omen",
-    stormveil = "Godrick the Grafted",
     volcano_manor = "Rykard, Lord of Blasphemy",
     nokron = "Mimic Tear",
     farum_azula = "Maliketh, the Black Blade",
@@ -111,13 +110,6 @@ return {
       speed = { 0.8, 2.2 },
       from = "peach",
       to = "yellow",
-    },
-    stormveil = {
-      glyphs = { "·", "╎", "│" },
-      drift = "fall",
-      speed = { 9.0, 15.0 },
-      from = "overlay2",
-      to = "sky",
     },
     volcano_manor = {
       glyphs = { "·", "•", "●" },
@@ -240,7 +232,6 @@ return {
     "Academy Gate Town",
     "Bellum Highway",
     "Fort Haight",
-    "Stormveil Castle",
     "Castle Sol",
     "Ordina, Liturgical Town",
   },
@@ -263,6 +254,29 @@ return {
     { "variable", "Item" },
   },
 
+  -- what the editor's chrome says: mode names in the statusline, command line titles, the picker's
+  -- preview and the notification titles per level
+  chrome = {
+    modes = {
+      normal = "ROAM",
+      insert = "INSCRIBE",
+      visual = "LOCK ON",
+      replace = "REFORGE",
+      command = "INCANT",
+      terminal = "SPIRIT",
+    },
+    cmdline = "Incantation",
+    search = "Seek",
+    examine = "Inspect",
+    notify = {
+      info = "Message",
+      warn = "Omen",
+      error = "Peril",
+      debug = "Whisper",
+      trace = "Echo",
+    },
+  },
+
   words = {
     traveler = "Tarnished",
     hub = "Roundtable Hold",
@@ -279,5 +293,6 @@ return {
     motion_on = "The Lands Between stir once more",
     motion_off = "The world stands still",
     map = "Map of the Lands Between",
+    arts = "Incantations",
   },
 }

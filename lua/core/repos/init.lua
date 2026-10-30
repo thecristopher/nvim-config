@@ -147,31 +147,43 @@ local function show_tree(dir, focus)
   })
 end
 
+local PICKERS = {
+  files = function(dir)
+    Snacks.picker.files({ cwd = dir })
+  end,
+  grep = function(dir)
+    Snacks.picker.grep({ cwd = dir })
+  end,
+  recent = function()
+    require("core.find").recent("repo")
+  end,
+}
+
 -- the picker closes when another window grabs focus, so wait for the tree to finish drawing
-local function open_files_after_tree(dir)
+local function picker_after_tree(dir, name)
   local events = require("neo-tree.events")
   local opened = false
-  local subscription = { event = events.AFTER_RENDER, id = "eldentree_files_after_tree" }
+  local subscription = { event = events.AFTER_RENDER, id = "eldentree_picker_after_tree" }
 
-  local function open_files()
+  local function open_picker()
     if opened then
       return
     end
     opened = true
     events.unsubscribe(subscription)
     vim.schedule(function()
-      Snacks.picker.files({ cwd = dir })
+      PICKERS[name](dir)
     end)
   end
 
   subscription.handler = function(state)
     if state.name == "filesystem" then
-      open_files()
+      open_picker()
     end
   end
   events.subscribe(subscription)
   -- in case the tree skips a redraw, the picker still shows up
-  vim.defer_fn(open_files, 800)
+  vim.defer_fn(open_picker, 800)
 end
 
 local function buffer_infos()
@@ -217,10 +229,36 @@ local function leave_project()
   close_project_buffers(infos)
 end
 
+--- Saves the files open on the branch about to be left, when there is anything worth keeping.
+function M.save_branch_session()
+  if vim.g.eldentree_project_sessions == false then
+    return
+  end
+  if actions.worth_saving(buffer_infos()) then
+    save_session()
+  end
+end
+
+--- Brings back the files saved on the checked out branch, unsaved work stays open.
+---@return boolean restored false when the branch has no session of its own
+function M.restore_branch_session()
+  local persistence = require("persistence")
+  if vim.g.eldentree_project_sessions == false then
+    return false
+  end
+  if vim.fn.filereadable(persistence.current()) == 0 then
+    return false
+  end
+  close_project_buffers(buffer_infos())
+  persistence.load()
+  return true
+end
+
 --- Travels to a repo: the fog rolls in, the old project's session is kept, and the new one comes back
---- with the files you had open there, or a file picker on a first visit.
+--- with the files you had open there. A first visit, or a picker asked for, opens that picker on arrival.
 ---@param repo string
-function M.open(repo)
+---@param picker? "files"|"grep"|"recent"
+function M.open(repo, picker)
   local first_visit = not actions.returning(read_json_list(visits_file), repo)
   local sessions = vim.g.eldentree_project_sessions ~= false and M.root() ~= repo
   require("core.fog").roll()
@@ -238,30 +276,99 @@ function M.open(repo)
 
   if sessions and has_session() then
     require("persistence").load()
-    return show_tree(repo)
   end
-  open_files_after_tree(repo)
+  local arrival = actions.after_travel(first_visit, picker)
+  if arrival then
+    picker_after_tree(repo, arrival)
+  end
   show_tree(repo)
 end
 
+-- a repo travels with its session and fog, any other folder just becomes the cwd beside the tree
 local function open_dir(dir)
+  if M.is_repo(dir) then
+    return M.open(dir)
+  end
   vim.fn.chdir(dir)
   show_tree(dir, true)
 end
 
-local function ask_for_folder()
-  local start = actions.browse_start(M.roots(), vim.uv.cwd())
-  vim.ui.input({ prompt = "  Open folder: ", default = start, completion = "dir" }, function(input)
-    local dir = actions.folder_from_input(input)
-    if not dir then
-      return
+local function folder_items(dir)
+  local entries = {}
+  -- a folder you cannot read lists as empty instead of breaking the browser
+  pcall(function()
+    for name, kind in vim.fs.dir(dir) do
+      table.insert(entries, { name = name, type = kind })
     end
-    if vim.fn.isdirectory(dir) == 0 then
-      vim.notify("No such folder: " .. dir, vim.log.levels.WARN)
-      return
-    end
-    open_dir(dir)
   end)
+  return vim.tbl_map(function(name)
+    local path = vim.fs.joinpath(dir, name)
+    local repo = M.is_repo(path)
+    return { text = name, file = path, dir = true, repo = repo, icon = repo and "󰊢 " or "󰉋 " }
+  end, actions.subfolders(entries))
+end
+
+local function format_folder(item)
+  return {
+    { item.icon, item.repo and "SnacksPickerGitBranch" or "SnacksPickerDirectory" },
+    { item.text, "SnacksPickerFile" },
+  }
+end
+
+local BROWSE_KEYS = "l enter  h up  o open  . open here  / filter"
+
+--- Browses folders with the keyboard in normal mode, starting at a dev folder. Enter travels to
+--- a repo and goes into any other folder, a folder with nothing inside opens right away.
+---@param dir? string
+function M.browse(dir)
+  dir = dir or actions.browse_root(M.roots(), vim.uv.cwd(), vim.uv.os_homedir())
+  local items = folder_items(dir)
+  if #items == 0 then
+    return open_dir(dir)
+  end
+
+  local function go(picker, target)
+    picker:close()
+    vim.schedule(function()
+      M.browse(target)
+    end)
+  end
+
+  Snacks.picker({
+    title = actions.display_path(dir) .. "  " .. BROWSE_KEYS,
+    items = items,
+    focus = "list",
+    preview = "directory",
+    format = format_folder,
+    confirm = function(picker, item)
+      if item and item.repo then
+        picker:close()
+        return open_dir(item.file)
+      end
+      go(picker, item and item.file or dir)
+    end,
+    actions = {
+      enter = function(picker, item)
+        go(picker, item and item.file or dir)
+      end,
+      up = function(picker)
+        go(picker, vim.fs.dirname(dir))
+      end,
+      open = function(picker, item)
+        picker:close()
+        open_dir(item and item.file or dir)
+      end,
+      open_here = function(picker)
+        picker:close()
+        open_dir(dir)
+      end,
+    },
+    win = {
+      list = {
+        keys = { l = "enter", h = "up", ["-"] = "up", o = "open", ["."] = "open_here" },
+      },
+    },
+  })
 end
 
 local function repo_items()
@@ -290,24 +397,23 @@ local function format_item(item)
   }
 end
 
--- known repos first so most opens are a few letters and Enter, typing a path is the escape hatch
+-- known repos first so most opens are a few letters and Enter, the browser is the escape hatch
 function M.open_folder()
   local items = repo_items()
   if #items == 0 then
-    return ask_for_folder()
+    return M.browse()
   end
 
-  local start = actions.browse_start(M.roots(), vim.uv.cwd())
   table.insert(items, {
     idx = #items + 1,
     text = "browse another folder",
-    file = vim.fs.normalize(vim.fn.expand(start)),
+    file = actions.browse_root(M.roots(), vim.uv.cwd(), vim.uv.os_homedir()),
     dir = true,
     browse = true,
     icon = "󰝰 ",
     name = "Browse another folder…",
     branch = "",
-    where = start,
+    where = "",
   })
 
   Snacks.picker({
@@ -321,25 +427,43 @@ function M.open_folder()
         return
       end
       if item.browse then
-        return ask_for_folder()
+        return M.browse()
       end
       open_dir(item.file)
     end,
   })
 end
 
+local function travel_with(name)
+  return function(picker, item)
+    picker:close()
+    if item then
+      M.open(item.file, name)
+    end
+  end
+end
+
+local TRAVEL_KEYS = {
+  ["<C-f>"] = { "travel_files", mode = { "i", "n" } },
+  ["<C-g>"] = { "travel_grep", mode = { "i", "n" } },
+  ["<C-o>"] = { "travel_recent", mode = { "i", "n" } },
+}
+
+--- Sites of Grace: Enter travels, <C-f> <C-g> <C-o> travel and open files, grep or recent there.
 function M.pick()
   Snacks.picker({
-    title = require("core.franchise").current().words.sites,
+    title = require("core.franchise").current().words.sites
+      .. "  <C-f> files  <C-g> grep  <C-o> recent",
     items = repo_items(),
     preview = "directory",
     format = format_item,
-    confirm = function(picker, item)
-      picker:close()
-      if item then
-        M.open(item.file)
-      end
-    end,
+    confirm = travel_with(nil),
+    actions = {
+      travel_files = travel_with("files"),
+      travel_grep = travel_with("grep"),
+      travel_recent = travel_with("recent"),
+    },
+    win = { input = { keys = TRAVEL_KEYS }, list = { keys = TRAVEL_KEYS } },
   })
 end
 
@@ -413,6 +537,9 @@ function M.setup()
     M.open_folder,
     { desc = "Open a folder with the tree" }
   )
+  vim.api.nvim_create_user_command("BrowseFolders", function()
+    M.browse()
+  end, { desc = "Browse folders with hjkl" })
   vim.api.nvim_create_user_command("ReposRescan", function()
     local task = require("core.progress").start({
       id = "eldentree_repos",
