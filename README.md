@@ -126,7 +126,7 @@ A few classics from ThePrimeagen's setup live here too: cloak.nvim masks `.env` 
 
 Traveling to a Site of Grace keeps the session of the repo you leave and restores the one you arrive at. Files with unsaved changes are never closed. Turn it off with `vim.g.eldentree_project_sessions = false`.
 
-Portraits in `images/portraits/` are 276x336 crops of the originals in `images/`, with contrast, color and sharpness lifted so they survive half block rendering. A region whose portrait is missing simply shows the HUD without art.
+Portraits in `images/portraits/` are 276x336 crops of the originals in `images/`, with contrast, color and sharpness lifted so they survive half block rendering. `python3 scripts/portraits.py` builds them with the face centered, from where `FACES` says it sits in each original, pass names to rebuild only those. A region whose portrait is missing simply shows the HUD without art.
 
 ### Terminals
 
