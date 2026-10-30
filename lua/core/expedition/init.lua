@@ -81,6 +81,8 @@ function M.start(arg)
     M.stop()
   end
   vim.notify(words().started:format(minutes), vim.log.levels.INFO, { title = words().name })
+  -- the last sound before the quiet
+  require("core.sound").play("expedition")
   local saved = hush()
   block = {
     ends_at = os.time() + minutes * 60,

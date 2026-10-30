@@ -148,16 +148,9 @@ Everything works in iTerm. Two extras are worth turning on:
 
 ### Sounds
 
-Every sound is made from scratch by `python3 scripts/sounds.py`: synthesized tones and noise, spoken lines from [Piper](https://github.com/OHF-Voice/piper1-gpl) (a local neural voice) with macOS `say` as the fallback, and ffmpeg for the echo and pitch, nothing sampled from the games. Run `python3 scripts/sounds.py --setup-voices` once to install Piper and its voices in `~/.local/share/eldentree`. Run it again after tweaking a recipe, or pass a franchise to rebuild only that one. `:Sound died` previews any of them.
+Some sounds are clips from the games, the rest are made from scratch by `python3 scripts/sounds.py` out of synthesized tones and noise, with ffmpeg for the echo. Run it again after tweaking a recipe, or pass a franchise to rebuild only that one. `:Sound died` previews any of them.
 
-To use your own instead, drop audio files into `sounds/elden_ring/` or `sounds/resident_evil/`, named after the moment they belong to: `title`, `door`, `fog`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`, `zone`, `phantom`, `continue`, `summon` (the spirit calling bell that opens back-to-basics' coach stage), and the inventory HUD's `hud_open`, `hud_close`, `hud_move`, `hud_select`, `hud_back`. Variants like `died_2.wav` take turns. Every sound plays at 60% volume (`VOLUME` in `core/sound/actions`). Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
-
-### Voice credits
-
-| Voice                          | Used for                              | Source                                                                          | License         |
-| ------------------------------ | ------------------------------------- | ------------------------------------------------------------------------------- | --------------- |
-| Ryan (high)                    | Resident Evil announcer               | [Piper voices](https://huggingface.co/rhasspy/piper-voices), RyanSpeech dataset | CC BY-NC-SA 4.0 |
-| Northern English Male (medium) | The Merchant, the Elden Ring narrator | [Piper voices](https://huggingface.co/rhasspy/piper-voices)                     | CC BY-SA 4.0    |
+To use your own instead, drop audio files into `sounds/elden_ring/` or `sounds/resident_evil/`, named after the moment they belong to: `title`, `door`, `fog`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`, `zone`, `phantom`, `continue`, `summon` (the spirit calling bell that opens back-to-basics' coach stage), `comfort` (failing the same exercise again), `bought` (a hint bought from the merchant), `expedition` (the last sound before an expedition goes quiet), and the inventory HUD's `hud_open`, `hud_close`, `hud_move`, `hud_select`, `hud_back`. Variants like `died_2.wav` take turns. Every sound plays at 60% volume (`VOLUME` in `core/sound/actions`). Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
 
 ### Portrait credits
 

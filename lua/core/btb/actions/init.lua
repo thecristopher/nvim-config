@@ -3,13 +3,14 @@
 local M = {}
 
 -- the coach reuses sounds the franchise already has, first match wins, a moment with no match
--- stays quiet. Opening the stage rings the spirit calling bell where there is one: the coach is summoned
+-- stays quiet. Opening the stage rings the spirit calling bell where there is one: the coach is summoned.
+-- Failing twice in a row gets a word of comfort where the coach has one
 M.SOUNDS = {
   coach_open = { "summon", "hud_open" },
   ready = { "hud_select" },
   hint = { "hud_select" },
   failed = { "hud_back" },
-  failed_again = { "hud_back" },
+  failed_again = { "comfort", "hud_back" },
   skip = { "hud_close" },
 }
 
