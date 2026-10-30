@@ -19,15 +19,29 @@ local AHEAD_ICONS = { forge = "󰈸", brief = "󰭹" }
 
 local STATE_ICONS = { mastered = "★", due = "↻", solved = "✓", started = "~", new = "·" }
 
----The persona that coaches in a franchise, nil when the lore names none.
----@param lore table franchise lore
----@return string|nil
-function M.persona_of(lore)
-  local persona = lore.coach and lore.coach.persona
-  if persona == nil or persona == "" then
+-- the partners have a persona of their own in back-to-basics, the only coaches with the romance
+M.PARTNERS = { ["Claire Redfield"] = "claire", ["Malenia"] = "malenia", ["Ada Wong"] = "ada" }
+
+---A character's name as a btb persona name: lowercase words joined by hyphens.
+---@param character string
+---@return string
+function M.persona_id(character)
+  local id = character:lower():gsub("[^%w]+", "-"):gsub("^%-+", ""):gsub("%-+$", "")
+  return id
+end
+
+---The coach of the day is the character of the day's region: a partner by her persona, anyone
+---else as a character btb summons the first time.
+---@param region { character?: string }|nil
+---@param franchise string the franchise's title, like "Resident Evil"
+---@return string|{ id: string, character: string, franchise: string }|nil
+function M.coach_of(region, franchise)
+  local character = region and region.character
+  if not character or character == "" then
     return nil
   end
-  return persona
+  return M.PARTNERS[character]
+    or { id = M.persona_id(character), character = character, franchise = franchise }
 end
 
 ---The franchise sounds that may play for a coach event, in order of preference.
@@ -90,15 +104,25 @@ function M.celebration(result)
   return { banner = banner, subtitle = words, runes = result.xp or 0 }
 end
 
----Where a persona's portrait lives in the config.
----@param config_dir string
----@param persona { portrait?: string }
+---The sound a pass plays, the merchant's praise where the franchise has it. A failure plays none.
+---@param result table the User BtbResult payload
 ---@return string|nil
-function M.portrait_file(config_dir, persona)
-  if not persona or not persona.portrait then
+function M.pass_sound(result)
+  return result.ok and "weapon" or nil
+end
+
+---Where the coach's portrait lives in the config: her own, or the region's character when a
+---summoned coach brings none.
+---@param config_dir string
+---@param persona { portrait?: string }|nil
+---@param region { portrait?: string }|nil
+---@return string|nil
+function M.portrait_file(config_dir, persona, region)
+  local portrait = (persona and persona.portrait) or (region and region.portrait)
+  if not portrait then
     return nil
   end
-  return config_dir .. "/images/portraits/" .. persona.portrait
+  return config_dir .. "/images/portraits/" .. portrait
 end
 
 -- the portraits are 276x336 and a terminal cell is about twice as tall as it is wide
@@ -288,6 +312,19 @@ end
 ---@return string
 function M.onsite_name(boss, coach)
   return ("%s  ·  %s"):format(boss, coach.onsite)
+end
+
+---How the merchant greets you at the hint shop: a welcome on the first visit of the day in this
+---franchise, after that he only asks what you are buying.
+---@param saved string|nil the day and franchise of the last visit
+---@param day string like 2026-10-30
+---@param franchise string
+---@return string[] sound events in order of preference, so a franchise without a welcome falls back
+function M.shop_greeting(saved, day, franchise)
+  if saved == day .. " " .. franchise then
+    return { "merchant" }
+  end
+  return { "welcome", "merchant" }
 end
 
 ---What the merchant asks before a hint, nil when there is nothing left to sell.

@@ -55,8 +55,8 @@ M.CHROME_LEVELS = { "info", "warn", "error", "debug", "trace" }
 M.MUSIC_SKIN = { "bar", "divider", "sung" }
 M.MUSIC_WORDS = { "title", "loading", "missing", "instrumental" }
 M.LISTS = { "hub_messages", "message_templates", "places", "item_categories" }
--- back-to-basics reads the coach's persona and the names the HUD gives the drills
-M.COACH = { "persona", "training", "lessons", "onsite", "concepts", "hint", "buy", "leave" }
+-- back-to-basics reads the names the HUD gives the drills, the coach is the region's character
+M.COACH = { "training", "lessons", "onsite", "concepts", "hint", "buy", "leave" }
 -- the words of the modules that follow the work around the code: CI, review threads, conflicts,
 -- the bestiary, focus blocks and the chronicle
 M.QUESTS = {

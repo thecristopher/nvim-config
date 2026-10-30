@@ -18,9 +18,8 @@ return {
 
   currency = { glyph = "◈", stain = "󰈸" },
 
-  -- back-to-basics: the persona that coaches the daily drills (btb persona list) and the HUD names
+  -- back-to-basics: the names the HUD gives the drills, the coach is the region's character
   coach = {
-    persona = "",
     training = "Training",
     lessons = "Lessons",
     onsite = "Onsite",

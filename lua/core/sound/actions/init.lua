@@ -27,6 +27,8 @@ M.EVENTS = {
   "comfort",
   "expedition",
   "bought",
+  "welcome",
+  "weapon",
   "hud_open",
   "hud_close",
   "hud_move",
