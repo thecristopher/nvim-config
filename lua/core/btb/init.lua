@@ -21,7 +21,10 @@ end
 ---The coach of today's franchise.
 ---@return string|nil
 function M.persona()
-  return actions.persona_of(require("core.franchise").current())
+  return actions.coach_of(
+    require("core.themes").current(),
+    require("core.franchise").current().title
+  )
 end
 
 local function draw_portrait(win, file)
@@ -52,7 +55,8 @@ end
 ---@param win integer
 ---@param persona { portrait?: string }
 function M.portrait(_, win, persona)
-  local file = actions.portrait_file(vim.fn.stdpath("config"), persona)
+  local file =
+    actions.portrait_file(vim.fn.stdpath("config"), persona, require("core.themes").current())
   if not file then
     return
   end
@@ -137,8 +141,14 @@ end
 
 local function celebrate(result)
   local fanfare = actions.celebration(result)
+  local praise = actions.pass_sound(result)
+  -- the merchant's praise speaks over the banner where the franchise has it, the banner stays quiet
+  local praised = praise and require("core.sound").play(praise) ~= nil
   if fanfare.banner then
-    require("core.banner").show(fanfare.banner, { reward = false, subtitle = fanfare.subtitle })
+    require("core.banner").show(
+      fanfare.banner,
+      { reward = false, subtitle = fanfare.subtitle, sound = not praised }
+    )
   end
   if fanfare.runes > 0 then
     require("core.runes").award(fanfare.runes)
@@ -267,6 +277,15 @@ local function stage_onsite(fight)
   end
 end
 
+local shop_file = vim.fn.stdpath("state") .. "/eldentree_merchant"
+
+local function greet_at_shop()
+  local day, franchise = os.date("%Y-%m-%d"), require("core.franchise").name()
+  local ok, lines = pcall(vim.fn.readfile, shop_file, "", 1)
+  require("core.sound").play_first(actions.shop_greeting(ok and lines[1] or nil, day, franchise))
+  pcall(vim.fn.writefile, { day .. " " .. franchise }, shop_file)
+end
+
 ---Asked before a hint is revealed: the franchise's merchant names the price, you buy or leave.
 ---@param info { id: string, hints_left?: integer, cost?: integer }
 ---@param buy fun()
@@ -276,7 +295,7 @@ function M.before_hint(info, buy)
   if not offer then
     return buy()
   end
-  require("core.sound").play("merchant")
+  greet_at_shop()
   vim.ui.select({ coach.buy, coach.leave }, { prompt = offer }, function(choice)
     if choice == coach.buy then
       require("core.sound").play("bought")

@@ -17,9 +17,8 @@ return {
 
   currency = { glyph = "◈", stain = "󰈸" },
 
-  -- back-to-basics: who coaches the daily drills and what the HUD calls them
+  -- back-to-basics: what the HUD calls the daily drills, the coach is the region's character
   coach = {
-    persona = "malenia",
     training = "Sparring",
     lessons = "Battle Notes",
     -- the last 2 levels of a path, staged as a boss fight

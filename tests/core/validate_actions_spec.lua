@@ -24,10 +24,10 @@ describe("problems", function()
     assert.is_true(mentions(validate.problems(broken), "raccoon_city has no boss"))
   end)
 
-  it("notices a franchise with no coach for the drills", function()
+  it("notices a franchise with no name for the drills", function()
     local broken = lore()
-    broken.coach.persona = nil
-    assert.is_true(mentions(validate.problems(broken), "coach.persona"))
+    broken.coach.training = nil
+    assert.is_true(mentions(validate.problems(broken), "coach.training"))
   end)
 
   it("notices a franchise with no words for the CI run", function()

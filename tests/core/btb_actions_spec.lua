@@ -1,19 +1,33 @@
 local actions = require("core.btb.actions")
 
-describe("persona_of", function()
-  it("reads the coach of the franchise", function()
-    assert.are.equal("claire", actions.persona_of({ coach = { persona = "claire" } }))
+describe("coach_of", function()
+  it("makes Claire the coach on Raccoon City's day, by her persona", function()
+    assert.are.equal("claire", actions.coach_of({ character = "Claire Redfield" }, "Resident Evil"))
+    assert.are.equal("ada", actions.coach_of({ character = "Ada Wong" }, "Resident Evil"))
+    assert.are.equal("malenia", actions.coach_of({ character = "Malenia" }, "Elden Ring"))
   end)
 
-  it("leaves the choice to btb when the lore names nobody", function()
-    assert.is_nil(actions.persona_of({ coach = { persona = "" } }))
-    assert.is_nil(actions.persona_of({}))
+  it("hands btb Leon to summon on his region's day", function()
+    assert.are.same(
+      { id = "leon-s-kennedy", character = "Leon S. Kennedy", franchise = "Resident Evil" },
+      actions.coach_of({ character = "Leon S. Kennedy" }, "Resident Evil")
+    )
   end)
 
-  it("gives Resident Evil to Claire and Elden Ring to Malenia", function()
-    local lore = require("core.franchise.actions").lore
-    assert.are.equal("claire", actions.persona_of(lore("resident_evil")))
-    assert.are.equal("malenia", actions.persona_of(lore("elden_ring")))
+  it("leaves the choice to btb when the region has nobody", function()
+    assert.is_nil(actions.coach_of({}, "Elden Ring"))
+    assert.is_nil(actions.coach_of(nil, "Elden Ring"))
+  end)
+
+  it("names every region's character as a persona btb can keep", function()
+    assert.are.equal("mimic-tear", actions.persona_id("Mimic Tear"))
+    for _, name in ipairs({ "resident_evil", "elden_ring" }) do
+      for _, region in ipairs(require("core.franchise.actions").lore(name).regions) do
+        local id = actions.persona_id(region.character)
+        assert.is_nil(id:find("[^a-z0-9%-]"), id)
+        assert.is_nil(id:find("^%-") or id:find("%-$") or id:find("%-%-"), id)
+      end
+    end
   end)
 end)
 
@@ -24,6 +38,47 @@ describe("sound_for", function()
 
   it("stays quiet on a clean solve, the banner already sings", function()
     assert.is_nil(actions.sound_for("passed_clean"))
+  end)
+end)
+
+describe("pass_sound", function()
+  it("has the merchant praise every pass, a redo included", function()
+    assert.are.equal("weapon", actions.pass_sound({ ok = true, outcome = "struggled" }))
+    assert.are.equal("weapon", actions.pass_sound({ ok = true, redo = true }))
+  end)
+
+  it("stays quiet on a failure", function()
+    assert.is_nil(actions.pass_sound({ ok = false }))
+  end)
+end)
+
+describe("shop_greeting", function()
+  it("welcomes Leon on his first visit of the day", function()
+    assert.are.same(
+      { "welcome", "merchant" },
+      actions.shop_greeting("2026-10-29 resident_evil", "2026-10-30", "resident_evil")
+    )
+  end)
+
+  it("only asks what he is buying after that", function()
+    assert.are.same(
+      { "merchant" },
+      actions.shop_greeting("2026-10-30 resident_evil", "2026-10-30", "resident_evil")
+    )
+  end)
+
+  it("welcomes again when Malenia's franchise takes over the same day", function()
+    assert.are.same(
+      { "welcome", "merchant" },
+      actions.shop_greeting("2026-10-30 resident_evil", "2026-10-30", "elden_ring")
+    )
+  end)
+
+  it("welcomes on the very first visit, with nothing saved", function()
+    assert.are.same(
+      { "welcome", "merchant" },
+      actions.shop_greeting(nil, "2026-10-30", "elden_ring")
+    )
   end)
 end)
 
@@ -66,6 +121,11 @@ describe("portrait_file", function()
   it("finds Claire's portrait among the config's portraits", function()
     local file = actions.portrait_file("/config", { portrait = "claire.jpg" })
     assert.are.equal("/config/images/portraits/claire.jpg", file)
+  end)
+
+  it("draws Leon from his region when the summoned coach brings no portrait", function()
+    local file = actions.portrait_file("/config", { name = "Leon" }, { portrait = "leon.jpg" })
+    assert.are.equal("/config/images/portraits/leon.jpg", file)
   end)
 
   it("has nothing to draw for a coach without a portrait", function()

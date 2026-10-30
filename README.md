@@ -32,7 +32,7 @@ Whatever Apple Music or Cider is playing sits in the statusline, with the cover 
 
 ![Now playing panel](images/demo/music.gif)
 
-Daily drills come from back-to-basics, coached by the franchise of the day. On Resident Evil days Claire briefs the exercise, a Bedrock one here, and every name and place in it stays in Raccoon City.
+Daily drills come from back-to-basics, coached by the character of the day's region. Here Claire briefs the exercise, a Bedrock one here, and every name and place in it stays in Raccoon City.
 
 ![Claire briefs a Bedrock exercise](images/demo/btb_re_coach.png)
 
@@ -175,7 +175,7 @@ Cider needs its API on in Settings > Connectivity, and `vim.g.eldentree_cider_to
 
 ## back-to-basics
 
-`core/btb` brings [back-to-basics](https://github.com/thecristopher/back-to-basics) in: daily drills by hand, coached by the franchise (Claire in Resident Evil, Malenia in Elden Ring) on a stage with their portrait.
+`core/btb` brings [back-to-basics](https://github.com/thecristopher/back-to-basics) in: daily drills by hand, coached by the character of the day's region on a stage with their portrait: Claire, Malenia and Ada by their own persona, anyone else (Leon, Wesker, Radahn, Mohg...) summoned by btb the first time they coach.
 
 - `b` on the HUD or `<leader>kk` starts the lesson, `<leader>kb` opens the library of lessons fought so far
 - Saving runs the tests, and failing ones land on your solution as warnings on the line they broke
@@ -220,13 +220,13 @@ Everything works in iTerm. A few extras are worth turning on:
 
 - **Real image portraits.** Ghostty, Kitty and WezTerm speak the kitty graphics protocol, so the HUD shows the portraits as actual pictures instead of chafa's half blocks. The portraits are JPEG, so snacks needs ImageMagick to convert them (`brew install imagemagick`), without it they stay in chafa. Ghostty is the closest to iTerm in feel: `brew install --cask ghostty`.
 
-Portraits in `images/portraits/` are 276x336 crops of the originals in `images/`, with contrast, color and sharpness lifted so they survive half block rendering. A region whose portrait is missing simply shows the HUD without art.
+Portraits in `images/portraits/` are 276x336 crops of the originals in `images/`, with contrast, color and sharpness lifted so they survive half block rendering. `python3 scripts/portraits.py` builds them with the face centered, from where `FACES` says it sits in each original, pass names to rebuild only those. A region whose portrait is missing simply shows the HUD without art.
 
 ### Sounds
 
 Some sounds are clips from the games, the rest are made from scratch by `python3 scripts/sounds.py` out of synthesized tones and noise, with ffmpeg for the echo. Run it again after tweaking a recipe, or pass a franchise to rebuild only that one. `:Sound died` previews any of them.
 
-To use your own instead, drop audio files into `sounds/elden_ring/` or `sounds/resident_evil/`, named after the moment they belong to: `title`, `door`, `fog`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`, `zone`, `phantom`, `continue`, `summon` (the spirit calling bell that opens back-to-basics' coach stage), `comfort` (failing the same exercise again), `bought` (a hint bought from the merchant), `expedition` (the last sound before an expedition goes quiet), and the inventory HUD's `hud_open`, `hud_close`, `hud_move`, `hud_select`, `hud_back`. Variants like `died_2.wav` take turns. Every sound plays at 60% volume (`VOLUME` in `core/sound/actions`). Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
+To use your own instead, drop audio files into `sounds/elden_ring/` or `sounds/resident_evil/`, named after the moment they belong to: `title`, `door`, `fog`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`, `zone`, `phantom`, `continue`, `summon` (the spirit calling bell that opens back-to-basics' coach stage), `comfort` (failing the same exercise again), `bought` (a hint bought from the merchant), `welcome` (the merchant opening the hint shop for the first time that day, after that `merchant` asks what you are buying), `weapon` (the merchant praising a back-to-basics pass, the banner stays quiet when it plays), `expedition` (the last sound before an expedition goes quiet), and the inventory HUD's `hud_open`, `hud_close`, `hud_move`, `hud_select`, `hud_back`. Variants like `died_2.wav` take turns. Every sound plays at 60% volume (`VOLUME` in `core/sound/actions`). Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
 
 ### Portrait credits
 

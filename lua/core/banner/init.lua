@@ -175,7 +175,8 @@ local function crumble(duration)
   end, duration)
 end
 
--- shows a banner by kind name ("felled", "great", "died", "grace", "cleansed", "region")
+-- shows a banner by kind name ("felled", "great", "died", "grace", "cleansed", "region"),
+-- opts.sound = false when another sound already speaks for it
 function M.show(name, opts)
   opts = opts or {}
   local kind = actions.kind(name, opts.kind)
@@ -189,7 +190,9 @@ function M.show(name, opts)
   if not motion.enabled() or vim.g.eldentree_banners == false then
     return
   end
-  require("core.sound").play(name)
+  if opts.sound ~= false then
+    require("core.sound").play(name)
+  end
   if actions.rains(name, vim.bo.buftype, vim.g.eldentree_rain) then
     crumble(kind.duration)
   end

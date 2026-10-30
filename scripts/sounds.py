@@ -222,7 +222,7 @@ def er_region():
 
 RECIPES = {
     # title, door, rest (the save room), continue, grace (the typewriter saving), died (game over), merchant,
-    # bought, summon, comfort, expedition and the hud_ inventory sounds are clips from the game, so they are not built here
+    # bought, welcome, weapon, summon, comfort, expedition and the hud_ inventory sounds are clips from the game, so they are not built here
     "resident_evil": {
         "boss": re_boss, "felled": re_felled, "great": re_great, "cleansed": re_cleansed,
         "region": re_region,

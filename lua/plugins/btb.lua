@@ -1,5 +1,6 @@
--- back-to-basics: daily drills by hand, coached by the franchise's persona (Claire in Resident
--- Evil, Malenia in Elden Ring). <leader>kk starts the lesson, <leader>kb opens the lesson library.
+-- back-to-basics: daily drills by hand, coached by the character of the day's region (Claire,
+-- Malenia and Ada by their own persona, anyone else summoned by btb). <leader>kk starts the lesson,
+-- <leader>kb opens the lesson library.
 -- vim.g.eldentree_btb_dir points at the clone when it is not in ~/Documents/GitHub/back-to-basics.
 
 local dir = vim.g.eldentree_btb_dir or vim.fn.expand("~/Documents/GitHub/back-to-basics")
