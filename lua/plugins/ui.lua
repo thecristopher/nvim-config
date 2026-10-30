@@ -62,6 +62,24 @@ return {
             },
           },
           lualine_x = {
+            -- the focus block counting down while the world stays quiet
+            {
+              function()
+                return require("core.expedition").statusline()
+              end,
+              color = function()
+                return { fg = palette().lavender }
+              end,
+            },
+            -- the branch's CI run, each state carries its own highlight group
+            {
+              function()
+                return require("core.ci").statusline()
+              end,
+              on_click = function()
+                require("core.ci").open()
+              end,
+            },
             -- the next back-to-basics exercise getting ready, small enough to not cover the statement
             {
               function()

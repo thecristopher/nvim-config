@@ -43,6 +43,9 @@ local function finish()
   end
   final.rank = actions.rank(final)
   pcall(vim.fn.writefile, { vim.json.encode(final) }, state_file)
+  pcall(function()
+    require("core.chronicle").record(final)
+  end)
 end
 
 local function count_fixes(buf)

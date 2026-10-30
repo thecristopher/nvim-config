@@ -17,6 +17,7 @@ return {
         persona = bridge.persona,
         portrait = bridge.portrait,
         sound = bridge.sound,
+        before_hint = bridge.before_hint,
         progress = require("core.progress").start,
         -- the coach takes the stage once the solve's banner is done, never on top of it
         advance_ms = require("core.banner.actions").KINDS.felled.duration,

@@ -18,7 +18,19 @@ return {
   currency = { glyph = "◈", stain = "󰈸" },
 
   -- back-to-basics: who coaches the daily drills and what the HUD calls them
-  coach = { persona = "malenia", training = "Sparring", lessons = "Battle Notes" },
+  coach = {
+    persona = "malenia",
+    training = "Sparring",
+    lessons = "Battle Notes",
+    -- the last 2 levels of a path, staged as a boss fight
+    onsite = "Onsite Trial",
+    -- the concepts fought so far, as a map of rooms
+    concepts = "Incantations",
+    -- what is asked before a hint is bought, the price in XP fills the blank
+    hint = "Seek a hint for %d XP?",
+    buy = "Accept",
+    leave = "Decline",
+  },
 
   -- Claude Code's statusline bars and spinner (claude/install.lua merges the verbs into settings)
   claude = {
@@ -133,6 +145,53 @@ return {
       to = "yellow",
     },
   },
+
+  -- the CI run of the branch, in the statusline
+  ci = { running = "Awaiting the summons", passed = "Summons answered", failed = "Summons lost" },
+
+  -- review threads still open on the branch's PR, left on their lines
+  threads = {
+    title = "Messages from the Roundtable",
+    resolved = "Message heeded",
+    none = "No message left unheeded on this PR",
+  },
+
+  -- who guards a merge conflict, and how many conflicted files the repo still holds
+  conflict = { boss = "Godrick the Grafted", left = "%d files still grafted" },
+
+  -- every kind of error you cleared becomes a foe you felled
+  bestiary = {
+    title = "Bestiary",
+    empty = "No foes felled here yet",
+    enemies = {
+      "Wandering Noble",
+      "Godrick Soldier",
+      "Demi-Human",
+      "Giant Crab",
+      "Rotten Stray",
+      "Crucible Knight",
+      "Tree Sentinel",
+      "Night's Cavalry",
+      "Erdtree Avatar",
+      "Ulcerated Tree Spirit",
+      "Grafted Scion",
+      "Black Knife Assassin",
+      "Miranda Flower",
+      "Leyndell Knight",
+      "Crystalian",
+      "Kindred of Rot",
+    },
+  },
+
+  -- a focus block: the world goes quiet and the block gets its own rank
+  expedition = {
+    name = "Expedition",
+    started = "You set out from the grace for %d minutes",
+    ended = "Expedition over",
+  },
+
+  -- the days you fought, as a grid
+  chronicle = { title = "Chronicle of the Tarnished" },
 
   banners = {
     felled = "ENEMY FELLED",

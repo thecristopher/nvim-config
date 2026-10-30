@@ -64,6 +64,14 @@ function M.award(amount)
   end
 end
 
+--- Pays for something bought, the counter rolls down to the new tally.
+---@param amount integer
+function M.spend(amount)
+  if amount > 0 then
+    settle(actions.spend(state, amount), 0)
+  end
+end
+
 function M.after_banner(kind)
   local before = state.held
   local next_state = actions.after_banner(state, kind)

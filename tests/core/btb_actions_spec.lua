@@ -255,3 +255,81 @@ describe("path_map", function()
     assert.equal("   locked for now", lines[6])
   end)
 end)
+
+describe("onsite_name", function()
+  it("puts the franchise's word for the onsite beside the boss", function()
+    assert.equal(
+      "Nemesis T-Type  ·  Final Exam",
+      actions.onsite_name("Nemesis T-Type", { onsite = "Final Exam" })
+    )
+  end)
+end)
+
+describe("hint_offer", function()
+  local coach = { hint = "What are ya buyin'? A hint for %d XP" }
+
+  it("quotes Claire the price of the next hint", function()
+    assert.equal(
+      "What are ya buyin'? A hint for 3 XP",
+      actions.hint_offer(coach, { hints_left = 2, cost = 3 })
+    )
+  end)
+
+  it("sells nothing once the hints run out", function()
+    assert.is_nil(actions.hint_offer(coach, { hints_left = 0, cost = 3 }))
+  end)
+end)
+
+describe("concept_map", function()
+  local concepts = {
+    {
+      track = "node",
+      concept = "recursion",
+      clean = 0,
+      struggled = 1,
+      skipped = 1,
+      standing = "weak",
+    },
+    {
+      track = "node",
+      concept = "closures",
+      clean = 3,
+      struggled = 0,
+      skipped = 0,
+      standing = "owned",
+    },
+    {
+      track = "react",
+      concept = "state",
+      clean = 1,
+      struggled = 0,
+      skipped = 0,
+      standing = "learning",
+    },
+  }
+
+  it("draws Malenia's concepts as rooms under their track", function()
+    local lines = actions.concept_map(concepts)
+    assert.same({
+      " node",
+      " □ recursion  ✓0  ✗2",
+      " ■ closures   ✓3  ✗0",
+      "",
+      " react",
+      " ▣ state      ✓1  ✗0",
+    }, lines)
+  end)
+
+  it("paints the costly rooms red and the owned ones blue", function()
+    local _, marks = actions.concept_map(concepts)
+    assert.equal("EldenMapLeft", marks[2].group)
+    assert.equal("EldenMapCleared", marks[3].group)
+  end)
+
+  it("remembers the track of every room so Enter opens the right library", function()
+    local _, _, tracks = actions.concept_map(concepts)
+    assert.equal("node", tracks[2])
+    assert.equal("react", tracks[6])
+    assert.is_nil(tracks[1])
+  end)
+end)

@@ -8,6 +8,8 @@ local M = {}
 
 local ns = vim.api.nvim_create_namespace("eldentree_boss")
 local fights = {}
+-- fights other modules stage on a buffer, counted by them instead of by the diagnostics
+local stages = {}
 local view
 local animation
 local hunt
@@ -217,16 +219,21 @@ end
 
 local function felled(buf, fight)
   fights[buf] = nil
+  local stage = stages[buf]
+  stages[buf] = nil
   hide()
-  require("core.banner").show("felled", { subtitle = fight.name })
+  if stage and stage.banner == false then
+    return
+  end
+  require("core.banner").show(stage and stage.banner or "felled", { subtitle = fight.name })
 end
 
-local function engage(fight)
+local function engage(fight, stage)
   fight.engaged = true
-  fight.peak = fight.errors
-  fight.health = 1
+  fight.peak = math.max(fight.errors, stage and stage.peak or 0)
+  fight.health = actions.health(fight.errors, fight.peak)
   fight.entered_at = vim.uv.now()
-  fight.name = actions.boss_for(require("core.themes").current().name)
+  fight.name = stage and stage.name or actions.boss_for(require("core.themes").current().name)
   require("core.sound").play("boss")
   animate(fight, actions.ENTRANCE_MS)
 end
@@ -285,11 +292,31 @@ local function watch_for_fight(buf, errors)
   end, actions.ENGAGE_AFTER_MS)
 end
 
+-- a staged fight starts at once, its module already decided it is worth one
+local function refresh_stage(buf, stage)
+  local fight = fights[buf]
+  if fight and fight.engaged then
+    fight.name = stage.name
+    return update_engaged(buf, fight, stage.count)
+  end
+  hide()
+  if stage.count <= 0 then
+    stages[buf] = nil
+    return
+  end
+  fight = { errors = stage.count }
+  fights[buf] = fight
+  engage(fight, stage)
+end
+
 --- Reconciles the bar with the current buffer's errors: starts, updates, hides or ends the fight.
 function M.refresh()
   local buf = vim.api.nvim_get_current_buf()
   if not enabled() or vim.bo[buf].buftype ~= "" then
     return hide()
+  end
+  if stages[buf] then
+    return refresh_stage(buf, stages[buf])
   end
 
   local errors, fight = error_count(buf), fights[buf]
@@ -303,6 +330,26 @@ function M.refresh()
     return
   end
   watch_for_fight(buf, errors)
+end
+
+--- Stages a fight on a buffer that another module counts: every count that drops lands a hit, and
+--- reaching zero fells the boss. Errors in that buffer stop counting until the stage ends.
+---@param buf integer
+---@param stage { name: string, count: integer, peak?: integer, banner?: string|false }|nil nil ends it quietly
+function M.stage(buf, stage)
+  if not stage then
+    if stages[buf] then
+      stages[buf], fights[buf] = nil, nil
+      if buf == vim.api.nvim_get_current_buf() then
+        hide()
+      end
+    end
+    return
+  end
+  stages[buf] = stage
+  if buf == vim.api.nvim_get_current_buf() then
+    M.refresh()
+  end
 end
 
 --- Tells whether a boss is fighting in a buffer, so other celebrations can step aside.
@@ -345,7 +392,7 @@ function M.setup()
   vim.api.nvim_create_autocmd("BufDelete", {
     group = group,
     callback = function(ev)
-      fights[ev.buf] = nil
+      fights[ev.buf], stages[ev.buf] = nil, nil
     end,
   })
   vim.api.nvim_create_autocmd("VimResized", {

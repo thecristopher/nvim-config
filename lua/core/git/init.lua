@@ -180,6 +180,7 @@ function M.push()
   local task = progress("Pushing " .. branch .. "…")
   run(actions.push_args(M.has_upstream()), function()
     task:done("Pushed " .. branch)
+    require("core.ci").soon()
   end, task)
 end
 

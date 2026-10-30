@@ -1,0 +1,50 @@
+local actions = require("core.expedition.actions")
+
+describe("minutes", function()
+  it("sets out for the default block when Claire gives no minutes", function()
+    assert.equal(actions.DEFAULT_MINUTES, actions.minutes(nil))
+    assert.equal(actions.DEFAULT_MINUTES, actions.minutes(""))
+  end)
+
+  it("reads the minutes Inde asked for", function()
+    assert.equal(25, actions.minutes("25"))
+  end)
+
+  it("refuses minutes that are not a positive number", function()
+    assert.is_nil(actions.minutes("soon"))
+    assert.is_nil(actions.minutes("0"))
+  end)
+end)
+
+describe("countdown", function()
+  it("counts the block down in minutes, then seconds", function()
+    assert.equal(32, actions.remaining(1000 + 32 * 60, 1000) / 60)
+    assert.equal("32m", actions.countdown(31 * 60 + 5))
+    assert.equal("45s", actions.countdown(45))
+    assert.equal(0, actions.remaining(10, 20))
+  end)
+end)
+
+describe("segment", function()
+  it("keeps only what Malenia did during the block", function()
+    local before = { seconds = 600, saves = 4, fixes = 1 }
+    local after = { seconds = 3300, saves = 20, fixes = 9 }
+    assert.same({ seconds = 2700, saves = 16, fixes = 8 }, actions.segment(before, after))
+  end)
+end)
+
+describe("subtitle", function()
+  it("ranks the block on its own", function()
+    local text = actions.subtitle({ seconds = 2700, saves = 16, fixes = 8 })
+    assert.equal("Rank A  ·  45m  ·  16 saves  ·  8 fixes", text)
+  end)
+end)
+
+describe("lets_through", function()
+  it("lets warnings and errors reach Claire and keeps the rest quiet", function()
+    assert.is_true(actions.lets_through(vim.log.levels.WARN))
+    assert.is_true(actions.lets_through(vim.log.levels.ERROR))
+    assert.is_false(actions.lets_through(vim.log.levels.INFO))
+    assert.is_false(actions.lets_through(nil))
+  end)
+end)

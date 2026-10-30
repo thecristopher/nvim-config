@@ -281,4 +281,70 @@ function M.path_map(status)
   return lines, marks
 end
 
+---Names the onsite fight: the region's boss, then the franchise's word for the onsite.
+---@param boss string
+---@param coach { onsite: string }
+---@return string
+function M.onsite_name(boss, coach)
+  return ("%s  ·  %s"):format(boss, coach.onsite)
+end
+
+---What the merchant asks before a hint, nil when there is nothing left to sell.
+---@param coach { hint: string } the franchise's coach words
+---@param info { hints_left?: integer, cost?: integer }
+---@return string|nil
+function M.hint_offer(coach, info)
+  if info.hints_left == 0 then
+    return nil
+  end
+  return coach.hint:format(info.cost or 0)
+end
+
+local STANDINGS = {
+  weak = { "□", "EldenMapLeft" },
+  learning = { "▣", "EldenMapPath" },
+  owned = { "■", "EldenMapCleared" },
+}
+
+local function concept_line(row, width)
+  local glyph = STANDINGS[row.standing] or STANDINGS.learning
+  local name = row.concept .. (" "):rep(math.max(0, width - vim.api.nvim_strwidth(row.concept)))
+  local tally = ("✓%d  ✗%d"):format(row.clean, row.struggled + row.skipped)
+  local line = (" %s %s  %s"):format(glyph[1], name, tally)
+  return line, 1 + #glyph[1] + 1 + #name, glyph[2]
+end
+
+local function widest(rows)
+  local width = 0
+  for _, row in ipairs(rows) do
+    width = math.max(width, vim.api.nvim_strwidth(row.concept))
+  end
+  return width
+end
+
+---The concepts fought so far as rooms, per track: red the ones that cost you, blue the owned ones.
+---@param concepts table[] btb status --json concepts, as { track, concept, clean, struggled, skipped, standing }
+---@return string[] lines
+---@return { row: integer, col: integer, end_col: integer, group: string }[] marks zero based rows
+---@return table<integer, string> tracks the track of each concept row, by one based line
+function M.concept_map(concepts)
+  local lines, marks, tracks = {}, {}, {}
+  local width, track = widest(concepts), nil
+  for _, row in ipairs(concepts) do
+    if row.track ~= track then
+      track = row.track
+      if #lines > 0 then
+        table.insert(lines, "")
+      end
+      table.insert(marks, { row = #lines, col = 1, end_col = 1 + #track, group = "Title" })
+      table.insert(lines, " " .. track)
+    end
+    local line, name_end, group = concept_line(row, width)
+    table.insert(marks, { row = #lines, col = 0, end_col = name_end, group = group })
+    table.insert(lines, line)
+    tracks[#lines] = track
+  end
+  return lines, marks, tracks
+end
+
 return M

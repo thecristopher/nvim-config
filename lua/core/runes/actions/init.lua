@@ -28,6 +28,14 @@ function M.award(state, amount)
   return { held = state.held + amount, bloodstain = state.bloodstain }
 end
 
+--- Takes runes out of the purse for something bought, never below zero.
+---@param state { held: integer, bloodstain: integer }
+---@param amount integer
+---@return { held: integer, bloodstain: integer }
+function M.spend(state, amount)
+  return { held = math.max(0, state.held - math.max(0, amount)), bloodstain = state.bloodstain }
+end
+
 -- an older bloodstain is gone for good once you die again, just like the Lands Between
 function M.die(state)
   return { held = 0, bloodstain = state.held }

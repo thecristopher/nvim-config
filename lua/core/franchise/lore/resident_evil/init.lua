@@ -19,7 +19,19 @@ return {
   currency = { glyph = "₧", stain = "☣" },
 
   -- back-to-basics: who coaches the daily drills and what the HUD calls them
-  coach = { persona = "claire", training = "Training Room", lessons = "Lesson Files" },
+  coach = {
+    persona = "claire",
+    training = "Training Room",
+    lessons = "Lesson Files",
+    -- the last 2 levels of a path, staged as a boss fight
+    onsite = "Final Exam",
+    -- the concepts fought so far, as a map of rooms
+    concepts = "Upgrades",
+    -- what is asked before a hint is bought, the price in XP fills the blank
+    hint = "What are ya buyin'? A hint for %d XP",
+    buy = "Buy",
+    leave = "Leave",
+  },
 
   -- Claude Code's statusline bars and spinner (claude/install.lua merges the verbs into settings)
   claude = {
@@ -124,6 +136,53 @@ return {
       to = "yellow",
     },
   },
+
+  -- the CI run of the branch, in the statusline
+  ci = { running = "Radio static", passed = "All clear", failed = "Mayday" },
+
+  -- review threads still open on the branch's PR, left on their lines
+  threads = {
+    title = "Radio Transmissions",
+    resolved = "Transmission answered",
+    none = "No open transmissions on this PR",
+  },
+
+  -- who guards a merge conflict, and how many conflicted files the repo still holds
+  conflict = { boss = "Uroboros", left = "%d files infected" },
+
+  -- every kind of error you cleared becomes a creature you neutralized
+  bestiary = {
+    title = "Enemy Files",
+    empty = "No B.O.W.s neutralized here yet",
+    enemies = {
+      "Zombie",
+      "Cerberus",
+      "Licker",
+      "Hunter",
+      "Crimson Head",
+      "Ganado",
+      "Regenerador",
+      "Plaga Parasite",
+      "Majini",
+      "Molded",
+      "Lycan",
+      "Chimera",
+      "Drain Deimos",
+      "Iron Maiden",
+      "Garrador",
+      "Novistador",
+    },
+  },
+
+  -- a focus block: the world goes quiet and the block gets its own rank
+  expedition = {
+    name = "Mission",
+    started = "Mission start, %d minutes on the clock",
+    ended = "Mission over",
+  },
+
+  -- the days you fought, as a grid
+  chronicle = { title = "Mission Log" },
 
   banners = {
     felled = "THREAT NEUTRALIZED",

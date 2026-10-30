@@ -147,55 +147,87 @@ end
 
 local path_ns = vim.api.nvim_create_namespace("eldentree_btb_path")
 
-local function show_path(status)
-  local lines, marks = actions.path_map(status)
+-- a float of rooms like the path and the concepts, Enter does what the map is for
+local function show_rooms(map)
   local width = 0
-  for _, line in ipairs(lines) do
+  for _, line in ipairs(map.lines) do
     width = math.max(width, vim.api.nvim_strwidth(line) + 2)
   end
+  width = math.max(width, #map.footer + 4)
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  for _, mark in ipairs(marks) do
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, map.lines)
+  for _, mark in ipairs(map.marks) do
     vim.api.nvim_buf_set_extmark(buf, path_ns, mark.row, mark.col, {
       end_col = mark.end_col,
       hl_group = mark.group,
     })
   end
   vim.bo[buf].modifiable = false
-  local footer = ("streak %d · %d XP · %d mastered"):format(
-    status.streak or 0,
-    status.xp or 0,
-    status.mastered or 0
-  )
   local win = vim.api.nvim_open_win(buf, true, {
     relative = "editor",
     style = "minimal",
     border = require("core.skin").border(),
-    width = math.min(math.max(width, #footer + 4), vim.o.columns - 4),
-    height = math.min(#lines, vim.o.lines - 6),
+    width = math.min(width, vim.o.columns - 4),
+    height = math.min(#map.lines, vim.o.lines - 6),
     row = 2,
     col = math.floor((vim.o.columns - width) / 2),
-    title = " "
-      .. require("core.skin").title(require("core.franchise").current().coach.training)
-      .. " ",
+    title = " " .. require("core.skin").title(map.title) .. " ",
     title_pos = "center",
-    footer = " " .. footer .. " ",
+    footer = " " .. map.footer .. " ",
     footer_pos = "center",
   })
+  local function close()
+    pcall(vim.api.nvim_win_close, win, true)
+  end
   for _, key in ipairs({ "q", "<Esc>" }) do
-    vim.keymap.set("n", key, function()
-      pcall(vim.api.nvim_win_close, win, true)
-    end, { buffer = buf, nowait = true })
+    vim.keymap.set("n", key, close, { buffer = buf, nowait = true })
   end
   vim.keymap.set("n", "<CR>", function()
-    pcall(vim.api.nvim_win_close, win, true)
-    require("back-to-basics").lesson()
+    local row = vim.api.nvim_win_get_cursor(win)[1]
+    close()
+    map.on_enter(row)
   end, { buffer = buf, nowait = true })
 end
 
----Opens the path map: every track as a chain of levels, Enter starts the lesson.
-function M.path()
+local function show_path(status)
+  local lines, marks = actions.path_map(status)
+  show_rooms({
+    lines = lines,
+    marks = marks,
+    title = require("core.franchise").current().coach.training,
+    footer = ("streak %d · %d XP · %d mastered"):format(
+      status.streak or 0,
+      status.xp or 0,
+      status.mastered or 0
+    ),
+    on_enter = function()
+      require("back-to-basics").lesson()
+    end,
+  })
+end
+
+local function show_concepts(status)
+  local concepts = status.concepts or {}
+  if #concepts == 0 then
+    return vim.notify("No concepts fought yet", vim.log.levels.INFO, { title = "btb" })
+  end
+  local lines, marks, tracks = actions.concept_map(concepts)
+  local owned = #vim.tbl_filter(function(row)
+    return row.standing == "owned"
+  end, concepts)
+  show_rooms({
+    lines = lines,
+    marks = marks,
+    title = require("core.franchise").current().coach.concepts,
+    footer = ("%d of %d owned · <CR> lessons"):format(owned, #concepts),
+    on_enter = function(row)
+      require("back-to-basics").lessons(tracks[row])
+    end,
+  })
+end
+
+local function with_status(show)
   local btb = plugin()
   if not btb then
     return vim.notify("back-to-basics is not installed", vim.log.levels.WARN, { title = "btb" })
@@ -204,7 +236,51 @@ function M.path()
     if data.error then
       return vim.notify(data.error, vim.log.levels.ERROR, { title = "btb" })
     end
-    show_path(data)
+    show(data)
+  end)
+end
+
+---Opens the path map: every track as a chain of levels, Enter starts the lesson.
+function M.path()
+  with_status(show_path)
+end
+
+---Opens the concept map: every concept fought so far as a room, Enter opens that track's lessons.
+function M.concepts()
+  with_status(show_concepts)
+end
+
+-- an onsite run stages the region's boss on the solution, one hit per test that starts passing.
+-- The pass itself is celebrated by BtbResult, so the boss falls without a banner of its own
+local function stage_onsite(fight)
+  local lore = require("core.franchise").current()
+  local boss = require("core.boss.actions").boss_for(require("core.themes").current().name)
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.b[buf].btb_exercise == fight.id and vim.b[buf].btb_redo ~= true then
+      require("core.boss").stage(buf, {
+        name = actions.onsite_name(boss, lore.coach),
+        count = fight.remaining,
+        peak = fight.total,
+        banner = false,
+      })
+    end
+  end
+end
+
+---Asked before a hint is revealed: the franchise's merchant names the price, you buy or leave.
+---@param info { id: string, hints_left?: integer, cost?: integer }
+---@param buy fun()
+function M.before_hint(info, buy)
+  local coach = require("core.franchise").current().coach
+  local offer = actions.hint_offer(coach, info)
+  if not offer then
+    return buy()
+  end
+  require("core.sound").play("merchant")
+  vim.ui.select({ coach.buy, coach.leave }, { prompt = offer }, function(choice)
+    if choice == coach.buy then
+      buy()
+    end
   end)
 end
 
@@ -227,8 +303,29 @@ function M.setup()
       refresh_statusline()
     end,
   })
+  vim.api.nvim_create_autocmd("User", {
+    group = group,
+    pattern = "BtbFight",
+    callback = function(event)
+      stage_onsite(event.data)
+    end,
+  })
+  -- the hint is paid in the franchise's currency too, the XP it costs leaves the purse
+  vim.api.nvim_create_autocmd("User", {
+    group = group,
+    pattern = "BtbHint",
+    callback = function(event)
+      require("core.runes").spend((event.data or {}).cost or 0)
+    end,
+  })
   vim.api.nvim_create_user_command("BtbPath", M.path, { desc = "The back-to-basics path as a map" })
+  vim.api.nvim_create_user_command(
+    "BtbConcepts",
+    M.concepts,
+    { desc = "The back-to-basics concepts as a map" }
+  )
   vim.keymap.set("n", "<leader>km", M.path, { desc = "Path map" })
+  vim.keymap.set("n", "<leader>kC", M.concepts, { desc = "Concept map" })
   M.refresh()
 end
 
