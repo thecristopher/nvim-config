@@ -137,3 +137,121 @@ describe("ahead_text", function()
     assert.are.equal("", actions.ahead_text(nil))
   end)
 end)
+
+describe("day_status", function()
+  it("counts what Claire still has to fight today", function()
+    local today = {
+      streak = 6,
+      queue = {
+        { id = "node/love-note", done = true, review = false },
+        { id = nil, slot = true, done = false, review = false },
+        { id = "react/playlist", done = false, review = true },
+      },
+    }
+    assert.same({ new = 1, reviews = 1, streak = 6, done = false }, actions.day_status(today))
+  end)
+
+  it("knows Malenia is done once nothing is pending", function()
+    local today = { streak = 2, queue = { { id = "py/haligtree", done = true } } }
+    assert.is_true(actions.day_status(today).done)
+  end)
+
+  it("says nothing until btb answers", function()
+    assert.is_nil(actions.day_status({ error = "no node" }))
+  end)
+end)
+
+describe("day_line", function()
+  it("reads what is left and the streak", function()
+    local line = actions.day_line({ new = 2, reviews = 1, streak = 6, done = false })
+    assert.equal("2 new · 1 review · streak 6", line)
+  end)
+
+  it("celebrates a finished day", function()
+    assert.equal(
+      "Done for today ✓ · streak 3",
+      actions.day_line({ new = 0, reviews = 0, streak = 3, done = true })
+    )
+  end)
+
+  it("leaves the streak out on Inde's first day", function()
+    assert.equal("2 reviews", actions.day_line({ new = 0, reviews = 2, streak = 0, done = false }))
+  end)
+end)
+
+describe("day_rank", function()
+  local flawless = { solved = 2, clean = 2, skipped = 0, hints = 0, xp = 40, goal = 40 }
+
+  it("gives Malenia an S for a flawless day at the goal", function()
+    assert.equal("S", actions.day_rank(flawless))
+  end)
+
+  it("drops Claire to an A when a hint was needed", function()
+    assert.equal("A", actions.day_rank(vim.tbl_extend("force", flawless, { hints = 1 })))
+  end)
+
+  it("gives a B when half the fights were clean", function()
+    local day = { solved = 2, clean = 1, skipped = 0, hints = 2, xp = 20, goal = 40 }
+    assert.equal("B", actions.day_rank(day))
+  end)
+
+  it("gives a D when skips outweigh the solves", function()
+    local day = { solved = 1, clean = 0, skipped = 2, hints = 3, xp = 4, goal = 40 }
+    assert.equal("D", actions.day_rank(day))
+  end)
+end)
+
+describe("celebration at the end of the day", function()
+  it("closes Inde's day with the great banner and its rank", function()
+    local day = { solved = 2, clean = 2, skipped = 0, hints = 0, xp = 40, goal = 40 }
+    local fanfare = actions.celebration({
+      ok = true,
+      outcome = "clean",
+      xp = 15,
+      title = "Aniversario",
+      day = day,
+    })
+    assert.equal("great", fanfare.banner)
+    assert.equal("day cleared  ·  rank S  ·  Aniversario  ·  +15 XP", fanfare.subtitle)
+  end)
+end)
+
+describe("path_map", function()
+  local status = {
+    tracks = {
+      {
+        id = "node",
+        title = "Node",
+        drawn = true,
+        current = 2,
+        levels = {
+          { level = 1, title = "Basics", clean = 4, target = 4, done = true },
+          { level = 2, title = "Closures", clean = 1, target = 4, done = false },
+          { level = 3, title = "Async", clean = 0, target = 4, done = false },
+        },
+      },
+      { id = "llm", title = "LLM", drawn = false, locked = { after = "python" }, levels = {} },
+    },
+  }
+
+  it("draws Claire's Node path as a chain, cleared, current and ahead", function()
+    local lines = actions.path_map(status)
+    assert.equal(" Node", lines[1])
+    assert.equal("   ◆━━◈━━◇", lines[2])
+    assert.equal("   level 2 · Closures · 1/4 clean", lines[3])
+  end)
+
+  it("lights each node with its state", function()
+    local _, marks = actions.path_map(status)
+    local groups = vim.tbl_map(function(mark)
+      return mark.group
+    end, marks)
+    assert.same({ "Title", "EldenMapCleared", "DiagnosticWarn", "Comment", "Title" }, groups)
+  end)
+
+  it("keeps a locked track out of Malenia's map but names it", function()
+    local lines = actions.path_map(status)
+    assert.equal(" LLM", lines[5])
+    assert.equal("   locked for now", lines[6])
+  end)
+end)

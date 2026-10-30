@@ -234,6 +234,29 @@ return {
     { "variable", "Item" },
   },
 
+  -- what the editor's chrome says: mode names in the statusline, command line titles, the picker's
+  -- preview and the notification titles per level
+  chrome = {
+    modes = {
+      normal = "SURVIVE",
+      insert = "TYPE",
+      visual = "AIM",
+      replace = "RELOAD",
+      command = "RADIO",
+      terminal = "PC",
+    },
+    cmdline = "Typewriter",
+    search = "Search",
+    examine = "Examine",
+    notify = {
+      info = "Radio",
+      warn = "Caution",
+      error = "Danger",
+      debug = "Memo",
+      trace = "Log",
+    },
+  },
+
   words = {
     traveler = "Survivor",
     hub = "Safe Room",
@@ -250,6 +273,7 @@ return {
     motion_on = "Raccoon City wakes up",
     motion_off = "Time stops in the safe room",
     map = "Map",
+    arts = "Commands",
     ink_ribbons = "Ink Ribbons",
     typewriter = "Will you use an Ink Ribbon?",
     last_run = "Last run",

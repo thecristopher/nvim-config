@@ -11,6 +11,10 @@ return {
   -- bufferline separator_style
   tabs = "thick",
   signs = { error = "☣", warn = "▲", hint = "◆", info = "◇" },
+  -- the snacks picker layout, see lua/plugins/snacks.lua: the item list beside what you examine
+  picker = "inventory",
+  -- the command line popup's glyphs
+  cmdline = { icon = "󰌌", search = "󰍉" },
   -- which inventory the HUD draws, see core/hud/views
   dashboard = "inventory",
   -- the title screen keeps the franchise's own colors whatever region you stand in

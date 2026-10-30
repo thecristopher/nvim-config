@@ -163,3 +163,23 @@ describe("follows", function()
     assert.is_false(hud.follows(1000, 7, 1001, 12))
   end)
 end)
+
+describe("resume_place", function()
+  it("opens on the first tab the first time Claire opens it", function()
+    local tab, cursor = hud.resume_place(nil, "inventory")
+    assert.equal(1, tab)
+    assert.same({ items = 1, chest = 1, quest = 1 }, cursor)
+  end)
+
+  it("lands Malenia back on the tab and slot she left", function()
+    local last = { style = "roundtable", tab = 3, cursor = { items = 5, chest = 2, quest = 1 } }
+    local tab, cursor = hud.resume_place(last, "roundtable")
+    assert.equal(3, tab)
+    assert.same({ items = 5, chest = 2, quest = 1 }, cursor)
+  end)
+
+  it("starts over when the franchise changed since Inde left", function()
+    local last = { style = "roundtable", tab = 3, cursor = { items = 5, chest = 2, quest = 1 } }
+    assert.equal(1, (hud.resume_place(last, "inventory")))
+  end)
+end)

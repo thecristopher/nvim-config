@@ -308,4 +308,17 @@ function M.hud_window(current, last, showing)
   return showing[1]
 end
 
+--- Where the HUD opens: the tab and slots it was left on, unless the franchise changed since,
+--- since the other world's tabs would not line up.
+---@param last { style: string, tab: integer, cursor: table }|nil
+---@param style string the skin's dashboard view now
+---@return integer tab
+---@return { items: integer, chest: integer, quest: integer } cursor
+function M.resume_place(last, style)
+  if not last or last.style ~= style then
+    return 1, { items = 1, chest = 1, quest = 1 }
+  end
+  return last.tab, vim.deepcopy(last.cursor)
+end
+
 return M

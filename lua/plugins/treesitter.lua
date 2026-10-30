@@ -119,10 +119,11 @@ local function setup_textobjects()
   move_map("[C", "goto_previous_end", "@class.outer", "Previous class end")
 
   local swap = require("nvim-treesitter-textobjects.swap")
-  vim.keymap.set("n", "<leader>a", function()
+  -- <leader>a is the claude group, a bare <leader>a would wait on every press
+  vim.keymap.set("n", "<leader>c>", function()
     swap.swap_next("@parameter.inner")
   end, { desc = "Swap with next parameter" })
-  vim.keymap.set("n", "<leader>A", function()
+  vim.keymap.set("n", "<leader>c<", function()
     swap.swap_previous("@parameter.inner")
   end, { desc = "Swap with previous parameter" })
 end

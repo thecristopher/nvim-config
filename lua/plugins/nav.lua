@@ -117,28 +117,28 @@ return {
     },
     keys = {
       {
-        "<leader>qs",
+        "<leader>Ss",
         function()
           require("persistence").load()
         end,
         desc = "Restore session (cwd)",
       },
       {
-        "<leader>qS",
+        "<leader>SS",
         function()
           require("persistence").select()
         end,
         desc = "Select session",
       },
       {
-        "<leader>ql",
+        "<leader>Sl",
         function()
           require("persistence").load({ last = true })
         end,
         desc = "Restore last session",
       },
       {
-        "<leader>qd",
+        "<leader>Sd",
         function()
           require("persistence").stop()
         end,
@@ -149,7 +149,8 @@ return {
       require("persistence").setup(opts)
       local ok, wk = pcall(require, "which-key")
       if ok then
-        wk.add({ { "<leader>q", group = "session", icon = "󰆔" } })
+        -- under <leader>S so <leader>q quits right away instead of waiting for a second key
+        wk.add({ { "<leader>S", group = "session", icon = "󰆔" } })
       end
     end,
   },

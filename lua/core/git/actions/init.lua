@@ -115,6 +115,17 @@ function M.push_args(has_upstream)
   return { "push", "-u", "origin", "HEAD" }
 end
 
+---Checkout arguments for a branch, tracking a remote one under its own name.
+---@param branch string like "feature/map" or "remotes/origin/feature/map"
+---@return string[] args for git
+function M.checkout_args(branch)
+  local remote_branch = branch:match("^remotes/[^/]+/(.+)$")
+  if remote_branch then
+    return { "switch", "-c", remote_branch, "--track", (branch:gsub("^remotes/", "")) }
+  end
+  return { "switch", branch }
+end
+
 ---@class GitQuickKey
 ---@field key string pressed after <leader>g
 ---@field fn string function name in core.git

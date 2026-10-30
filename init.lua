@@ -14,6 +14,7 @@ if vim.g.vscode then
 else
   require("core.franchise").setup()
   require("core.skin").setup()
+  require("core.chrome").setup()
   require("core.terminal").setup()
   require("core.title").setup()
   require("core.sound").setup()

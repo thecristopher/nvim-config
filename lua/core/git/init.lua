@@ -239,6 +239,24 @@ function M.stash_pop()
   end)
 end
 
+---Switches branch carrying the sessions along: the files open on this branch are saved, and the
+---ones saved on the branch you arrive at come back. Without a saved session the files stay open.
+---@param branch string
+function M.checkout(branch)
+  if not in_repo() then
+    return
+  end
+  local repos = require("core.repos")
+  repos.save_branch_session()
+  require("core.fog").roll()
+  run(actions.checkout_args(branch), function()
+    vim.cmd("silent! checktime")
+    if not repos.restore_branch_session() then
+      notify("On " .. M.current_branch())
+    end
+  end)
+end
+
 local function head_is_pushed()
   return M.has_upstream() and git_ok({ "merge-base", "--is-ancestor", "HEAD", "@{u}" })
 end

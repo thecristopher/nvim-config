@@ -170,33 +170,55 @@ describe("should_change_root", function()
   end)
 end)
 
-describe("folder_from_input", function()
-  it("returns nothing when Melina leaves the prompt empty", function()
-    assert.is_nil(actions.folder_from_input("   "))
-  end)
-
-  it("returns nothing when the prompt is cancelled", function()
-    assert.is_nil(actions.folder_from_input(nil))
-  end)
-
-  it("trims spaces and the trailing slash", function()
-    assert.equal(STORMVEIL, actions.folder_from_input("  " .. STORMVEIL .. "/  "))
-  end)
-end)
-
-describe("browse_start", function()
+describe("browse_root", function()
   local roots = { "/Users/ada/Documents/GitHub", "/Users/ada/work" }
 
   it("starts in the dev folder Ada is already standing in", function()
-    assert.equals("~/work/", actions.browse_start(roots, "/Users/ada/work/umbrella", "/Users/ada"))
+    assert.equals(
+      "/Users/ada/work",
+      actions.browse_root(roots, "/Users/ada/work/umbrella", "/Users/ada")
+    )
   end)
 
   it("falls back to the first dev folder when cwd is elsewhere", function()
-    assert.equals("~/Documents/GitHub/", actions.browse_start(roots, "/Users/ada", "/Users/ada"))
+    assert.equals(
+      "/Users/ada/Documents/GitHub",
+      actions.browse_root(roots, "/Users/ada", "/Users/ada")
+    )
   end)
 
-  it("uses cwd when there are no dev folders at all", function()
-    assert.equals("/tmp/raccoon/", actions.browse_start({}, "/tmp/raccoon", "/Users/ada"))
+  it("starts at home when there are no dev folders at all", function()
+    assert.equals("/Users/ada", actions.browse_root({}, "/tmp/raccoon", "/Users/ada"))
+  end)
+end)
+
+describe("subfolders", function()
+  it("lists Claire's folders by name, ignoring case", function()
+    local entries = {
+      { name = "terrasave", type = "directory" },
+      { name = "Raccoon", type = "directory" },
+      { name = "love-notes.md", type = "file" },
+    }
+    assert.same({ "Raccoon", "terrasave" }, actions.subfolders(entries))
+  end)
+
+  it("keeps hidden folders out of Malenia's way", function()
+    local entries = { { name = ".git", type = "directory" }, { name = "haligtree", type = "link" } }
+    assert.same({ "haligtree" }, actions.subfolders(entries))
+  end)
+end)
+
+describe("after_travel", function()
+  it("opens the picker Inde asked for, even on a return visit", function()
+    assert.equal("grep", actions.after_travel(false, "grep"))
+  end)
+
+  it("opens the files picker on a first visit", function()
+    assert.equal("files", actions.after_travel(true, nil))
+  end)
+
+  it("lets the session speak on a return visit", function()
+    assert.is_nil(actions.after_travel(false, nil))
   end)
 end)
 

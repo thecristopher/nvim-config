@@ -22,7 +22,10 @@ return {
         padding = true,
         sort = { "level", "added" },
         icons = { error = "󰅚 ", warn = "󰊌 ", info = "󰋽 ", debug = "󰒄 ", trace = "✎ " },
-        style = "compact",
+        -- the game's messages: the franchise's word for the level and the hour, see core/chrome
+        style = function(buf, notif, ctx)
+          require("core.chrome.notify").style(buf, notif, ctx)
+        end,
         top_down = true,
       },
 
@@ -75,7 +78,23 @@ return {
 
       -- ── Input / Picker / Lazygit ──────────────────────────────────
       input = { enabled = true },
-      picker = { enabled = true },
+      picker = {
+        enabled = true,
+        -- each franchise lays the picker out its own way and frames its titles, see core/chrome
+        layouts = {
+          grace = require("core.chrome.picker").GRACE,
+          inventory = require("core.chrome.picker").INVENTORY,
+        },
+        layout = {
+          cycle = true,
+          preset = function()
+            return require("core.chrome.picker").preset()
+          end,
+          config = function(layout)
+            return require("core.chrome.picker").frame(layout)
+          end,
+        },
+      },
       lazygit = { enabled = true },
 
       -- ── Utilities ─────────────────────────────────────────────────
@@ -111,6 +130,126 @@ return {
     },
 
     keys = {
+      -- ── Pickers: one look everywhere, file:line in the files picker jumps to the line ──
+      {
+        "<leader>ff",
+        function()
+          Snacks.picker.files()
+        end,
+        desc = "Find files",
+      },
+      {
+        "<leader>fa",
+        function()
+          Snacks.picker.files({ hidden = true, ignored = true })
+        end,
+        desc = "Find all files, hidden and ignored too",
+      },
+      {
+        "<leader>fr",
+        function()
+          require("core.find").recent()
+        end,
+        desc = "Recent files (<C-a> flips repo and everywhere)",
+      },
+      {
+        "<leader>fg",
+        function()
+          Snacks.picker.grep()
+        end,
+        desc = "Live grep",
+      },
+      {
+        "<leader>fG",
+        function()
+          Snacks.picker.grep_word()
+        end,
+        desc = "Grep word under cursor",
+      },
+      {
+        "<leader>fb",
+        function()
+          Snacks.picker.buffers()
+        end,
+        desc = "Buffers",
+      },
+      {
+        "<leader>fh",
+        function()
+          Snacks.picker.help()
+        end,
+        desc = "Help",
+      },
+      {
+        "<leader>fm",
+        function()
+          Snacks.picker.marks()
+        end,
+        desc = "Marks",
+      },
+      {
+        "<leader>fk",
+        function()
+          Snacks.picker.keymaps()
+        end,
+        desc = "Keymaps",
+      },
+      {
+        "<leader>fc",
+        function()
+          Snacks.picker.command_history()
+        end,
+        desc = "Command history",
+      },
+      {
+        "<leader>f/",
+        function()
+          Snacks.picker.search_history()
+        end,
+        desc = "Search history",
+      },
+      {
+        "<leader>f.",
+        function()
+          Snacks.picker.resume()
+        end,
+        desc = "Resume the last picker",
+      },
+      {
+        "<leader>fn",
+        function()
+          Snacks.picker.files({ cwd = vim.fn.stdpath("config") })
+        end,
+        desc = "Neovim config",
+      },
+      {
+        "<leader>gC",
+        function()
+          Snacks.picker.git_log()
+        end,
+        desc = "Git commits",
+      },
+      {
+        "<leader>gs",
+        function()
+          Snacks.picker.git_status()
+        end,
+        desc = "Git status",
+      },
+      {
+        "<leader>gS",
+        function()
+          Snacks.picker.git_stash()
+        end,
+        desc = "Git stash",
+      },
+      {
+        "<leader>gb",
+        function()
+          require("core.find").branches()
+        end,
+        desc = "Git branches (each with its session)",
+      },
       {
         "<leader>gl",
         function()

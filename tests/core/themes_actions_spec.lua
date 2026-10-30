@@ -37,7 +37,7 @@ local function brightness(hex)
 end
 
 describe("regions", function()
-  it("lists all eleven in picker order", function()
+  it("lists all ten in picker order", function()
     assert.same({
       "leyndell",
       "haligtree",
@@ -46,7 +46,6 @@ describe("regions", function()
       "mohgwyn",
       "ordina",
       "limgrave",
-      "stormveil",
       "volcano_manor",
       "nokron",
       "farum_azula",
@@ -77,7 +76,7 @@ describe("resolve", function()
   end)
 
   it("falls back to Leyndell for an unknown region", function()
-    assert.equal("leyndell", actions.resolve("stormveil_but_misspelled").name)
+    assert.equal("leyndell", actions.resolve("godrick_was_never_here").name)
   end)
 
   it("falls back to Leyndell when nothing was saved", function()

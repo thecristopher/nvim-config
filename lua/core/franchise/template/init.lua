@@ -83,6 +83,23 @@ return {
     { "variable", "Item" },
   },
 
+  -- what the editor's chrome says: mode names in the statusline, command line titles, the picker's
+  -- preview and the notification titles per level
+  chrome = {
+    modes = {
+      normal = "NORMAL",
+      insert = "INSERT",
+      visual = "VISUAL",
+      replace = "REPLACE",
+      command = "COMMAND",
+      terminal = "TERMINAL",
+    },
+    cmdline = "Command",
+    search = "Search",
+    examine = "Preview",
+    notify = { info = "Info", warn = "Warning", error = "Error", debug = "Debug", trace = "Trace" },
+  },
+
   words = {
     traveler = "Traveler",
     hub = "Hub",
@@ -99,5 +116,6 @@ return {
     motion_on = "The world moves again",
     motion_off = "The world stands still",
     map = "Map",
+    arts = "Commands",
   },
 }

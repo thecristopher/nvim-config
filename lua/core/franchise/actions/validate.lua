@@ -35,7 +35,22 @@ M.SLOTS = {
 
 M.BANNERS = { "felled", "great", "died", "grace", "cleansed" }
 M.MECHANICS = { "travel", "boss", "status", "rest" }
-M.SKIN = { "border", "ornament", "statusline", "tabs", "signs", "dashboard", "title", "music" }
+M.SKIN = {
+  "border",
+  "ornament",
+  "statusline",
+  "tabs",
+  "signs",
+  "dashboard",
+  "title",
+  "music",
+  "picker",
+  "cmdline",
+}
+-- what core/chrome reads: the mode names, the command line, the preview and the notification titles
+M.CHROME = { "modes", "cmdline", "search", "examine", "notify" }
+M.CHROME_MODES = { "normal", "insert", "visual", "replace", "command", "terminal" }
+M.CHROME_LEVELS = { "info", "warn", "error", "debug", "trace" }
 -- what the now playing panel reads, its looks from the skin and its words from the lore
 M.MUSIC_SKIN = { "bar", "divider", "sung" }
 M.MUSIC_WORDS = { "title", "loading", "missing", "instrumental" }
@@ -59,6 +74,7 @@ M.WORDS = {
   "motion_on",
   "motion_off",
   "map",
+  "arts",
 }
 
 -- words only some mechanics read, so a franchise pays for what it plays
@@ -90,6 +106,14 @@ local function check_music(lore, problems)
   end
   if lore.music then
     missing_keys(lore.music, M.MUSIC_WORDS, "music", problems)
+  end
+end
+
+local function check_chrome(lore, problems)
+  missing_keys(lore.chrome, M.CHROME, "chrome", problems)
+  if lore.chrome then
+    missing_keys(lore.chrome.modes, M.CHROME_MODES, "chrome.modes", problems)
+    missing_keys(lore.chrome.notify, M.CHROME_LEVELS, "chrome.notify", problems)
   end
 end
 
@@ -173,6 +197,7 @@ function M.problems(lore, portrait_exists)
   missing_keys(lore.coach, M.COACH, "coach", problems)
   check_words(lore, problems)
   check_music(lore, problems)
+  check_chrome(lore, problems)
   check_regions(lore, portrait_exists, problems)
   return problems
 end

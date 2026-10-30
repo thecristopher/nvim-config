@@ -30,10 +30,7 @@ local function define_highlights()
 end
 
 local function refresh_statusline()
-  local ok, lualine = pcall(require, "lualine")
-  if ok then
-    lualine.refresh({ place = { "statusline" } })
-  end
+  require("core.utils").refresh_statusline()
 end
 
 -- the statusline only repaints when the trace actually moved

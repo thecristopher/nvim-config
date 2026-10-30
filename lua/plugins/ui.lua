@@ -36,8 +36,9 @@ return {
           lualine_a = {
             {
               "mode",
-              fmt = function(s)
-                return s:sub(1, 3)
+              -- the franchise names the mode, ROAM in the Lands Between, SURVIVE in Raccoon City
+              fmt = function()
+                return require("core.chrome").label()
               end,
             },
           },
@@ -214,10 +215,8 @@ return {
       cmdline = {
         enabled = true,
         view = "cmdline_popup",
-        format = {
-          cmdline = { pattern = "^:", icon = "", lang = "vim" },
-          search_down = { kind = "search", pattern = "^/", icon = "󰍉 ", lang = "regex" },
-          search_up = { kind = "search", pattern = "^%?", icon = "󰍉 ", lang = "regex" },
+        -- the command line and search are titled and marked by the franchise, see core/chrome
+        format = vim.tbl_extend("force", {
           filter = { pattern = "^:%s*!", icon = "$", lang = "bash" },
           lua = {
             pattern = { "^:%s*lua%s+", "^:%s*lua%s*=%s*", "^:%s*=%s*" },
@@ -226,7 +225,7 @@ return {
           },
           help = { pattern = "^:%s*he?l?p?%s+", icon = "" },
           input = { view = "cmdline_input", icon = "󰥻 " },
-        },
+        }, require("core.chrome.cmdline").formats()),
       },
       messages = { enabled = true, view = "notify", view_error = "notify", view_warn = "notify" },
       popupmenu = { enabled = true, backend = "nui" },

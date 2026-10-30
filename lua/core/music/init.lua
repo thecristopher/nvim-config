@@ -21,10 +21,7 @@ local function enabled()
 end
 
 local function refresh_statusline()
-  local ok, lualine = pcall(require, "lualine")
-  if ok then
-    lualine.refresh({ place = { "statusline" } })
-  end
+  require("core.utils").refresh_statusline()
 end
 
 local function run(cmd, on_done)
