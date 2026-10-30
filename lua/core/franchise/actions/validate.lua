@@ -56,7 +56,17 @@ M.MUSIC_SKIN = { "bar", "divider", "sung" }
 M.MUSIC_WORDS = { "title", "loading", "missing", "instrumental" }
 M.LISTS = { "hub_messages", "message_templates", "places", "item_categories" }
 -- back-to-basics reads the coach's persona and the names the HUD gives the drills
-M.COACH = { "persona", "training", "lessons" }
+M.COACH = { "persona", "training", "lessons", "onsite", "concepts", "hint", "buy", "leave" }
+-- the words of the modules that follow the work around the code: CI, review threads, conflicts,
+-- the bestiary, focus blocks and the chronicle
+M.QUESTS = {
+  ci = { "running", "passed", "failed" },
+  threads = { "title", "resolved", "none" },
+  conflict = { "boss", "left" },
+  bestiary = { "title", "empty", "enemies" },
+  expedition = { "name", "started", "ended" },
+  chronicle = { "title" },
+}
 
 M.WORDS = {
   "traveler",
@@ -165,6 +175,16 @@ local function check_region(lore, region, portrait_exists, problems)
   check_palette(region, problems)
 end
 
+local function check_quests(lore, problems)
+  for name, keys in pairs(M.QUESTS) do
+    missing_keys(lore[name], keys, name, problems)
+  end
+  local enemies = (lore.bestiary or {}).enemies
+  if enemies ~= nil and (type(enemies) ~= "table" or #enemies == 0) then
+    table.insert(problems, "bestiary.enemies is empty")
+  end
+end
+
 local function check_regions(lore, portrait_exists, problems)
   if type(lore.regions) ~= "table" or #lore.regions == 0 then
     table.insert(problems, "regions is empty")
@@ -198,6 +218,7 @@ function M.problems(lore, portrait_exists)
   check_words(lore, problems)
   check_music(lore, problems)
   check_chrome(lore, problems)
+  check_quests(lore, problems)
   check_regions(lore, portrait_exists, problems)
   return problems
 end

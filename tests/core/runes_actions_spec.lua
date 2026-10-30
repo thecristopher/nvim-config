@@ -106,3 +106,13 @@ describe("crossed", function()
     assert.is_true(actions.crossed(90, 110, 100))
   end)
 end)
+
+describe("spend", function()
+  it("pays for Claire's hint out of the purse", function()
+    assert.same({ held = 70, bloodstain = 5 }, actions.spend({ held = 100, bloodstain = 5 }, 30))
+  end)
+
+  it("never leaves Inde owing runes", function()
+    assert.same({ held = 0, bloodstain = 0 }, actions.spend({ held = 2, bloodstain = 0 }, 30))
+  end)
+end)

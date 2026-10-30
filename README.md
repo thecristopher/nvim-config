@@ -99,6 +99,12 @@ ln -sf ~/.config/nvim/.claude/commands/my-style.md ~/.claude/commands/my-style.m
 | `core/hub`       | The HUD's ambient life: shimmering gold, the region's weather and a typed player message                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `core/banner`    | Elden Ring style banners fired by commits, PRs, test runs, new projects and region changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `core/boss`      | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it. In Resident Evil the boss is a stalker that walks closer while errors stay and backs off with every fix                                                                                                                                                                                                                                                                                                                                                      |
+| `core/conflicts` | Merge conflicts fight back: a buffer with conflict markers brings Godrick the Grafted (Uroboros in Resident Evil) to the boss bar, each conflict resolved lands a hit and the header counts the conflicted files left in the repo |
+| `core/ci`        | The branch's CI run in the statusline in the franchise's words, asked to `gh` in the background. A run that finishes while you work fires the felled or the died banner, `:CI` / `<leader>gi` opens it |
+| `core/threads`   | The open review threads of the branch's PR sit at the end of their lines. `<leader>mc` lists them, `<leader>mo` opens the conversation and `<leader>mr` resolves it on GitHub after asking |
+| `core/bestiary`  | Every kind of error or warning you clear by editing is a foe felled, named from the franchise's enemies by its code. `:Bestiary` / `<leader>ub` shows which ones you fight the most in the repo |
+| `core/expedition` | `:Expedition [minutes]` / `<leader>ue`: a focus block. Sounds, animations and quiet notifications step aside, the statusline counts down and the end ranks the block on its own |
+| `core/chronicle` | `:Chronicle` / `<leader>uj`: the last 20 weeks as a grid, each day lit by its run's rank and your commits in the repo |
 | `core/door`      | Resident Evil's travel: the screen goes dark and a door creaks open, where Elden Ring rolls the fog wall                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `core/ecg`       | Resident Evil's statusline ECG: Fine, Caution or Danger from the buffer's diagnostics                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `core/map`       | `:Map` / `<leader>fM` shows every folder as a room, red while errors or TODOs are left in it, blue once cleared                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -195,6 +201,13 @@ Leader is `<Space>`, local leader is `\`.
 | `<leader>kk`                | Lesson with the coach (back-to-basics)                                             |
 | `<leader>kb`                | Lesson library (back-to-basics)                                                    |
 | `<leader>uB`                | Toggle boss fights                                                                 |
+| `<leader>gi`                | Open the branch's CI run                                                           |
+| `<leader>mc` / `mo` / `mr`  | PR review threads / open the one on this line / resolve it                         |
+| `<leader>ub`                | Bestiary of the repo                                                               |
+| `<leader>ue`                | Start or end an expedition (focus block)                                           |
+| `<leader>uj`                | Chronicle of the weeks you fought                                                  |
+| `<leader>kd`                | Your back-to-basics solution beside the reference                                  |
+| `<leader>kC`                | back-to-basics concept map                                                         |
 | `<leader>gw`                | Who wrote this line (phantom)                                                      |
 | `<leader>cp`                | Snapshot the buffer or selection as a PNG                                          |
 | `<leader>o`                 | Now playing panel with the album cover                                             |
@@ -286,6 +299,12 @@ On macOS, F11 shows the desktop unless "Use F1, F2, etc. keys as standard functi
 | `:OpenFolder`                                  | Open the file tree at a folder you pick  |
 | `:BrowseFolders`                               | Walk folders with hjkl, Enter travels to a repo |
 | `:BtbPath`                                     | The back-to-basics path as a map         |
+| `:BtbConcepts`                                 | The back-to-basics concepts as a map     |
+| `:CI`                                          | Open the branch's CI run                 |
+| `:Threads`                                     | Open review threads of the PR            |
+| `:Bestiary`                                    | The foes felled in this repo             |
+| `:Expedition [minutes\|stop]`                  | A quiet focus block with its own rank    |
+| `:Chronicle`                                   | The weeks you fought, as a grid          |
 | `:Repos` / `:ReposRescan`                      | Browse or rescan known repositories      |
 
 ## Claude Code

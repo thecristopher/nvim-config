@@ -30,6 +30,24 @@ describe("problems", function()
     assert.is_true(mentions(validate.problems(broken), "coach.persona"))
   end)
 
+  it("notices a franchise with no words for the CI run", function()
+    local broken = lore()
+    broken.ci.failed = nil
+    assert.is_true(mentions(validate.problems(broken), "ci.failed"))
+  end)
+
+  it("notices a bestiary with no enemies for Leon to fight", function()
+    local broken = lore()
+    broken.bestiary.enemies = {}
+    assert.is_true(mentions(validate.problems(broken), "bestiary.enemies is empty"))
+  end)
+
+  it("notices a coach that cannot sell Claire a hint", function()
+    local broken = lore()
+    broken.coach.hint = nil
+    assert.is_true(mentions(validate.problems(broken), "coach.hint"))
+  end)
+
   it("notices a missing word", function()
     local broken = lore()
     broken.words.traveler = nil

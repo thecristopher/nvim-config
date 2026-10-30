@@ -19,7 +19,16 @@ return {
   currency = { glyph = "◈", stain = "󰈸" },
 
   -- back-to-basics: the persona that coaches the daily drills (btb persona list) and the HUD names
-  coach = { persona = "", training = "Training", lessons = "Lessons" },
+  coach = {
+    persona = "",
+    training = "Training",
+    lessons = "Lessons",
+    onsite = "Onsite",
+    concepts = "Concepts",
+    hint = "Buy a hint for %d XP?",
+    buy = "Buy",
+    leave = "Leave",
+  },
 
   -- Claude Code's statusline: the 5 hour limit and the weekly one, plus spinner verbs
   claude = {
@@ -50,6 +59,27 @@ return {
       to = "yellow",
     },
   },
+
+  -- the CI run of the branch, in the statusline
+  ci = { running = "CI running", passed = "CI passed", failed = "CI failed" },
+
+  -- review threads still open on the branch's PR
+  threads = {
+    title = "Review threads",
+    resolved = "Thread resolved",
+    none = "No open threads on this PR",
+  },
+
+  -- who guards a merge conflict, and how many conflicted files are left
+  conflict = { boss = "The Merge", left = "%d files left" },
+
+  -- every kind of error cleared becomes a foe, picked from enemies by its code
+  bestiary = { title = "Bestiary", empty = "Nothing felled yet", enemies = { "The First Foe" } },
+
+  -- a focus block with its own rank
+  expedition = { name = "Focus", started = "Focus for %d minutes", ended = "Focus over" },
+
+  chronicle = { title = "Chronicle" },
 
   banners = {
     felled = "ENEMY FELLED",
