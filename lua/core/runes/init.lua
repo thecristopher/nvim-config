@@ -23,10 +23,7 @@ local function save()
 end
 
 local function refresh_statusline()
-  local ok, lualine = pcall(require, "lualine")
-  if ok then
-    lualine.refresh({ place = { "statusline" } })
-  end
+  require("core.utils").refresh_statusline()
 end
 
 -- worlds with a merchant greet you each time your purse crosses another milestone
