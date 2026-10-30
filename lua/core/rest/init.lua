@@ -104,6 +104,10 @@ function M.wake()
     return
   end
   scene.loop:stop()
+  -- the rest sound can be a whole save room theme, it ends when you wake
+  if scene.sound then
+    pcall(scene.sound.kill, scene.sound, 15)
+  end
   pcall(vim.api.nvim_win_close, scene.win, true)
   pcall(vim.api.nvim_buf_delete, scene.buf, { force = true })
   scene = nil
@@ -113,9 +117,9 @@ function M.rest()
   if scene then
     return
   end
-  require("core.sound").play("rest")
   local width, height = vim.o.columns, vim.o.lines
   local s = { width = width, height = height, embers = {}, text_rows = {} }
+  s.sound = require("core.sound").play("rest")
   s.style = require("core.franchise").mechanic("rest")
   s.text = actions.layout(width, height, require("core.themes").current().title, {
     style = s.style,

@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""Builds every franchise sound from scratch into sounds/<franchise>/<event>.wav.
+"""Builds the synthesized franchise sounds into sounds/<franchise>/<event>.wav.
 
-Nothing is sampled from the games: tones and noise are synthesized here, voices come from Piper
-(a local neural TTS) or macOS `say` as a fallback, and ffmpeg adds the room (echo, filters, pitch).
-Only the standard library is needed, plus ffmpeg.
+Tones and noise are synthesized here and ffmpeg adds the room (echo, filters). The clips from the
+games live next to them and are left alone. Only the standard library is needed, plus ffmpeg.
 
 Usage:
-    python3 scripts/sounds.py --setup-voices  # once: Piper and its voices, for natural speech
     python3 scripts/sounds.py                 # every franchise
     python3 scripts/sounds.py resident_evil   # just one
 """
@@ -139,29 +137,11 @@ def thump(freq, seconds):
 
 
 # ── recipes ──────────────────────────────────────────────────────────────────────
-# Each returns (samples, ffmpeg filter), or ("say", voice, text, ffmpeg filter) for a spoken line.
+# Each returns (samples, ffmpeg filter).
 
 # a big hall: three echoes, each further and fainter
 HALL = "aecho=0.8:0.8:90|240|520:0.45|0.3|0.18"
 ROOM = "aecho=0.8:0.6:40|110:0.35|0.18"
-
-
-def deep_voice(pitch):
-    """ffmpeg chain that lowers a voice a touch without slowing it, and trims rumble and hiss.
-
-    Voices arrive at 22050 Hz, so they are brought to RATE first: asetrate relabels the rate it is
-    given, and relabeling 22050 Hz audio as 44100 Hz would push the voice up an octave instead.
-    """
-    return f"aresample={RATE},asetrate={RATE}*{pitch},aresample={RATE},atempo={1 / pitch:.4f},highpass=f=70,lowpass=f=9000"
-
-
-# Spoken lines: (role, text, length_scale, ffmpeg chain). length_scale above 1 speaks slower.
-def re_died():
-    return ("voice", "announcer", "You are dead.", 1.4, f"{deep_voice(0.78)},{HALL}")
-
-
-def re_merchant():
-    return ("voice", "merchant", "What are ya buyin'?", 1.35, f"{deep_voice(0.94)},{ROOM}")
 
 
 def re_boss():
@@ -241,9 +221,10 @@ def er_region():
 
 
 RECIPES = {
-    # title, door, rest, continue, grace (the typewriter saving) and the hud_ inventory sounds are clips from the game, so they are not built here
+    # title, door, rest (the save room), continue, grace (the typewriter saving), died (game over), merchant,
+    # bought, summon, comfort, expedition and the hud_ inventory sounds are clips from the game, so they are not built here
     "resident_evil": {
-        "died": re_died, "merchant": re_merchant, "boss": re_boss, "felled": re_felled, "great": re_great, "cleansed": re_cleansed,
+        "boss": re_boss, "felled": re_felled, "great": re_great, "cleansed": re_cleansed,
         "region": re_region,
     },
     # title, died, felled, grace, rest, zone, merchant, phantom and continue are clips from the game, so they are not built here
@@ -251,17 +232,6 @@ RECIPES = {
         "great": er_great, "cleansed": er_cleansed,
         "fog": er_fog, "boss": er_boss, "region": er_region,
     },
-}
-
-def re_impact():
-    """The hit and low rumble under the announcer, the way the old title screens open."""
-    rumble = envelope(lowpass(chord([41.2, 55.0], 2.4, "saw"), 180), attack=0.02, release=1.4)
-    return mix((thump(45, 1.2), 1.0, 0.0), (rumble, 0.6, 0.0))
-
-
-# spoken lines get a bed laid under them afterwards
-UNDERLAYS = {
-    ("resident_evil", "died"): re_impact,
 }
 
 
@@ -279,13 +249,6 @@ def write_wav(path, samples):
         out.writeframes(frames)
 
 
-def read_wav(path):
-    """Reads mono 16 bit samples back as floats."""
-    with wave.open(path, "rb") as source:
-        data = source.readframes(source.getnframes())
-    return [value / 32767 for (value,) in struct.iter_unpack("<h", data)]
-
-
 def ffmpeg(source, target, chain):
     """Runs a file through an ffmpeg filter chain into a mono wav, leaving a tail for the echoes."""
     subprocess.run(
@@ -293,67 +256,6 @@ def ffmpeg(source, target, chain):
          "-af", f"apad=pad_dur=0.6,{chain},alimiter=limit=0.9", "-ac", "1", "-ar", str(RATE), target],
         check=True,
     )
-
-
-# Piper speaks the lines when it is set up (python3 scripts/sounds.py --setup-voices), macOS say otherwise.
-# The path stays short on purpose: espeak, inside Piper, gives up on long data paths.
-PIPER_HOME = os.environ.get("ELDENTREE_PIPER_HOME", os.path.expanduser("~/.local/share/eldentree"))
-VOICE_URL = "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/"
-
-# role: (piper model, where it lives in the voices repo, say voice to fall back on)
-VOICES = {
-    "announcer": ("en_US-ryan-high", "en_US/ryan/high", "Ralph"),
-    "merchant": ("en_GB-northern_english_male-medium", "en_GB/northern_english_male/medium", "Daniel"),
-    "narrator": ("en_GB-northern_english_male-medium", "en_GB/northern_english_male/medium", "Whisper"),
-}
-
-
-def piper_python():
-    """Returns Piper's python when it is installed, None otherwise."""
-    python = os.path.join(PIPER_HOME, "piper", "bin", "python")
-    return python if os.path.exists(python) else None
-
-
-def piper_model(role):
-    """Returns the downloaded model for a role, None when it is missing."""
-    model = os.path.join(PIPER_HOME, "voices", VOICES[role][0] + ".onnx")
-    return model if os.path.exists(model) else None
-
-
-def setup_voices():
-    """Installs Piper in its own venv and downloads every voice the recipes use."""
-    venv = os.path.join(PIPER_HOME, "piper")
-    if not piper_python():
-        subprocess.run([sys.executable, "-m", "venv", venv], check=True)
-        subprocess.run([os.path.join(venv, "bin", "pip"), "install", "-q", "piper-tts"], check=True)
-    os.makedirs(os.path.join(PIPER_HOME, "voices"), exist_ok=True)
-    for name, path, _ in set(VOICES.values()):
-        for suffix in (".onnx", ".onnx.json"):
-            target = os.path.join(PIPER_HOME, "voices", name + suffix)
-            if not os.path.exists(target):
-                # curl uses the system's certificates, which some networks need
-                subprocess.run(["curl", "-sSfL", "-o", target, VOICE_URL + path + "/" + name + suffix], check=True)
-        print(f"voice {name} ready")
-
-
-def speak(role, text, length, target, chain, scratch):
-    """Speaks a line with Piper, or macOS say when Piper is not set up, then shapes it with ffmpeg.
-
-    Returns False when neither can speak.
-    """
-    raw = os.path.join(scratch, "voice.wav")
-    if piper_python() and piper_model(role):
-        subprocess.run(
-            [piper_python(), "-m", "piper", "-m", piper_model(role), "-f", raw, "--length-scale", str(length)],
-            input=text, text=True, check=True, capture_output=True,
-        )
-    elif shutil.which("say"):
-        raw = os.path.join(scratch, "voice.aiff")
-        subprocess.run(["say", "-v", VOICES[role][2], "-r", str(int(170 / length)), "-o", raw, text], check=True)
-    else:
-        return False
-    ffmpeg(raw, target, chain)
-    return True
 
 
 def level(target, scratch):
@@ -368,36 +270,25 @@ def level(target, scratch):
 
 
 def build(franchise, event, recipe, scratch):
-    """Builds one event's file, returns False when a tool it needs is missing."""
+    """Builds one event's file."""
     target = os.path.join(ROOT, franchise, event + ".wav")
-    made = recipe()
-    if made[0] == "voice":
-        if not speak(made[1], made[2], made[3], target, made[4], scratch):
-            return False
-    else:
-        dry = os.path.join(scratch, "dry.wav")
-        write_wav(dry, made[0])
-        ffmpeg(dry, target, made[1])
-    underlay = UNDERLAYS.get((franchise, event))
-    if underlay:
-        write_wav(target, mix((underlay(), 0.5, 0.0), (read_wav(target), 1.0, 0.25)))
+    samples, chain = recipe()
+    dry = os.path.join(scratch, "dry.wav")
+    write_wav(dry, samples)
+    ffmpeg(dry, target, chain)
     level(target, scratch)
-    return True
 
 
 def main():
     if not shutil.which("ffmpeg"):
         sys.exit("ffmpeg is needed: brew install ffmpeg")
-    if "--setup-voices" in sys.argv:
-        return setup_voices()
-    print("voices: " + ("piper" if piper_python() else "macOS say, run --setup-voices for natural ones"))
     wanted = sys.argv[1:] or list(RECIPES)
     with tempfile.TemporaryDirectory() as scratch:
         for franchise in wanted:
             os.makedirs(os.path.join(ROOT, franchise), exist_ok=True)
             for event, recipe in RECIPES[franchise].items():
-                status = "ok" if build(franchise, event, recipe, scratch) else "skipped, nothing can speak"
-                print(f"{franchise}/{event}.wav {status}")
+                build(franchise, event, recipe, scratch)
+                print(f"{franchise}/{event}.wav ok")
 
 
 if __name__ == "__main__":

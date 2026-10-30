@@ -279,6 +279,7 @@ function M.before_hint(info, buy)
   require("core.sound").play("merchant")
   vim.ui.select({ coach.buy, coach.leave }, { prompt = offer }, function(choice)
     if choice == coach.buy then
+      require("core.sound").play("bought")
       buy()
     end
   end)
