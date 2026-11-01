@@ -187,6 +187,21 @@ describe("others_alive", function()
   end)
 end)
 
+describe("settled_by_other", function()
+  it("tells Inde's nvim to redraw Claire's portrait after Claire's nvim reloads Ghostty", function()
+    assert.is_true(actions.settled_by_other(actions.settle_note(101, 42), 202))
+  end)
+
+  it("lets the nvim that reloaded skip its own note, it already redrew", function()
+    assert.is_false(actions.settled_by_other(actions.settle_note(202, 42), 202))
+  end)
+
+  it("ignores a note that is missing or was never written", function()
+    assert.is_false(actions.settled_by_other(nil, 202))
+    assert.is_false(actions.settled_by_other("", 202))
+  end)
+end)
+
 describe("passthrough", function()
   it("leaves the sequence alone outside tmux", function()
     assert.equal("\27]111\7", actions.passthrough("\27]111\7", false))

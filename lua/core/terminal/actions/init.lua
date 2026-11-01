@@ -145,6 +145,23 @@ function M.others_alive(names, own, is_alive)
   return alive
 end
 
+--- The note an nvim leaves once Ghostty reloads, so the others know to send their images again.
+---@param pid integer the nvim that reloaded
+---@param stamp number anything that changes on every reload
+---@return string
+function M.settle_note(pid, stamp)
+  return ("%d %d"):format(pid, stamp)
+end
+
+--- Tells whether a settle note was left by another nvim, the one that reloaded already redrew.
+---@param note string|nil first line of the note
+---@param own integer this nvim's pid
+---@return boolean
+function M.settled_by_other(note, own)
+  local pid = tonumber((note or ""):match("^(%d+)"))
+  return pid ~= nil and pid ~= own
+end
+
 --- AppleScript that makes Ghostty read its config again. Any terminal works as the target,
 --- reload_config applies to the whole app.
 ---@return string

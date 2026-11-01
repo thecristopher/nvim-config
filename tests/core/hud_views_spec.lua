@@ -111,6 +111,16 @@ local function widest(view)
   return width
 end
 
+-- the zero based row where a text first shows up
+local function line_of(view, needle)
+  for index, line in ipairs(view.lines) do
+    if line:find(needle, 1, true) then
+      return index - 1
+    end
+  end
+  return nil
+end
+
 -- what every hub owes the screen, whichever franchise draws it
 local function behaves_on_any_screen(render)
   it("centers the stage, the same margin on both sides", function()
@@ -125,6 +135,19 @@ local function behaves_on_any_screen(render)
       assert.is_true(widest(view) <= size[1], ("too wide at %dx%d"):format(size[1], size[2]))
       assert.is_true(#view.lines <= size[2], ("too tall at %dx%d"):format(size[1], size[2]))
     end
+  end)
+
+  it("keeps the portrait on half of a laptop screen, like Inde snapping it aside", function()
+    assert.is_truthy(render(model({ width = 79, height = 43, portrait = true })).anchors.portrait)
+  end)
+
+  it("keeps the portrait on the smallest laptop split, 80 by 24", function()
+    assert.is_truthy(render(model({ width = 80, height = 24, portrait = true })).anchors.portrait)
+  end)
+
+  it("gives up grid slots so the portrait stays big beside a Claude split", function()
+    local split = render(model({ width = 99, height = 39, portrait = true })).anchors.portrait
+    assert.is_true(split.height >= 20)
   end)
 
   it("keeps the portrait on a laptop screen", function()
@@ -212,6 +235,12 @@ describe("roundtable", function()
     assert.is_truthy(drawn:find("Good evening, Inde", 1, true))
   end)
 
+  it("carves Malenia's name right under a portrait standing above the inventory", function()
+    local narrow = roundtable.render(model({ width = 79, height = 43, portrait = true }))
+    local portrait = narrow.anchors.portrait
+    assert.equal(portrait.row + portrait.height, line_of(narrow, "M  A  L  E  N  I  A"))
+  end)
+
   it("describes the selected item underneath", function()
     assert.is_truthy(text(view):find("A note for Inde about Playlist", 1, true))
   end)
@@ -287,10 +316,24 @@ describe("inventory", function()
     assert.is_truthy(after:find("║", 1, true))
   end)
 
-  it("drops the portrait but keeps the survivor on a narrow screen", function()
-    local narrow = inventory.render(model({ width = 80, portrait = true }))
-    assert.is_nil(narrow.anchors.portrait)
-    assert.is_truthy(text(narrow):find("CLAIRE REDFIELD", 1, true))
+  it("stands the portrait above the survivor when STATUS cannot fit beside the items", function()
+    local narrow = inventory.render(model({ width = 60, portrait = true }))
+    local portrait = narrow.anchors.portrait
+    assert.is_truthy(portrait)
+    assert.is_true(narrow.plan.stacked)
+    assert.equal(portrait.row + portrait.height + 1, line_of(narrow, "CLAIRE REDFIELD"))
+  end)
+
+  it("lets the changed files go before the portrait on a short narrow screen", function()
+    local short = inventory.render(model({ width = 70, height = 30, portrait = true }))
+    assert.is_truthy(short.anchors.portrait)
+    assert.equal(0, short.plan.change_rows)
+  end)
+
+  it("keeps the survivor when the screen is too small for any portrait", function()
+    local cramped = inventory.render(model({ width = 60, height = 24, portrait = true }))
+    assert.is_nil(cramped.anchors.portrait)
+    assert.is_truthy(text(cramped):find("CLAIRE REDFIELD", 1, true))
   end)
 
   behaves_on_any_screen(inventory.render)
