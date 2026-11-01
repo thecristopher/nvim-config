@@ -5,6 +5,7 @@ return {
 
   regions = require("core.franchise.lore.resident_evil.regions"),
   skin = require("core.franchise.lore.resident_evil.skin"),
+  voices = require("core.franchise.lore.resident_evil.voices"),
 
   -- which version of each mechanic this world plays
   mechanics = {
@@ -77,9 +78,7 @@ return {
     rpd = "Mr. X, Tyrant T-00",
     spencer_mansion = "Tyrant T-002",
     umbrella_lab = "William Birkin, G-Type",
-    salazar_castle = "Ramon Salazar",
     the_island = "Osmund Saddler",
-    village = "Lady Dimitrescu",
   },
 
   -- drift says where particles travel, speed is rows per second,
@@ -113,25 +112,11 @@ return {
       from = "overlay1",
       to = "yellow",
     },
-    salazar_castle = {
-      glyphs = { "·", "•", "●" },
-      drift = "fall",
-      speed = { 1.5, 3.5 },
-      from = "maroon",
-      to = "yellow",
-    },
     the_island = {
       glyphs = { "·", "∙", "˙" },
       drift = "float",
       speed = { 0.4, 1.2 },
       from = "overlay2",
-      to = "yellow",
-    },
-    village = {
-      glyphs = { "·", "∗", "❄" },
-      drift = "fall",
-      speed = { 0.6, 1.6 },
-      from = "peach",
       to = "yellow",
     },
   },

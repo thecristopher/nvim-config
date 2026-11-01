@@ -35,6 +35,7 @@ local function announce(verdict)
   else
     require("core.banner").show("died", { subtitle = text })
   end
+  require("core.voice").say("ci_" .. verdict, { branch = branch })
 end
 
 local function settle(next_run)

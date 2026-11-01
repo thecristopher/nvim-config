@@ -30,9 +30,11 @@ function M.run()
       if result.code == 0 then
         task:done("All tests passed")
         require("core.banner").show("felled", { subtitle = "all tests passed" })
+        require("core.voice").say("trial_passed")
       else
         task:fail(actions.tail(output, 15))
         require("core.banner").show("died", { subtitle = "the tests have spoken" })
+        require("core.voice").say("trial_failed")
       end
     end)
   )

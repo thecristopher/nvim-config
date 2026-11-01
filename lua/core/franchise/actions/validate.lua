@@ -1,6 +1,7 @@
 -- Checks a franchise has everything the config reads from it, so a new one fails loudly in
 -- :checkhealth instead of quietly mid session. Pure logic only.
 local themes = require("core.themes.actions")
+local voice = require("core.voice.actions")
 
 local M = {}
 
@@ -165,6 +166,11 @@ local function check_region(lore, region, portrait_exists, problems)
   end
   if not (lore.weather or {})[region.name] then
     table.insert(problems, region.name .. " has no weather")
+  end
+  for _, moment in ipairs(voice.MOMENTS) do
+    if not voice.line(lore.voices, region.name, moment, 0, nil) then
+      table.insert(problems, ("%s has no voice for %s"):format(region.name, moment))
+    end
   end
   if region.portrait and portrait_exists and not portrait_exists(region.portrait) then
     table.insert(

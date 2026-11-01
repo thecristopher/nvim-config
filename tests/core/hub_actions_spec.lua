@@ -73,7 +73,7 @@ describe("embers", function()
 end)
 
 describe("weather", function()
-  local snow = actions.weather("ordina")
+  local petals = actions.weather("haligtree")
 
   it("gives every region its own sky", function()
     for _, region in ipairs(require("core.themes.actions").regions()) do
@@ -93,17 +93,17 @@ describe("weather", function()
     assert.is_true(petal.y > start)
   end)
 
-  it("melts snow once it reaches the floor of the window", function()
-    local flake = actions.spawn_ember(always(0.5), 100, 40, snow)
-    flake.y = 40
-    assert.is_false(actions.ember_alive(flake))
+  it("lets a rot petal wither once it reaches the floor of the window", function()
+    local petal = actions.spawn_ember(always(0.5), 100, 40, petals)
+    petal.y = 40
+    assert.is_false(actions.ember_alive(petal))
   end)
 
-  it("draws snowflakes with Ordina's glyphs", function()
-    local flake = actions.spawn_ember(always(0.5), 100, 40, snow)
-    actions.step_ember(flake, flake.life * 0.15)
-    local glyph = actions.ember_look(flake, snow)
-    assert.equal("❄", glyph)
+  it("draws rot petals with the Haligtree's glyphs", function()
+    local petal = actions.spawn_ember(always(0.5), 100, 40, petals)
+    actions.step_ember(petal, petal.life * 0.15)
+    local glyph = actions.ember_look(petal, petals)
+    assert.equal("❀", glyph)
   end)
 end)
 
