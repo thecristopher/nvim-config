@@ -16,7 +16,9 @@ M.TAB_WIDTH = 5
 M.CHEST_WIDTH = { min = 36, max = 52 }
 M.COLUMNS = { min = 2, max = 4 }
 M.GRID_ROWS = { min = 1, max = 4 }
-M.PORTRAIT = { min = 12, max = 36 }
+M.PORTRAIT = { min = 4, max = 36 }
+-- under a stacked portrait: the champion's name and a gap before the body
+M.STACKED_ROWS = 2
 -- under the portrait: a gap, the plaque (three rows), the area, a gap, the greeting and the date
 M.PLAQUE_ROWS = 8
 M.QUEST_CHANGE_ROWS = 3
@@ -53,21 +55,52 @@ local function fixed_rows(quest_rows)
   return 5 + 1 + 1 + 5 + 1 + 3 + quest_rows
 end
 
---- Decides how big everything is for a window: the portrait, the grid's columns and rows.
----@param model table needs width, height and portrait
----@return table plan { portrait?, columns, chest_width, grid_rows, quest_rows, body_width, stage_width, indent }
-function M.plan(model)
+-- every way the hub can stand: the portrait beside a body of two columns or more, beside a single
+-- column, or above the body. The plan keeps the one with the biggest portrait
+local SHAPES = {
+  { beside = true, columns = M.COLUMNS.min },
+  { beside = true, columns = 1 },
+  { beside = false },
+}
+
+-- the portrait beside a body of that many columns, with the plaque under it
+local function portrait_beside(inner, room, columns)
+  return hud.portrait_fit(
+    inner - M.GAP - body_width(columns, M.CHEST_WIDTH.min),
+    math.min(room - M.PLAQUE_ROWS, M.PORTRAIT.max),
+    M.PORTRAIT.min
+  )
+end
+
+-- the portrait above the body, taking the rows the smallest body leaves
+local function portrait_above(inner, room, quest_rows)
+  local body_rows = fixed_rows(quest_rows) + M.GRID_ROWS.min * M.SLOT_HEIGHT
+  return hud.portrait_fit(
+    inner,
+    math.min(room - body_rows - M.STACKED_ROWS, M.PORTRAIT.max),
+    M.PORTRAIT.min
+  )
+end
+
+-- the whole plan for one shape
+local function shape_plan(model, shape)
   local inner = model.width - 2 * M.MARGIN
   local room = model.height - 2 - parts.FOOTER_ROWS
-  -- the portrait comes first: it takes what is left after the smallest body that still reads well
-  local portrait = model.portrait
-      and hud.portrait_fit(
-        inner - M.GAP - body_width(M.COLUMNS.min, M.CHEST_WIDTH.min),
-        math.min(room - M.PLAQUE_ROWS, M.PORTRAIT.max),
-        M.PORTRAIT.min
-      )
-    or nil
-  local space = inner - (portrait and portrait.width + M.GAP or 0)
+  local quest_rows = room - fixed_rows(M.QUEST_CHANGE_ROWS) >= M.SLOT_HEIGHT and M.QUEST_CHANGE_ROWS
+    or 0
+  local portrait = nil
+  if model.portrait and shape.beside then
+    portrait = portrait_beside(inner, room, shape.columns)
+  elseif model.portrait then
+    portrait = portrait_above(inner, room, quest_rows)
+    -- the quest's changes give their rows up before the portrait does
+    if not portrait and quest_rows > 0 then
+      quest_rows = 0
+      portrait = portrait_above(inner, room, quest_rows)
+    end
+  end
+  local stacked = portrait ~= nil and not shape.beside
+  local space = inner - ((portrait and not stacked) and portrait.width + M.GAP or 0)
   local columns = hud.clamp(
     math.floor((space - M.PANE_GAP - M.CHEST_WIDTH.max) / M.SLOT_WIDTH),
     M.COLUMNS.min,
@@ -78,16 +111,17 @@ function M.plan(model)
   end
   local chest_width =
     hud.clamp(space - M.PANE_GAP - columns * M.SLOT_WIDTH, M.CHEST_WIDTH.min, M.CHEST_WIDTH.max)
-  local quest_rows = room - fixed_rows(M.QUEST_CHANGE_ROWS) >= M.SLOT_HEIGHT and M.QUEST_CHANGE_ROWS
-    or 0
+  local above = stacked and portrait.height + M.STACKED_ROWS or 0
   local grid_rows = hud.clamp(
-    math.floor((room - fixed_rows(quest_rows)) / M.SLOT_HEIGHT),
+    math.floor((room - above - fixed_rows(quest_rows)) / M.SLOT_HEIGHT),
     M.GRID_ROWS.min,
     M.GRID_ROWS.max
   )
-  local stage_width = (portrait and portrait.width + M.GAP or 0) + body_width(columns, chest_width)
+  local stage_width = ((portrait and not stacked) and portrait.width + M.GAP or 0)
+    + body_width(columns, chest_width)
   return {
     portrait = portrait,
+    stacked = stacked,
     columns = columns,
     chest_width = chest_width,
     grid_rows = grid_rows,
@@ -96,6 +130,19 @@ function M.plan(model)
     stage_width = stage_width,
     indent = math.max(0, math.floor((model.width - stage_width) / 2)),
   }
+end
+
+--- Decides how big everything is for a window: the portrait, the grid's columns and rows.
+--- The portrait comes first: every shape is tried and the one where it stands tallest wins.
+---@param model table needs width, height and portrait
+---@return table plan { portrait?, stacked, columns, chest_width, grid_rows, quest_rows, body_width, stage_width, indent }
+function M.plan(model)
+  if not model.portrait then
+    return shape_plan(model, SHAPES[1])
+  end
+  return hud.biggest_portrait(vim.tbl_map(function(shape)
+    return shape_plan(model, shape)
+  end, SHAPES))
 end
 
 -- the inventory ---------------------------------------------------------------------------
@@ -248,7 +295,9 @@ local function tab_bar(model)
   return bar, rule
 end
 
-local HINTS = "⏎ Use   K Check   C Combine   ⇥ Tabs   hjkl Move   j Quest   s Session   q Quit"
+-- most important first, a narrow screen drops them from the end
+local HINTS =
+  { "⏎ Use", "K Check", "C Combine", "⇥ Tabs", "hjkl Move", "j Quest", "s Session", "q Quit" }
 
 local function description(item, width)
   local rows = { { { ("─"):rep(width), "EldenHudRule" } } }
@@ -257,7 +306,7 @@ local function description(item, width)
   for index = 1, 2 do
     table.insert(rows, { { " " .. (lines[index] or ""), "EldenHudDesc" } })
   end
-  table.insert(rows, { { " " .. hud.fit(HINTS, width - 2), "EldenHudHint" } })
+  table.insert(rows, { { " " .. hud.fit_hints(HINTS, width - 2), "EldenHudHint" } })
   return rows
 end
 
@@ -367,6 +416,21 @@ local function champion(model, portrait)
   return rows
 end
 
+-- the portrait centered above the body with the champion's name under it
+local function champion_above(model, portrait, width)
+  local left = math.floor((width - portrait.width) / 2)
+  local rows = { { { (" "):rep(left) }, { "", spot = "portrait" } } }
+  for _ = 2, portrait.height do
+    table.insert(rows, {})
+  end
+  table.insert(
+    rows,
+    hud.center({ { parts.champion_name(model.character or "", width), "EldenHudTitle" } }, width)
+  )
+  table.insert(rows, {})
+  return rows
+end
+
 --- Lays out the whole Elden Ring hub for a model.
 ---@param model table HUD state: tabs, tab, focus, cursor, offset, chest, status, message, width, height
 ---@return table view { lines, marks, cursor, grids, anchors, plan }
@@ -379,7 +443,9 @@ function M.render(model)
     offset = 0,
     cursor_row = (model.cursor.quest or 1) - 1,
   }
-  if plan.portrait then
+  if plan.portrait and plan.stacked then
+    rows = vim.list_extend(champion_above(model, plan.portrait, plan.body_width), rows)
+  elseif plan.portrait then
     local column = champion(model, plan.portrait)
     local height = math.max(#column, #rows)
     rows =

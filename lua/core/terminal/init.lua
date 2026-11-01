@@ -145,11 +145,42 @@ end
 -- Ghostty applies the new config a moment after AppleScript returns, so the settle waits a little more
 local SETTLE_MS = 300
 
+-- a reload drops the images of every tab, so the nvim that reloads leaves a note here and every
+-- other nvim watching it draws its images again
+local SETTLED_FILE = vim.fn.stdpath("state") .. "/eldentree_ghostty_settled"
+local SETTLED_POLL_MS = 1000
+
+local function fire_settled()
+  vim.api.nvim_exec_autocmds("User", { pattern = "EldentreeTerminalSettled", modeline = false })
+end
+
 -- tells everyone the terminal finished reloading, images drawn before it may need drawing again
 local function settled()
   vim.defer_fn(function()
-    vim.api.nvim_exec_autocmds("User", { pattern = "EldentreeTerminalSettled", modeline = false })
+    pcall(vim.fn.writefile, { actions.settle_note(own_pid(), vim.uv.hrtime()) }, SETTLED_FILE)
+    fire_settled()
   end, SETTLE_MS)
+end
+
+local settled_watch = nil
+
+local function on_settled_note(err)
+  if err then
+    return
+  end
+  local ok, lines = pcall(vim.fn.readfile, SETTLED_FILE, "", 1)
+  if ok and actions.settled_by_other(lines[1], own_pid()) then
+    fire_settled()
+  end
+end
+
+-- polled instead of fs_event, which loses the file when it is replaced on write
+local function watch_settled()
+  if settled_watch then
+    return
+  end
+  settled_watch = vim.uv.new_fs_poll()
+  settled_watch:start(SETTLED_FILE, SETTLED_POLL_MS, vim.schedule_wrap(on_settled_note))
 end
 
 -- writes and reloads only when the file changes, every reload makes Ghostty lay out its fonts again
@@ -183,6 +214,7 @@ local function apply_ghostty()
   end
   worn.ghostty = written
   register_instance()
+  watch_settled()
   write_ghostty(settings)
 end
 

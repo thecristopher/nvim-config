@@ -5,6 +5,7 @@ return {
 
   regions = require("core.franchise.lore.elden_ring.regions"),
   skin = require("core.franchise.lore.elden_ring.skin"),
+  voices = require("core.franchise.lore.elden_ring.voices"),
 
   -- which version of each mechanic this world plays
   mechanics = {
@@ -61,12 +62,8 @@ return {
     leyndell = "Morgott, the Omen King",
     haligtree = "Malenia, Blade of Miquella",
     raya_lucaria = "Rennala, Queen of the Full Moon",
-    caelid = "Starscourge Radahn",
     mohgwyn = "Mohg, Lord of Blood",
-    ordina = "Commander Niall",
     limgrave = "Margit, the Fell Omen",
-    volcano_manor = "Rykard, Lord of Blasphemy",
-    nokron = "Mimic Tear",
     farum_azula = "Maliketh, the Black Blade",
   },
 
@@ -94,13 +91,6 @@ return {
       from = "lavender",
       to = "yellow",
     },
-    caelid = {
-      glyphs = { "·", "∙", "•" },
-      drift = "rise",
-      speed = { 3.0, 6.0 },
-      from = "red",
-      to = "peach",
-    },
     mohgwyn = {
       glyphs = { "·", "•", "●" },
       drift = "fall",
@@ -108,32 +98,11 @@ return {
       from = "maroon",
       to = "yellow",
     },
-    ordina = {
-      glyphs = { "·", "∗", "❄" },
-      drift = "fall",
-      speed = { 0.6, 1.6 },
-      from = "overlay2",
-      to = "text",
-    },
     limgrave = {
       glyphs = { "·", "∙", "❦" },
       drift = "fall",
       speed = { 0.8, 2.2 },
       from = "peach",
-      to = "yellow",
-    },
-    volcano_manor = {
-      glyphs = { "·", "•", "●" },
-      drift = "rise",
-      speed = { 2.5, 5.5 },
-      from = "red",
-      to = "yellow",
-    },
-    nokron = {
-      glyphs = { "·", "✧", "✦" },
-      drift = "float",
-      speed = { 0.1, 0.4 },
-      from = "overlay2",
       to = "yellow",
     },
     farum_azula = {

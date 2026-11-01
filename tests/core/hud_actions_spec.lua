@@ -115,6 +115,41 @@ describe("portrait_fit", function()
   end)
 end)
 
+describe("fit_hints", function()
+  local hints = { "⏎ Love letter", "K Read", "q Goodbye" }
+
+  it("shows every hint when Inde's screen is wide", function()
+    assert.equal("⏎ Love letter   K Read   q Goodbye", hud.fit_hints(hints, 80))
+  end)
+
+  it("drops whole hints from the end instead of cutting one in half", function()
+    assert.equal("⏎ Love letter   K Read", hud.fit_hints(hints, 26))
+  end)
+
+  it("shows nothing rather than a broken hint", function()
+    assert.equal("", hud.fit_hints(hints, 5))
+  end)
+end)
+
+describe("biggest_portrait", function()
+  local roomy = { name = "roomy", portrait = { width = 46, height = 28 } }
+  local snug = { name = "snug", portrait = { width = 20, height = 12 } }
+  local bare = { name = "bare" }
+
+  it("keeps the layout where Malenia stands tallest", function()
+    assert.equal("roomy", hud.biggest_portrait({ snug, roomy, bare }).name)
+  end)
+
+  it("keeps the earlier layout when Claire stands just as tall in both", function()
+    local twin = { name = "twin", portrait = { width = 46, height = 28 } }
+    assert.equal("roomy", hud.biggest_portrait({ roomy, twin }).name)
+  end)
+
+  it("still hands back a layout when none has room for a portrait", function()
+    assert.equal("bare", hud.biggest_portrait({ bare }).name)
+  end)
+end)
+
 describe("beside", function()
   it("pads the left column so the right one starts in the same place on every row", function()
     local rows = hud.beside({ { { "ab" } }, { { "a" } } }, 4, { { { "R" } }, { { "R" } } }, 1)

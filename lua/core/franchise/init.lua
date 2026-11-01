@@ -87,7 +87,7 @@ function M.create(text)
 
   vim.fn.mkdir(dir, "p")
   local template = vim.fn.stdpath("config") .. "/lua/core/franchise/template/"
-  for _, file in ipairs({ "init.lua", "regions.lua", "skin.lua" }) do
+  for _, file in ipairs({ "init.lua", "regions.lua", "skin.lua", "voices.lua" }) do
     local text_lines = vim.fn.readfile(template .. file)
     local filled =
       vim.split(actions.fill_template(table.concat(text_lines, "\n"), name), "\n", { plain = true })

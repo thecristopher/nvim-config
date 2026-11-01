@@ -25,21 +25,15 @@ LIFT = "eq=contrast=1.15:saturation=1.25,unsharp=5:5:0.8"
 # name: (face x, face y, crop height), all as fractions of the original image
 FACES = {
     "ada": (0.58, 0.25, 0.50),
-    "ashley": (0.80, 0.59, 0.45),
-    "chris": (0.50, 0.37, 0.68),
     "claire": (0.50, 0.43, 0.90),
     "jill": (0.61, 0.225, 0.45),
-    "latenna": (0.51, 0.19, 0.35),
     "leon": (0.41, 0.175, 0.38),
     "malenia": (0.59, 0.263, 0.32),
     "maliketh": (0.45, 0.45, 0.50),
     "marika": (0.51, 0.415, 0.40),
     "melina": (0.48, 0.24, 0.45),
-    "mimic_tear": (0.26, 0.67, 0.40),
     "mohgwyn": (0.365, 0.45, 0.35),
-    "radahn": (0.467, 0.375, 0.50),
     "ranni": (0.425, 0.233, 0.32),
-    "rykard": (0.60, 0.20, 0.45),
     "wesker": (0.50, 0.36, 0.60),
 }
 

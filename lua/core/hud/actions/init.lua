@@ -257,6 +257,32 @@ function M.portrait_fit(max_width, max_height, min_height)
   return { width = math.floor(height * M.PORTRAIT_RATIO + 0.5), height = height }
 end
 
+--- Joins key hints into one line, leaving out whole hints from the end until it fits.
+---@param hints string[] most important first
+---@param width integer cells available
+---@return string
+function M.fit_hints(hints, width)
+  local shown = vim.list_slice(hints)
+  while #shown > 0 and vim.api.nvim_strwidth(table.concat(shown, "   ")) > width do
+    table.remove(shown)
+  end
+  return table.concat(shown, "   ")
+end
+
+--- Picks the plan that draws the biggest portrait, the earliest one when two tie.
+---@param plans table[] each with an optional portrait { width, height }
+---@return table|nil
+function M.biggest_portrait(plans)
+  local best, best_height = nil, -1
+  for _, plan in ipairs(plans) do
+    local height = plan.portrait and plan.portrait.height or 0
+    if height > best_height then
+      best, best_height = plan, height
+    end
+  end
+  return best
+end
+
 --- Clamps a number between two bounds.
 ---@param value number
 ---@param low number

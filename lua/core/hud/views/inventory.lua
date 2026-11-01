@@ -15,7 +15,7 @@ M.MENU_WIDTH = 13
 M.STATUS_MIN = 42
 M.COLUMNS = { min = 2, max = 4 }
 M.GRID_ROWS = { min = 1, max = 4 }
-M.PORTRAIT = { min = 8, max = 32 }
+M.PORTRAIT = { min = 4, max = 32 }
 -- the STATUS frame around the portrait: borders, gaps, the name and the area
 M.STATUS_ROWS = 7
 -- under the stage: a gap, the banner, two lines of description, the hints, a gap and the message
@@ -55,34 +55,61 @@ local function fixed_rows(change_rows)
   return 2 + 1 + 2 + M.DATA_ROWS + change_rows
 end
 
---- Decides how big everything is for a window: the portrait, the STATUS panel and the grid.
----@param model table needs width, height and portrait
----@return table plan { portrait?, status_width, columns, grid_rows, change_rows, items_width, stacked, stage_width, indent }
-function M.plan(model)
+-- every way the hub can stand: STATUS with the portrait beside items of two columns or more,
+-- beside a single column, or shrunk to the survivor's name above the items with the portrait over
+-- it. The plan keeps the one with the biggest portrait
+local SHAPES = {
+  { beside = true, columns = M.COLUMNS.min },
+  { beside = true, columns = 1 },
+  { beside = false },
+}
+
+-- the portrait inside the STATUS frame beside items of that many columns
+local function portrait_beside(inner, room, columns)
+  return hud.portrait_fit(
+    inner - M.GAP - items_width(columns) - 6,
+    math.min(room - M.STATUS_ROWS, M.PORTRAIT.max),
+    M.PORTRAIT.min
+  )
+end
+
+-- the portrait above the survivor's name on a narrow screen, taking the rows the smallest
+-- grid leaves, plus a gap before the name
+local function portrait_above(width, room, change_rows)
+  local body_rows = fixed_rows(change_rows) + M.GRID_ROWS.min * M.SLOT_HEIGHT
+  return hud.portrait_fit(width, math.min(room - body_rows - 1, M.PORTRAIT.max), M.PORTRAIT.min)
+end
+
+-- the whole plan for one shape, stacked anyway when STATUS does not fit beside the items
+local function shape_plan(model, shape)
   local inner = model.width - 2 * M.MARGIN
-  local stacked = model.width - 2 * M.MARGIN < M.STATUS_MIN + M.GAP + items_width(M.COLUMNS.min)
+  local fits_beside = shape.beside and inner >= M.STATUS_MIN + M.GAP + items_width(shape.columns)
+  local stacked = not fits_beside
   local room = model.height - 2 - M.FOOTER_ROWS - (stacked and 2 or 0)
   local change_rows = room - fixed_rows(M.CHANGE_ROWS) >= M.SLOT_HEIGHT and M.CHANGE_ROWS or 0
-  local grid_rows = hud.clamp(
-    math.floor((room - fixed_rows(change_rows)) / M.SLOT_HEIGHT),
-    M.GRID_ROWS.min,
-    M.GRID_ROWS.max
-  )
-  local portrait = not stacked
-      and model.portrait
-      and hud.portrait_fit(
-        inner - M.GAP - items_width(M.COLUMNS.min) - 6,
-        math.min(room - M.STATUS_ROWS, M.PORTRAIT.max),
-        M.PORTRAIT.min
-      )
+  local portrait = not stacked and model.portrait and portrait_beside(inner, room, shape.columns)
     or nil
   local status_width = math.max(M.STATUS_MIN, portrait and portrait.width + 6 or 0)
   local beside = stacked and 0 or status_width + M.GAP
   local columns =
     hud.clamp(math.floor((inner - beside - 1 - M.MENU_WIDTH) / M.SLOT_WIDTH), 1, M.COLUMNS.max)
-  if stacked then
+  if stacked and model.portrait then
+    status_width = items_width(columns)
+    portrait = portrait_above(status_width, room, change_rows)
+    -- the changed files give their rows up before the portrait does
+    if not portrait and change_rows > 0 then
+      change_rows = 0
+      portrait = portrait_above(status_width, room, change_rows)
+    end
+  elseif stacked then
     status_width = items_width(columns)
   end
+  local above = (stacked and portrait) and portrait.height + 1 or 0
+  local grid_rows = hud.clamp(
+    math.floor((room - above - fixed_rows(change_rows)) / M.SLOT_HEIGHT),
+    M.GRID_ROWS.min,
+    M.GRID_ROWS.max
+  )
   local stage_width = beside + items_width(columns)
   return {
     portrait = portrait,
@@ -95,6 +122,19 @@ function M.plan(model)
     stage_width = stage_width,
     indent = math.max(0, math.floor((model.width - stage_width) / 2)),
   }
+end
+
+--- Decides how big everything is for a window: the portrait, the STATUS panel and the grid.
+--- The portrait comes first: every shape is tried and the one where it stands tallest wins.
+---@param model table needs width, height and portrait
+---@return table plan { portrait?, status_width, columns, grid_rows, change_rows, items_width, stacked, stage_width, indent }
+function M.plan(model)
+  if not model.portrait then
+    return shape_plan(model, SHAPES[1])
+  end
+  return hud.biggest_portrait(vim.tbl_map(function(shape)
+    return shape_plan(model, shape)
+  end, SHAPES))
 end
 
 -- frames ----------------------------------------------------------------------------------
@@ -127,7 +167,18 @@ local function status_line(model, plan)
     { status.character and status.character:upper() or "", "EldenHudBanner" },
     { "  ·  " .. (status.area or ""), "EldenHudSection" },
   }
-  return { hud.center(hud.clip(name, plan.status_width), plan.status_width), {} }
+  local rows = {}
+  if plan.portrait then
+    local left = math.floor((plan.status_width - plan.portrait.width) / 2)
+    table.insert(rows, { { (" "):rep(left) }, { "", spot = "portrait" } })
+    for _ = 2, plan.portrait.height do
+      table.insert(rows, {})
+    end
+    table.insert(rows, {})
+  end
+  table.insert(rows, hud.center(hud.clip(name, plan.status_width), plan.status_width))
+  table.insert(rows, {})
+  return rows
 end
 
 -- STATUS: the portrait float is drawn by the HUD over the blank cells after the spot
@@ -340,7 +391,8 @@ local function banner(item, width)
   return rows
 end
 
-local HINTS = "⏎ Command   K Check   ⇥ Tabs   hjkl Move   j DATA   s Session   q Quit"
+-- most important first, a narrow screen drops them from the end
+local HINTS = { "⏎ Command", "K Check", "⇥ Tabs", "hjkl Move", "j DATA", "s Session", "q Quit" }
 
 --- Lays out the whole Resident Evil hub for a model.
 ---@param model table HUD state: tabs, tab, cursor, offset, menu, status, message, width, height
@@ -359,7 +411,10 @@ function M.render(model)
   end
   table.insert(rows, {})
   vim.list_extend(rows, banner(parts.selected(model), plan.stage_width))
-  table.insert(rows, hud.center({ { HINTS, "EldenHudHint" } }, plan.stage_width))
+  table.insert(
+    rows,
+    hud.center({ { hud.fit_hints(HINTS, plan.stage_width), "EldenHudHint" } }, plan.stage_width)
+  )
   table.insert(rows, {})
   table.insert(
     rows,

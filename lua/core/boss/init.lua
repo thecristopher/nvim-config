@@ -226,6 +226,10 @@ local function felled(buf, fight)
     return
   end
   require("core.banner").show(stage and stage.banner or "felled", { subtitle = fight.name })
+  -- staged fights belong to whoever staged them, like btb's coach
+  if not stage then
+    require("core.voice").say("boss_felled", { boss = fight.name })
+  end
 end
 
 local function engage(fight, stage)

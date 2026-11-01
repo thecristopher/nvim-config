@@ -79,7 +79,7 @@ Every option is a global with the `eldentree_` prefix (`vim.g.eldentree_sound = 
 | Module           | What it does |
 | ---------------- | ------------ |
 | `core/franchise` | Picks the world for the day, rotating between Elden Ring and Resident Evil. `:Franchise` or `<leader>uf` switches until midnight, `vim.g.eldentree_franchise` pins one. Each lore also picks its `mechanics`, so Resident Evil travels through doors, gets stalked instead of dueling, shows a health ECG, rests at a typewriter and ranks every run |
-| `core/themes`    | Catppuccin Mocha recolored per region (ten in Elden Ring, seven in Resident Evil). One region per day, the same in every repo and every launch. Picking another with `<leader>ut` or `:Region` holds until midnight, and traveling between repos never changes it. `vim.g.eldentree_region` pins one |
+| `core/themes`    | Catppuccin Mocha recolored per region (six in Elden Ring, five in Resident Evil). One region per day, the same in every repo and every launch. Picking another with `<leader>ut` or `:Region` holds until midnight, and traveling between repos never changes it. `vim.g.eldentree_region` pins one |
 | `core/skin`      | Dresses components per franchise: float borders, gutter signs, statusline separators and tabs. Elden Ring is rounded and ornate, Resident Evil wears the inventory's double frames |
 | `core/chrome`    | The editor speaks the franchise: the mode badge says ROAM or SURVIVE and fades into the next mode, line numbers fade away from the cursor, notifications arrive titled Radio, Danger or Omen with the hour, pickers take an inventory or grace layout, and the command line becomes a Typewriter or an Incantation |
 | `core/title`     | A title screen in big block letters once a day per franchise and on every switch, `:Title` shows it again, `vim.g.eldentree_title = false` skips it |
@@ -106,6 +106,7 @@ Each franchise is a folder in `lua/core/franchise/lore/<name>/`, found on its ow
 | `core/boss`       | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it. In Resident Evil the boss is a stalker that walks closer while errors stay and backs off with every fix. `:Boss` or `<leader>uB` |
 | `core/conflicts`  | Merge conflicts fight back: a buffer with conflict markers brings Godrick the Grafted (Uroboros in Resident Evil) to the boss bar, each conflict resolved lands a hit and the header counts the conflicted files left in the repo |
 | `core/banner`     | Elden Ring style banners fired by commits, PRs, test runs, new projects, region changes and long fights with errors. `:Banner felled\|great\|died\|grace\|cleansed` |
+| `core/voice`      | The character of the day's region speaks up when tests pass or fail, CI finishes, a push lands or a boss falls, in a notification under their name. Lines live in each lore's `voices.lua`, written from the sheets in `docs/voices/`. Every character has one, Claire and Malenia with a soft spot for you, and `:checkhealth eldentree` asks each region for every moment. `vim.g.eldentree_voice = false` silences them |
 | `core/bestiary`   | Every kind of error or warning you clear by editing is a foe felled, named from the franchise's enemies by its code. `:Bestiary` / `<leader>ub` shows which ones you fight the most in the repo |
 | `core/runes`      | Statusline rune tally (pesetas in Resident Evil, where the Merchant greets every 10,000). Saves and banners pay out, dying leaves a bloodstain |
 | `core/results`    | Ranks each run from S to D by fixes and saves, and the Resident Evil STATUS panel shows the last one |
@@ -175,7 +176,7 @@ Cider needs its API on in Settings > Connectivity, and `vim.g.eldentree_cider_to
 
 ## back-to-basics
 
-`core/btb` brings [back-to-basics](https://github.com/thecristopher/back-to-basics) in: daily drills by hand, coached by the character of the day's region on a stage with their portrait: Claire, Malenia and Ada by their own persona, anyone else (Leon, Wesker, Radahn, Mohg...) summoned by btb the first time they coach.
+`core/btb` brings [back-to-basics](https://github.com/thecristopher/back-to-basics) in: daily drills by hand, coached by the character of the day's region on a stage with their portrait: Claire, Malenia and Ada by their own persona, anyone else (Leon, Wesker, Mohg, Maliketh...) summoned by btb the first time they coach.
 
 - `b` on the HUD or `<leader>kk` starts the lesson, `<leader>kb` opens the library of lessons fought so far
 - Saving runs the tests, and failing ones land on your solution as warnings on the line they broke
@@ -238,9 +239,7 @@ The Resident Evil portraits are fan art and photography by their own authors, us
 | Leon     | RPD              | Artist pending  |
 | Jill     | Spencer Mansion  | Like Detectives |
 | Wesker   | Umbrella Lab     | Artist pending  |
-| Ashley   | Salazar Castle   | Artist pending  |
 | Ada      | Saddler's Island | Artist pending  |
-| Chris    | The Village      | Artist pending  |
 
 ## Keys
 

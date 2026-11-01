@@ -37,17 +37,13 @@ local function brightness(hex)
 end
 
 describe("regions", function()
-  it("lists all ten in picker order", function()
+  it("lists all six in picker order", function()
     assert.same({
       "leyndell",
       "haligtree",
       "raya_lucaria",
-      "caelid",
       "mohgwyn",
-      "ordina",
       "limgrave",
-      "volcano_manor",
-      "nokron",
       "farum_azula",
     }, actions.names())
   end)
@@ -89,8 +85,8 @@ describe("next_name", function()
     assert.equal("haligtree", actions.next_name("leyndell"))
   end)
 
-  it("moves from Ordina down to Limgrave", function()
-    assert.equal("limgrave", actions.next_name("ordina"))
+  it("moves from Mohgwyn down to Limgrave", function()
+    assert.equal("limgrave", actions.next_name("mohgwyn"))
   end)
 
   it("wraps from Farum Azula back to Leyndell", function()
@@ -295,7 +291,7 @@ describe("guicursor", function()
 end)
 
 describe("of_the_day", function()
-  local names = { "limgrave", "caelid", "haligtree", "leyndell" }
+  local names = { "limgrave", "mohgwyn", "haligtree", "leyndell" }
 
   it("keeps Malenia in the same region all day", function()
     assert.equal(
@@ -331,12 +327,12 @@ describe("choice_for", function()
   end)
 
   it("ignores the old file that held only a name", function()
-    assert.is_nil(actions.choice_for("caelid", "2026-10-26"))
+    assert.is_nil(actions.choice_for("mohgwyn", "2026-10-26"))
   end)
 end)
 
 describe("encode_choice", function()
   it("writes Inde's pick with its day", function()
-    assert.equal("2026-10-26 caelid", actions.encode_choice("2026-10-26", "caelid"))
+    assert.equal("2026-10-26 mohgwyn", actions.encode_choice("2026-10-26", "mohgwyn"))
   end)
 end)

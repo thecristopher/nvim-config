@@ -24,6 +24,12 @@ describe("problems", function()
     assert.is_true(mentions(validate.problems(broken), "raccoon_city has no boss"))
   end)
 
+  it("notices Claire with nothing to say when a push lands", function()
+    local broken = lore()
+    broken.voices.raccoon_city.pushed = nil
+    assert.is_true(mentions(validate.problems(broken), "raccoon_city has no voice for pushed"))
+  end)
+
   it("notices a franchise with no name for the drills", function()
     local broken = lore()
     broken.coach.training = nil
