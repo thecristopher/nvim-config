@@ -287,7 +287,7 @@ local function greet_at_shop()
 end
 
 ---Asked before a hint is revealed: the franchise's merchant names the price, you buy or leave.
----@param info { id: string, hints_left?: integer, cost?: integer }
+---@param info { id: string, hints_left?: integer, cost?: integer, nudge_ready?: boolean }
 ---@param buy fun()
 function M.before_hint(info, buy)
   local coach = require("core.franchise").current().coach

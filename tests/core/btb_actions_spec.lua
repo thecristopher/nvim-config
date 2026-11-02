@@ -286,7 +286,18 @@ describe("path_map", function()
         current = 2,
         levels = {
           { level = 1, title = "Basics", clean = 4, target = 4, done = true },
-          { level = 2, title = "Closures", clean = 1, target = 4, done = false },
+          {
+            level = 2,
+            title = "Closures",
+            clean = 1,
+            target = 3,
+            done = false,
+            items = {
+              { id = "closures", title = "Closures: funciones que recuerdan", standing = "owned" },
+              { id = "recursion", title = "Recursión con caso base", standing = "weak" },
+              { id = "immutability", title = "No mutar los datos que recibes", standing = "new" },
+            },
+          },
           { level = 3, title = "Async", clean = 0, target = 4, done = false },
         },
       },
@@ -298,7 +309,14 @@ describe("path_map", function()
     local lines = actions.path_map(status)
     assert.equal(" Node", lines[1])
     assert.equal("   ◆━━◈━━◇", lines[2])
-    assert.equal("   level 2 · Closures · 1/4 clean", lines[3])
+    assert.equal("   level 2 · Closures · 1/3 owned", lines[3])
+  end)
+
+  it("lists the concepts of Claire's current level with where Inde stands on each", function()
+    local lines = actions.path_map(status)
+    assert.equal("     ■ Closures: funciones que recuerdan", lines[4])
+    assert.equal("     □ Recursión con caso base", lines[5])
+    assert.equal("     · No mutar los datos que recibes", lines[6])
   end)
 
   it("lights each node with its state", function()
@@ -306,13 +324,22 @@ describe("path_map", function()
     local groups = vim.tbl_map(function(mark)
       return mark.group
     end, marks)
-    assert.same({ "Title", "EldenMapCleared", "DiagnosticWarn", "Comment", "Title" }, groups)
+    assert.same({
+      "Title",
+      "EldenMapCleared",
+      "DiagnosticWarn",
+      "Comment",
+      "EldenMapCleared",
+      "EldenMapLeft",
+      "Comment",
+      "Title",
+    }, groups)
   end)
 
   it("keeps a locked track out of Malenia's map but names it", function()
     local lines = actions.path_map(status)
-    assert.equal(" LLM", lines[5])
-    assert.equal("   locked for now", lines[6])
+    assert.equal(" LLM", lines[8])
+    assert.equal("   locked for now", lines[9])
   end)
 end)
 
@@ -337,6 +364,13 @@ describe("hint_offer", function()
 
   it("sells nothing once the hints run out", function()
     assert.is_nil(actions.hint_offer(coach, { hints_left = 0, cost = 3 }))
+  end)
+
+  it("still sells Inde the hint aimed at her mistake after the general ones run out", function()
+    assert.equal(
+      "What are ya buyin'? A hint for 3 XP",
+      actions.hint_offer(coach, { hints_left = 0, cost = 3, nudge_ready = true })
+    )
   end)
 end)
 
