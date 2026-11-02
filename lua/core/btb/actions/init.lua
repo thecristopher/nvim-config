@@ -229,6 +229,14 @@ function M.day_line(status)
   return table.concat(parts, " · ")
 end
 
+-- where you stand on a concept: red the ones that cost you, blue the owned ones, fog for the new ones
+local STANDINGS = {
+  weak = { "□", "EldenMapLeft" },
+  learning = { "▣", "EldenMapPath" },
+  owned = { "■", "EldenMapCleared" },
+  new = { "·", "Comment" },
+}
+
 local NODES = {
   done = { "◆", "EldenMapCleared" },
   current = { "◈", "DiagnosticWarn" },
@@ -275,7 +283,7 @@ local function track_note(track)
   if not level then
     return "   every level cleared"
   end
-  return ("   level %d · %s · %d/%d clean"):format(
+  return ("   level %d · %s · %d/%d owned"):format(
     level.level,
     level.title,
     level.clean,
@@ -283,8 +291,29 @@ local function track_note(track)
   )
 end
 
+-- the concepts of the level being fought, one per line, so what is left to own is always in sight
+local function item_lines(track)
+  local level = not track.locked and track.drawn and current_level(track)
+  local lines, marks = {}, {}
+  for _, item in ipairs(level and level.items or {}) do
+    local glyph = STANDINGS[item.standing] or STANDINGS.new
+    table.insert(marks, { row = #lines, col = 5, end_col = 5 + #glyph[1], group = glyph[2] })
+    table.insert(lines, ("     %s %s"):format(glyph[1], item.title))
+  end
+  return lines, marks
+end
+
+local function append_items(lines, marks, track)
+  local items, item_marks = item_lines(track)
+  for index, mark in ipairs(item_marks) do
+    table.insert(marks, vim.tbl_extend("force", mark, { row = #lines + index - 1 }))
+  end
+  vim.list_extend(lines, items)
+end
+
 ---The path map of every track, as lines with their highlights: a chain of levels per track,
----cleared ones blue, the current one lit, the ones ahead in the fog.
+---cleared ones blue, the current one lit, the ones ahead in the fog, and under it the concepts
+---of the current level with where you stand on each.
 ---@param status table btb status --json
 ---@return string[] lines
 ---@return { row: integer, col: integer, end_col: integer, group: string }[] marks zero based rows
@@ -301,6 +330,7 @@ function M.path_map(status)
       table.insert(lines, line)
     end
     table.insert(lines, track_note(track))
+    append_items(lines, marks, track)
     table.insert(lines, "")
   end
   return lines, marks
@@ -327,22 +357,17 @@ function M.shop_greeting(saved, day, franchise)
   return { "welcome", "merchant" }
 end
 
----What the merchant asks before a hint, nil when there is nothing left to sell.
+---What the merchant asks before a hint, nil when there is nothing left to sell. A hint aimed at the
+---mistake the last run looks like is still for sale after the general ones run out.
 ---@param coach { hint: string } the franchise's coach words
----@param info { hints_left?: integer, cost?: integer }
+---@param info { hints_left?: integer, cost?: integer, nudge_ready?: boolean }
 ---@return string|nil
 function M.hint_offer(coach, info)
-  if info.hints_left == 0 then
+  if info.hints_left == 0 and not info.nudge_ready then
     return nil
   end
   return coach.hint:format(info.cost or 0)
 end
-
-local STANDINGS = {
-  weak = { "□", "EldenMapLeft" },
-  learning = { "▣", "EldenMapPath" },
-  owned = { "■", "EldenMapCleared" },
-}
 
 local function concept_line(row, width)
   local glyph = STANDINGS[row.standing] or STANDINGS.learning
