@@ -85,11 +85,27 @@ local function diff_context(base_r, branch, cb)
   end)
 end
 
--- asks GitHub, the slow one of the three, whether this branch already has a PR
-local function existing_pr(branch, cb)
-  output_of({ "gh", "pr", "view", branch, "--json", "number,url" }, function(out)
+-- asks GitHub, the slow one of the three, whether this branch already has an open PR into base.
+-- Matching on base too, since one release branch can have open PRs into staging and master at once.
+local function existing_pr(branch, base, cb)
+  local cmd = {
+    "gh",
+    "pr",
+    "list",
+    "--head",
+    branch,
+    "--base",
+    base,
+    "--state",
+    "open",
+    "--json",
+    "number,url",
+    "--limit",
+    "1",
+  }
+  output_of(cmd, function(out)
     local ok, decoded = pcall(vim.json.decode, out or "")
-    cb(ok and type(decoded) == "table" and decoded or nil)
+    cb(ok and type(decoded) == "table" and decoded[1] or nil)
   end)
 end
 
@@ -456,7 +472,7 @@ local function proceed(branch, base)
     task:update("Reading the diff…", 1 / 3)
     diff_context(base_r, branch, function(diff)
       task:update("Asking GitHub for an open PR…", 2 / 3)
-      existing_pr(branch, function(pr)
+      existing_pr(branch, base, function(pr)
         task:update(nil, 1)
         task:done("Diff context ready")
         ask_vibe_and_draft(branch, base, base_r, log, diff, pr)
