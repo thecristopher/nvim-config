@@ -175,7 +175,7 @@ local function check_region(lore, region, portrait_exists, problems)
   if region.portrait and portrait_exists and not portrait_exists(region.portrait) then
     table.insert(
       problems,
-      ("%s portrait %s is not in images/portraits"):format(region.name, region.portrait)
+      ("%s portrait %s is in no portraits folder"):format(region.name, region.portrait)
     )
   end
   check_palette(region, problems)

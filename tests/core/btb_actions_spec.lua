@@ -118,18 +118,22 @@ describe("celebration", function()
 end)
 
 describe("portrait_file", function()
+  local function locate(file)
+    return "/config/images/portraits/" .. file
+  end
+
   it("finds Claire's portrait among the config's portraits", function()
-    local file = actions.portrait_file("/config", { portrait = "claire.jpg" })
+    local file = actions.portrait_file(locate, { portrait = "claire.jpg" })
     assert.are.equal("/config/images/portraits/claire.jpg", file)
   end)
 
   it("draws Leon from his region when the summoned coach brings no portrait", function()
-    local file = actions.portrait_file("/config", { name = "Leon" }, { portrait = "leon.jpg" })
+    local file = actions.portrait_file(locate, { name = "Leon" }, { portrait = "leon.jpg" })
     assert.are.equal("/config/images/portraits/leon.jpg", file)
   end)
 
   it("has nothing to draw for a coach without a portrait", function()
-    assert.is_nil(actions.portrait_file("/config", { name = "Melina" }))
+    assert.is_nil(actions.portrait_file(locate, { name = "Melina" }))
   end)
 end)
 

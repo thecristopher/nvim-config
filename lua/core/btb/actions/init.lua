@@ -111,18 +111,18 @@ function M.pass_sound(result)
   return result.ok and "weapon" or nil
 end
 
----Where the coach's portrait lives in the config: her own, or the region's character when a
----summoned coach brings none.
----@param config_dir string
+---Where the coach's portrait lives: her own, or the region's character when a summoned coach
+---brings none.
+---@param locate fun(file: string): string turns a portrait's file name into its path
 ---@param persona { portrait?: string }|nil
 ---@param region { portrait?: string }|nil
 ---@return string|nil
-function M.portrait_file(config_dir, persona, region)
+function M.portrait_file(locate, persona, region)
   local portrait = (persona and persona.portrait) or (region and region.portrait)
   if not portrait then
     return nil
   end
-  return config_dir .. "/images/portraits/" .. portrait
+  return locate(portrait)
 end
 
 -- the portraits are 276x336 and a terminal cell is about twice as tall as it is wide

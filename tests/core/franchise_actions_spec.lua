@@ -115,8 +115,14 @@ for _, name in ipairs(actions.names()) do
     end)
 
     it("passes every check :checkhealth runs, portraits included", function()
+      -- private portraits live outside the repo, so CI never has them
+      local private = {}
+      for _, region in ipairs(lore.regions) do
+        private[region.portrait] = region.private or nil
+      end
       local function on_disk(file)
-        return vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. file) == 1
+        return private[file]
+          or vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. file) == 1
       end
       assert.same({}, require("core.franchise.actions.validate").problems(lore, on_disk))
     end)
@@ -168,12 +174,11 @@ for _, name in ipairs(actions.names()) do
     for _, region in ipairs(lore.regions) do
       local p = region.palette
 
-      it(("keeps %s's portrait on disk"):format(region.title), function()
-        assert.equal(
-          1,
-          vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. region.portrait),
-          region.portrait
-        )
+      it(("keeps %s's portrait where it belongs"):format(region.title), function()
+        local in_repo =
+          vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. region.portrait)
+        -- a private portrait is someone real, it never lands in the public repo
+        assert.equal(region.private and 0 or 1, in_repo, region.portrait)
       end)
 
       it(("gives %s a champion, a portrait, a boss and a sky"):format(region.title), function()

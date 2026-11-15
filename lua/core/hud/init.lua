@@ -120,9 +120,7 @@ local function stats()
 end
 
 local function portrait_file()
-  return vim.fn.stdpath("config")
-    .. "/images/portraits/"
-    .. require("core.themes").current().portrait
+  return require("core.utils").portrait_path(require("core.themes").current().portrait)
 end
 
 -- a region without its portrait yet, or a terminal that can draw neither pixels nor chafa, goes without

@@ -97,7 +97,7 @@ describe("problems", function()
       return false
     end
     assert.is_true(
-      mentions(validate.problems(lore(), nothing_on_disk), "is not in images/portraits")
+      mentions(validate.problems(lore(), nothing_on_disk), "is in no portraits folder")
     )
   end)
 
