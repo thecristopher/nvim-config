@@ -218,3 +218,16 @@ describe("resume_place", function()
     assert.equal(1, (hud.resume_place(last, "inventory")))
   end)
 end)
+
+describe("direct_keys", function()
+  local keys = hud.direct_keys({ { key = "f" }, { key = "d" }, { key = "L" } })
+
+  it("answers every hub key Claire adds, the desk included", function()
+    assert.same({ "f", "d", "L" }, vim.list_slice(keys, 1, 3))
+  end)
+
+  it("keeps the digits that open Malenia's projects", function()
+    assert.equal("1", keys[4])
+    assert.equal("9", keys[#keys])
+  end)
+end)

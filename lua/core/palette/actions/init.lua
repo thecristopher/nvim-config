@@ -52,6 +52,13 @@ M.ENTRIES = {
     cmd = "Review",
   },
   {
+    icon = "󰃭 ",
+    name = "Desk",
+    desc = "Open the manager desk artifact",
+    key = "<leader>ud",
+    cmd = "Desk",
+  },
+  {
     icon = "󰑮 ",
     name = "CI",
     desc = "Open the branch's CI run",

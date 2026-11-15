@@ -47,6 +47,7 @@ else
   require("core.claude_ui").setup()
   require("core.claude_panel").setup()
   require("core.resize").setup()
+  require("core.desk").setup()
 end
 
 -- ── Bootstrap lazy.nvim ──────────────────────────────────────────────────────

@@ -108,6 +108,15 @@ function M.keys()
         return require("core.btb").day()
       end,
     },
+    {
+      icon = "󰃭 ",
+      key = "d",
+      desc = "Desk",
+      action = function()
+        require("core.desk").open()
+      end,
+      slot = "Desk",
+    },
     { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", slot = "Lazy" },
     { icon = "󰏗 ", key = "m", desc = "Mason", action = ":Mason", slot = "Mason" },
     { icon = "󰐥 ", key = "q", desc = "Quit", action = ":qa", slot = "Quit" },
