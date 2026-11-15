@@ -4,8 +4,8 @@ local actions = require("core.claude_panel.actions")
 
 local M = {}
 
--- winminwidth to give back when fullscreen ends, nil while the panel is not fullscreen
-local saved_minwidth = nil
+-- the window options fullscreen bends, to give back when it ends, nil while not fullscreen
+local saved = nil
 
 ---The buffer claudecode runs Claude in, nil when it is not running.
 ---@return integer|nil
@@ -39,7 +39,7 @@ end
 --- Whether the panel has the whole editor right now.
 ---@return boolean
 function M.is_fullscreen()
-  return saved_minwidth ~= nil
+  return saved ~= nil
 end
 
 --- Columns the panel opens with in the editor as it is now.
@@ -62,21 +62,53 @@ local function fill(win)
 end
 
 local function end_fullscreen()
-  if not saved_minwidth then
+  if not saved then
     return
   end
-  vim.o.winminwidth = saved_minwidth
-  saved_minwidth = nil
+  vim.o.winminwidth, vim.o.winwidth = saved.winminwidth, saved.winwidth
+  saved = nil
   require("core.hud").hide_portrait(false)
 end
 
 local function start_fullscreen(win)
-  saved_minwidth = vim.o.winminwidth
+  saved = { winminwidth = vim.o.winminwidth, winwidth = vim.o.winwidth }
   require("core.hud").hide_portrait(true)
   enter_panel(win)
-  -- the other windows fold down to their border instead of keeping a column each
+  -- the other windows fold down to their border instead of keeping a column each, and one that
+  -- gets focus by accident grows a single column instead of twenty
   vim.o.winminwidth = 0
+  vim.o.winwidth = 1
   fill(win)
+end
+
+local function focus_target(win, opened)
+  if win == M.window() then
+    return "panel"
+  end
+  if vim.api.nvim_win_get_config(win).relative ~= "" then
+    return "float"
+  end
+  return opened and "new" or "collapsed"
+end
+
+---Keeps fullscreen whole when focus lands elsewhere: anything that closes a float or looks for a
+---main window can drop focus on a collapsed window, which would grow and squeeze Claude.
+---@param win integer window that got focus
+---@param opened boolean whether it was just created
+local function guard(win, opened)
+  local panel = M.window()
+  if not saved or not panel or not vim.api.nvim_win_is_valid(win) then
+    return
+  end
+  local action = actions.on_focus(focus_target(win, opened))
+  if action == "release" then
+    end_fullscreen()
+    return require("core.resize").reset()
+  end
+  if action == "back" then
+    vim.api.nvim_set_current_win(panel)
+  end
+  fill(panel)
 end
 
 --- Lets the panel take the whole editor, or puts every window back to its default size.
@@ -92,7 +124,7 @@ function M.toggle_fullscreen()
       end
     end)
   end
-  if not saved_minwidth then
+  if not saved then
     return start_fullscreen(win)
   end
   end_fullscreen()
@@ -102,7 +134,7 @@ end
 -- snacks and the split equalizer put the default width back, fullscreen goes on after them
 local function keep_fullscreen()
   local win = M.window()
-  if saved_minwidth and win then
+  if saved and win then
     vim.schedule(function()
       fill(win)
     end)
@@ -112,6 +144,20 @@ end
 function M.setup()
   local group = vim.api.nvim_create_augroup("eldentree_claude_panel", { clear = true })
   vim.api.nvim_create_autocmd("VimResized", { group = group, callback = keep_fullscreen })
+  vim.api.nvim_create_autocmd({ "WinEnter", "WinNew" }, {
+    group = group,
+    callback = function(args)
+      if not saved then
+        return
+      end
+      local win = vim.api.nvim_get_current_win()
+      local opened = args.event == "WinNew"
+      -- floats get their config after WinNew, so look once the layout settles
+      vim.schedule(function()
+        guard(win, opened)
+      end)
+    end,
+  })
   vim.api.nvim_create_autocmd("BufWinLeave", {
     group = group,
     callback = function(args)
