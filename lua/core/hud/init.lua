@@ -516,32 +516,7 @@ local function map_keys(buf)
   map("C", function()
     combine(selected())
   end)
-  for _, key in ipairs({
-    "f",
-    "g",
-    "r",
-    "p",
-    "e",
-    "o",
-    "n",
-    "s",
-    "t",
-    "c",
-    "L",
-    "m",
-    "q",
-    "a",
-    "b",
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-  }) do
+  for _, key in ipairs(require("core.hud.actions").direct_keys(require("core.hud.keys").keys())) do
     map(key, function()
       use_key(key)
     end)

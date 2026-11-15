@@ -347,4 +347,18 @@ function M.resume_place(last, style)
   return last.tab, vim.deepcopy(last.cursor)
 end
 
+---Every key the HUD answers directly: each hub key plus the digits that open the chest's projects.
+---@param hub_keys { key: string }[] the list from core.hud.keys
+---@return string[]
+function M.direct_keys(hub_keys)
+  local out = {}
+  for _, entry in ipairs(hub_keys) do
+    table.insert(out, entry.key)
+  end
+  for digit = 1, 9 do
+    table.insert(out, tostring(digit))
+  end
+  return out
+end
+
 return M
