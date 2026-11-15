@@ -89,10 +89,9 @@ return {
           winhighlight = "Normal:BlinkCmpMenu,FloatBorder:BlinkCmpMenuBorder,CursorLine:BlinkCmpMenuSelection",
           draw = {
             treesitter = { "lsp" },
-            columns = {
-              { "label", "label_description", gap = 1 },
-              { "kind_icon", "kind", gap = 1 },
-            },
+            columns = function(context)
+              return require("core.chrome.actions").completion_columns(context.mode)
+            end,
           },
         },
         documentation = {

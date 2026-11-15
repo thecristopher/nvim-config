@@ -273,4 +273,18 @@ function M.names_itself(buftype)
   return buftype == "" or buftype == "help"
 end
 
+---The completion menu's columns: in code the label and its kind, in the command line only the
+---label, since blink calls every command and path there a Property, which tells nothing.
+---@param mode string blink's context mode, "default" or "cmdline"
+---@return table[] blink draw columns
+function M.completion_columns(mode)
+  if mode == "cmdline" then
+    return { { "label", "label_description", gap = 1 } }
+  end
+  return {
+    { "label", "label_description", gap = 1 },
+    { "kind_icon", "kind", gap = 1 },
+  }
+end
+
 return M

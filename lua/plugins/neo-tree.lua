@@ -55,6 +55,8 @@ return {
           hide_gitignored = true,
           hide_by_name = { "node_modules", ".git", "__pycache__" },
           never_show = { ".DS_Store", "thumbs.db" },
+          -- the "(1 hidden item)" row only said the gitignored files were hidden, which they always are
+          show_hidden_count = false,
         },
       },
       default_component_configs = {
@@ -155,14 +157,6 @@ return {
         position = { col = "50%", row = "30%" },
         size = { width = 60, height = 15 },
         border = { style = require("core.skin").border() },
-      },
-      event_handlers = {
-        {
-          event = "neo_tree_buffer_enter",
-          handler = function()
-            vim.cmd("setlocal number relativenumber")
-          end,
-        },
       },
     },
   },
