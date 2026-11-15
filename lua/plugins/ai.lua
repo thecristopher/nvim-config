@@ -71,7 +71,7 @@ return {
         auto_insert = true, -- toggling in drops you straight into Insert mode, ready to type
         snacks_win_opts = {
           position = "right",
-          width = 0.38,
+          width = require("core.claude_panel.actions").DEFAULT_SHARE,
           border = require("core.skin").border(),
           -- same floor as the tree, focused or not, so Claude always reads as a side panel
           wo = {
@@ -91,6 +91,7 @@ return {
       -- Toggle / navigation
       { "<leader>ac", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude" },
       { "<leader>af", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
+      { "<leader>aF", "<cmd>ClaudeFullscreen<cr>", desc = "Claude fullscreen" },
       { "<leader>am", "<cmd>ClaudeCodeSelectModel<cr>", desc = "Select model" },
       -- Context
       { "<leader>ab", "<cmd>ClaudeCodeAdd<cr>", desc = "Add buffer to context" },

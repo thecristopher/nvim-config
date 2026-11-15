@@ -29,7 +29,12 @@ map("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { desc = "Increase width" }
 
 map("n", "<leader>sv", "<cmd>vsplit<cr>", { desc = "Split vertical" })
 map("n", "<leader>sh", "<cmd>split<cr>", { desc = "Split horizontal" })
-map("n", "<leader>se", "<C-w>=", { desc = "Equalize splits" })
+map("n", "<leader>se", function()
+  require("core.resize").reset()
+end, { desc = "Reset window layout" })
+map("n", "<leader>uw", function()
+  require("core.resize").mode()
+end, { desc = "Resize windows" })
 
 -- ── Buffers ──────────────────────────────────────────────────────────────────
 map("n", "<S-h>", "<cmd>bprevious<cr>", { desc = "Prev buffer" })
