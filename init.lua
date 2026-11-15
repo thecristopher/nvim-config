@@ -45,6 +45,8 @@ else
   require("core.music").setup()
   require("core.links").setup()
   require("core.claude_ui").setup()
+  require("core.claude_panel").setup()
+  require("core.resize").setup()
 end
 
 -- ── Bootstrap lazy.nvim ──────────────────────────────────────────────────────
