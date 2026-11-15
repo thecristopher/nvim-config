@@ -19,7 +19,7 @@ local function read_choice()
 end
 
 local function save(name)
-  pcall(vim.fn.writefile, { actions.encode_choice(today(), name) }, state_file)
+  require("core.utils").write_state(state_file, { actions.encode_choice(today(), name) })
 end
 
 local function of_the_day()
@@ -167,8 +167,9 @@ end
 function M.setup(base_opts)
   M.base_opts = base_opts
   M.pinned = vim.g.eldentree_region ~= nil
-  -- the day's region stays for the whole session, traveling between repos never changes it
-  M.apply(starting_region())
+  -- the day's region stays for the whole session, traveling between repos never changes it.
+  -- It came from the state file or from the date, so there is nothing new to save
+  M.apply(starting_region(), { save = false })
 
   vim.api.nvim_create_user_command("Region", function(cmd)
     if cmd.args == "" then

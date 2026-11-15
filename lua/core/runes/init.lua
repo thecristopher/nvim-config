@@ -19,7 +19,7 @@ local function load()
 end
 
 local function save()
-  pcall(vim.fn.writefile, { actions.encode(state) }, state_file)
+  require("core.utils").write_state(state_file, { actions.encode(state) })
 end
 
 local function refresh_statusline()

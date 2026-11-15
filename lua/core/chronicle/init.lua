@@ -21,7 +21,7 @@ end
 ---@param run { seconds: integer, saves: integer, fixes: integer }
 function M.record(run)
   local history = actions.merge_day(read_history(), os.date("%Y-%m-%d"), run)
-  pcall(vim.fn.writefile, { vim.json.encode(history) }, history_file)
+  require("core.utils").write_state(history_file, { vim.json.encode(history) })
 end
 
 local function define_highlights()

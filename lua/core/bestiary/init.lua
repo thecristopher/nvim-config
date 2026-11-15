@@ -18,7 +18,7 @@ local function read_store()
 end
 
 local function write_store(store)
-  pcall(vim.fn.writefile, { vim.json.encode(store) }, store_file)
+  require("core.utils").write_state(store_file, { vim.json.encode(store) })
 end
 
 local function repo_of(buf)

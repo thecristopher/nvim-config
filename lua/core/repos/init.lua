@@ -21,8 +21,14 @@ local function read_json_list(path)
   return (decoded_ok and type(decoded) == "table") and decoded or {}
 end
 
+-- the ranked list checks every scanned repo on disk (~9 ms for a hundred), and the HUD asks for it
+-- on every rebuild, so it is kept a few seconds and dropped whenever a list is written
+local LIST_TTL_MS = 10000
+local listed = {}
+
 local function write_json_list(path, list)
-  pcall(vim.fn.writefile, { vim.json.encode(list) }, path)
+  listed = {}
+  require("core.utils").write_state(path, { vim.json.encode(list) })
 end
 
 local function last_activity(repo)
@@ -78,7 +84,8 @@ function M.record_visit(dir)
   write_json_list(visits_file, actions.remember(read_json_list(visits_file), root, 30))
 end
 
-function M.list(limit)
+-- ranks the visited and scanned repos straight from disk
+local function rank_now(limit)
   local still_there = function(path)
     return vim.fn.isdirectory(path) == 1 and M.is_repo(path)
   end
@@ -91,6 +98,20 @@ function M.list(limit)
   end
 
   return actions.rank(visited, scanned, activity, limit)
+end
+
+--- The repos to offer, visited first then the most active, remembered for a few seconds.
+---@param limit integer|nil
+---@return string[]
+function M.list(limit)
+  local key = tostring(limit)
+  local kept = listed[key]
+  if kept and vim.uv.now() - kept.at < LIST_TTL_MS then
+    return vim.deepcopy(kept.repos)
+  end
+  local repos = rank_now(limit)
+  listed[key] = { at = vim.uv.now(), repos = repos }
+  return vim.deepcopy(repos)
 end
 
 function M.dashboard_items(limit)

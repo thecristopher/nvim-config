@@ -361,4 +361,25 @@ function M.direct_keys(hub_keys)
   return out
 end
 
+--- Whether something fetched at a moment is old enough to fetch again.
+---@param fetched_at integer|nil milliseconds, nil when it was never fetched
+---@param now integer milliseconds
+---@param ttl integer milliseconds it stays fresh
+---@return boolean
+function M.stale(fetched_at, now, ttl)
+  return fetched_at == nil or now - fetched_at >= ttl
+end
+
+--- Reads one line of `git for-each-ref` with the branch, its last commit and `%(ahead-behind:HEAD)`.
+---@param line string like "feature/x\t3 days ago\t2 5", the counts are missing on older git
+---@return { branch: string, when: string, ahead: integer|nil }|nil
+function M.parse_branch(line)
+  local branch, when, counts = line:match("^(.-)\t([^\t]*)\t?(.*)$")
+  if not branch or branch == "" then
+    return nil
+  end
+  local ahead = tonumber((counts or ""):match("^(%d+)"))
+  return { branch = branch, when = when, ahead = ahead }
+end
+
 return M

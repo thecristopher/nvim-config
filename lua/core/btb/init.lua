@@ -283,7 +283,7 @@ local function greet_at_shop()
   local day, franchise = os.date("%Y-%m-%d"), require("core.franchise").name()
   local ok, lines = pcall(vim.fn.readfile, shop_file, "", 1)
   require("core.sound").play_first(actions.shop_greeting(ok and lines[1] or nil, day, franchise))
-  pcall(vim.fn.writefile, { day .. " " .. franchise }, shop_file)
+  require("core.utils").write_state(shop_file, { day .. " " .. franchise })
 end
 
 ---Asked before a hint is revealed: the franchise's merchant names the price, you buy or leave.

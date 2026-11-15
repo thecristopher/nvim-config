@@ -231,3 +231,37 @@ describe("direct_keys", function()
     assert.equal("9", keys[#keys])
   end)
 end)
+
+describe("stale", function()
+  it("fetches what was never fetched", function()
+    assert.is_true(hud.stale(nil, 500, 10000))
+  end)
+
+  it("keeps Claire's playlist while it is fresh", function()
+    assert.is_false(hud.stale(1000, 5000, 10000))
+  end)
+
+  it("fetches again once the time to live is over", function()
+    assert.is_true(hud.stale(1000, 11000, 10000))
+  end)
+end)
+
+describe("parse_branch", function()
+  it("reads the branch, its last commit and how far ahead it is", function()
+    assert.same(
+      { branch = "feature/anniversary", when = "2 days ago", ahead = 3 },
+      hud.parse_branch("feature/anniversary\t2 days ago\t3 1")
+    )
+  end)
+
+  it("leaves the count out on git without ahead-behind", function()
+    assert.same(
+      { branch = "malenia/haligtree", when = "a week ago" },
+      hud.parse_branch("malenia/haligtree\ta week ago")
+    )
+  end)
+
+  it("skips an empty line", function()
+    assert.is_nil(hud.parse_branch(""))
+  end)
+end)

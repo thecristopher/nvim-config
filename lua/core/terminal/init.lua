@@ -16,12 +16,39 @@ function M.name()
   return detected
 end
 
+-- snacks asks the terminal what it can draw and, asked synchronously, waits up to 1.5 s for the
+-- answer. The question goes out in the background instead and the terminal's name answers meanwhile
+local images_known = false
+local images_asked = false
+
+local function ask_terminal_about_images()
+  if images_asked then
+    return
+  end
+  images_asked = true
+  local guess = actions.images(M.name())
+  pcall(Snacks.image.terminal.detect, function()
+    images_known = true
+    local ok, supported = pcall(Snacks.image.supports_terminal)
+    -- the portrait was drawn on the guess, a wrong guess draws it again the right way
+    if ok and supported ~= guess then
+      vim.schedule(function()
+        require("core.hud.portrait").close()
+        require("core.hud").refresh()
+      end)
+    end
+  end)
+end
+
 --- Tells whether portraits can be drawn as real images instead of chafa's half blocks.
+--- Never blocks: until the terminal answers, its name decides.
 ---@return boolean
 function M.supports_images()
-  local ok, supported = pcall(function()
-    return Snacks.image.supports_terminal()
-  end)
+  ask_terminal_about_images()
+  if not images_known then
+    return actions.images(M.name())
+  end
+  local ok, supported = pcall(Snacks.image.supports_terminal)
   if ok then
     return supported == true
   end
@@ -121,7 +148,7 @@ end
 
 local function register_instance()
   vim.fn.mkdir(INSTANCES_DIR, "p")
-  pcall(vim.fn.writefile, {}, INSTANCES_DIR .. "/" .. own_pid())
+  require("core.utils").write_state(INSTANCES_DIR .. "/" .. own_pid(), {})
 end
 
 local function is_alive(pid)
@@ -157,7 +184,10 @@ end
 -- tells everyone the terminal finished reloading, images drawn before it may need drawing again
 local function settled()
   vim.defer_fn(function()
-    pcall(vim.fn.writefile, { actions.settle_note(own_pid(), vim.uv.hrtime()) }, SETTLED_FILE)
+    require("core.utils").write_state(
+      SETTLED_FILE,
+      { actions.settle_note(own_pid(), vim.uv.hrtime()) }
+    )
     fire_settled()
   end, SETTLE_MS)
 end
@@ -258,7 +288,7 @@ function M.set_opacity(opacity)
   local was_see_through = see_through()
   chosen_opacity = opacity
   if opacity then
-    pcall(vim.fn.writefile, { tostring(opacity) }, OPACITY_FILE)
+    require("core.utils").write_state(OPACITY_FILE, { tostring(opacity) })
   else
     pcall(vim.fn.delete, OPACITY_FILE)
   end

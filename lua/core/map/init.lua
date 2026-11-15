@@ -34,6 +34,26 @@ local function survey(root)
   return actions.rooms(root, files, todos, open_errors())
 end
 
+--- Gathers the files and TODO counts of a project in the background.
+---@param root string repo root
+---@param done fun(survey: { files: string[], todos: table<string, integer> })
+function M.survey_async(root, done)
+  local background = require("core.hud.background")
+  background.git(root, { "ls-files" }, function(files)
+    background.git(root, { "grep", "-I", "-c", "-E", "TODO|FIXME" }, function(lines)
+      done({ files = files, todos = actions.parse_counts(table.concat(lines, "\n")) })
+    end)
+  end)
+end
+
+--- The rooms of a project from a survey gathered earlier, with the errors open right now.
+---@param root string repo root
+---@param gathered { files: string[], todos: table<string, integer> }
+---@return table[]
+function M.rooms_from(root, gathered)
+  return actions.rooms(root, gathered.files, gathered.todos, open_errors())
+end
+
 local function render(rooms)
   local name_width = 0
   for _, room in ipairs(rooms) do
