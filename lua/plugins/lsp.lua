@@ -12,7 +12,7 @@ local function setup_diagnostics()
     update_in_insert = false,
     underline = true,
     severity_sort = true,
-    float = { border = require("core.skin").border(), source = true, header = "", prefix = "" },
+    float = { border = require("core.skin").border(), source = "if_many", header = "", prefix = "" },
   })
 end
 

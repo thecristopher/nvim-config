@@ -8,7 +8,8 @@ opt.cursorline = true
 -- the cursor changes color with the mode, terminals that ignore cursor colors just keep the shapes
 opt.guicursor = require("core.themes.actions").guicursor()
 opt.signcolumn = "yes"
-opt.colorcolumn = "100"
+-- no column painted down the window, core/chrome/ruler tints only what runs past it
+opt.colorcolumn = ""
 opt.showmode = false
 opt.ruler = false
 -- noice draws the command line in a popup and sets this to 0 once it loads. Starting at 0 keeps the
@@ -16,14 +17,15 @@ opt.ruler = false
 opt.cmdheight = vim.g.vscode and 1 or 0
 opt.laststatus = 3
 opt.pumheight = 10
-opt.pumblend = 10
+-- menus and floats are opaque: any blend lets the code behind ghost through the text on top
+opt.pumblend = 0
 -- 'pumborder' arrived in 0.12, the config still runs on 0.11
 if vim.fn.exists("+pumborder") == 1 then
   opt.pumborder = "rounded"
 end
 -- every float without its own border gets this one, full screen layers opt out with border = "none"
 opt.winborder = "rounded"
-opt.winblend = 5
+opt.winblend = 0
 opt.wrap = false
 opt.breakindent = true -- wrapped lines keep their indent in prose buffers
 opt.scrolloff = 8

@@ -46,7 +46,6 @@ return {
         go = { "goimports", "gofumpt", stop_after_first = false },
         fish = { "fish_indent" },
         terraform = { "terraform_fmt" },
-        ["_"] = { "trim_whitespace" },
       },
       -- without this conform runs prettierd and then prettier again on every save
       default_format_opts = { stop_after_first = true },

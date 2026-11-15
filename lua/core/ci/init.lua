@@ -147,7 +147,6 @@ function M.setup()
     end,
   })
   vim.api.nvim_create_user_command("CI", M.open, { desc = "Open the branch's CI run" })
-  vim.keymap.set("n", "<leader>gi", M.open, { desc = "Open the CI run" })
   timer = vim.uv.new_timer()
   vim.defer_fn(M.check, 3000)
 end

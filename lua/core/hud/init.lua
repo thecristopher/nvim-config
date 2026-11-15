@@ -35,33 +35,52 @@ end
 
 -- highlights -----------------------------------------------------------------------------
 
+local function palette_and_blend()
+  return require("core.themes").palette(), require("core.themes.actions").blend
+end
+
 local function define_highlights()
-  local p = require("core.themes").palette()
-  local blend = require("core.themes.actions").blend
-  local plates = style() == "inventory"
-  local groups = {
-    EldenHudTitle = { fg = p.yellow, bold = true },
-    EldenHudTab = plates and { fg = p.subtext0, bg = p.surface1 } or { fg = p.overlay1 },
-    EldenHudTabSel = plates and { fg = p.base, bg = p.yellow, bold = true }
-      or { fg = p.yellow, bold = true },
-    EldenHudRule = { fg = p.surface2 },
-    EldenHudRuleSel = { fg = p.yellow },
-    EldenHudSection = { fg = p.subtext0, italic = true },
-    EldenHudName = { fg = p.text, bold = true },
-    EldenHudDim = { fg = p.overlay0 },
-    EldenHudFrame = { fg = p.overlay0 },
-    EldenHudFrameSel = { fg = p.yellow, bold = true },
-    EldenHudSlotSel = { bg = blend(p.yellow, p.base, 0.16) },
-    EldenHudIcon = { fg = p.text },
-    EldenHudKey = { fg = p.rosewater, bold = true },
-    EldenHudCount = { fg = p.subtext1 },
-    EldenHudDesc = { fg = p.subtext0 },
-    EldenHudHint = { fg = p.overlay1 },
-    EldenHudBanner = { fg = p.yellow, bold = true },
-  }
-  for name, look in pairs(groups) do
+  local p, blend = palette_and_blend()
+  for name, look in pairs(actions.hud_groups(p, blend, style() == "inventory")) do
     vim.api.nvim_set_hl(0, name, look)
   end
+end
+
+-- transitions ----------------------------------------------------------------------------
+-- every one starts from a lit or sunk look and fades to rest on core/motion's clock, so they still
+-- with <leader>um, during an expedition and while a macro replays
+
+local function fade_to_rest(from, duration)
+  local p, blend = palette_and_blend()
+  local rest = actions.hud_groups(p, blend, style() == "inventory")
+  local motion = require("core.motion")
+  for name, look in pairs(from) do
+    vim.api.nvim_set_hl(0, name, look)
+    motion.fade_hl(name, rest[name], { duration = duration })
+  end
+end
+
+-- the slot the cursor lands on glows and settles
+local function pulse_selection()
+  local p, blend = palette_and_blend()
+  fade_to_rest(actions.selection_flash(p, blend), 220)
+end
+
+-- a new tab flashes its plate or rule as the selection lands in it
+local function pulse_tab()
+  local p, blend = palette_and_blend()
+  local flash = actions.selection_flash(p, blend)
+  flash.EldenHudTabSel = style() == "inventory" and { fg = p.base, bg = p.text, bold = true }
+    or { fg = p.text, bold = true }
+  flash.EldenHudRuleSel = { fg = p.text }
+  fade_to_rest(flash, 260)
+end
+
+-- the whole HUD rises out of the background when it opens
+local function entrance()
+  local p, blend = palette_and_blend()
+  local rest = actions.hud_groups(p, blend, style() == "inventory")
+  fade_to_rest(actions.sunk(rest, p.base, blend, 0.15), 320)
 end
 
 -- model ----------------------------------------------------------------------------------
@@ -111,7 +130,10 @@ local function portrait_available()
   if vim.fn.filereadable(portrait_file()) == 0 then
     return false
   end
-  return vim.fn.executable("chafa") == 1 or require("core.terminal").can_draw(portrait_file())
+  local terminal = require("core.terminal")
+  return vim.fn.executable("chafa") == 1
+    or terminal.awaiting_images()
+    or terminal.can_draw(portrait_file())
 end
 
 local function model()
@@ -325,6 +347,7 @@ local function move(direction)
   end
   sound("hud_move")
   M.refresh()
+  pulse_selection()
 end
 
 local function switch_tab(step)
@@ -333,6 +356,7 @@ local function switch_tab(step)
   state.cursor.items, state.offset.items = 1, 0
   sound("hud_move")
   M.refresh()
+  pulse_tab()
 end
 
 -- using items ----------------------------------------------------------------------------
@@ -651,6 +675,7 @@ function M.open()
   watch(buf)
   sound("hud_open")
   M.refresh(true)
+  entrance()
   require("core.hub").start(buf)
 end
 

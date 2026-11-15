@@ -24,8 +24,8 @@ describe("sign_text", function()
   it("keys every sign by its severity", function()
     local severity = vim.diagnostic.severity
     local text =
-      actions.sign_text({ error = "☣", warn = "▲", hint = "◆", info = "◇" }, severity)
-    assert.equal("☣", text[severity.ERROR])
+      actions.sign_text({ error = "󰂧", warn = "▲", hint = "◆", info = "◇" }, severity)
+    assert.equal("󰂧", text[severity.ERROR])
     assert.equal("◇", text[severity.INFO])
   end)
 end)

@@ -189,7 +189,7 @@ function M.show()
 end
 
 local function remember_today()
-  pcall(vim.fn.writefile, { os.date("%Y-%m-%d") .. " " .. lore().name }, state_file)
+  require("core.utils").write_state(state_file, { os.date("%Y-%m-%d") .. " " .. lore().name })
 end
 
 local function first_today()

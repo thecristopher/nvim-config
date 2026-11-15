@@ -1,4 +1,4 @@
--- AI: claudecode.nvim — Claude Code CLI integrated natively into Neovim
+-- AI: claudecode.nvim, the Claude Code CLI integrated natively into Neovim
 -- No API key needed. Uses your existing Claude.ai login (same as VS Code).
 -- How it works: Neovim starts a WebSocket server; `claude` CLI auto-connects to it.
 

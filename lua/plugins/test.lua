@@ -1,5 +1,5 @@
 -- Tests in place: neotest runs the one under the cursor and marks each test in the gutter.
--- :Trial (<leader>cT) still runs the whole suite in the background and announces the verdict.
+-- :Trial (<leader>TT) still runs the whole suite in the background and announces the verdict.
 
 local function neotest()
   return require("neotest")

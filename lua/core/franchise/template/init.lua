@@ -127,6 +127,8 @@ return {
     cmdline = "Command",
     search = "Search",
     examine = "Preview",
+    -- the title of the notification history
+    history = "Notification History",
     notify = { info = "Info", warn = "Warning", error = "Error", debug = "Debug", trace = "Trace" },
   },
 

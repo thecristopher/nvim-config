@@ -69,3 +69,36 @@ describe("hex conversion", function()
     assert.equal("#C9A84C", actions.to_hex(actions.to_int("#C9A84C")))
   end)
 end)
+
+describe("next_beat", function()
+  it("puts Claire's 50 ms heartbeat and Malenia's 100 ms breath on the same frame", function()
+    assert.equal(200, actions.next_beat(170, 0, 50))
+    assert.equal(200, actions.next_beat(170, 0, 100))
+  end)
+
+  it("never returns the beat that is happening right now", function()
+    assert.equal(150, actions.next_beat(100, 0, 50))
+  end)
+
+  it("counts from the clock's epoch, not from zero", function()
+    assert.equal(1060, actions.next_beat(1000, 1000, 60))
+  end)
+
+  it("treats a zero interval as one millisecond so it never loops in place", function()
+    assert.equal(11, actions.next_beat(10, 0, 0))
+  end)
+end)
+
+describe("sleep_for", function()
+  it("sleeps until the earliest date Inde has planned", function()
+    assert.equal(16, actions.sleep_for({ 140, 116, 200 }, 100))
+  end)
+
+  it("wakes right away when a frame is already late", function()
+    assert.equal(0, actions.sleep_for({ 80 }, 100))
+  end)
+
+  it("has nothing to wait for when nobody subscribed", function()
+    assert.is_nil(actions.sleep_for({}, 100))
+  end)
+end)

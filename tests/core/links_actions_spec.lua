@@ -107,3 +107,59 @@ describe("resolve", function()
     assert.equal(vim.fs.normalize("~/notes.md"), actions.resolve("~/notes.md", "/repo"))
   end)
 end)
+
+describe("parentheses", function()
+  it("keeps the parenthesis a wiki page name opened", function()
+    local line = "lore at https://en.wikipedia.org/wiki/Malenia_(Elden_Ring) tonight"
+    assert.equal(
+      "https://en.wikipedia.org/wiki/Malenia_(Elden_Ring)",
+      actions.links_in(line)[1].url
+    )
+  end)
+
+  it("leaves out the parenthesis that closes Claire's aside", function()
+    assert.equal("http://localhost:3000", actions.links_in("(see http://localhost:3000)")[1].url)
+  end)
+
+  it("leaves out a markdown link's closing parenthesis", function()
+    local line = "[the PR](https://github.com/claire/love-letters/pull/12)"
+    assert.equal("https://github.com/claire/love-letters/pull/12", actions.links_in(line)[1].url)
+  end)
+end)
+
+describe("wrapped urls", function()
+  local width = 20
+  local lines = {
+    "Open this link:",
+    "https://claude.ai/oa",
+    "uth/inde?code=love",
+    "and come back here",
+  }
+
+  it("joins the lines a terminal wrapped a long url over", function()
+    assert.equal("https://claude.ai/oauth/inde?code=love", actions.logical_line(lines, 3, width))
+  end)
+
+  it("opens the whole url from its first line", function()
+    assert.equal(
+      "https://claude.ai/oauth/inde?code=love",
+      actions.url_across_lines(lines, 2, 3, width)
+    )
+  end)
+
+  it("opens the whole url from the line it ran on into", function()
+    assert.equal(
+      "https://claude.ai/oauth/inde?code=love",
+      actions.url_across_lines(lines, 3, 5, width)
+    )
+  end)
+
+  it("takes a line alone when the width is unknown", function()
+    assert.equal("https://claude.ai/oa", actions.url_across_lines(lines, 2, 3, nil))
+  end)
+
+  it("gives Malenia's last link back whole", function()
+    local printed = { "server ready", "https://haligtree.d", "ev/garden", "" }
+    assert.equal("https://haligtree.dev/garden", actions.last_url(printed, 19))
+  end)
+end)

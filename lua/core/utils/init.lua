@@ -31,14 +31,34 @@ function M.platform()
   return "linux"
 end
 
+--- Writes one of Eldentree's own state files (tallies, the region of the day, caches). Losing
+--- the last write to a crash costs nothing, so it skips the fsync that makes writefile take
+--- milliseconds instead of microseconds, which matters for files written on every save.
+---@param path string
+---@param lines string[]
+---@param flags? string extra writefile flags, like "a" to append
+---@return boolean ok
+function M.write_state(path, lines, flags)
+  return (pcall(vim.fn.writefile, lines, path, (flags or "") .. "S"))
+end
+
 --- Repaints the statusline. lualine draws one global statusline, so only the current window is
 --- refreshed: refreshing every window lets lualine lose track of the focused one in command mode
---- and paint the inactive line over the real one.
+--- and paint the inactive line over the real one. Calls that land in the same tick share one
+--- repaint, so the grace, the ECG and the music moving on the same frame redraw once.
+local statusline_pending = false
 function M.refresh_statusline()
-  local ok, lualine = pcall(require, "lualine")
-  if ok then
-    lualine.refresh({ place = { "statusline" }, scope = "window" })
+  if statusline_pending then
+    return
   end
+  statusline_pending = true
+  vim.schedule(function()
+    statusline_pending = false
+    local ok, lualine = pcall(require, "lualine")
+    if ok then
+      lualine.refresh({ place = { "statusline" }, scope = "window" })
+    end
+  end)
 end
 
 return M

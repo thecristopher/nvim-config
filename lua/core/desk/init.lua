@@ -365,7 +365,6 @@ function M.setup()
   vim.api.nvim_create_user_command("DeskReview", function(opts)
     M.review(opts.fargs[1])
   end, { nargs = 1, desc = "Review the open PR of a ticket in a new tab: KEY" })
-  vim.keymap.set("n", "<leader>ud", M.open, { desc = "Open the desk" })
   start_schedule()
 end
 

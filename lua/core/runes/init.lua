@@ -19,7 +19,7 @@ local function load()
 end
 
 local function save()
-  pcall(vim.fn.writefile, { actions.encode(state) }, state_file)
+  require("core.utils").write_state(state_file, { actions.encode(state) })
 end
 
 local function refresh_statusline()
@@ -99,7 +99,7 @@ end
 local glow_level = 1
 
 function M.grace()
-  return ("%%#EldenGraceGlow%d#✦ %s"):format(glow_level, require("core.themes").current().title)
+  return ("%%#EldenGraceGlow%d#󰫢 %s"):format(glow_level, require("core.themes").current().title)
 end
 
 -- every step of the breath gets its own group once, so breathing never redefines a highlight
@@ -114,6 +114,10 @@ end
 
 -- changing a highlight repaints every window, switching groups only repaints the statusline
 local function breathe(elapsed)
+  -- franchises that show the ECG never draw the grace, so its breath would repaint for nothing
+  if require("core.franchise").mechanic("status") == "ecg" then
+    return
+  end
   local level = actions.glow_level(elapsed)
   if level == glow_level then
     return

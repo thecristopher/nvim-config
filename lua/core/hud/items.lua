@@ -1,6 +1,9 @@
 -- What fills the HUD's slots, gathered from the real workspace: the hub actions, recent files,
 -- branches and stashes, ground messages, regions, projects and the rooms of the map.
 -- Every item knows how to be used, checked (details for a float) and, where it makes sense, combined.
+local background = require("core.hud.background")
+local hud_actions = require("core.hud.actions")
+
 local M = {}
 
 local function words()
@@ -126,51 +129,80 @@ local function switch_branch(root, branch)
         ok and vim.log.levels.INFO or vim.log.levels.WARN,
         { title = "Git" }
       )
-      require("core.hud").refresh()
+      background.forget()
+      require("core.hud").refresh(true)
     end)
   )
 end
 
-local function branch_items(root)
+local BRANCH_FORMAT = "%(refname:short)\t%(committerdate:relative)"
+local BRANCH_ARGS = { "for-each-ref", "--sort=-committerdate", "--count=12" }
+
+-- one for-each-ref with the ahead count of every branch, instead of a rev-list per branch.
+-- %(ahead-behind) arrived in git 2.41, older git gets the list without the counts
+local function fetch_branches(root, done)
+  local with_counts = vim.list_extend(vim.deepcopy(BRANCH_ARGS), {
+    "--format=" .. BRANCH_FORMAT .. "\t%(ahead-behind:HEAD)",
+    "refs/heads",
+  })
+  background.git(root, with_counts, function(lines, ok)
+    if ok then
+      return done(lines)
+    end
+    local plain =
+      vim.list_extend(vim.deepcopy(BRANCH_ARGS), { "--format=" .. BRANCH_FORMAT, "refs/heads" })
+    background.git(root, plain, done)
+  end)
+end
+
+local function fetch_git(root)
+  return function(done)
+    fetch_branches(root, function(branches)
+      background.git(root, { "stash", "list", "--format=%gd\t%s" }, function(stashes)
+        done({ branches = branches, stashes = stashes })
+      end)
+    end)
+  end
+end
+
+local function branch_item(root, current, parsed)
+  local branch = parsed.branch
+  return {
+    icon = branch == current and "󰘬" or "󰌆",
+    name = branch,
+    count = parsed.ahead and parsed.ahead > 0 and parsed.ahead or nil,
+    desc = (branch == current and "You stand on this branch. " or "")
+      .. "Last commit "
+      .. parsed.when
+      .. ".",
+    use = function()
+      switch_branch(root, branch)
+    end,
+    check = function()
+      return vim.list_extend({ branch, "" }, git(root, { "log", "--oneline", "-10", branch }))
+    end,
+    combine = function()
+      return vim.list_extend(
+        { "HEAD against " .. branch, "" },
+        git(root, { "diff", "--stat", "HEAD..." .. branch })
+      )
+    end,
+  }
+end
+
+local function branch_items(root, lines)
   local current = require("core.repos").branch(root)
   local items = {}
-  for _, line in
-    ipairs(git(root, {
-      "for-each-ref",
-      "--sort=-committerdate",
-      "--count=12",
-      "--format=%(refname:short)\t%(committerdate:relative)",
-      "refs/heads",
-    }))
-  do
-    local branch, when = line:match("^(.-)\t(.*)$")
-    local ahead = tonumber(git(root, { "rev-list", "--count", "HEAD.." .. branch })[1])
-    table.insert(items, {
-      icon = branch == current and "󰘬" or "󰌆",
-      name = branch,
-      count = ahead and ahead > 0 and ahead or nil,
-      desc = (branch == current and "You stand on this branch. " or "")
-        .. "Last commit "
-        .. when
-        .. ".",
-      use = function()
-        switch_branch(root, branch)
-      end,
-      check = function()
-        return vim.list_extend({ branch, "" }, git(root, { "log", "--oneline", "-10", branch }))
-      end,
-      combine = function()
-        return vim.list_extend(
-          { "HEAD against " .. branch, "" },
-          git(root, { "diff", "--stat", "HEAD..." .. branch })
-        )
-      end,
-    })
+  for _, line in ipairs(lines) do
+    local parsed = hud_actions.parse_branch(line)
+    if parsed then
+      table.insert(items, branch_item(root, current, parsed))
+    end
   end
   return items
 end
 
-local function stash_items(root)
+local function stash_items(root, lines)
   return vim.tbl_map(function(line)
     local ref, message = line:match("^(.-)\t(.*)$")
     return {
@@ -183,12 +215,13 @@ local function stash_items(root)
           vim.log.levels.INFO,
           { title = "Git" }
         )
+        background.forget()
       end,
       check = function()
         return vim.list_extend({ ref, "" }, git(root, { "stash", "show", "--stat", ref }))
       end,
     }
-  end, git(root, { "stash", "list", "--format=%gd\t%s" }))
+  end, lines)
 end
 
 --- Branches and stashes of the repo you stand in, the key items that open other paths.
@@ -198,7 +231,11 @@ function M.git()
   if not root then
     return {}
   end
-  return vim.list_extend(branch_items(root), stash_items(root))
+  local cached = background.get("git:" .. root, fetch_git(root))
+  if not cached then
+    return {}
+  end
+  return vim.list_extend(branch_items(root, cached.branches), stash_items(root, cached.stashes))
 end
 
 --- Messages left on the ground of this repo.
@@ -211,7 +248,7 @@ function M.messages()
   return vim.tbl_map(function(entry)
     local path = root .. "/" .. entry.file
     return {
-      icon = "✎",
+      icon = "󰏫",
       icon_hl = "EldenMessage",
       name = entry.text,
       count = entry.line,
@@ -233,7 +270,7 @@ function M.regions()
   local current = require("core.themes").current().name
   local items = vim.tbl_map(function(region)
     return {
-      icon = region.name == current and "✦" or "◈",
+      icon = region.name == current and "󰫢" or "◈",
       name = region.title,
       desc = region.tagline .. ", watched over by " .. region.character .. ".",
       use = function()
@@ -247,7 +284,7 @@ function M.regions()
   local franchise = require("core.franchise.actions")
   for _, name in ipairs(franchise.names()) do
     table.insert(items, {
-      icon = "⚑",
+      icon = "󰈻",
       name = franchise.lore(name).title,
       desc = "Wake up in " .. franchise.lore(name).title .. " for the rest of the day.",
       use = function()
@@ -259,9 +296,15 @@ function M.regions()
 end
 
 local changed = {}
+local counted_at
 
--- reading every project's changes means a git call each, so it runs in the background
+-- reading every project's changes means a git call each, so it runs in the background, and at
+-- most once every background.TTL_MS: spawning a dozen processes on every rebuild costs ~7 ms
 local function count_changes(items)
+  if not hud_actions.stale(counted_at, vim.uv.now(), background.TTL_MS) then
+    return
+  end
+  counted_at = vim.uv.now()
   for _, item in ipairs(items) do
     vim.system(
       { "git", "-C", item.repo, "status", "--porcelain" },
@@ -317,7 +360,9 @@ end
 --- The work waiting where you stand: the repo, its branch, what changed and the last file touched.
 ---@return { project?: string, branch?: string, changes?: string[], last_file?: string, filetype?: string }
 function M.quest()
-  local latest = vim.v.oldfiles[1]
+  local root = require("core.repos").root()
+  -- the quest is the project's, so its last file is the last one touched inside it
+  local latest = hud_actions.last_in(vim.v.oldfiles, root)
   local quest = {
     last_path = latest,
     -- whether the last file can be opened, so the views and the walkable items agree on it
@@ -326,7 +371,6 @@ function M.quest()
     -- the HUD's own buffer says nothing about the work, the last file you touched does
     filetype = latest and vim.filetype.match({ filename = latest }) or nil,
   }
-  local root = require("core.repos").root()
   if not root then
     return quest
   end
@@ -384,7 +428,7 @@ function M.quest_items(quest)
   local list = {}
   if quest.last_ready then
     table.insert(list, {
-      icon = "↳",
+      icon = "󰘍",
       name = vim.fs.basename(quest.last_path),
       desc = "Pick up where you left off: " .. quest.last_file .. ".",
       use = function()
@@ -411,6 +455,12 @@ function M.rooms()
   if not root then
     return {}
   end
+  local survey = background.get("map:" .. root, function(done)
+    require("core.map").survey_async(root, done)
+  end)
+  if not survey then
+    return {}
+  end
   local map = require("core.map.actions")
   return vim.tbl_map(function(room)
     local left = room.errors + room.todos
@@ -432,7 +482,7 @@ function M.rooms()
         Snacks.picker.grep({ cwd = root .. "/" .. room.key, search = "TODO|FIXME", regex = true })
       end,
     }
-  end, require("core.map").rooms(root))
+  end, require("core.map").rooms_from(root, survey))
 end
 
 --- The way out: back to work, the last session, or leave for good.
@@ -493,10 +543,10 @@ function M.tabs(style)
       nil
   end
   return {
-    { title = "Tools", icon = "⚒", items = M.actions() },
+    { title = "Tools", icon = "󱌣", items = M.actions() },
     { title = "Recent", icon = "󰋚", items = M.recent() },
     { title = "Key Items", icon = "󰌆", items = M.git() },
-    { title = "Messages", icon = "✎", items = M.messages() },
+    { title = "Messages", icon = "󰏫", items = M.messages() },
     { title = "Regions", icon = "◈", items = M.regions() },
     {
       title = require("core.franchise").current().coach.lessons,

@@ -16,12 +16,54 @@ function M.name()
   return detected
 end
 
---- Tells whether portraits can be drawn as real images instead of chafa's half blocks.
----@return boolean
-function M.supports_images()
-  local ok, supported = pcall(function()
-    return Snacks.image.supports_terminal()
+-- snacks asks the terminal what it can draw and, asked synchronously, waits up to 1.5 s for the
+-- answer, so the question goes out in the background. Until it is answered nothing may touch
+-- snacks' image code: it would work out its environment without the answer (Ghostty is only known
+-- from it) and keep that wrong answer for the whole session
+local images = { asked = false, known = false }
+
+local function images_answered()
+  images.known = true
+  -- anything that read snacks' environment while the question was out cached it without the answer
+  pcall(function()
+    Snacks.image.terminal._env = nil
   end)
+  vim.api.nvim_exec_autocmds("User", { pattern = "EldentreeImagesKnown", modeline = false })
+end
+
+local function ask_terminal_about_images()
+  if images.asked then
+    return
+  end
+  images.asked = true
+  local ok = pcall(Snacks.image.terminal.detect, vim.schedule_wrap(images_answered))
+  if not ok then
+    images.known = true
+  end
+end
+
+--- Whether pixels should wait: the terminal has not answered yet and its name says it can draw them.
+--- `User EldentreeImagesKnown` fires once it answers.
+---@return boolean
+function M.awaiting_images()
+  ask_terminal_about_images()
+  return not images.known and actions.images(M.name())
+end
+
+--- Tells whether portraits can be drawn as real images instead of chafa's half blocks. Answers
+--- false while the terminal has not replied, unless opts.wait asks to block for the answer.
+---@param opts? { wait: boolean }
+---@return boolean
+function M.supports_images(opts)
+  ask_terminal_about_images()
+  if not images.known then
+    if not (opts and opts.wait) then
+      return false
+    end
+    pcall(Snacks.image.terminal.detect)
+    images_answered()
+  end
+  local ok, supported = pcall(Snacks.image.supports_terminal)
   if ok then
     return supported == true
   end
@@ -121,7 +163,7 @@ end
 
 local function register_instance()
   vim.fn.mkdir(INSTANCES_DIR, "p")
-  pcall(vim.fn.writefile, {}, INSTANCES_DIR .. "/" .. own_pid())
+  require("core.utils").write_state(INSTANCES_DIR .. "/" .. own_pid(), {})
 end
 
 local function is_alive(pid)
@@ -157,7 +199,10 @@ end
 -- tells everyone the terminal finished reloading, images drawn before it may need drawing again
 local function settled()
   vim.defer_fn(function()
-    pcall(vim.fn.writefile, { actions.settle_note(own_pid(), vim.uv.hrtime()) }, SETTLED_FILE)
+    require("core.utils").write_state(
+      SETTLED_FILE,
+      { actions.settle_note(own_pid(), vim.uv.hrtime()) }
+    )
     fire_settled()
   end, SETTLE_MS)
 end
@@ -258,7 +303,7 @@ function M.set_opacity(opacity)
   local was_see_through = see_through()
   chosen_opacity = opacity
   if opacity then
-    pcall(vim.fn.writefile, { tostring(opacity) }, OPACITY_FILE)
+    require("core.utils").write_state(OPACITY_FILE, { tostring(opacity) })
   else
     pcall(vim.fn.delete, OPACITY_FILE)
   end

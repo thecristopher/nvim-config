@@ -6,7 +6,8 @@ local M = {}
 ---@field name string
 ---@field desc string
 ---@field key? string the mapping that does the same, shown so it sticks
----@field cmd string ex command the entry runs
+---@field cmd? string ex command the entry runs
+---@field feed? string a mapping the entry presses instead of running a command
 
 ---@type PaletteEntry[]
 M.ENTRIES = {
@@ -14,7 +15,7 @@ M.ENTRIES = {
     icon = "󰮫 ",
     name = "HUD",
     desc = "The inventory start screen",
-    key = "<leader>uh",
+    key = "<leader>jh",
     cmd = "Hud",
   },
   {
@@ -31,17 +32,17 @@ M.ENTRIES = {
     cmd = "BrowseFolders",
   },
   {
-    icon = "▦ ",
+    icon = "󰕰 ",
     name = "Map",
     desc = "Folders as rooms, red with errors left",
-    key = "<leader>fM",
+    key = "<leader>jm",
     cmd = "Map",
   },
   {
     icon = "󰙨 ",
     name = "Trial",
     desc = "Run the whole test suite",
-    key = "<leader>cT",
+    key = "<leader>TT",
     cmd = "Trial",
   },
   {
@@ -55,7 +56,7 @@ M.ENTRIES = {
     icon = "󰃭 ",
     name = "Desk",
     desc = "Open the manager desk artifact",
-    key = "<leader>ud",
+    key = "<leader>jd",
     cmd = "Desk",
   },
   {
@@ -76,21 +77,21 @@ M.ENTRIES = {
     icon = "󰯈 ",
     name = "Bestiary",
     desc = "The foes felled in this repo",
-    key = "<leader>ub",
+    key = "<leader>jb",
     cmd = "Bestiary",
   },
   {
     icon = "󱎫 ",
     name = "Expedition",
     desc = "A quiet focus block with its own rank",
-    key = "<leader>ue",
+    key = "<leader>je",
     cmd = "Expedition",
   },
   {
     icon = "󰃭 ",
     name = "Chronicle",
     desc = "The weeks you fought, as a grid",
-    key = "<leader>uj",
+    key = "<leader>jc",
     cmd = "Chronicle",
   },
   {
@@ -108,14 +109,14 @@ M.ENTRIES = {
     cmd = "Phantom",
   },
   {
-    icon = "✎ ",
+    icon = "󰏫 ",
     name = "Inscribe",
     desc = "Leave a message on this line",
     key = "<leader>mw",
     cmd = "Inscribe",
   },
   {
-    icon = "✎ ",
+    icon = "󰏫 ",
     name = "Inscriptions",
     desc = "Every message left in this repo",
     key = "<leader>ml",
@@ -132,14 +133,14 @@ M.ENTRIES = {
     icon = "󰏘 ",
     name = "Region",
     desc = "Choose today's region",
-    key = "<leader>ut",
+    key = "<leader>jr",
     cmd = "Region",
   },
   {
     icon = "󰯉 ",
     name = "Franchise",
     desc = "Choose today's world",
-    key = "<leader>uf",
+    key = "<leader>jf",
     cmd = "Franchise",
   },
   {
@@ -182,7 +183,7 @@ M.ENTRIES = {
     icon = "󰩨 ",
     name = "Resize",
     desc = "Move the current window's borders with hjkl",
-    key = "<leader>uw",
+    key = "<leader>sw",
     cmd = "Resize",
   },
   {
@@ -193,7 +194,7 @@ M.ENTRIES = {
     cmd = "ResizeReset",
   },
   { icon = "󰔟 ", name = "Title", desc = "The franchise title screen", cmd = "Title" },
-  { icon = "󰛐 ", name = "Boss", desc = "Toggle boss fights", key = "<leader>uB", cmd = "Boss" },
+  { icon = "󰛐 ", name = "Boss", desc = "Toggle boss fights", key = "<leader>ub", cmd = "Boss" },
   { icon = "󰖨 ", name = "Fog", desc = "Walk through a fog wall", cmd = "Fog" },
   {
     icon = "󰐊 ",
@@ -211,7 +212,42 @@ M.ENTRIES = {
 ---@param entry PaletteEntry
 ---@return boolean
 function M.wants_args(entry)
-  return entry.cmd:sub(-1) == " "
+  return entry.cmd ~= nil and entry.cmd:sub(-1) == " "
+end
+
+local DEFAULT_ICON = "󰌌 "
+
+---The curated entries plus a row for every leader binding they do not already show, so the
+---palette reaches every key in the leader map.
+---@param entries PaletteEntry[]
+---@param bindings LeaderBinding[]
+---@param group_of fun(key: string): LeaderGroup|nil
+---@return PaletteEntry[]
+function M.with_bindings(entries, bindings, group_of)
+  local shown = {}
+  for _, entry in ipairs(entries) do
+    if entry.key then
+      shown[entry.key] = true
+    end
+  end
+  local all = vim.list_extend({}, entries)
+  for _, binding in ipairs(bindings) do
+    local lhs = "<leader>" .. binding.key
+    local normal = binding.mode == nil or binding.mode == "n"
+    if normal and binding.key ~= "<leader>" and not shown[lhs] then
+      shown[lhs] = true
+      local group = group_of(binding.key)
+      local icon = binding.icon or (group and group.icon)
+      table.insert(all, {
+        icon = icon and (icon.icon .. " ") or DEFAULT_ICON,
+        name = binding.desc,
+        desc = group and group.name or "leader",
+        key = lhs,
+        feed = lhs,
+      })
+    end
+  end
+  return all
 end
 
 ---The text the picker matches on: name, what it does and its key.
@@ -219,6 +255,52 @@ end
 ---@return string
 function M.search_text(entry)
   return table.concat({ entry.name, entry.desc, entry.key or "" }, " ")
+end
+
+-- the widest a column may grow, so one long description never pushes every key off screen
+M.MAX_NAME = 22
+M.MAX_DESC = 42
+
+---How wide the name, description and key columns are, name and description capped.
+---@param entries PaletteEntry[]
+---@return { name: integer, desc: integer, key: integer }
+function M.column_widths(entries)
+  local widths = { name = 0, desc = 0, key = 0 }
+  for _, entry in ipairs(entries) do
+    widths.name = math.max(widths.name, vim.fn.strdisplaywidth(entry.name))
+    widths.desc = math.max(widths.desc, vim.fn.strdisplaywidth(entry.desc))
+    widths.key = math.max(widths.key, vim.fn.strdisplaywidth(entry.key or ""))
+  end
+  widths.name = math.min(widths.name, M.MAX_NAME)
+  widths.desc = math.min(widths.desc, M.MAX_DESC)
+  return widths
+end
+
+-- the icon, the gaps between columns and the picker's own frame around the rows
+local ROW_CHROME = 2 + 2 + 2 + 6
+
+---How wide the palette window has to be to show every column, never wider than the screen.
+---@param widths { name: integer, desc: integer, key: integer }
+---@param columns integer the editor's width
+---@return integer
+function M.window_width(widths, columns)
+  return math.min(widths.name + widths.desc + widths.key + ROW_CHROME, columns - 4)
+end
+
+---Fits text to a column: cut with an ellipsis when too long, padded with spaces when short.
+---@param text string
+---@param width integer display cells
+---@return string
+function M.fit(text, width)
+  local cells = vim.fn.strdisplaywidth(text)
+  if cells <= width then
+    return text .. (" "):rep(width - cells)
+  end
+  local cut = vim.fn.strcharpart(text, 0, width - 1)
+  while vim.fn.strdisplaywidth(cut) > width - 1 do
+    cut = vim.fn.strcharpart(cut, 0, vim.fn.strchars(cut) - 1)
+  end
+  return cut .. "…" .. (" "):rep(width - 1 - vim.fn.strdisplaywidth(cut))
 end
 
 return M

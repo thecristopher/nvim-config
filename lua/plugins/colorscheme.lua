@@ -1,4 +1,4 @@
--- Eldentree colorscheme: catppuccin mocha recolored per Elden Ring region (<leader>ut)
+-- Eldentree colorscheme: catppuccin mocha recolored per Elden Ring region (<leader>jr)
 
 return {
   {
@@ -39,6 +39,7 @@ return {
       custom_highlights = function(c)
         local t = require("core.themes.actions").derive(c)
         local rainbow = require("core.themes.actions").rainbow(c)
+        local guides = require("core.themes.actions").indent_guides(c)
         local function mode_color(mode)
           return require("core.themes.actions").mode_look(c, t, mode).number
         end
@@ -116,6 +117,10 @@ return {
           NormalFloat = { fg = c.text, bg = c.mantle },
           -- Popup menu
           Pmenu = { fg = c.text, bg = c.surface0 },
+          -- the completion menu wears the same frame as every other float, so it and its
+          -- documentation beside it read as one piece
+          BlinkCmpMenu = { fg = c.text, bg = c.mantle },
+          BlinkCmpMenuBorder = { fg = c.yellow, bg = c.mantle },
           PmenuSel = { fg = c.base, bg = c.yellow },
           PmenuSbar = { bg = c.surface1 },
           PmenuThumb = { bg = c.yellow },
@@ -129,6 +134,8 @@ return {
           SnacksWinSeparator = { fg = t.separator, bg = c.base },
           -- Fold
           Folded = { fg = c.overlay1, bg = c.surface0, style = { "italic" } },
+          -- the hidden line tally is a quiet note on the fold, not a bright pill on every closed one
+          UfoFoldedEllipsis = { fg = c.overlay2, bg = c.surface0, style = { "italic" } },
           FoldColumn = { fg = c.overlay0, bg = c.base },
           -- Diagnostics: styled with game colors
           DiagnosticVirtualTextError = { fg = c.red, bg = t.diag_error_bg, style = { "italic" } },
@@ -143,6 +150,14 @@ return {
           -- Indent scope line: very subtle
           IblIndent = { fg = t.indent },
           IblScope = { fg = t.indent_scope },
+          -- snacks.indent guides: the rainbow faded toward the background, the scope in full gold
+          EldenIndent1 = { fg = guides[1] },
+          EldenIndent2 = { fg = guides[2] },
+          EldenIndent3 = { fg = guides[3] },
+          EldenIndent4 = { fg = guides[4] },
+          EldenIndent5 = { fg = guides[5] },
+          EldenIndent6 = { fg = guides[6] },
+          EldenIndentScope = { fg = c.yellow, style = { "bold" } },
           -- Rainbow delimiters share the indent rainbow so nesting reads the same everywhere
           EldenRainbow1 = { fg = rainbow[1] },
           EldenRainbow2 = { fg = rainbow[2] },
@@ -284,17 +299,20 @@ return {
         }
       end,
       -- ── Plugin integrations ────────────────────────────────────────
+      -- listed by hand, detecting them scans every plugin on each start and costs ~6 ms
+      auto_integrations = false,
       integrations = {
         blink_cmp = true,
         bufferline = true,
         dashboard = true,
         dap = true,
+        diffview = true,
         dropbar = { enabled = true, color_mode = true },
         flash = true,
         gitsigns = true,
         grug_far = true,
+        harpoon = true,
         illuminate = { enabled = false }, -- handled by snacks.words
-        indent_blankline = { enabled = true, scope_color = "yellow", colored_indent_levels = false },
         lsp_trouble = true,
         mason = true,
         mini = { enabled = true, indentscope_color = "" },
@@ -318,6 +336,8 @@ return {
         neotree = true,
         noice = true,
         notify = true,
+        nvim_surround = true,
+        rainbow_delimiters = true,
         render_markdown = true,
         snacks = true,
         treesitter = true,

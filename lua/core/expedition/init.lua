@@ -1,4 +1,4 @@
--- :Expedition [minutes] or <leader>ue: a focus block. Sounds, animations and quiet notifications
+-- :Expedition [minutes] or <leader>je: a focus block. Sounds, animations and quiet notifications
 -- step aside, the statusline counts down, and the end ranks the block on its own.
 local actions = require("core.expedition.actions")
 
@@ -121,9 +121,6 @@ function M.setup()
   vim.api.nvim_create_user_command("Expedition", function(command)
     M.start(command.args)
   end, { nargs = "?", desc = "A focus block, :Expedition stop ends it" })
-  vim.keymap.set("n", "<leader>ue", function()
-    M.start()
-  end, { desc = "Expedition (focus block)" })
   vim.api.nvim_create_autocmd("VimLeavePre", {
     group = vim.api.nvim_create_augroup("eldentree_expedition", { clear = true }),
     callback = stop_timer,

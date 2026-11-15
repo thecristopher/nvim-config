@@ -43,7 +43,7 @@ end
 
 local function grace_lines(words, region_title)
   return {
-    { text = "✦", group = "EldenRestTitle", gap = 0 },
+    { text = "󰫢", group = "EldenRestTitle", gap = 0 },
     { text = banner.spaced(words.site), group = "EldenRestTitle", gap = 1 },
     { text = region_title, group = "EldenRestSub", gap = 1 },
     { text = words.rise, group = "EldenRestHint", gap = 3 },

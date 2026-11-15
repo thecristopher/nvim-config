@@ -1,5 +1,5 @@
 -- The gutter: line numbers fade with their distance to the cursor, the nearest one wearing a
--- touch of the region's accent.
+-- touch of the region's accent, and windows out of focus drop their cursor line and dim every number.
 local actions = require("core.chrome.actions")
 
 local M = {}
@@ -25,7 +25,20 @@ function M.render()
   if not ok then
     return ""
   end
-  return actions.paint_number(column, vim.v.relnum)
+  local focused = vim.g.statusline_winid == vim.api.nvim_get_current_win()
+  return actions.paint_number(column, vim.v.relnum, focused)
+end
+
+-- windows holding a file show their cursor line only while in focus; trees, pickers and lists keep
+-- theirs, it is how they show the selection. Changing the option also redraws the window, so its
+-- numbers repaint in the faint step right away
+local function follow_focus(on)
+  return function()
+    if vim.bo.buftype ~= "" or vim.api.nvim_win_get_config(0).relative ~= "" then
+      return
+    end
+    vim.wo.cursorline = on
+  end
 end
 
 local function take_over()
@@ -42,6 +55,11 @@ end
 
 function M.setup(group)
   define_highlights()
+  vim.api.nvim_create_autocmd(
+    { "WinEnter", "BufWinEnter" },
+    { group = group, callback = follow_focus(true) }
+  )
+  vim.api.nvim_create_autocmd("WinLeave", { group = group, callback = follow_focus(false) })
   vim.api.nvim_create_autocmd("ColorScheme", { group = group, callback = define_highlights })
   vim.api.nvim_create_autocmd("User", {
     group = group,

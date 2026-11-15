@@ -37,6 +37,16 @@ return {
       open_files_do_not_replace_types = { "terminal", "Trouble", "trouble", "qf", "Outline" },
       filesystem = {
         bind_to_cwd = false,
+        components = {
+          -- the root shows the project's name, not a full path cut in half by the window edge
+          name = function(config, node, state)
+            local name = require("neo-tree.sources.common.components").name(config, node, state)
+            if node:get_depth() == 1 and node.type ~= "message" then
+              name.text = "󰉋 " .. vim.fs.basename(node.path)
+            end
+            return name
+          end,
+        },
         follow_current_file = { enabled = true, leave_dirs_open = false },
         use_libuv_file_watcher = true,
         filtered_items = {
@@ -45,6 +55,8 @@ return {
           hide_gitignored = true,
           hide_by_name = { "node_modules", ".git", "__pycache__" },
           never_show = { ".DS_Store", "thumbs.db" },
+          -- the "(1 hidden item)" row only said the gitignored files were hidden, which they always are
+          show_hidden_count = false,
         },
       },
       default_component_configs = {
@@ -145,14 +157,6 @@ return {
         position = { col = "50%", row = "30%" },
         size = { width = 60, height = 15 },
         border = { style = require("core.skin").border() },
-      },
-      event_handlers = {
-        {
-          event = "neo_tree_buffer_enter",
-          handler = function()
-            vim.cmd("setlocal number relativenumber")
-          end,
-        },
       },
     },
   },

@@ -39,7 +39,7 @@ M.bindings = {
   { lhs = "<leader>xx", command = "workbench.actions.view.problems" },
   { lhs = "<leader>w", command = "workbench.action.files.save" },
   { lhs = "<leader>bd", command = "workbench.action.closeActiveEditor" },
-  { lhs = "<leader>gl", command = "workbench.view.scm" },
+  { lhs = "<leader>gg", command = "workbench.view.scm" },
   { lhs = "<leader>tt", command = "workbench.action.terminal.toggleTerminal" },
 }
 

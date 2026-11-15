@@ -72,6 +72,13 @@ local function link_under_mouse()
   end
   local line = vim.api.nvim_buf_get_lines(buf, mouse.line - 1, mouse.line, false)[1]
   local link = line and actions.link_at(line, mouse.column)
+  if link and link.url then
+    -- a long url the terminal wrapped opens whole, from whichever of its lines was clicked
+    local first = math.max(0, mouse.line - 1 - 20)
+    local lines = vim.api.nvim_buf_get_lines(buf, first, mouse.line + 20, false)
+    local width = vim.api.nvim_win_get_width(mouse.winid)
+    link.url = actions.url_across_lines(lines, mouse.line - first, mouse.column, width) or link.url
+  end
   link = link and on_disk(link)
   return link and { buf = buf, row = mouse.line - 1, link = link }
 end
@@ -127,7 +134,10 @@ function M.open_last()
   end
   -- newest buffers have the highest numbers, the current one went last on purpose
   for index = #buffers, 1, -1 do
-    local url = actions.last_url(vim.api.nvim_buf_get_lines(buffers[index], 0, -1, false))
+    local buf = buffers[index]
+    local win = vim.fn.bufwinid(buf)
+    local width = win ~= -1 and vim.api.nvim_win_get_width(win) or nil
+    local url = actions.last_url(vim.api.nvim_buf_get_lines(buf, 0, -1, false), width)
     if url then
       return open(url)
     end

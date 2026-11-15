@@ -11,18 +11,26 @@ return {
     event = "VeryLazy",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     opts = function()
-      local function lsp_info()
-        local buf_clients = vim.lsp.get_clients({ bufnr = 0 })
-        if #buf_clients == 0 then
+      -- the filetype icon with the language servers, so the filetype never shows twice
+      local chrome = require("core.chrome.actions")
+      -- a piece that leaves the bar first when the editor gets narrow
+      local function wide(piece)
+        return function()
+          return chrome.shows(piece, vim.o.columns)
+        end
+      end
+
+      local function language()
+        if not chrome.names_itself(vim.bo.buftype) then
           return ""
         end
-        local names = {}
-        for _, client in ipairs(buf_clients) do
-          if client.name ~= "null-ls" and client.name ~= "copilot" then
-            table.insert(names, client.name)
-          end
-        end
-        return #names > 0 and ("󰒋  " .. table.concat(names, ", ")) or ""
+        local names = vim.tbl_map(function(client)
+          return client.name
+        end, vim.lsp.get_clients({ bufnr = 0 }))
+        local ok, devicons = pcall(require, "nvim-web-devicons")
+        local icon = ok and devicons.get_icon_by_filetype(vim.bo.filetype, { default = false })
+          or ""
+        return chrome.language_label(icon or "", vim.bo.filetype, names)
       end
 
       return {
@@ -45,6 +53,7 @@ return {
           lualine_b = {
             { "branch", icon = "󰘬 " },
             {
+              cond = wide("diff"),
               "diff",
               symbols = { added = "󰐖 ", modified = "󰏫 ", removed = "󰍴 " },
               diff_color = {
@@ -59,6 +68,19 @@ return {
               "filename",
               path = 1,
               symbols = { modified = " ●", readonly = " ", unnamed = "[No Name]" },
+              -- a terminal says which shell it runs, not its term:// address
+              fmt = function(name)
+                if vim.bo.buftype == "terminal" then
+                  return "\u{F120} " .. chrome.terminal_title(vim.api.nvim_buf_get_name(0))
+                end
+                -- the HUD and other scratch screens have no file to name
+                if
+                  not chrome.names_itself(vim.bo.buftype) and vim.api.nvim_buf_get_name(0) == ""
+                then
+                  return ""
+                end
+                return name
+              end,
             },
           },
           lualine_x = {
@@ -73,6 +95,7 @@ return {
             },
             -- the branch's CI run, each state carries its own highlight group
             {
+              cond = wide("ci"),
               function()
                 return require("core.ci").statusline()
               end,
@@ -82,6 +105,7 @@ return {
             },
             -- the next back-to-basics exercise getting ready, small enough to not cover the statement
             {
+              cond = wide("btb"),
               function()
                 local ok, btb = pcall(require, "core.btb")
                 return ok and btb.statusline() or ""
@@ -91,6 +115,7 @@ return {
               end,
             },
             {
+              cond = wide("music"),
               function()
                 return require("core.music").statusline()
               end,
@@ -103,6 +128,7 @@ return {
             },
             -- the breathing grace or the health ECG, each carries its own highlight group
             {
+              cond = wide("status"),
               function()
                 if require("core.franchise").mechanic("status") == "ecg" then
                   return require("core.ecg").statusline()
@@ -111,20 +137,21 @@ return {
               end,
             },
             {
-              lsp_info,
+              "diagnostics",
+              sources = { "nvim_diagnostic" },
+              symbols = { error = "󰅚 ", warn = "󰊌 ", hint = "󰌶 ", info = "󰋽 " },
+            },
+            {
+              cond = wide("language"),
+              language,
               color = function()
                 return { fg = palette().yellow }
               end,
             },
-            {
-              "diagnostics",
-              sources = { "nvim_lsp" },
-              symbols = { error = "󰅚 ", warn = "󰊌 ", hint = "󰌶 ", info = "󰋽 " },
-            },
-            { "filetype", icon_only = false },
           },
           lualine_y = {
             {
+              cond = wide("runes"),
               function()
                 return require("core.runes").gain()
               end,
@@ -133,11 +160,11 @@ return {
               end,
             },
             {
+              cond = wide("runes"),
               function()
                 return require("core.runes").held()
               end,
             },
-            "progress",
           },
           lualine_z = {
             {
@@ -156,7 +183,9 @@ return {
           lualine_y = {},
           lualine_z = {},
         },
-        extensions = { "neo-tree", "lazy", "trouble", "toggleterm" },
+        -- no toggleterm extension: with one global statusline it replaced the whole bar with the
+        -- terminal's name, and the mode badge already says the franchise's word for terminal mode
+        extensions = { "neo-tree", "lazy", "trouble" },
       }
     end,
   },
@@ -214,6 +243,10 @@ return {
           show_tab_indicators = true,
           separator_style = require("core.skin").current().tabs,
           always_show_bufferline = false,
+          -- tabs as wide as their names need, so more of them fit before the list is cut short
+          tab_size = 12,
+          -- a file you open lands beside the one you were reading, not at the far end
+          sort_by = "insert_after_current",
           hover = { enabled = true, delay = 150, reveal = { "close" } },
         },
         -- a function so bufferline rebuilds it on every ColorScheme
@@ -325,7 +358,8 @@ return {
       win = {
         border = require("core.skin").border(),
         padding = { 1, 2 },
-        wo = { winblend = 10 },
+        -- opaque: with blend the code behind ghosted through every label and made them hard to read
+        wo = { winblend = 0 },
       },
       layout = { align = "center" },
       show_help = true,
@@ -334,30 +368,22 @@ return {
     config = function(_, opts)
       local wk = require("which-key")
       wk.setup(opts)
+      -- groups and icons come from the leader map, so which-key never drifts from the keys
+      wk.add(require("core.leader.actions").which_key_spec({
+        gj = { icon = "󰁅", color = "blue" },
+        gk = { icon = "󰁝", color = "green" },
+        gN = { icon = "󰘬", color = "orange" },
+        gz = { icon = "󰆓", color = "yellow" },
+        gZ = { icon = "󰆓", color = "yellow" },
+        gu = { icon = "󰕌", color = "red" },
+        gg = { icon = "󰊢", color = "orange" },
+      }))
       wk.add({
-        { "<leader>b", group = "buffer" },
-        { "<leader>c", group = "code" },
-        { "<leader>f", group = "find" },
-        { "<leader>g", group = "git" },
-        { "<leader>gh", group = "hunks" },
-        { "<leader>gj", icon = { icon = "󰁅", color = "blue" } },
-        { "<leader>gk", icon = { icon = "󰁝", color = "green" } },
-        { "<leader>gN", icon = { icon = "󰘬", color = "orange" } },
-        { "<leader>gz", icon = { icon = "󰆓", color = "yellow" } },
-        { "<leader>gZ", icon = { icon = "󰆓", color = "yellow" } },
-        { "<leader>gu", icon = { icon = "󰕌", color = "red" } },
-        { "<leader>gw", icon = { icon = "󰊠", color = "blue" } },
-        { "<leader>rw", icon = { icon = "󰛔", color = "cyan" } },
-        { "<leader>k", group = "back to basics", icon = { icon = "󰓥", color = "red" } },
-        { "<leader>m", group = "messages", icon = { icon = "✎", color = "orange" } },
-        { "<leader>D", group = "debug", icon = { icon = "", color = "red" } },
-        { "<leader>o", icon = { icon = "󰎈", color = "purple" } },
-        { "<leader>M", group = "multicursor", icon = { icon = "󰇀", color = "yellow" } },
-        { "<leader>T", group = "tests", icon = { icon = "󰙨", color = "green" } },
-        { "<leader>s", group = "split" },
-        { "<leader>t", group = "terminal" },
-        { "<leader>u", group = "ui" },
-        { "<leader>x", group = "diagnostics" },
+        -- the four harpoon jumps would fill the first page, the harpoon group names them instead
+        { "<leader>1", hidden = true },
+        { "<leader>2", hidden = true },
+        { "<leader>3", hidden = true },
+        { "<leader>4", hidden = true },
         { "[", group = "prev" },
         { "]", group = "next" },
         { "g", group = "goto" },
@@ -421,52 +447,6 @@ return {
           follow(vim.api.nvim_get_mode().mode)
         end,
       })
-    end,
-  },
-
-  -- ── indent-blankline: rainbow indent guides in region colors ───────
-  {
-    "lukas-reineke/indent-blankline.nvim",
-    main = "ibl",
-    event = { "BufReadPost", "BufNewFile" },
-    opts = {
-      indent = { char = "│", tab_char = "│" },
-      scope = { enabled = true, char = "│" },
-      exclude = {
-        filetypes = {
-          "help",
-          "alpha",
-          "dashboard",
-          "neo-tree",
-          "Trouble",
-          "trouble",
-          "lazy",
-          "mason",
-          "notify",
-          "toggleterm",
-          "snacks_dashboard",
-          "eldentree_hud",
-          "bigfile",
-        },
-      },
-    },
-    config = function(_, opts)
-      local hooks = require("ibl.hooks")
-      local names = {}
-      for level = 1, 6 do
-        table.insert(names, "IBLRainbow" .. level)
-      end
-      -- ibl reruns this on every ColorScheme, which keeps the rainbow on the current region
-      hooks.register(hooks.type.HIGHLIGHT_SETUP, function()
-        local p = palette()
-        for level, color in ipairs(require("core.themes.actions").indent_guides(p)) do
-          vim.api.nvim_set_hl(0, names[level], { fg = color })
-        end
-        vim.api.nvim_set_hl(0, "IBLScope", { fg = p.yellow, bold = true })
-      end)
-      opts.indent.highlight = names
-      opts.scope.highlight = { "IBLScope" }
-      require("ibl").setup(opts)
     end,
   },
 

@@ -49,7 +49,7 @@ M.SKIN = {
   "cmdline",
 }
 -- what core/chrome reads: the mode names, the command line, the preview and the notification titles
-M.CHROME = { "modes", "cmdline", "search", "examine", "notify" }
+M.CHROME = { "modes", "cmdline", "search", "examine", "history", "notify" }
 M.CHROME_MODES = { "normal", "insert", "visual", "replace", "command", "terminal" }
 M.CHROME_LEVELS = { "info", "warn", "error", "debug", "trace" }
 -- what the now playing panel reads, its looks from the skin and its words from the lore

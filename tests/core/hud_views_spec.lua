@@ -20,7 +20,7 @@ local function model(overrides)
     tabs = {
       {
         title = "Tools",
-        icon = "⚒",
+        icon = "󱌣",
         items = {
           item("Love letter", { key = "f" }),
           item("Playlist", { count = 12 }),
@@ -202,9 +202,20 @@ end
 describe("roundtable", function()
   local view = roundtable.render(model())
 
+  it("gives up the quest's changes before Malenia's inventory drops to one row", function()
+    local small = roundtable.render(model({ width = 100, height = 30, portrait = true }))
+    assert.is_true(small.plan.grid_rows >= roundtable.GRID_ROWS.comfort)
+    assert.equal(0, small.plan.quest_rows)
+  end)
+
+  it("keeps the quest's changes when the screen has room for both", function()
+    local roomy = roundtable.render(model({ width = 210, height = 56, portrait = true }))
+    assert.is_true(roomy.plan.quest_rows > 0)
+  end)
+
   it("titles the open tab and draws every tab icon", function()
     assert.is_truthy(text(view):find("Tools", 1, true))
-    assert.is_truthy(text(view):find("⚒", 1, true))
+    assert.is_truthy(text(view):find("󱌣", 1, true))
   end)
 
   it("frames the selected slot in heavy gold", function()
@@ -334,6 +345,28 @@ describe("inventory", function()
     local cramped = inventory.render(model({ width = 60, height = 24, portrait = true }))
     assert.is_nil(cramped.anchors.portrait)
     assert.is_truthy(text(cramped):find("CLAIRE REDFIELD", 1, true))
+  end)
+
+  it("starts the plates on STATUS's top edge and ends DATA on its bottom edge", function()
+    local wide = inventory.render(model({ width = 210, height = 56, portrait = true }))
+    local status_top = line_of(wide, "STATUS")
+    local plates = line_of(wide, "Tools")
+    assert.equal(status_top, plates)
+    -- the bottom of a frame is the last line with ╚ in the column its ╔ opened
+    local function bottom_of(label)
+      local top = line_of(wide, label) + 1
+      local line = wide.lines[top]
+      local column = vim.fn.strchars(line:sub(1, line:find(label, 1, true) - 1)) - 3
+      local bottom
+      for index = top, #wide.lines do
+        if vim.fn.strcharpart(wide.lines[index], column, 1) == "╚" then
+          bottom = index
+        end
+      end
+      return bottom
+    end
+    assert.is_truthy(bottom_of("DATA"))
+    assert.equal(bottom_of("STATUS"), bottom_of("DATA"))
   end)
 
   behaves_on_any_screen(inventory.render)

@@ -10,7 +10,7 @@ return {
   },
   -- bufferline separator_style
   tabs = "thick",
-  signs = { error = "☣", warn = "▲", hint = "◆", info = "◇" },
+  signs = { error = "󰂧", warn = "▲", hint = "◆", info = "◇" },
   -- the snacks picker layout, see lua/plugins/snacks.lua: the item list beside what you examine
   picker = "inventory",
   -- the command line popup's glyphs
@@ -27,7 +27,7 @@ return {
   -- the now playing panel: the progress bar runs like a tape counter, dividers frame the lyrics
   -- and the marks wrap the sung line
   music = {
-    bar = { done = "▰", head = "▶", left = "▱" },
+    bar = { done = "", head = "▶", left = "" },
     divider = { line = "═", gem = "■" },
     sung = { "▶ ", " ◀" },
   },

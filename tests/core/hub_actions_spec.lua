@@ -103,7 +103,7 @@ describe("weather", function()
     local petal = actions.spawn_ember(always(0.5), 100, 40, petals)
     actions.step_ember(petal, petal.life * 0.15)
     local glyph = actions.ember_look(petal, petals)
-    assert.equal("❀", glyph)
+    assert.equal("󰧰", glyph)
   end)
 end)
 

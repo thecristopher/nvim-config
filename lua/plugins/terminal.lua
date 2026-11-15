@@ -36,7 +36,7 @@ return {
       auto_scroll = true,
       float_opts = {
         border = require("core.skin.actions").toggleterm_border(require("core.skin").border()),
-        winblend = 8,
+        winblend = 0,
         width = function()
           return math.floor(vim.o.columns * 0.85)
         end,
@@ -73,31 +73,6 @@ return {
       -- a TermOpen name pattern misses on Windows, where the buffer is named cmd.exe&::toggleterm::1
       opts.on_open = set_terminal_keymaps
       require("toggleterm").setup(opts)
-
-      -- Named terminal instances
-      local Terminal = require("toggleterm.terminal").Terminal
-
-      local lazygit = Terminal:new({
-        cmd = "lazygit",
-        dir = "git_dir",
-        direction = "float",
-        float_opts = {
-          border = require("core.skin.actions").toggleterm_border(require("core.skin").border()),
-        },
-        on_open = function(term)
-          vim.cmd("startinsert!")
-          vim.keymap.set(
-            "n",
-            "q",
-            "<cmd>close<CR>",
-            { noremap = true, silent = true, buffer = term.bufnr }
-          )
-        end,
-      })
-
-      vim.keymap.set("n", "<leader>tg", function()
-        lazygit:toggle()
-      end, { desc = "Lazygit (toggleterm)" })
     end,
   },
 }

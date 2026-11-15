@@ -17,7 +17,7 @@ return {
   },
 
   -- pesetas, and what you drop when you die is still yours to reclaim
-  currency = { glyph = "₧", stain = "☣" },
+  currency = { glyph = "₧", stain = "󰂧" },
 
   -- back-to-basics: what the HUD calls the daily drills, the coach is the region's character
   coach = {
@@ -291,6 +291,7 @@ return {
     cmdline = "Typewriter",
     search = "Search",
     examine = "Examine",
+    history = "Radio Log",
     notify = {
       info = "Radio",
       warn = "Caution",

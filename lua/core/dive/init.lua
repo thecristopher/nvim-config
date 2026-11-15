@@ -111,10 +111,6 @@ function M.attach(buf)
   vim.keymap.set("i", "<C-k>", function()
     vim.lsp.buf.signature_help({ border = require("core.skin").border() })
   end, { buffer = buf, desc = "LSP: Signature help" })
-  -- <leader>uh opens the HUD everywhere, a buffer map there would hide it in every LSP buffer
-  vim.keymap.set("n", "<leader>ui", function()
-    vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = buf }), { bufnr = buf })
-  end, { buffer = buf, desc = "Toggle inlay hints" })
 
   local picker = function(source)
     return function()

@@ -42,7 +42,7 @@ local function finish()
     return
   end
   final.rank = actions.rank(final)
-  pcall(vim.fn.writefile, { vim.json.encode(final) }, state_file)
+  require("core.utils").write_state(state_file, { vim.json.encode(final) })
   pcall(function()
     require("core.chronicle").record(final)
   end)

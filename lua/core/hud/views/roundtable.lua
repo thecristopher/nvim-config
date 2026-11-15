@@ -15,7 +15,8 @@ M.SLOT_HEIGHT = 4
 M.TAB_WIDTH = 5
 M.CHEST_WIDTH = { min = 36, max = 52 }
 M.COLUMNS = { min = 2, max = 4 }
-M.GRID_ROWS = { min = 1, max = 4 }
+-- comfort is the fewest rows the grid keeps before the quest's changes give theirs up
+M.GRID_ROWS = { min = 1, comfort = 2, max = 4 }
 M.PORTRAIT = { min = 4, max = 36 }
 -- under a stacked portrait: the champion's name and a gap before the body
 M.STACKED_ROWS = 2
@@ -112,11 +113,19 @@ local function shape_plan(model, shape)
   local chest_width =
     hud.clamp(space - M.PANE_GAP - columns * M.SLOT_WIDTH, M.CHEST_WIDTH.min, M.CHEST_WIDTH.max)
   local above = stacked and portrait.height + M.STACKED_ROWS or 0
-  local grid_rows = hud.clamp(
-    math.floor((room - above - fixed_rows(quest_rows)) / M.SLOT_HEIGHT),
-    M.GRID_ROWS.min,
-    M.GRID_ROWS.max
-  )
+  local function grid_rows_with(rows)
+    return hud.clamp(
+      math.floor((room - above - fixed_rows(rows)) / M.SLOT_HEIGHT),
+      M.GRID_ROWS.min,
+      M.GRID_ROWS.max
+    )
+  end
+  local grid_rows = grid_rows_with(quest_rows)
+  -- the quest's changes also give their rows up before the inventory shrinks under its comfort
+  if quest_rows > 0 and grid_rows < M.GRID_ROWS.comfort and grid_rows_with(0) > grid_rows then
+    quest_rows = 0
+    grid_rows = grid_rows_with(0)
+  end
   local stage_width = ((portrait and not stacked) and portrait.width + M.GAP or 0)
     + body_width(columns, chest_width)
   return {
@@ -306,7 +315,8 @@ local function description(item, width)
   for index = 1, 2 do
     table.insert(rows, { { " " .. (lines[index] or ""), "EldenHudDesc" } })
   end
-  table.insert(rows, { { " " .. hud.fit_hints(HINTS, width - 2), "EldenHudHint" } })
+  local hints = hud.hint_chunks(HINTS, width - 2, "EldenHudKey", "EldenHudHint")
+  table.insert(rows, vim.list_extend({ { " ", "EldenHudHint" } }, hints))
   return rows
 end
 
@@ -342,7 +352,7 @@ local function quest(model, plan)
     local bg = last_selected and "EldenHudSlotSel" or nil
     table.insert(rows, {
       { last_selected and "▶ " or "  ", "EldenHudFrameSel" },
-      { "↳ last  ", "EldenHudDim", bg = bg, spot = last_selected and "cursor" or nil },
+      { "󰘍 last  ", "EldenHudDim", bg = bg, spot = last_selected and "cursor" or nil },
       {
         hud.fit(status.last_file, width - 12),
         last_selected and "EldenHudBanner" or "EldenHudName",

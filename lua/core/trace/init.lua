@@ -30,7 +30,7 @@ local function record()
     floats = floats(),
     mode = event.new_mode,
   })
-  pcall(vim.fn.writefile, { line }, log_file, "a")
+  require("core.utils").write_state(log_file, { line }, "a")
 end
 
 local function start()

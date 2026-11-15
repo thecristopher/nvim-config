@@ -269,6 +269,31 @@ function M.fit_hints(hints, width)
   return table.concat(shown, "   ")
 end
 
+--- The hints that fit as chunks: each key in the key's color and its label dim, so the eye finds the
+--- keys at a glance. A hint is "key label", the key being its first word.
+---@param hints string[] most important first, like { "K Check", "⇥ Tabs" }
+---@param width integer display cells
+---@param key_hl string
+---@param label_hl string
+---@return table[] chunks
+function M.hint_chunks(hints, width, key_hl, label_hl)
+  local text = M.fit_hints(hints, width)
+  local chunks = {}
+  for index, hint in ipairs(vim.split(text, "   ", { plain = true, trimempty = true })) do
+    if index > 1 then
+      table.insert(chunks, { "   ", label_hl })
+    end
+    local key, label = hint:match("^(%S+)%s+(.*)$")
+    if key then
+      table.insert(chunks, { key, key_hl })
+      table.insert(chunks, { " " .. label, label_hl })
+    else
+      table.insert(chunks, { hint, label_hl })
+    end
+  end
+  return chunks
+end
+
 --- Picks the plan that draws the biggest portrait, the earliest one when two tie.
 ---@param plans table[] each with an optional portrait { width, height }
 ---@return table|nil
@@ -359,6 +384,104 @@ function M.direct_keys(hub_keys)
     table.insert(out, tostring(digit))
   end
   return out
+end
+
+--- Whether something fetched at a moment is old enough to fetch again.
+---@param fetched_at integer|nil milliseconds, nil when it was never fetched
+---@param now integer milliseconds
+---@param ttl integer milliseconds it stays fresh
+---@return boolean
+function M.stale(fetched_at, now, ttl)
+  return fetched_at == nil or now - fetched_at >= ttl
+end
+
+--- Reads one line of `git for-each-ref` with the branch, its last commit and `%(ahead-behind:HEAD)`.
+---@param line string like "feature/x\t3 days ago\t2 5", the counts are missing on older git
+---@return { branch: string, when: string, ahead: integer|nil }|nil
+function M.parse_branch(line)
+  local branch, when, counts = line:match("^(.-)\t([^\t]*)\t?(.*)$")
+  if not branch or branch == "" then
+    return nil
+  end
+  local ahead = tonumber((counts or ""):match("^(%d+)"))
+  return { branch = branch, when = when, ahead = ahead }
+end
+
+--- The HUD's highlight groups at rest, from the region's palette.
+---@param p table region palette
+---@param blend fun(fg: string, bg: string, alpha: number): string
+---@param plates boolean whether the tabs are plates (Resident Evil) or a rule (Elden Ring)
+---@return table<string, table> groups for nvim_set_hl
+function M.hud_groups(p, blend, plates)
+  return {
+    EldenHudTitle = { fg = p.yellow, bold = true },
+    EldenHudTab = plates and { fg = p.subtext0, bg = p.surface1 } or { fg = p.overlay1 },
+    EldenHudTabSel = plates and { fg = p.base, bg = p.yellow, bold = true }
+      or { fg = p.yellow, bold = true },
+    EldenHudRule = { fg = p.surface2 },
+    EldenHudRuleSel = { fg = p.yellow },
+    EldenHudSection = { fg = p.subtext0, italic = true },
+    EldenHudName = { fg = p.text, bold = true },
+    EldenHudDim = { fg = p.overlay0 },
+    EldenHudFrame = { fg = p.overlay0 },
+    EldenHudFrameSel = { fg = p.yellow, bold = true },
+    EldenHudSlotSel = { bg = blend(p.yellow, p.base, 0.16) },
+    EldenHudIcon = { fg = p.text },
+    EldenHudKey = { fg = p.rosewater, bold = true },
+    EldenHudCount = { fg = p.subtext1 },
+    EldenHudDesc = { fg = p.subtext0 },
+    EldenHudHint = { fg = p.overlay1 },
+    EldenHudBanner = { fg = p.yellow, bold = true },
+  }
+end
+
+--- The selection lit up for the moment it lands: a stronger glow and a frame that turns to light,
+--- faded back to rest right after so the eye follows the jump.
+---@param p table region palette
+---@param blend fun(fg: string, bg: string, alpha: number): string
+---@return table<string, table>
+function M.selection_flash(p, blend)
+  return {
+    EldenHudSlotSel = { bg = blend(p.yellow, p.base, 0.38) },
+    EldenHudFrameSel = { fg = blend(p.text, p.yellow, 0.6), bold = true },
+  }
+end
+
+--- The groups sunk toward the background, where the HUD's entrance starts from.
+---@param groups table<string, table>
+---@param base string the background color
+---@param blend fun(fg: string, bg: string, alpha: number): string
+---@param amount number how much of each color is left, 0 is the background itself
+---@return table<string, table>
+function M.sunk(groups, base, blend, amount)
+  local out = {}
+  for name, look in pairs(groups) do
+    local copy = vim.deepcopy(look)
+    for _, key in ipairs({ "fg", "bg" }) do
+      if type(copy[key]) == "string" then
+        copy[key] = blend(copy[key], base, amount)
+      end
+    end
+    out[name] = copy
+  end
+  return out
+end
+
+--- The last file touched inside a project, the newest of the recent files under its root. Outside a
+--- project, or when none of them lives there, the newest one anywhere.
+---@param oldfiles string[] newest first, like v:oldfiles
+---@param root string|nil the project's root
+---@return string|nil
+function M.last_in(oldfiles, root)
+  if root then
+    local prefix = root:gsub("/$", "") .. "/"
+    for _, path in ipairs(oldfiles) do
+      if path:sub(1, #prefix) == prefix then
+        return path
+      end
+    end
+  end
+  return oldfiles[1]
 end
 
 return M

@@ -21,7 +21,7 @@ local function notify_info(msg)
   vim.notify(msg, vim.log.levels.INFO, { title = "PR Helper", id = "pr_helper" })
 end
 
--- ── git/gh plumbing (synchronous — quick, local-ish, one-shot user action) ──
+-- ── git/gh plumbing (synchronous: quick, local, one shot user action) ──
 
 local function git_ok(args)
   vim.fn.system(vim.list_extend({ "git" }, args))
@@ -130,7 +130,7 @@ end
 -- Local-branch picker with `default` sorted to the top (so `<CR>` on open
 -- reproduces it). Built from a static item list rather than Snacks'
 -- `git_branches` finder + a prefilled fuzzy `pattern`: that combination races
--- the async matcher against the list cursor — the cursor stays pinned to
+-- the async matcher against the list cursor, the cursor stays pinned to
 -- whichever item loaded first instead of following the pattern's top match,
 -- so `<CR>` can silently confirm the wrong branch. A static, pre-sorted list
 -- has no matcher re-sort to race against.
@@ -208,7 +208,7 @@ local function preview_diff(base_r, branch, base, cb)
   })
 end
 
--- ── Claude draft (async — this is the slow step) ────────────────────────────
+-- ── Claude draft (async, this is the slow step) ────────────────────────────
 
 local function draft_via_claude(prompt, cb)
   local task = require("core.progress").start({
