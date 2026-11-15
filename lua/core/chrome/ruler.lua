@@ -1,5 +1,6 @@
 -- The ruler: instead of a column painted down the whole window, only the part of a line that runs
 -- past the limit (textwidth, or 100) is tinted, so inline blame and long comments are never split.
+-- Wrapped prose without a textwidth has no column to keep and goes without.
 local actions = require("core.chrome.actions")
 
 local M = {}
@@ -13,7 +14,10 @@ end
 -- only buffers holding a file get the ruler, never pickers, terminals or the HUD
 local function wants_ruler(win)
   local buf = vim.api.nvim_win_get_buf(win)
-  return vim.bo[buf].buftype == "" and vim.api.nvim_win_get_config(win).relative == ""
+  if vim.bo[buf].buftype ~= "" or vim.api.nvim_win_get_config(win).relative ~= "" then
+    return false
+  end
+  return actions.ruler_applies(vim.bo[buf].textwidth, vim.wo[win].wrap)
 end
 
 --- Draws the ruler in a window, replacing the one it had, or takes it away where it does not belong.
@@ -47,7 +51,7 @@ function M.setup(group)
   })
   vim.api.nvim_create_autocmd("OptionSet", {
     group = group,
-    pattern = "textwidth",
+    pattern = { "textwidth", "wrap" },
     callback = function()
       M.draw(vim.api.nvim_get_current_win())
     end,

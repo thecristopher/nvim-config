@@ -37,6 +37,16 @@ return {
       open_files_do_not_replace_types = { "terminal", "Trouble", "trouble", "qf", "Outline" },
       filesystem = {
         bind_to_cwd = false,
+        components = {
+          -- the root shows the project's name, not a full path cut in half by the window edge
+          name = function(config, node, state)
+            local name = require("neo-tree.sources.common.components").name(config, node, state)
+            if node:get_depth() == 1 and node.type ~= "message" then
+              name.text = "󰉋 " .. vim.fs.basename(node.path)
+            end
+            return name
+          end,
+        },
         follow_current_file = { enabled = true, leave_dirs_open = false },
         use_libuv_file_watcher = true,
         filtered_items = {

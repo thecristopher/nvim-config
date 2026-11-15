@@ -130,6 +130,8 @@ return {
           SnacksWinSeparator = { fg = t.separator, bg = c.base },
           -- Fold
           Folded = { fg = c.overlay1, bg = c.surface0, style = { "italic" } },
+          -- the hidden line tally is a quiet note on the fold, not a bright pill on every closed one
+          UfoFoldedEllipsis = { fg = c.overlay2, bg = c.surface0, style = { "italic" } },
           FoldColumn = { fg = c.overlay0, bg = c.base },
           -- Diagnostics: styled with game colors
           DiagnosticVirtualTextError = { fg = c.red, bg = t.diag_error_bg, style = { "italic" } },

@@ -51,10 +51,15 @@ end
 -- how bright each line number stays as it moves away from the cursor, nearest first
 M.GUTTER_STEPS = { 0.85, 0.68, 0.55, 0.44, 0.34 }
 
----The highlight group of a relative line number, nil on the cursor line.
+---The highlight group of a relative line number, nil on the cursor line of the window in focus.
+---Every number of a window out of focus takes the faintest step, so the eye finds the active one.
 ---@param relnum integer
+---@param focused? boolean false for a window out of focus, defaults to true
 ---@return string|nil
-function M.number_group(relnum)
+function M.number_group(relnum, focused)
+  if focused == false then
+    return "EldenNr" .. #M.GUTTER_STEPS
+  end
   if relnum <= 0 then
     return nil
   end
@@ -64,9 +69,10 @@ end
 ---Paints the number of a statuscolumn with the group of its distance to the cursor.
 ---@param column string the statuscolumn string snacks built, its number as "%=<n> "
 ---@param relnum integer
+---@param focused? boolean false for a window out of focus
 ---@return string
-function M.paint_number(column, relnum)
-  local group = M.number_group(relnum)
+function M.paint_number(column, relnum, focused)
+  local group = M.number_group(relnum, focused)
   if not group then
     return column
   end
@@ -143,11 +149,79 @@ function M.ruler_limit(textwidth)
   return textwidth > 0 and textwidth or M.RULER_DEFAULT
 end
 
+---Whether a buffer has a column worth keeping: code without wrap, or any buffer with a textwidth
+---of its own (a commit message keeps its 72). Wrapped prose has no column to stay within.
+---@param textwidth integer
+---@param wrap boolean
+---@return boolean
+function M.ruler_applies(textwidth, wrap)
+  return textwidth > 0 or not wrap
+end
+
 ---The match pattern for the part of every line that runs past the limit.
 ---@param limit integer
 ---@return string
 function M.overflow_pattern(limit)
   return ("\\%%>%dv.\\+"):format(limit)
+end
+
+-- clients that never speak the buffer's language, they would only crowd the label
+M.QUIET_CLIENTS = { copilot = true, ["null-ls"] = true }
+
+---The statusline's language piece: the filetype icon with the language servers attached, or the
+---filetype itself while none is.
+---@param icon string devicon of the filetype, "" when there is none
+---@param filetype string
+---@param client_names string[]
+---@return string
+function M.language_label(icon, filetype, client_names)
+  local names = vim.tbl_filter(function(name)
+    return not M.QUIET_CLIENTS[name]
+  end, client_names)
+  local text = #names > 0 and table.concat(names, " ") or filetype
+  if text == "" then
+    return ""
+  end
+  return icon ~= "" and (icon .. " " .. text) or text
+end
+
+---A terminal buffer's name the way a person says it: the shell and its toggleterm number.
+---@param bufname string like "term://~/repo//4242:/bin/zsh;#toggleterm#1"
+---@return string like "zsh #1", or "terminal" when the name says nothing usable
+function M.terminal_title(bufname)
+  local command = bufname:match("^term://.-//%d+:([^;]+)") or ""
+  local shell = vim.fs.basename(vim.trim(command):match("^(%S+)") or "")
+  local number = bufname:match("#toggleterm#(%d+)")
+  local title = shell ~= "" and shell or "terminal"
+  return number and (title .. " #" .. number) or title
+end
+
+-- the narrowest editor each statusline piece still shows in: on a narrow screen the least needed
+-- leave first, instead of lualine cutting the whole bar short with "<"
+M.STATUSLINE_MIN = {
+  music = 150,
+  btb = 135,
+  ci = 120,
+  runes = 110,
+  diff = 100,
+  status = 90,
+  language = 80,
+}
+
+---Whether a statusline piece fits an editor this wide.
+---@param piece string a key of STATUSLINE_MIN, anything else always shows
+---@param columns integer
+---@return boolean
+function M.shows(piece, columns)
+  return columns >= (M.STATUSLINE_MIN[piece] or 0)
+end
+
+---Whether a buffer holds something with a name and a language worth naming in the statusline:
+---files and help pages do, the HUD, pickers, prompts and lists do not.
+---@param buftype string
+---@return boolean
+function M.names_itself(buftype)
+  return buftype == "" or buftype == "help"
 end
 
 return M

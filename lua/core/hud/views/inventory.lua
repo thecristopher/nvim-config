@@ -339,7 +339,8 @@ local function data_box(model, plan)
   return boxed(focused and "DATA ▼" or "DATA  j", body, width, focused)
 end
 
-local function items_column(model, plan)
+-- stretch adds empty rows above the DATA box, so the column can end where STATUS ends
+local function items_column(model, plan, stretch)
   local items = model.tabs[model.tab].items
   local cursor = model.cursor.items or 1
   local cursor_row = math.floor((cursor - 1) / plan.columns)
@@ -355,7 +356,9 @@ local function items_column(model, plan)
     table.insert(grid_area, {})
   end
   vim.list_extend(rows, grid_area)
-  table.insert(rows, {})
+  for _ = 0, stretch or 0 do
+    table.insert(rows, {})
+  end
   vim.list_extend(rows, data_box(model, plan))
   return rows, { columns = plan.columns, count = #items, offset = offset, cursor_row = cursor_row }
 end
@@ -405,9 +408,13 @@ function M.render(model)
   if plan.stacked then
     rows = vim.list_extend(status, items)
   else
+    -- both columns share their top and bottom edges: the plates start where STATUS starts and
+    -- DATA ends where it ends, the room left over goes between the grid and DATA
+    if #items < #status then
+      items, items_grid = items_column(model, plan, #status - #items)
+    end
     local height = math.max(#status, #items)
-    rows =
-      hud.beside(hud.middle(status, height), plan.status_width, hud.middle(items, height), M.GAP)
+    rows = hud.beside(hud.middle(status, height), plan.status_width, items, M.GAP)
   end
   table.insert(rows, {})
   vim.list_extend(rows, banner(parts.selected(model), plan.stage_width))

@@ -11,18 +11,26 @@ return {
     event = "VeryLazy",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     opts = function()
-      local function lsp_info()
-        local buf_clients = vim.lsp.get_clients({ bufnr = 0 })
-        if #buf_clients == 0 then
+      -- the filetype icon with the language servers, so the filetype never shows twice
+      local chrome = require("core.chrome.actions")
+      -- a piece that leaves the bar first when the editor gets narrow
+      local function wide(piece)
+        return function()
+          return chrome.shows(piece, vim.o.columns)
+        end
+      end
+
+      local function language()
+        if not chrome.names_itself(vim.bo.buftype) then
           return ""
         end
-        local names = {}
-        for _, client in ipairs(buf_clients) do
-          if client.name ~= "null-ls" and client.name ~= "copilot" then
-            table.insert(names, client.name)
-          end
-        end
-        return #names > 0 and ("󰒋  " .. table.concat(names, ", ")) or ""
+        local names = vim.tbl_map(function(client)
+          return client.name
+        end, vim.lsp.get_clients({ bufnr = 0 }))
+        local ok, devicons = pcall(require, "nvim-web-devicons")
+        local icon = ok and devicons.get_icon_by_filetype(vim.bo.filetype, { default = false })
+          or ""
+        return chrome.language_label(icon or "", vim.bo.filetype, names)
       end
 
       return {
@@ -45,6 +53,7 @@ return {
           lualine_b = {
             { "branch", icon = "󰘬 " },
             {
+              cond = wide("diff"),
               "diff",
               symbols = { added = "󰐖 ", modified = "󰏫 ", removed = "󰍴 " },
               diff_color = {
@@ -59,6 +68,19 @@ return {
               "filename",
               path = 1,
               symbols = { modified = " ●", readonly = " ", unnamed = "[No Name]" },
+              -- a terminal says which shell it runs, not its term:// address
+              fmt = function(name)
+                if vim.bo.buftype == "terminal" then
+                  return "\u{F120} " .. chrome.terminal_title(vim.api.nvim_buf_get_name(0))
+                end
+                -- the HUD and other scratch screens have no file to name
+                if
+                  not chrome.names_itself(vim.bo.buftype) and vim.api.nvim_buf_get_name(0) == ""
+                then
+                  return ""
+                end
+                return name
+              end,
             },
           },
           lualine_x = {
@@ -73,6 +95,7 @@ return {
             },
             -- the branch's CI run, each state carries its own highlight group
             {
+              cond = wide("ci"),
               function()
                 return require("core.ci").statusline()
               end,
@@ -82,6 +105,7 @@ return {
             },
             -- the next back-to-basics exercise getting ready, small enough to not cover the statement
             {
+              cond = wide("btb"),
               function()
                 local ok, btb = pcall(require, "core.btb")
                 return ok and btb.statusline() or ""
@@ -91,6 +115,7 @@ return {
               end,
             },
             {
+              cond = wide("music"),
               function()
                 return require("core.music").statusline()
               end,
@@ -103,6 +128,7 @@ return {
             },
             -- the breathing grace or the health ECG, each carries its own highlight group
             {
+              cond = wide("status"),
               function()
                 if require("core.franchise").mechanic("status") == "ecg" then
                   return require("core.ecg").statusline()
@@ -111,20 +137,21 @@ return {
               end,
             },
             {
-              lsp_info,
-              color = function()
-                return { fg = palette().yellow }
-              end,
-            },
-            {
               "diagnostics",
               sources = { "nvim_diagnostic" },
               symbols = { error = "󰅚 ", warn = "󰊌 ", hint = "󰌶 ", info = "󰋽 " },
             },
-            { "filetype", icon_only = false },
+            {
+              cond = wide("language"),
+              language,
+              color = function()
+                return { fg = palette().yellow }
+              end,
+            },
           },
           lualine_y = {
             {
+              cond = wide("runes"),
               function()
                 return require("core.runes").gain()
               end,
@@ -133,11 +160,11 @@ return {
               end,
             },
             {
+              cond = wide("runes"),
               function()
                 return require("core.runes").held()
               end,
             },
-            "progress",
           },
           lualine_z = {
             {
@@ -156,7 +183,9 @@ return {
           lualine_y = {},
           lualine_z = {},
         },
-        extensions = { "neo-tree", "lazy", "trouble", "toggleterm" },
+        -- no toggleterm extension: with one global statusline it replaced the whole bar with the
+        -- terminal's name, and the mode badge already says the franchise's word for terminal mode
+        extensions = { "neo-tree", "lazy", "trouble" },
       }
     end,
   },
@@ -214,6 +243,10 @@ return {
           show_tab_indicators = true,
           separator_style = require("core.skin").current().tabs,
           always_show_bufferline = false,
+          -- tabs as wide as their names need, so more of them fit before the list is cut short
+          tab_size = 12,
+          -- a file you open lands beside the one you were reading, not at the far end
+          sort_by = "insert_after_current",
           hover = { enabled = true, delay = 150, reveal = { "close" } },
         },
         -- a function so bufferline rebuilds it on every ColorScheme
