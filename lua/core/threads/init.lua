@@ -249,9 +249,6 @@ function M.setup()
     end,
   })
   vim.api.nvim_create_user_command("Threads", M.pick, { desc = "Open review threads of the PR" })
-  vim.keymap.set("n", "<leader>mc", M.pick, { desc = "PR review threads" })
-  vim.keymap.set("n", "<leader>mo", M.open, { desc = "Open the thread on this line" })
-  vim.keymap.set("n", "<leader>mr", M.resolve, { desc = "Resolve the thread on this line" })
 end
 
 return M

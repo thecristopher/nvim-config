@@ -30,7 +30,7 @@ end)
 
 describe("search_text", function()
   it("matches on the name, what it does and the key", function()
-    local entry = { name = "Map", desc = "Folders as rooms", key = "<leader>fM" }
-    assert.equal("Map Folders as rooms <leader>fM", actions.search_text(entry))
+    local entry = { name = "Map", desc = "Folders as rooms", key = "<leader>jm" }
+    assert.equal("Map Folders as rooms <leader>jm", actions.search_text(entry))
   end)
 end)

@@ -13,27 +13,25 @@ au("TextYankPost", {
   end,
 })
 
--- Restore cursor position on buffer open
+-- Restore cursor position on buffer open. Commit and rebase messages always start at the top,
+-- a fresh message landing where the last one ended would put the cursor mid sentence
+local fresh_every_time = { gitcommit = true, gitrebase = true }
 au("BufReadPost", {
   group = aug("restore_cursor"),
   callback = function(ev)
+    if fresh_every_time[vim.bo[ev.buf].filetype] then
+      return
+    end
     local mark = vim.api.nvim_buf_get_mark(ev.buf, '"')
     local lcount = vim.api.nvim_buf_line_count(ev.buf)
-    if mark[1] > 0 and mark[1] <= lcount then
-      vim.api.nvim_win_set_cursor(0, mark)
+    local win = vim.fn.bufwinid(ev.buf)
+    if win ~= -1 and mark[1] > 0 and mark[1] <= lcount then
+      vim.api.nvim_win_set_cursor(win, mark)
     end
   end,
 })
 
--- Equalize splits after terminal resize
-au("VimResized", {
-  group = aug("resize_splits"),
-  callback = function()
-    local curr = vim.api.nvim_get_current_tabpage()
-    vim.cmd("tabdo wincmd =")
-    vim.api.nvim_set_current_tabpage(curr)
-  end,
-})
+-- core/resize puts the layout back when the terminal resizes, it knows the tree and Claude panel
 
 -- Close utility windows with q
 au("FileType", {
@@ -97,19 +95,7 @@ au("ModeChanged", {
   end,
 })
 
--- Strip trailing whitespace on save (respects filetype exclusions)
-local ws_exclude = { "markdown", "diff" }
-au("BufWritePre", {
-  group = aug("strip_whitespace"),
-  callback = function()
-    if vim.tbl_contains(ws_exclude, vim.bo.filetype) then
-      return
-    end
-    local view = vim.fn.winsaveview()
-    vim.cmd([[silent! %s/\s\+$//e]])
-    vim.fn.winrestview(view)
-  end,
-})
+-- Trailing whitespace is trimmed on the changed lines only, in core/whitespace
 
 -- Auto-create parent directories on save
 au("BufWritePre", {

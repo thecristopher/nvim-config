@@ -1,4 +1,4 @@
--- :Chronicle or <leader>uj: the weeks you fought as a grid, each day lit by its rank and by the
+-- :Chronicle or <leader>jc: the weeks you fought as a grid, each day lit by its rank and by the
 -- commits you made in the repo you stand in. Every run that ends adds to its day.
 local actions = require("core.chronicle.actions")
 local color = require("core.motion.actions")
@@ -127,7 +127,6 @@ function M.setup()
     M.open,
     { desc = "The weeks you fought, as a grid" }
   )
-  vim.keymap.set("n", "<leader>uj", M.open, { desc = "Chronicle" })
 end
 
 return M

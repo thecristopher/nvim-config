@@ -223,11 +223,11 @@ return {
         desc = "Neovim config",
       },
       {
-        "<leader>gC",
+        "<leader>gl",
         function()
           Snacks.picker.git_log()
         end,
-        desc = "Git commits",
+        desc = "Git log",
       },
       {
         "<leader>gs",
@@ -251,7 +251,7 @@ return {
         desc = "Git branches (each with its session)",
       },
       {
-        "<leader>gl",
+        "<leader>gg",
         function()
           Snacks.lazygit()
         end,
@@ -269,7 +269,7 @@ return {
         function()
           Snacks.lazygit.log()
         end,
-        desc = "Git log (root)",
+        desc = "Lazygit log",
       },
       {
         "]]",
@@ -284,13 +284,6 @@ return {
           Snacks.words.jump(-vim.v.count1)
         end,
         desc = "Prev word ref",
-      },
-      {
-        "<leader>N",
-        function()
-          Snacks.notifier.show_history()
-        end,
-        desc = "Notification history",
       },
     },
 

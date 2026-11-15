@@ -274,10 +274,20 @@ function M.setup()
       draw()
     end,
   })
-  vim.api.nvim_create_autocmd({ "VimResized", "WinClosed" }, {
+  vim.api.nvim_create_autocmd("WinClosed", {
     group = group,
     callback = function()
       vim.schedule(draw)
+    end,
+  })
+  -- the terminal changed size, so the defaults (a share of the editor) are worth recomputing
+  vim.api.nvim_create_autocmd("VimResized", {
+    group = group,
+    callback = function()
+      if require("core.claude_panel").is_fullscreen() then
+        return vim.schedule(draw)
+      end
+      vim.schedule(M.reset)
     end,
   })
   -- on_key instead of mouse mappings, so buffer mappings like the link hover keep theirs

@@ -1,5 +1,5 @@
 -- Region switcher: one region per day, recolors catppuccin, and lets you
--- browse regions live with <leader>ut. Everything else follows the ColorScheme event.
+-- browse regions live with <leader>jr. Everything else follows the ColorScheme event.
 local actions = require("core.themes.actions")
 local motion = require("core.motion")
 local blend = require("core.motion.actions")

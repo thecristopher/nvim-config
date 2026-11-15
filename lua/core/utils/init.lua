@@ -33,12 +33,21 @@ end
 
 --- Repaints the statusline. lualine draws one global statusline, so only the current window is
 --- refreshed: refreshing every window lets lualine lose track of the focused one in command mode
---- and paint the inactive line over the real one.
+--- and paint the inactive line over the real one. Calls that land in the same tick share one
+--- repaint, so the grace, the ECG and the music moving on the same frame redraw once.
+local statusline_pending = false
 function M.refresh_statusline()
-  local ok, lualine = pcall(require, "lualine")
-  if ok then
-    lualine.refresh({ place = { "statusline" }, scope = "window" })
+  if statusline_pending then
+    return
   end
+  statusline_pending = true
+  vim.schedule(function()
+    statusline_pending = false
+    local ok, lualine = pcall(require, "lualine")
+    if ok then
+      lualine.refresh({ place = { "statusline" }, scope = "window" })
+    end
+  end)
 end
 
 return M

@@ -1,4 +1,4 @@
--- Eldentree colorscheme: catppuccin mocha recolored per Elden Ring region (<leader>ut)
+-- Eldentree colorscheme: catppuccin mocha recolored per Elden Ring region (<leader>jr)
 
 return {
   {

@@ -78,14 +78,15 @@ Every option is a global with the `eldentree_` prefix (`vim.g.eldentree_sound = 
 
 | Module           | What it does |
 | ---------------- | ------------ |
-| `core/franchise` | Picks the world for the day, rotating between Elden Ring and Resident Evil. `:Franchise` or `<leader>uf` switches until midnight, `vim.g.eldentree_franchise` pins one. Each lore also picks its `mechanics`, so Resident Evil travels through doors, gets stalked instead of dueling, shows a health ECG, rests at a typewriter and ranks every run |
-| `core/themes`    | Catppuccin Mocha recolored per region (six in Elden Ring, five in Resident Evil). One region per day, the same in every repo and every launch. Picking another with `<leader>ut` or `:Region` holds until midnight, and traveling between repos never changes it. `vim.g.eldentree_region` pins one |
+| `core/franchise` | Picks the world for the day, rotating between Elden Ring and Resident Evil. `:Franchise` or `<leader>jf` switches until midnight, `vim.g.eldentree_franchise` pins one. Each lore also picks its `mechanics`, so Resident Evil travels through doors, gets stalked instead of dueling, shows a health ECG, rests at a typewriter and ranks every run |
+| `core/themes`    | Catppuccin Mocha recolored per region (six in Elden Ring, five in Resident Evil). One region per day, the same in every repo and every launch. Picking another with `<leader>jr` or `:Region` holds until midnight, and traveling between repos never changes it. `vim.g.eldentree_region` pins one |
 | `core/skin`      | Dresses components per franchise: float borders, gutter signs, statusline separators and tabs. Elden Ring is rounded and ornate, Resident Evil wears the inventory's double frames |
 | `core/chrome`    | The editor speaks the franchise: the mode badge says ROAM or SURVIVE and fades into the next mode, line numbers fade away from the cursor, notifications arrive titled Radio, Danger or Omen with the hour, pickers take an inventory or grace layout, and the command line becomes a Typewriter or an Incantation |
 | `core/title`     | A title screen in big block letters once a day per franchise and on every switch, `:Title` shows it again, `vim.g.eldentree_title = false` skips it |
 | `core/terminal`  | Paints the terminal around nvim with the region's background, and switches iTerm profiles, Kitty opacity or the Ghostty font and opacity per franchise. `:Opacity [90\|skin]` or `<leader>uo` picks your own opacity, kept until set back to `skin` |
 | `core/sound`     | Plays the franchise's sounds for titles, doors, deaths, the merchant and the HUD (see [Sounds](#sounds)) |
-| `core/motion`    | The shared animation engine. `<leader>um` or `:Motion` stills everything, ambient loops pause while nvim is unfocused |
+| `core/motion`    | The shared animation engine, one clock for every animation so they move on the same frame. `<leader>um` or `:Motion` stills everything, ambient loops stop while nvim is unfocused |
+| `core/whitespace` | Trims trailing whitespace on save, only on the lines you changed |
 
 ### Your own world
 
@@ -95,7 +96,7 @@ Each franchise is a folder in `lua/core/franchise/lore/<name>/`, found on its ow
 
 | Module         | What it does |
 | -------------- | ------------ |
-| `core/hud`     | The start screen is a playable inventory. Elden Ring shows category tabs with the Inventory and the Chest side by side, Resident Evil a STATUS panel with the survivor, plate tabs and the COMMAND menu. The tabs fill from real data: recent files, branches, stashes, projects, messages and map rooms. hjkl walks the slots, Tab changes category, Enter uses, K checks, C combines, and reopening lands where you left. `:Hud` or `<leader>uh` |
+| `core/hud`     | The start screen is a playable inventory. Elden Ring shows category tabs with the Inventory and the Chest side by side, Resident Evil a STATUS panel with the survivor, plate tabs and the COMMAND menu. The tabs fill from real data: recent files, branches, stashes, projects, messages and map rooms. hjkl walks the slots, Tab changes category, Enter uses, K checks, C combines, and reopening lands where you left. `:Hud` or `<leader>jh` |
 | `core/hub`     | The HUD's ambient life: shimmering gold, the region's weather and a typed player message |
 | `core/palette` | `<leader><leader>` (or `?` on the HUD) lists everything Eldentree does, each with its key |
 
@@ -103,18 +104,18 @@ Each franchise is a folder in `lua/core/franchise/lore/<name>/`, found on its ow
 
 | Module            | What it does |
 | ----------------- | ------------ |
-| `core/boss`       | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it. In Resident Evil the boss is a stalker that walks closer while errors stay and backs off with every fix. `:Boss` or `<leader>uB` |
+| `core/boss`       | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it. In Resident Evil the boss is a stalker that walks closer while errors stay and backs off with every fix. `:Boss` or `<leader>ub` |
 | `core/conflicts`  | Merge conflicts fight back: a buffer with conflict markers brings Godrick the Grafted (Uroboros in Resident Evil) to the boss bar, each conflict resolved lands a hit and the header counts the conflicted files left in the repo |
 | `core/banner`     | Elden Ring style banners fired by commits, PRs, test runs, new projects, region changes and long fights with errors. `:Banner felled\|great\|died\|grace\|cleansed` |
 | `core/voice`      | The character of the day's region speaks up when tests pass or fail, CI finishes, a push lands or a boss falls, in a notification under their name. Lines live in each lore's `voices.lua`, written from the sheets in `docs/voices/`. Every character has one, Claire and Malenia with a soft spot for you, and `:checkhealth eldentree` asks each region for every moment. `vim.g.eldentree_voice = false` silences them |
-| `core/bestiary`   | Every kind of error or warning you clear by editing is a foe felled, named from the franchise's enemies by its code. `:Bestiary` / `<leader>ub` shows which ones you fight the most in the repo |
+| `core/bestiary`   | Every kind of error or warning you clear by editing is a foe felled, named from the franchise's enemies by its code. `:Bestiary` / `<leader>jb` shows which ones you fight the most in the repo |
 | `core/runes`      | Statusline rune tally (pesetas in Resident Evil, where the Merchant greets every 10,000). Saves and banners pay out, dying leaves a bloodstain |
 | `core/results`    | Ranks each run from S to D by fixes and saves, and the Resident Evil STATUS panel shows the last one |
-| `core/chronicle`  | `:Chronicle` / `<leader>uj`: the last 20 weeks as a grid, each day lit by its run's rank and your commits in the repo |
-| `core/expedition` | `:Expedition [minutes]` / `<leader>ue`: a focus block. Sounds, animations and quiet notifications step aside, the statusline counts down and the end ranks the block on its own |
-| `core/trial`      | `:Trial` / `<leader>cT` runs the project's tests in the background and announces the verdict |
+| `core/chronicle`  | `:Chronicle` / `<leader>jc`: the last 20 weeks as a grid, each day lit by its run's rank and your commits in the repo |
+| `core/expedition` | `:Expedition [minutes]` / `<leader>je`: a focus block. Sounds, animations and quiet notifications step aside, the statusline counts down and the end ranks the block on its own |
+| `core/trial`      | `:Trial` / `<leader>TT` runs the project's tests in the background and announces the verdict |
 | `core/ecg`        | Resident Evil's statusline ECG: Fine, Caution or Danger from the buffer's diagnostics |
-| `core/map`        | `:Map` / `<leader>fM` shows every folder as a room, red while errors or TODOs are left in it, blue once cleared |
+| `core/map`        | `:Map` / `<leader>jm` shows every folder as a room, red while errors or TODOs are left in it, blue once cleared |
 | `core/zones`      | The first time you walk into a folder each session, it is announced like a new area |
 | `core/rest`       | After 5 idle minutes in normal mode the editor rests at a Site of Grace, or at a Safe Room typewriter in Resident Evil. Any key wakes it, `:Rest` rests now |
 
@@ -122,7 +123,7 @@ Each franchise is a folder in `lua/core/franchise/lore/<name>/`, found on its ow
 
 | Module          | What it does |
 | --------------- | ------------ |
-| `core/git`      | Quick branch, pull, push, merge, stash and undo keys under `<leader>g`, plus the related change staging `<leader>pc` uses. Neogit covers the rest |
+| `core/git`      | Quick branch, pull, push, merge, stash and undo keys under `<leader>g`, plus the related change staging `<leader>pc` uses. lazygit (`<leader>gg`) covers the rest |
 | Commits and PRs | `<leader>pc` stages related changes and has Claude draft the commit, `:w` commits it. `<leader>pp` picks the branches, previews the diff, has Claude draft the PR and `:w` creates or updates it with `gh`. Both follow [your style guide](#your-own-style-guide) |
 | `core/review`   | `:Review [number\|url]` / `<leader>pr` has Claude analyze any PR's diff into a float, `d` opens the diff per file |
 | `core/ci`       | The branch's CI run in the statusline in the franchise's words, asked to `gh` in the background. A run that finishes while you work fires the felled or the died banner, `:CI` / `<leader>gi` opens it |
@@ -135,7 +136,7 @@ Each franchise is a folder in `lua/core/franchise/lore/<name>/`, found on its ow
 | Module       | What it does |
 | ------------ | ------------ |
 | `core/repos` | A background repo scanner, the Sites of Grace project picker (`<leader>fp`) and automatic project root. Traveling keeps the session of the repo you leave and restores the one you arrive at, files with unsaved changes are never closed (`vim.g.eldentree_project_sessions = false` turns it off). Switching branch with `<leader>gb` keeps a session per branch too |
-| `core/fog`   | The fog wall that rolls over the editor when you travel, `:Fog` or `<leader>uF`. In Resident Evil `core/door` takes over: the screen goes dark and a door creaks open |
+| `core/fog`   | The fog wall that rolls over the editor when you travel, `:Fog` or `<leader>uf`. In Resident Evil `core/door` takes over: the screen goes dark and a door creaks open |
 | `core/find`  | The pickers that need more than one Snacks call: recent files per repo (`<C-a>` flips to everywhere) and branches with their sessions |
 | `core/dive`  | F12 family: go to definition, Glance peek, references and F2 rename. `K` hover docs arrive dressed as item descriptions |
 | `core/links` | Ctrl+click opens the link under the mouse in a terminal, `<leader>to` opens the last one any terminal printed, like the dev server's localhost |
@@ -201,7 +202,7 @@ Plugin specs live in `lua/plugins/`, one file per concern, managed by lazy.nvim.
 - **Inside Cursor or VS Code** only the allow listed editing plugins load
 - **`:InsertTrace`** logs every exit from insert mode with the keys right before it, for when something keeps kicking you out
 
-A few classics from ThePrimeagen's setup live here too: cloak.nvim masks `.env` values so secrets never show on a shared screen or a snapshot, `<leader>rw` replaces the word under the cursor across the file, `<leader>cx` makes the file executable, `:VimBeGood` trains your motions, and `<leader>ur` makes it rain. Dying makes it rain on its own, `vim.g.eldentree_rain = false` keeps the code standing.
+A few classics from ThePrimeagen's setup live here too: cloak.nvim masks `.env` values so secrets never show on a shared screen or a snapshot, `<leader>cw` replaces the word under the cursor across the file, `<leader>cx` makes the file executable, `:VimBeGood` trains your motions, and `<leader>ur` makes it rain. Dying makes it rain on its own, `vim.g.eldentree_rain = false` keeps the code standing.
 
 ### Terminals
 
@@ -245,24 +246,38 @@ The Resident Evil portraits are fan art and photography by their own authors, us
 
 Leader is `<Space>`, local leader is `\`. `<leader><leader>` shows the Eldentree ones with their keys at any time.
 
-### Worlds and the HUD
+### Journey, toggles and windows
+
+Every leader key lives in one list, `lua/core/leader/actions/init.lua`, grouped by what it does. Its specs fail when a key is bound twice or would make another wait for the timeout, and which-key and the palette read their groups from it.
 
 | Key                | Action                                                                         |
 | ------------------ | ------------------------------------------------------------------------------ |
 | `<leader><leader>` | Command palette: everything Eldentree does, each with its key (`?` on the HUD) |
-| `<leader>uh`       | Open the inventory HUD                                                         |
-| `<leader>uf`       | Choose today's franchise                                                       |
-| `<leader>ut`       | Choose a region theme                                                          |
-| `<leader>uT`       | Next region theme                                                              |
-| `<leader>uo`       | Choose the terminal opacity (Kitty, Ghostty)                                   |
-| `<leader>um`       | Toggle animations                                                              |
-| `<leader>uF`       | Walk through a fog wall                                                        |
-| `<leader>uB`       | Toggle boss fights                                                             |
-| `<leader>ub`       | Bestiary of the repo                                                           |
-| `<leader>ue`       | Start or end an expedition (focus block)                                       |
-| `<leader>uj`       | Chronicle of the weeks you fought                                              |
-| `<leader>ur`       | Make it rain                                                                   |
+| `<leader>jh`       | Open the inventory HUD                                                         |
+| `<leader>jm`       | Project map                                                                    |
+| `<leader>jb`       | Bestiary of the repo                                                           |
+| `<leader>jc`       | Chronicle of the weeks you fought                                              |
+| `<leader>je`       | Start or end an expedition (focus block)                                       |
+| `<leader>jd`       | Open the desk                                                                  |
+| `<leader>jf`       | Choose today's franchise                                                       |
+| `<leader>jr`       | Choose a region theme                                                          |
+| `<leader>jR`       | Next region theme                                                              |
+| `<leader>jt`       | Title screen                                                                   |
 | `<leader>o`        | Now playing panel with the album cover and lyrics                              |
+| `<leader>um`       | Toggle animations                                                              |
+| `<leader>uf`       | Toggle fog walls                                                               |
+| `<leader>ub`       | Toggle boss fights                                                             |
+| `<leader>uo`       | Choose the terminal opacity (Kitty, Ghostty)                                   |
+| `<leader>uw` / `us` / `uL` | Toggle wrap / spell / relative numbers                                 |
+| `<leader>ud` / `ui` | Toggle diagnostics / inlay hints                                              |
+| `<leader>un` / `uN` | Dismiss notifications / notification history                                  |
+| `<leader>uR`       | Toggle auto root                                                               |
+| `<leader>ur`       | Make it rain                                                                   |
+| `<leader>sv` / `sh` | Split vertical / horizontal                                                   |
+| `<leader>sc` / `so` | Close this window / close the others                                          |
+| `<leader>sw`       | Resize mode: hjkl move the lit borders                                         |
+| `<leader>sz`       | Zoom the window                                                                |
+| `<leader>se`       | Reset the layout (tree and Claude at their defaults)                           |
 
 ### Finding and moving
 
@@ -272,7 +287,6 @@ Leader is `<Space>`, local leader is `\`. `<leader><leader>` shows the Eldentree
 | `<leader>ff` / `<leader>fa` | Find files / all files, hidden and ignored too. `file:line` jumps to the line                 |
 | `<leader>fr`                | Recent files in this repo, `<C-a>` flips to everywhere                                        |
 | `<leader>f.`                | Resume the last picker where you left it                                                      |
-| `<leader>fM`                | Project map                                                                                   |
 | `<leader>fy`                | Yank history                                                                                  |
 | `<leader>fR`                | Find and replace in the project (grug-far), works on a selection too                          |
 | `<leader>fF`                | Find and replace in this file                                                                 |
@@ -289,12 +303,11 @@ Leader is `<Space>`, local leader is `\`. `<leader><leader>` shows the Eldentree
 | `K`                         | Hover docs, dressed as an item description                                         |
 | `<leader>xd`                | Diagnostic float                                                                   |
 | `<leader>xQ`                | Toggle the quickfix list, editable (quicker)                                       |
-| `<leader>ui`                | Toggle inlay hints                                                                 |
 | `<leader>c>` / `<leader>c<` | Swap the parameter with the next or previous one                                   |
-| `<leader>cT`                | Run tests (Trial)                                                                  |
+| `<leader>TT`                | Run the whole suite (Trial), `<leader>T` holds neotest's single runs               |
 | `<leader>cp`                | Snapshot the buffer or selection as a PNG                                          |
 | `<leader>cx`                | Make this file executable                                                          |
-| `<leader>rw`                | Replace the word under the cursor in this file (`<C-w>` clears the prefilled word) |
+| `<leader>cw`                | Replace the word under the cursor in this file (`<C-w>` clears the prefilled word) |
 | `<leader>uc` / `<leader>uC` | Toggle the `.env` cloak, or peek one line                                          |
 | `[y` / `]y`                 | Right after a paste, swap it for the older or newer yank                           |
 | `<C-n>`                     | Add a cursor on the next match (multicursor)                                       |
@@ -324,12 +337,10 @@ While several cursors are active, `n` / `N` add the next or previous match, `q` 
 | `<leader>gi`                | Open the branch's CI run                                     |
 | `<leader>gw`                | Who wrote this line (phantom)                                |
 | `<leader>mc` / `mo` / `mr`  | PR review threads / open the one on this line / resolve it   |
-| `<leader>gn`                | Neogit status                                                |
-| `<leader>gc`                | Neogit commit                                                |
-| `<leader>gp` / `<leader>gP` | Neogit pull / push popups                                    |
-| `<leader>gv`                | Neogit log                                                   |
-| `<leader>gr`                | Neogit branch popup                                          |
-| `<leader>gC`                | Search commits                                               |
+| `<leader>gg`                | Lazygit, colored by the region                               |
+| `<leader>gl` / `<leader>gL` | Search commits / lazygit log                                 |
+| `<leader>gs` / `<leader>gS` | Changed files / stashes                                      |
+| `<leader>gd` / `<leader>gf` | Diffview / this file's history                               |
 
 Inside a toggleterm terminal, the bar at the top lists the quick git keys. Press `<Esc>` and then `<Space>g` to use them.
 

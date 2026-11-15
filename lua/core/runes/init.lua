@@ -114,6 +114,10 @@ end
 
 -- changing a highlight repaints every window, switching groups only repaints the statusline
 local function breathe(elapsed)
+  -- franchises that show the ECG never draw the grace, so its breath would repaint for nothing
+  if require("core.franchise").mechanic("status") == "ecg" then
+    return
+  end
   local level = actions.glow_level(elapsed)
   if level == glow_level then
     return

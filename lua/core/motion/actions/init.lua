@@ -76,6 +76,33 @@ function M.changed_groups(before, after)
   return names
 end
 
+--- The next beat of a rhythm after now, counted from the clock's epoch so every rhythm that
+--- shares a period, or a multiple of one, lands on the same frame.
+---@param now integer milliseconds
+---@param epoch integer milliseconds when the clock started counting
+---@param interval integer milliseconds between beats
+---@return integer milliseconds
+function M.next_beat(now, epoch, interval)
+  local step = math.max(1, interval)
+  local beats = math.floor((now - epoch) / step) + 1
+  return epoch + beats * step
+end
+
+--- How long the clock can sleep before the earliest subscriber is due.
+---@param dues integer[] absolute milliseconds when each subscriber wants its next frame
+---@param now integer milliseconds
+---@return integer|nil milliseconds, nil when nobody is waiting
+function M.sleep_for(dues, now)
+  local earliest
+  for _, due in ipairs(dues) do
+    earliest = earliest and math.min(earliest, due) or due
+  end
+  if not earliest then
+    return nil
+  end
+  return math.max(0, earliest - now)
+end
+
 function M.to_int(hex)
   return tonumber(hex:sub(2), 16)
 end

@@ -118,7 +118,7 @@ return {
             },
             {
               "diagnostics",
-              sources = { "nvim_lsp" },
+              sources = { "nvim_diagnostic" },
               symbols = { error = "󰅚 ", warn = "󰊌 ", hint = "󰌶 ", info = "󰋽 " },
             },
             { "filetype", icon_only = false },
@@ -334,30 +334,17 @@ return {
     config = function(_, opts)
       local wk = require("which-key")
       wk.setup(opts)
+      -- groups and icons come from the leader map, so which-key never drifts from the keys
+      wk.add(require("core.leader.actions").which_key_spec({
+        gj = { icon = "󰁅", color = "blue" },
+        gk = { icon = "󰁝", color = "green" },
+        gN = { icon = "󰘬", color = "orange" },
+        gz = { icon = "󰆓", color = "yellow" },
+        gZ = { icon = "󰆓", color = "yellow" },
+        gu = { icon = "󰕌", color = "red" },
+        gg = { icon = "󰊢", color = "orange" },
+      }))
       wk.add({
-        { "<leader>b", group = "buffer" },
-        { "<leader>c", group = "code" },
-        { "<leader>f", group = "find" },
-        { "<leader>g", group = "git" },
-        { "<leader>gh", group = "hunks" },
-        { "<leader>gj", icon = { icon = "󰁅", color = "blue" } },
-        { "<leader>gk", icon = { icon = "󰁝", color = "green" } },
-        { "<leader>gN", icon = { icon = "󰘬", color = "orange" } },
-        { "<leader>gz", icon = { icon = "󰆓", color = "yellow" } },
-        { "<leader>gZ", icon = { icon = "󰆓", color = "yellow" } },
-        { "<leader>gu", icon = { icon = "󰕌", color = "red" } },
-        { "<leader>gw", icon = { icon = "󰊠", color = "blue" } },
-        { "<leader>rw", icon = { icon = "󰛔", color = "cyan" } },
-        { "<leader>k", group = "back to basics", icon = { icon = "󰓥", color = "red" } },
-        { "<leader>m", group = "messages", icon = { icon = "✎", color = "orange" } },
-        { "<leader>D", group = "debug", icon = { icon = "", color = "red" } },
-        { "<leader>o", icon = { icon = "󰎈", color = "purple" } },
-        { "<leader>M", group = "multicursor", icon = { icon = "󰇀", color = "yellow" } },
-        { "<leader>T", group = "tests", icon = { icon = "󰙨", color = "green" } },
-        { "<leader>s", group = "split" },
-        { "<leader>t", group = "terminal" },
-        { "<leader>u", group = "ui" },
-        { "<leader>x", group = "diagnostics" },
         { "[", group = "prev" },
         { "]", group = "next" },
         { "g", group = "goto" },

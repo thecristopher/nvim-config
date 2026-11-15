@@ -1,5 +1,5 @@
 -- The bestiary of a repo: every error or warning you clear by editing counts as a foe felled,
--- named from the franchise's enemies. :Bestiary or <leader>ub shows which ones you fight the most.
+-- named from the franchise's enemies. :Bestiary or <leader>jb shows which ones you fight the most.
 local actions = require("core.bestiary.actions")
 
 local M = {}
@@ -138,7 +138,6 @@ function M.setup()
     end,
   })
   vim.api.nvim_create_user_command("Bestiary", M.open, { desc = "The foes felled in this repo" })
-  vim.keymap.set("n", "<leader>ub", M.open, { desc = "Bestiary" })
 end
 
 return M

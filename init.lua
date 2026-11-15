@@ -8,6 +8,7 @@ vim.g.maplocalleader = "\\"
 require("core.options")
 require("core.keymaps")
 require("core.autocmds")
+require("core.whitespace").setup()
 
 if vim.g.vscode then
   require("core.vscode").setup()
@@ -48,6 +49,7 @@ else
   require("core.claude_panel").setup()
   require("core.resize").setup()
   require("core.desk").setup()
+  require("core.leader").setup()
 end
 
 -- ── Bootstrap lazy.nvim ──────────────────────────────────────────────────────

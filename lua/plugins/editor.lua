@@ -133,24 +133,23 @@ return {
   },
 
   -- ── Comment ────────────────────────────────────────────────────────
+  -- nvim ships gc, gcc and the gc text object, this only teaches it that JSX needs {/* */}
+  -- instead of // by asking treesitter which language sits under the cursor
   {
-    "numToStr/Comment.nvim",
+    "JoosepAlviste/nvim-ts-context-commentstring",
     event = "VeryLazy",
-    dependencies = {
-      -- JSX needs {/* */} not //, this works out which one from the treesitter node
-      { "JoosepAlviste/nvim-ts-context-commentstring", opts = { enable_autocmd = false } },
-    },
-    opts = function()
-      return {
-        pre_hook = require("ts_context_commentstring.integrations.comment_nvim").create_pre_hook(),
-        padding = true,
-        sticky = true,
-        ignore = "^$",
-        toggler = { line = "gcc", block = "gbc" },
-        opleader = { line = "gc", block = "gb" },
-        extra = { above = "gcO", below = "gco", eol = "gcA" },
-        mappings = { basic = true, extra = true },
-      }
+    opts = { enable_autocmd = false },
+    config = function(_, opts)
+      require("ts_context_commentstring").setup(opts)
+      local get_option = vim.filetype.get_option
+      ---@diagnostic disable-next-line: duplicate-set-field
+      vim.filetype.get_option = function(filetype, option)
+        if option ~= "commentstring" then
+          return get_option(filetype, option)
+        end
+        return require("ts_context_commentstring.internal").calculate_commentstring()
+          or get_option(filetype, option)
+      end
     end,
   },
 
