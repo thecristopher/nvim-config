@@ -7,8 +7,11 @@ games live next to them and are left alone. Only the standard library is needed,
 Usage:
     python3 scripts/sounds.py                 # every franchise
     python3 scripts/sounds.py resident_evil   # just one
+    python3 scripts/sounds.py --clips         # finish the game clips listed in CLIPS
+    python3 scripts/sounds.py --import ~/Downloads/clip.mp3 elden_ring bought
 """
 
+import glob
 import math
 import os
 import random
@@ -278,22 +281,115 @@ def clapper():
     return mix((snap, 1.0, 0.0), (body, 0.6, 0.0), (snap, 0.7, 0.025))
 
 
+# short sounds that follow every keypress: built dry and quiet, loudnorm cannot measure them
+UI = {"pad": 0.05, "loudness": None, "gain": -6, "trim": True}
+# moments: their echo trimmed so nothing rings longer than the banner it belongs to
+MOMENT = {"trim": True}
+DRY = "anull"
+LITTLE_ROOM = "aecho=0.8:0.5:30:0.18"
+
+
+def tine(freq, seconds):
+    """One music box tine at any pitch, struck and gone."""
+    return decay(bell(freq, seconds), seconds * 0.3)
+
+
 def el_title():
-    tune = melody(["C5", "E5", "G5", "C6", "E6", "D6", "C6"], 0.22, 1.6)
-    pad = envelope(er_choir_pad([261.63, 329.63, 392.0], 2.6, 1600), attack=0.8, release=1.0)
-    return mix((tune, 0.9, 0.0), (pad, 0.35, 0.4)), STAGE
+    # the overture: strings swell through four chords while the music box plays her theme
+    chords = [[261.63, 329.63, 392.0], [220.0, 261.63, 329.63], [174.61, 220.0, 261.63], [196.0, 246.94, 293.66]]
+    pads = [(envelope(er_choir_pad(chord, 2.0, 1500), attack=0.5, release=0.8), 0.32, index * 1.6)
+            for index, chord in enumerate(chords)]
+    theme = melody(["E5", "G5", "C6", "B5", "A5", "C6", "G5", "E5", "F5", "A5", "G5", "D6", "C6"], 0.48, 1.8)
+    final = envelope(er_choir_pad([261.63, 329.63, 392.0, 523.25], 2.4, 2200), attack=0.3, release=1.6)
+    sparkle = melody(["C6", "E6", "G6"], 0.08, 1.2)
+    return mix(*pads, (theme, 0.9, 0.2), (final, 0.4, 6.4), (sparkle, 0.5, 6.4)), STAGE, MOMENT
 
 
 def el_curtain():
+    # timed to the animation: the drapes close by 0.9 s, the stage is announced, they part at 1.6 s
     closing = mix((velvet(0.9, 11, rising=True), 0.8, 0.0), (velvet(0.9, 12, rising=True), 0.6, 0.05))
     meet = thump(70, 0.3)
+    announce = mix((tine(NOTE["C6"], 0.9), 0.5, 0.0), (tine(NOTE["E6"], 0.9), 0.4, 0.0))
     opening = mix((velvet(1.0, 13, rising=False), 0.8, 0.0), (velvet(1.0, 14, rising=False), 0.6, 0.04))
-    return mix((closing, 1.0, 0.0), (meet, 0.5, 0.85), (opening, 1.0, 1.4)), ROOM
+    layers = [(closing, 1.0, 0.0), (meet, 0.5, 0.86), (announce, 0.6, 1.1), (opening, 1.0, 1.6)]
+    return mix(*layers), ROOM, MOMENT
 
 
 def el_rest():
-    lullaby = melody(["E5", "C5", "D5", "G4", "C5", "E5", "D5", "C5"], 0.5, 1.8)
-    return lullaby, STAGE
+    # a lullaby long enough to nap to: two phrases and their answer over a soft pad, it stops when she wakes you
+    phrase = ["E5", "C5", "D5", "G4", "C5", "E5", "D5", "C5"]
+    answer = ["A4", "C5", "E5", "D5", "C5", "B5", "G5", "C5"]
+    tune = phrase + phrase + answer + phrase
+    lullaby = melody(tune, 0.62, 2.2)
+    length = len(tune) * 0.62 + 2.0
+    pad = envelope(er_choir_pad([130.81, 196.0, 261.63], length, 700), attack=3.0, release=4.0)
+    return mix((lullaby, 0.8, 0.0), (pad, 0.18, 0.0)), STAGE, MOMENT
+
+
+def el_grace():
+    # a new stage found, and every time Claude finishes: short, bright, never in the way
+    return melody(["C5", "E5", "G5", "C6", "E6"], 0.09, 1.1), STAGE, MOMENT
+
+
+def el_bought():
+    # the till of the costume shop: a bright ka-ching and the drawer
+    ka = decay(highpass(noise(0.04, seed=61), 2500), 0.008)
+    ching = mix((tine(2093.0, 0.9), 0.7, 0.0), (tine(2637.0, 0.9), 0.5, 0.02))
+    drawer = lowpass(decay(noise(0.12, seed=62), 0.04), 600)
+    return mix((ka, 0.6, 0.0), (ching, 1.0, 0.05), (drawer, 0.4, 0.2)), LITTLE_ROOM, MOMENT
+
+
+def el_welcome():
+    # the bell over the costume shop's door, a little jingle as it swings
+    strikes = mix((tine(1318.5, 1.2), 0.7, 0.0), (tine(1046.5, 1.2), 0.6, 0.18))
+    jingle = mix(*[(tine(2400.0 + 180 * index, 0.25), 0.18, 0.04 * index) for index in range(6)])
+    return mix((strikes, 1.0, 0.0), (jingle, 1.0, 0.02)), STAGE, MOMENT
+
+
+def el_merchant():
+    # the wardrobe assistant answering: a soft ding dong
+    return melody(["E6", "C6"], 0.22, 1.1), STAGE, MOMENT
+
+
+def el_weapon():
+    # a pass she loved: a short round of applause and a whistle from the wings
+    whistle = mix(
+        (envelope(tone(1400, 0.18, glide_to=2300), 0.01, 0.05), 0.5, 0.0),
+        (envelope(tone(1500, 0.3, glide_to=1100), 0.01, 0.1), 0.5, 0.25),
+    )
+    return mix((applause(1.2, 34, seed=29), 0.8, 0.0), (whistle, 0.35, 0.3)), STAGE, MOMENT
+
+
+def el_expedition():
+    # the clapperboard calls the take and the set goes quiet
+    hush = envelope(lowpass(noise(1.4, seed=31), lambda index: 1200 - 900 * index / (1.4 * RATE)), 0.05, 1.0)
+    return mix((clapper(), 1.0, 0.0), (hush, 0.25, 0.2)), ROOM, MOMENT
+
+
+def el_hud_open():
+    # the dressing room door: a quick swish of the curtain and a bright tine
+    swish = velvet(0.22, 41, rising=True)
+    return mix((swish, 0.7, 0.0), (tine(NOTE["C6"], 0.35), 0.5, 0.14)), LITTLE_ROOM, dict(UI, gain=0)
+
+
+def el_hud_close():
+    swish = velvet(0.22, 43, rising=False)
+    return mix((swish, 0.7, 0.0), (tine(NOTE["G5"], 0.35), 0.45, 0.1)), LITTLE_ROOM, dict(UI, gain=0)
+
+
+def el_hud_move():
+    # browsing the rack: the softest tick of a hanger on the rail
+    tick = decay(highpass(noise(0.02, seed=47), 3000), 0.003)
+    hanger = tine(2637.0, 0.08)
+    return mix((tick, 0.5, 0.0), (hanger, 0.25, 0.0)), DRY, dict(UI, gain=-12)
+
+
+def el_hud_select():
+    return tine(NOTE["C6"], 0.4), DRY, dict(UI, gain=-9)
+
+
+def el_hud_back():
+    return mix((tine(NOTE["G5"], 0.35), 0.8, 0.0), (tine(NOTE["E5"], 0.35), 0.5, 0.07)), DRY, dict(UI, gain=-9)
 
 
 def el_boss():
@@ -318,10 +414,6 @@ def el_great():
 def el_died():
     falling = melody(["E5", "C5", "A4", "E4"], 0.32, 1.6)
     return mix((clapper(), 1.0, 0.0), (falling, 0.7, 0.35)), STAGE
-
-
-def el_grace():
-    return melody(["C5", "E5", "G5", "C6", "E6"], 0.11, 1.4), STAGE
 
 
 def el_cleansed():
@@ -356,46 +448,49 @@ def el_comfort():
     return melody(["E5", "C5"], 0.35, 1.6), STAGE
 
 
-def el_bought():
-    return mix((music_box("C6", 0.8), 0.7, 0.0), (music_box("G6", 0.8), 0.6, 0.08)), ROOM
+# Elden Ring's menus: a soft stone tok and small bells, quiet enough for every keypress
+def er_hud_move():
+    tok = lowpass(decay(noise(0.03, seed=81), 0.006), 1800)
+    return mix((tok, 0.7, 0.0), (decay(bell(1760.0, 0.08), 0.02), 0.2, 0.0)), DRY, dict(UI, gain=-12)
 
 
-def el_welcome():
-    return melody(["G5", "E5", "G5", "C6"], 0.14, 1.2), STAGE
+def er_hud_select():
+    return mix((decay(bell(1318.5, 0.4), 0.12), 0.8, 0.0), (thump(110, 0.12), 0.2, 0.0)), DRY, dict(UI, gain=-9)
 
 
-def el_merchant():
-    return melody(["C6", "G5"], 0.16, 1.0), STAGE
+def er_hud_back():
+    return decay(bell(880.0, 0.35), 0.1), DRY, dict(UI, gain=-9)
 
 
-def el_weapon():
-    return applause(1.0, 30, seed=29), STAGE
+def er_hud_open():
+    whoosh = envelope(lowpass(noise(0.3, seed=83), lambda index: 300 + 2500 * index / (0.3 * RATE)), 0.05, 0.12)
+    return mix((whoosh, 0.6, 0.0), (decay(bell(1046.5, 0.4), 0.12), 0.5, 0.18)), LITTLE_ROOM, dict(UI, gain=0)
 
 
-def el_expedition():
-    hush = envelope(lowpass(noise(1.4, seed=31), lambda index: 1200 - 900 * index / (1.4 * RATE)), 0.05, 1.0)
-    return mix((clapper(), 1.0, 0.0), (hush, 0.35, 0.2)), ROOM
+def er_hud_close():
+    whoosh = envelope(lowpass(noise(0.3, seed=85), lambda index: 2800 - 2500 * index / (0.3 * RATE)), 0.03, 0.15)
+    return mix((whoosh, 0.6, 0.0), (decay(bell(659.25, 0.4), 0.12), 0.45, 0.12)), LITTLE_ROOM, dict(UI, gain=0)
 
 
-def el_hud_open():
-    return mix((velvet(0.35, 41, rising=True), 0.6, 0.0), (music_box("C6", 0.6), 0.5, 0.2)), ROOM
+def er_comfort():
+    # failing the same trial again: the choir sighs and settles, no judgment in it
+    sigh = envelope(er_choir_pad([220.0, 261.63, 329.63], 1.8, 900), attack=0.3, release=1.0)
+    rest = envelope(er_choir_pad([196.0, 246.94, 293.66], 1.6, 700), attack=0.4, release=1.0)
+    return mix((sigh, 0.7, 0.0), (rest, 0.6, 0.9)), HALL, MOMENT
 
 
-def el_hud_close():
-    return mix((velvet(0.35, 43, rising=False), 0.6, 0.0), (music_box("G5", 0.6), 0.4, 0.15)), ROOM
+def er_expedition():
+    # the last sound before the Lands Between go quiet: a deep gong and a breath of choir fading out
+    gong = bell(73.42, 2.6)
+    breath = envelope(er_choir_pad([146.83, 220.0], 2.0, 600), attack=0.2, release=1.6)
+    return mix((gong, 0.8, 0.0), (breath, 0.4, 0.05)), HALL, MOMENT
 
 
-def el_hud_move():
-    tick = decay(highpass(noise(0.03, seed=47), 2500), 0.004)
-    return mix((tick, 0.6, 0.0), (music_box("E6", 0.25), 0.25, 0.0)), ROOM
-
-
-def el_hud_select():
-    return music_box("C6", 0.5), ROOM
-
-
-def el_hud_back():
-    return music_box("G5", 0.5), ROOM
+# Raccoon City's quiet new area chime: two soft square tones through a radio filter
+def re_zone():
+    first = envelope(tone(659.25, 0.12, "square"), 0.005, 0.06)
+    second = envelope(tone(987.77, 0.3, "square"), 0.005, 0.2)
+    return lowpass(mix((first, 0.5, 0.0), (second, 0.5, 0.13)), 2200), ROOM, {"trim": True}
 
 
 RECIPES = {
@@ -403,12 +498,15 @@ RECIPES = {
     # bought, welcome, weapon, summon, comfort, expedition and the hud_ inventory sounds are clips from the game, so they are not built here
     "resident_evil": {
         "boss": re_boss, "felled": re_felled, "great": re_great, "cleansed": re_cleansed,
-        "region": re_region,
+        "region": re_region, "zone": re_zone,
     },
     # title, died, felled, grace, rest, zone, merchant, phantom and continue are clips from the game, so they are not built here
     "elden_ring": {
         "great": er_great, "cleansed": er_cleansed,
         "fog": er_fog, "boss": er_boss, "region": er_region,
+        "comfort": er_comfort, "expedition": er_expedition,
+        "hud_open": er_hud_open, "hud_close": er_hud_close, "hud_move": er_hud_move,
+        "hud_select": er_hud_select, "hud_back": er_hud_back,
     },
     # every one of hers is built here, nothing is a clip
     "elizabeth": {
@@ -421,6 +519,96 @@ RECIPES = {
         "hud_move": el_hud_move, "hud_select": el_hud_select, "hud_back": el_hud_back,
     },
 }
+
+
+# ── clips ────────────────────────────────────────────────────────────────────────
+# The events that are clips from the games, finished so each fits its moment: the silence before
+# and after is cut, anything longer than max seconds fades out there, and every one is evened out
+# to the loudness the built sounds share (HUD clips stay quieter, they follow every keypress).
+
+CLIPS = {
+    "elden_ring": {
+        "title": {}, "rest": {}, "summon": {}, "merchant": {}, "zone": {},
+        "felled": {"max": 4.0}, "died": {"max": 5.5}, "continue": {"max": 4.0},
+        "grace": {"max": 3.5}, "phantom": {"max": 3.5},
+        "bought": {"max": 3.0}, "welcome": {}, "weapon": {},
+    },
+    "resident_evil": {
+        "title": {}, "continue": {}, "comfort": {}, "grace": {}, "door": {}, "expedition": {},
+        "merchant": {}, "welcome": {}, "bought": {}, "weapon": {"max": 4.0},
+        "died": {"max": 5.5}, "rest": {"loudness": -26}, "phantom": {}, "summon": {},
+        "hud_open": {"loudness": None}, "hud_close": {"loudness": None},
+        "hud_move": {"loudness": None}, "hud_select": {"loudness": None},
+        "hud_back": {"loudness": None},
+    },
+}
+
+# the clip finishing everything starts from: trims both ends, evens out to the moments' loudness
+CLIP_FINISH = {"max": None, "fade": 0.8, "loudness": -24}
+LEAD = "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.02"
+
+
+def duration_of(path):
+    """Returns how long a sound lasts in seconds, read by ffprobe."""
+    output = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path],
+        check=True, capture_output=True, text=True,
+    ).stdout
+    return float(output.strip())
+
+
+def clip_filters(path, finish):
+    """The filter chain that finishes a clip: both ends trimmed, a fade when it runs too long."""
+    steps = [LEAD, TRIM]
+    if finish["max"] and duration_of(path) > finish["max"] + 0.05:
+        start = finish["max"] - finish["fade"]
+        steps += [f"atrim=0:{finish['max']}", f"afade=t=out:st={start}:d={finish['fade']}"]
+    return steps
+
+
+def refine(path, finish, scratch):
+    """Finishes a clip in place, safe to run again: a trimmed clip has nothing left to trim."""
+    finish = {**CLIP_FINISH, **finish}
+    staged = os.path.join(scratch, "staged.wav")
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", path, "-af", ",".join(clip_filters(path, finish)),
+         "-ac", "1", "-ar", str(RATE), staged],
+        check=True,
+    )
+    level(staged, scratch, {"loudness": finish["loudness"], "gain": 0})
+    target = os.path.splitext(path)[0] + ".wav"
+    shutil.move(staged, target)
+    if target != path:
+        os.remove(path)
+
+
+def clip_path(franchise, event):
+    """Returns the file an event plays in a franchise, whatever its extension, None when missing."""
+    found = sorted(glob.glob(os.path.join(ROOT, franchise, event + ".*")))
+    return found[0] if found else None
+
+
+def refine_clips(scratch):
+    """Finishes every clip listed in CLIPS."""
+    for franchise, events in CLIPS.items():
+        for event, finish in events.items():
+            path = clip_path(franchise, event)
+            if not path:
+                print(f"{franchise}/{event} has no clip yet")
+                continue
+            refine(path, finish, scratch)
+            print(f"{franchise}/{event}.wav finished")
+
+
+def import_clip(source, franchise, event, scratch):
+    """Copies a clip into sounds/<franchise>/<event>.wav and finishes it like the rest."""
+    target = os.path.join(ROOT, franchise, event + ".wav")
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", source, "-ac", "1", "-ar", str(RATE), target],
+        check=True,
+    )
+    refine(target, CLIPS.get(franchise, {}).get(event, {}), scratch)
+    print(f"{franchise}/{event}.wav imported")
 
 
 # ── writing ──────────────────────────────────────────────────────────────────────
@@ -437,42 +625,76 @@ def write_wav(path, samples):
         out.writeframes(frames)
 
 
-def ffmpeg(source, target, chain):
+# how a recipe is finished unless it asks otherwise: the tail left for its echoes, the loudness it
+# is evened out to (None keeps it as built, for short sounds loudnorm cannot measure), a gain in dB
+# applied after, and whether the silence at its end is cut
+FINISH = {"pad": 0.6, "loudness": -24, "gain": 0, "trim": False}
+
+# what every sound of a franchise is finished with: Elizabeth's are all built here, so none rings
+# longer than the moment it belongs to
+FRANCHISE_FINISH = {"elizabeth": {"trim": True}}
+
+# trims the silence an echo leaves at the end, read backwards so the start stays untouched
+TRIM = "areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.06,areverse"
+
+
+def ffmpeg(source, target, chain, finish):
     """Runs a file through an ffmpeg filter chain into a mono wav, leaving a tail for the echoes."""
+    steps = [f"apad=pad_dur={finish['pad']}", chain]
+    if finish["trim"]:
+        steps.append(TRIM)
+    steps.append("alimiter=limit=0.9")
     subprocess.run(
         ["ffmpeg", "-y", "-loglevel", "error", "-i", source,
-         "-af", f"apad=pad_dur=0.6,{chain},alimiter=limit=0.9", "-ac", "1", "-ar", str(RATE), target],
+         "-af", ",".join(steps), "-ac", "1", "-ar", str(RATE), target],
         check=True,
     )
 
 
-def level(target, scratch):
-    """Evens out loudness so a whisper and a fanfare land at the same perceived volume."""
+def level(target, scratch, finish):
+    """Evens out loudness so a whisper and a fanfare land at the same perceived volume, then
+    applies the recipe's gain, quieter for sounds that play on every keypress."""
+    filters = []
+    if finish["loudness"] is not None:
+        filters.append(f"loudnorm=I={finish['loudness']}:TP=-5:LRA=11")
+    if finish["gain"]:
+        filters.append(f"volume={finish['gain']}dB")
+    if not filters:
+        return
     leveled = os.path.join(scratch, "leveled.wav")
     subprocess.run(
         ["ffmpeg", "-y", "-loglevel", "error", "-i", target,
-         "-af", "loudnorm=I=-24:TP=-5:LRA=11", "-ac", "1", "-ar", str(RATE), leveled],
+         "-af", ",".join(filters), "-ac", "1", "-ar", str(RATE), leveled],
         check=True,
     )
     shutil.move(leveled, target)
 
 
 def build(franchise, event, recipe, scratch):
-    """Builds one event's file."""
+    """Builds one event's file. A recipe returns (samples, chain) or (samples, chain, finish)."""
     target = os.path.join(ROOT, franchise, event + ".wav")
-    samples, chain = recipe()
+    samples, chain, *rest = recipe()
+    finish = {**FINISH, **FRANCHISE_FINISH.get(franchise, {}), **(rest[0] if rest else {})}
     dry = os.path.join(scratch, "dry.wav")
     write_wav(dry, samples)
-    ffmpeg(dry, target, chain)
-    level(target, scratch)
+    ffmpeg(dry, target, chain, finish)
+    level(target, scratch, finish)
 
 
 def main():
+    """Builds the recipes of the franchises given (all by default), or with --clips finishes the
+    clips in CLIPS, or with --import SOURCE FRANCHISE EVENT brings a new clip in."""
     if not shutil.which("ffmpeg"):
         sys.exit("ffmpeg is needed: brew install ffmpeg")
-    wanted = sys.argv[1:] or list(RECIPES)
+    args = sys.argv[1:]
     with tempfile.TemporaryDirectory() as scratch:
-        for franchise in wanted:
+        if args[:1] == ["--clips"]:
+            return refine_clips(scratch)
+        if args[:1] == ["--import"]:
+            if len(args) != 4:
+                sys.exit("usage: sounds.py --import SOURCE FRANCHISE EVENT")
+            return import_clip(args[1], args[2], args[3], scratch)
+        for franchise in args or list(RECIPES):
             os.makedirs(os.path.join(ROOT, franchise), exist_ok=True)
             for event, recipe in RECIPES[franchise].items():
                 build(franchise, event, recipe, scratch)
