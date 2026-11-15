@@ -48,6 +48,55 @@ function M.notify_title(title, level, chrome)
   return (chrome.notify or {})[name] or name
 end
 
+---The franchise's word for a notification level, the way the history lists it.
+---@param level string|integer|nil "warn" or vim.log.levels.WARN
+---@param chrome table lore.chrome
+---@return string
+function M.level_word(level, chrome)
+  local name = type(level) == "number" and LEVELS[level] or level or "info"
+  return (chrome.notify or {})[name] or name
+end
+
+local function level_name(level)
+  return type(level) == "number" and LEVELS[level] or level or "info"
+end
+
+---The notification history as buffer lines and highlight marks: the hour, the icon, the
+---franchise's word for the level and the title, then the message, its later lines indented.
+---@param notifs table[] snacks notifications, newest first
+---@param chrome table lore.chrome
+---@return string[] lines, { row: integer, first: integer, last: integer, group: string }[] marks zero based rows, byte columns
+function M.history_lines(notifs, chrome)
+  local lines, marks = {}, {}
+  for _, notif in ipairs(notifs) do
+    local name = level_name(notif.level)
+    local level_group = "SnacksNotifierTitle" .. name:sub(1, 1):upper() .. name:sub(2)
+    local parts = {
+      { os.date("%H:%M", notif.added), "SnacksNotifierHistoryDateTime" },
+      { notif.icon or "", "SnacksNotifierIcon" .. name:sub(1, 1):upper() .. name:sub(2) },
+      { M.level_word(name, chrome), level_group },
+      { notif.title or "", "SnacksNotifierHistoryTitle" },
+    }
+    local prefix, row = "", #lines
+    for _, part in ipairs(parts) do
+      if part[1] ~= "" then
+        table.insert(
+          marks,
+          { row = row, first = #prefix, last = #prefix + #part[1], group = part[2] }
+        )
+        prefix = prefix .. part[1] .. " "
+      end
+    end
+    local message = vim.split(notif.msg or "", "\n", { plain = true })
+    table.insert(lines, prefix .. message[1])
+    local indent = (" "):rep(vim.fn.strdisplaywidth(prefix))
+    for index = 2, #message do
+      table.insert(lines, indent .. message[index])
+    end
+  end
+  return lines, marks
+end
+
 -- how bright each line number stays as it moves away from the cursor, nearest first
 M.GUTTER_STEPS = { 0.85, 0.68, 0.55, 0.44, 0.34 }
 

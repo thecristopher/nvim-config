@@ -50,7 +50,7 @@ M.HANDLERS = {
     Snacks.notifier.hide()
   end,
   notifications_history = function()
-    Snacks.notifier.show_history()
+    require("core.chrome.notify").show_history()
   end,
 }
 

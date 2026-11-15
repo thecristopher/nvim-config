@@ -9,6 +9,7 @@ require("core.options")
 require("core.keymaps")
 require("core.autocmds")
 require("core.whitespace").setup()
+require("core.spell").setup()
 
 if vim.g.vscode then
   require("core.vscode").setup()

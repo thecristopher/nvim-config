@@ -315,7 +315,8 @@ local function description(item, width)
   for index = 1, 2 do
     table.insert(rows, { { " " .. (lines[index] or ""), "EldenHudDesc" } })
   end
-  table.insert(rows, { { " " .. hud.fit_hints(HINTS, width - 2), "EldenHudHint" } })
+  local hints = hud.hint_chunks(HINTS, width - 2, "EldenHudKey", "EldenHudHint")
+  table.insert(rows, vim.list_extend({ { " ", "EldenHudHint" } }, hints))
   return rows
 end
 

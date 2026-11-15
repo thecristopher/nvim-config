@@ -264,6 +264,13 @@ return {
     opts = {
       modes = {
         lsp = { win = { position = "right" } },
+        -- grouped by file with its path from the project root, not under a header holding the
+        -- whole absolute directory
+        diagnostics = {
+          groups = {
+            { "filename", format = "{file_icon} {filename} {count}" },
+          },
+        },
       },
     },
   },

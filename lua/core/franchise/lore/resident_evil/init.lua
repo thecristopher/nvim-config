@@ -291,6 +291,7 @@ return {
     cmdline = "Typewriter",
     search = "Search",
     examine = "Examine",
+    history = "Radio Log",
     notify = {
       info = "Radio",
       warn = "Caution",

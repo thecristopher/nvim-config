@@ -265,3 +265,65 @@ describe("parse_branch", function()
     assert.is_nil(hud.parse_branch(""))
   end)
 end)
+
+describe("hud looks", function()
+  local p = {
+    yellow = "#D8466A",
+    base = "#0A0D10",
+    text = "#E0E0E0",
+    subtext0 = "#A0A0A0",
+    subtext1 = "#B0B0B0",
+    surface1 = "#303030",
+    surface2 = "#404040",
+    overlay0 = "#606060",
+    overlay1 = "#707070",
+    rosewater = "#F0D0D0",
+  }
+  local blend = require("core.themes.actions").blend
+
+  it("gives Claire's RE tabs plates and Malenia's a rule", function()
+    assert.equal(p.surface1, hud.hud_groups(p, blend, true).EldenHudTab.bg)
+    assert.is_nil(hud.hud_groups(p, blend, false).EldenHudTab.bg)
+  end)
+
+  it("lights the selection brighter than it rests", function()
+    local rest = hud.hud_groups(p, blend, true).EldenHudSlotSel.bg
+    local lit = hud.selection_flash(p, blend).EldenHudSlotSel.bg
+    assert.is_true(tonumber(lit:sub(2, 3), 16) > tonumber(rest:sub(2, 3), 16))
+  end)
+
+  it("sinks every color toward the background for the entrance", function()
+    local sunk =
+      hud.sunk({ EldenHudName = { fg = "#FFFFFF", bold = true } }, "#000000", blend, 0.25)
+    assert.equal("#404040", sunk.EldenHudName.fg)
+    assert.is_true(sunk.EldenHudName.bold)
+  end)
+
+  it("leaves the looks it sinks untouched", function()
+    local groups = { EldenHudName = { fg = "#FFFFFF" } }
+    hud.sunk(groups, "#000000", blend, 0.25)
+    assert.equal("#FFFFFF", groups.EldenHudName.fg)
+  end)
+end)
+
+describe("hint_chunks", function()
+  it("colors Claire's keys apart from their labels", function()
+    local chunks = hud.hint_chunks({ "K Check", "⇥ Tabs" }, 80, "Key", "Label")
+    assert.same({
+      { "K", "Key" },
+      { " Check", "Label" },
+      { "   ", "Label" },
+      { "⇥", "Key" },
+      { " Tabs", "Label" },
+    }, chunks)
+  end)
+
+  it("drops the hints that do not fit, last first", function()
+    local chunks = hud.hint_chunks({ "K Check", "q Quit" }, 7, "Key", "Label")
+    assert.equal(2, #chunks)
+  end)
+
+  it("keeps a hint without a label whole", function()
+    assert.same({ { "Inde", "Label" } }, hud.hint_chunks({ "Inde" }, 10, "Key", "Label"))
+  end)
+end)

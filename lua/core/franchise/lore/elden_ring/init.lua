@@ -295,6 +295,7 @@ return {
     cmdline = "Incantation",
     search = "Seek",
     examine = "Inspect",
+    history = "Messages Remembered",
     notify = {
       info = "Message",
       warn = "Omen",

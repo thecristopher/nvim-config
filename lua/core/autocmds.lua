@@ -5,11 +5,11 @@ local function aug(name)
   return vim.api.nvim_create_augroup("eldentree_" .. name, { clear = true })
 end
 
--- Highlight yanked text briefly
+-- Yanked text glows in the region's accent and fades out (core/chrome/yank)
 au("TextYankPost", {
   group = aug("yank_highlight"),
   callback = function()
-    vim.hl.on_yank({ timeout = 250 })
+    require("core.chrome.yank").flash()
   end,
 })
 

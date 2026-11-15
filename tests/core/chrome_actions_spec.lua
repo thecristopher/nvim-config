@@ -231,3 +231,43 @@ describe("ruler_applies", function()
     assert.is_true(actions.ruler_applies(72, true))
   end)
 end)
+
+describe("level_word", function()
+  local chrome = { notify = { info = "Message", warn = "Omen" } }
+
+  it("lists Malenia's warning by the franchise's word", function()
+    assert.equal("Omen", actions.level_word("warn", chrome))
+  end)
+
+  it("takes the level as a number too", function()
+    assert.equal("Message", actions.level_word(vim.log.levels.INFO, chrome))
+  end)
+
+  it("keeps the plain level when the lore has no word for it", function()
+    assert.equal("error", actions.level_word("error", chrome))
+  end)
+end)
+
+describe("history_lines", function()
+  local chrome = { notify = { info = "Message", warn = "Omen" } }
+  local added = os.time({ year = 2026, month = 11, day = 14, hour = 21, min = 5 })
+
+  it("lists Claire's warning under the franchise's word", function()
+    local lines =
+      actions.history_lines({ { level = "warn", msg = "Inde left a note", added = added } }, chrome)
+    assert.equal("21:05 Omen Inde left a note", lines[1])
+  end)
+
+  it("marks the level with its snacks highlight", function()
+    local _, marks = actions.history_lines({ { level = "warn", msg = "x", added = added } }, chrome)
+    assert.same({ row = 0, first = 6, last = 10, group = "SnacksNotifierTitleWarn" }, marks[2])
+  end)
+
+  it("indents the later lines of a long message under the first", function()
+    local notif =
+      { level = "info", title = "Malenia", msg = "first date\nsecond date", added = added }
+    local lines = actions.history_lines({ notif }, chrome)
+    assert.equal("21:05 Message Malenia first date", lines[1])
+    assert.equal("                      " .. "second date", lines[2])
+  end)
+end)

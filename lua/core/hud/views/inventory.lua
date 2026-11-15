@@ -420,7 +420,10 @@ function M.render(model)
   vim.list_extend(rows, banner(parts.selected(model), plan.stage_width))
   table.insert(
     rows,
-    hud.center({ { hud.fit_hints(HINTS, plan.stage_width), "EldenHudHint" } }, plan.stage_width)
+    hud.center(
+      hud.hint_chunks(HINTS, plan.stage_width, "EldenHudKey", "EldenHudHint"),
+      plan.stage_width
+    )
   )
   table.insert(rows, {})
   table.insert(

@@ -19,4 +19,39 @@ function M.style(buf, notif, ctx)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(notif.msg, "\n"))
 end
 
+--- Opens the notification history titled in the franchise's words between the skin's ornaments,
+--- each entry under the franchise's word for its level, the same one its popup wore. Pressed again
+--- from inside the history, it closes it.
+function M.show_history()
+  if vim.bo.filetype == "snacks_notif_history" then
+    return vim.cmd("close")
+  end
+  local chrome = require("core.franchise").current().chrome
+  local lines, marks =
+    actions.history_lines(Snacks.notifier.get_history({ reverse = true }), chrome)
+  local win = Snacks.win({
+    style = "notification_history",
+    title = " " .. require("core.skin").title(chrome.history or "Notification History") .. " ",
+    -- the entries carry their own hour, numbers in the gutter would only repeat the row
+    wo = { number = false, relativenumber = false, statuscolumn = "", signcolumn = "no" },
+    enter = true,
+    show = false,
+  })
+  local buf = win:open_buf()
+  vim.bo[buf].modifiable = true
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+  local ns = vim.api.nvim_create_namespace("eldentree_notify_history")
+  for _, mark in ipairs(marks) do
+    vim.api.nvim_buf_set_extmark(
+      buf,
+      ns,
+      mark.row,
+      mark.first,
+      { end_col = mark.last, hl_group = mark.group }
+    )
+  end
+  win:show()
+end
+
 return M
