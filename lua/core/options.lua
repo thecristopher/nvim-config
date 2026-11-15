@@ -120,6 +120,11 @@ vim.g.eldentree_iterm_profiles = true
 -- Ghostty reloads ~/.config/ghostty/eldentree with the franchise's font and opacity
 vim.g.eldentree_ghostty_config = true
 
+-- settings only this machine wants, like vim.g.eldentree_opt_in, live in a file git ignores
+if vim.uv.fs_stat(vim.fn.stdpath("config") .. "/lua/core/options_local.lua") then
+  require("core.options_local")
+end
+
 -- the Claude native installer drops claude.exe here but often never makes it onto PATH
 if vim.fn.has("win32") == 1 then
   local claude_bin = (vim.env.USERPROFILE or "") .. "\\.local\\bin"

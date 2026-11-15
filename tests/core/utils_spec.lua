@@ -64,34 +64,3 @@ describe("write_state", function()
     assert.is_false(utils.write_state("/nonexistent/haligtree/note", { "lost" }))
   end)
 end)
-
-describe("find_portrait", function()
-  local dirs = { "/private", "/config/images/portraits" }
-
-  local function only(existing)
-    return function(path)
-      return path == existing
-    end
-  end
-
-  it("prefers Malenia's private portrait over the one the repo ships", function()
-    local readable = function()
-      return true
-    end
-    assert.equal("/private/malenia.jpg", utils.find_portrait("malenia.jpg", dirs, readable))
-  end)
-
-  it("falls back to the repo when Claire has no private portrait", function()
-    local found =
-      utils.find_portrait("claire.jpg", dirs, only("/config/images/portraits/claire.jpg"))
-    assert.equal("/config/images/portraits/claire.jpg", found)
-  end)
-
-  it("finds nothing when no folder keeps Inde's portrait", function()
-    assert.is_nil(utils.find_portrait("inde.jpg", dirs, only("/elsewhere")))
-  end)
-
-  it("finds nothing for a region without a portrait", function()
-    assert.is_nil(utils.find_portrait(nil, dirs, only("/private/nil")))
-  end)
-end)

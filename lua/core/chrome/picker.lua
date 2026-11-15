@@ -40,6 +40,23 @@ M.INVENTORY = {
   },
 }
 
+-- the preview as the vanity mirror on the left, the prompt and the pieces to choose from beside it
+M.VANITY = {
+  layout = {
+    box = "horizontal",
+    width = 0.84,
+    min_width = 120,
+    height = 0.84,
+    border = "none",
+    { win = "preview", title = "{preview}", width = 0.55, border = true },
+    {
+      box = "vertical",
+      { win = "input", height = 1, border = true, title = "{title} {live} {flags}" },
+      { win = "list", border = true },
+    },
+  },
+}
+
 ---The layout preset of the franchise in use, a stacked one on narrow screens.
 ---@return string
 function M.preset()

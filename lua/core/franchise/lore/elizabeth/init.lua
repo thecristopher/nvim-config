@@ -1,8 +1,11 @@
 -- Elizabeth: everything the config says and shows while she plays her roles. Each region is a
--- stage and a costume, the Scarlet Witch, Ada and Shadowheart, and the world speaks like a set.
+-- stage and a costume, the Scarlet Witch, Ada, Shadowheart and Psylocke, and the world speaks
+-- like a set: curtains between stages, a heart for a status and the afternoon sun to rest in.
 return {
   name = "elizabeth",
   title = "Elizabeth",
+  -- only played where vim.g.eldentree_opt_in names her, see lua/core/options.lua
+  opt_in = true,
 
   regions = require("core.franchise.lore.elizabeth.regions"),
   skin = require("core.franchise.lore.elizabeth.skin"),
@@ -10,10 +13,10 @@ return {
 
   -- which version of each mechanic this world plays
   mechanics = {
-    travel = "fog", -- a scarlet mist rolls between stages
-    boss = "duel", -- the villain of the stage stands and fights
-    status = "grace", -- the breathing glyph, a heart in this world
-    rest = "embers", -- the stage lights dim and glow
+    travel = "curtain", -- velvet drapes close on one stage and part on the next
+    boss = "scene", -- the villain steals the scene, every fix mends one of her broken hearts
+    status = "heartbeat", -- a heart that beats calm and races with the errors
+    rest = "golden_hour", -- the afternoon sun through the blinds, like in her photos
     ranking = true, -- every run is a take, and every take gets its review
   },
 
@@ -31,6 +34,15 @@ return {
     leave = "I know my lines",
   },
 
+  -- what the dressing room calls the HUD's tabs, the lessons tab takes coach.lessons
+  hud_tabs = {
+    tools = "Vanity",
+    recent = "Recent Takes",
+    keys = "Props",
+    messages = "Notes",
+    regions = "Roles",
+  },
+
   -- Claude Code's statusline bars and spinner (claude/install.lua merges the verbs into settings)
   claude = {
     bars = { five_hour = "HEX", seven_day = "MOON" },
@@ -42,6 +54,7 @@ return {
       "Polishing the pauldrons",
       "Checking the grappling hook",
       "Praying to the moon",
+      "Focusing the psychic blade",
       "Rehearsing the scene",
       "Finding the light",
       "Tying the cape",
@@ -61,6 +74,7 @@ return {
     westview = "Agatha Harkness",
     separate_ways = "Pesanta",
     moonrise_towers = "Ketheric Thorm",
+    danger_room = "Mister Sinister",
   },
 
   -- drift says where particles travel, speed is rows per second,
@@ -88,6 +102,14 @@ return {
       drift = "fall",
       speed = { 0.6, 1.6 },
       from = "overlay2",
+      to = "yellow",
+    },
+    -- psychic sparks flicking off the blade, quick and bright
+    danger_room = {
+      glyphs = { "·", "∙", "•" },
+      drift = "rise",
+      speed = { 2.4, 5.2 },
+      from = "lavender",
       to = "yellow",
     },
   },
@@ -122,6 +144,8 @@ return {
       "Gnoll",
       "Absolute Cultist",
       "Shar's Shade",
+      "Sentinel",
+      "Marauder",
       "Wardrobe Moth",
       "Torn Seam",
       "Lost Prop",
@@ -155,6 +179,8 @@ return {
     "Fix the wig, then fix the build",
     "This scene needs another take",
     "Every role, one heart, zero warnings",
+    "Focus the blade, then focus the diff",
+    "The Danger Room resets, your tests should too",
     "The cape is velvet, the code is not",
     "What are you buying? A cleaner commit?",
     "Shadowheart doesn't trust that regex",
@@ -217,6 +243,9 @@ return {
     "Baldur's Gate",
     "House of Grief",
     "The Emerald Grove",
+    "The Danger Room",
+    "Xavier's Mansion",
+    "Genosha",
     "The Dressing Room",
     "Backstage",
     "Golden Hour Hallway",

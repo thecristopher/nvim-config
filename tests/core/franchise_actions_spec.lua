@@ -106,7 +106,7 @@ describe("choice_for", function()
   end)
 end)
 
-for _, name in ipairs(actions.names()) do
+for _, name in ipairs(actions.all_names()) do
   local lore = actions.lore(name)
 
   describe(lore.title, function()
@@ -115,14 +115,8 @@ for _, name in ipairs(actions.names()) do
     end)
 
     it("passes every check :checkhealth runs, portraits included", function()
-      -- private portraits live outside the repo, so CI never has them
-      local private = {}
-      for _, region in ipairs(lore.regions) do
-        private[region.portrait] = region.private or nil
-      end
       local function on_disk(file)
-        return private[file]
-          or vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. file) == 1
+        return vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. file) == 1
       end
       assert.same({}, require("core.franchise.actions.validate").problems(lore, on_disk))
     end)
@@ -174,11 +168,12 @@ for _, name in ipairs(actions.names()) do
     for _, region in ipairs(lore.regions) do
       local p = region.palette
 
-      it(("keeps %s's portrait where it belongs"):format(region.title), function()
-        local in_repo =
-          vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. region.portrait)
-        -- a private portrait is someone real, it never lands in the public repo
-        assert.equal(region.private and 0 or 1, in_repo, region.portrait)
+      it(("keeps %s's portrait on disk"):format(region.title), function()
+        assert.equal(
+          1,
+          vim.fn.filereadable(vim.fn.getcwd() .. "/images/portraits/" .. region.portrait),
+          region.portrait
+        )
       end)
 
       it(("gives %s a champion, a portrait, a boss and a sky"):format(region.title), function()
@@ -257,6 +252,52 @@ describe("resident evil", function()
   it("lets Jill rest in a safe room", function()
     local layout = require("core.rest.actions").layout(80, 24, "Spencer Mansion")
     assert.equal("S A F E   R O O M", layout[2].text)
+  end)
+end)
+
+describe("plays", function()
+  local claire = { name = "claire", opt_in = true }
+
+  it("plays a franchise that never asked for an opt in", function()
+    assert.is_true(actions.plays({ name = "elden_ring" }, nil))
+  end)
+
+  it("keeps Claire's franchise out until someone opts in", function()
+    assert.is_false(actions.plays(claire, { "elden_ring" }))
+  end)
+
+  it("plays Claire's franchise once Inde opts in", function()
+    assert.is_true(actions.plays(claire, { "claire" }))
+  end)
+end)
+
+describe("opt in", function()
+  after_each(function()
+    vim.g.eldentree_opt_in = nil
+    actions.rediscover()
+  end)
+
+  it("leaves Elizabeth out of the rotation when nobody opted in", function()
+    vim.g.eldentree_opt_in = nil
+    actions.rediscover()
+    assert.is_false(vim.tbl_contains(actions.names(), "elizabeth"))
+    assert.is_true(vim.tbl_contains(actions.all_names(), "elizabeth"))
+  end)
+
+  it("brings Elizabeth into the rotation for the one who opted in", function()
+    vim.g.eldentree_opt_in = { "elizabeth" }
+    actions.rediscover()
+    assert.is_true(vim.tbl_contains(actions.names(), "elizabeth"))
+  end)
+
+  it("never resolves to Elizabeth for someone who did not opt in", function()
+    vim.g.eldentree_opt_in = nil
+    actions.rediscover()
+    assert.equal(actions.DEFAULT, actions.resolve("elizabeth"))
+  end)
+
+  it("still loads her lore by name for checkhealth", function()
+    assert.equal("elizabeth", actions.lore("elizabeth").name)
   end)
 end)
 

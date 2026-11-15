@@ -542,12 +542,14 @@ function M.tabs(style)
     },
       nil
   end
+  -- a franchise may name the tabs its own way, like Elizabeth's Vanity and Props
+  local names = require("core.franchise").current().hud_tabs or {}
   return {
-    { title = "Tools", icon = "󱌣", items = M.actions() },
-    { title = "Recent", icon = "󰋚", items = M.recent() },
-    { title = "Key Items", icon = "󰌆", items = M.git() },
-    { title = "Messages", icon = "󰏫", items = M.messages() },
-    { title = "Regions", icon = "◈", items = M.regions() },
+    { title = names.tools or "Tools", icon = "󱌣", items = M.actions() },
+    { title = names.recent or "Recent", icon = "󰋚", items = M.recent() },
+    { title = names.keys or "Key Items", icon = "󰌆", items = M.git() },
+    { title = names.messages or "Messages", icon = "󰏫", items = M.messages() },
+    { title = names.regions or "Regions", icon = "◈", items = M.regions() },
     {
       title = require("core.franchise").current().coach.lessons,
       icon = "󰂺",

@@ -5,11 +5,12 @@ local M = {}
 -- the fallback for anything unknown
 M.DEFAULT = "elden_ring"
 
-local discovered
+local discovered, playable
 
---- Lists every franchise found in the lore folder, sorted so the daily rotation is stable.
+--- Lists every franchise found in the lore folder, the ones waiting for an opt in included,
+--- sorted so the daily rotation is stable.
 ---@return string[]
-function M.names()
+function M.all_names()
   if discovered then
     return discovered
   end
@@ -26,9 +27,31 @@ function M.names()
   return names
 end
 
+--- Tells whether a franchise is played here: always, unless its lore asks for an opt in that
+--- the opted list does not give.
+---@param lore { name: string, opt_in?: boolean }
+---@param opted string[]|nil names opted in, like vim.g.eldentree_opt_in
+---@return boolean
+function M.plays(lore, opted)
+  return not lore.opt_in or vim.tbl_contains(opted or {}, lore.name)
+end
+
+--- Lists the franchises this config plays: every folder, minus the opt in ones nobody opted
+--- into with vim.g.eldentree_opt_in.
+---@return string[]
+function M.names()
+  if playable then
+    return playable
+  end
+  playable = vim.tbl_filter(function(name)
+    return M.plays(require("core.franchise.lore." .. name), vim.g.eldentree_opt_in)
+  end, M.all_names())
+  return playable
+end
+
 --- Forgets the franchises found so far, so a freshly created one shows up.
 function M.rediscover()
-  discovered = nil
+  discovered, playable = nil, nil
 end
 
 --- Returns the franchise name when it exists, the default otherwise.
@@ -42,7 +65,9 @@ end
 ---@param name string|nil franchise name
 ---@return table lore
 function M.lore(name)
-  return (require("core.franchise.lore." .. M.resolve(name)))
+  -- an opt in franchise still loads by name, for checkhealth and the specs
+  local known = vim.tbl_contains(M.all_names(), name) and name or M.DEFAULT
+  return (require("core.franchise.lore." .. known))
 end
 
 --- Counts days since the epoch for a calendar date, the same in every timezone.

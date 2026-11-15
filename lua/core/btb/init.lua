@@ -55,11 +55,8 @@ end
 ---@param win integer
 ---@param persona { portrait?: string }
 function M.portrait(_, win, persona)
-  local file = actions.portrait_file(
-    require("core.utils").portrait_path,
-    persona,
-    require("core.themes").current()
-  )
+  local file =
+    actions.portrait_file(vim.fn.stdpath("config"), persona, require("core.themes").current())
   if not file then
     return
   end

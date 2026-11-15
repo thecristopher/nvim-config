@@ -2,14 +2,14 @@
 local M = {}
 
 local function portrait_exists(file)
-  return vim.fn.filereadable(require("core.utils").portrait_path(file)) == 1
+  return vim.fn.filereadable(vim.fn.stdpath("config") .. "/images/portraits/" .. file) == 1
 end
 
 local function check_franchises()
   local actions = require("core.franchise.actions")
   local validate = require("core.franchise.actions.validate")
   actions.rediscover()
-  for _, name in ipairs(actions.names()) do
+  for _, name in ipairs(actions.all_names()) do
     vim.health.start("Franchise: " .. name)
     local ok, lore = pcall(actions.lore, name)
     if not ok then

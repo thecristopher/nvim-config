@@ -1,5 +1,5 @@
 -- Boss fights against your own errors: who guards each region (from the franchise), when a fight begins, and how the
--- health bar looks at any moment, gold chip of fresh damage included. Times are milliseconds.
+-- health bar, the stalker's hall or the scene's hearts look at any moment. Times are milliseconds.
 local ease = require("core.motion.actions")
 
 local M = {}
@@ -165,6 +165,78 @@ function M.hall(width, closeness)
   local walk = width - 2
   local near = math.floor((1 - math.max(0, math.min(1, closeness))) * walk + 0.5)
   return { near = near, far = walk - near }
+end
+
+-- the scene ------------------------------------------------------------------------------
+-- In worlds where the boss is a villain stealing the scene, every error is a broken heart on the
+-- stage. Each fix mends one, it glows as it heals, and the villain loses the crowd line by line.
+
+M.HEARTS = { broken = "󰋔", mended = "󰋑" }
+-- every heart takes its glyph and a space, so a long fight shares each heart among several errors
+M.HEART_CELLS = 2
+
+M.SCENE_LINES = {
+  { below = 0.34, text = "exit stage left" },
+  { below = 0.67, text = "losing the crowd" },
+  { below = math.huge, text = "steals the spotlight" },
+}
+
+--- Counts the hearts on the stage and how many of them are mended.
+---@param errors integer errors right now
+---@param peak integer most errors seen during the fight
+---@param width integer cells the row of hearts may take
+---@return { total: integer, mended: integer }
+function M.hearts(errors, peak, width)
+  local total = math.max(1, math.min(peak, math.floor(width / M.HEART_CELLS)))
+  local broken = math.ceil(M.health(errors, peak) * total)
+  return { total = total, mended = total - broken }
+end
+
+--- Returns how many hearts appear while the villain walks on, one after another.
+---@param total integer
+---@param since_entrance number milliseconds since the fight began
+---@return integer
+function M.hearts_shown(total, since_entrance)
+  return math.ceil(total * ease.progress(since_entrance, M.ENTRANCE_MS))
+end
+
+--- Returns how bright the hearts mended by the last fixes still glow, fading as the hit settles.
+---@param since_hit number|nil milliseconds since the last fix, nil when nothing was mended yet
+---@return number from 0 to 1
+function M.mend_glow(since_hit)
+  if not since_hit then
+    return 0
+  end
+  return 1 - ease.ease("in_out_sine", ease.progress(since_hit, M.hit_duration()))
+end
+
+--- Builds the row of hearts: the mended ones first, the freshest of them glowing, then the broken.
+---@param hearts { total: integer, mended: integer }
+---@param fresh integer hearts mended by the last fixes
+---@param shown integer hearts on the stage so far
+---@return { glyph: string, state: "mended"|"fresh"|"broken" }[]
+function M.heart_row(hearts, fresh, shown)
+  local row = {}
+  for index = 1, math.min(shown, hearts.total) do
+    local mended = index <= hearts.mended
+    local state = mended and (index > hearts.mended - fresh and "fresh" or "mended") or "broken"
+    table.insert(row, { glyph = mended and M.HEARTS.mended or M.HEARTS.broken, state = state })
+  end
+  return row
+end
+
+--- Builds the line above the stage: the villain on the left, what the scene says on the right.
+---@param name string
+---@param health number fraction of broken hearts left
+---@param width integer
+---@return string
+function M.scene_header(name, health, width)
+  for _, line in ipairs(M.SCENE_LINES) do
+    if health < line.below then
+      return spread(name, line.text, width)
+    end
+  end
+  return spread(name, M.SCENE_LINES[#M.SCENE_LINES].text, width)
 end
 
 --- Picks the editor row for the bar: just above the statusline, or the top while the cursor is down there.

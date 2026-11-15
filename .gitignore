@@ -3,3 +3,6 @@ NONE
 
 # compiled from spell/en.utf-8.add by core/spell on startup
 spell/*.spl
+
+# settings only this machine wants, read by core/options
+lua/core/options_local.lua

@@ -126,12 +126,16 @@ return {
                 require("core.music").open()
               end,
             },
-            -- the breathing grace or the health ECG, each carries its own highlight group
+            -- the breathing grace, the health ECG or the heartbeat, each with its own highlight group
             {
               cond = wide("status"),
               function()
-                if require("core.franchise").mechanic("status") == "ecg" then
+                local status = require("core.franchise").mechanic("status")
+                if status == "ecg" then
                   return require("core.ecg").statusline()
+                end
+                if status == "heartbeat" then
+                  return require("core.heartbeat").statusline()
                 end
                 return require("core.runes").grace()
               end,

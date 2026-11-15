@@ -103,4 +103,38 @@ return {
       "{boss} is finished. Let's find a quiet spot under the moon.",
     },
   },
+  danger_room = {
+    trial_passed = {
+      "All green. Focus is a blade, and you just drew it.",
+      "Every test passed. I felt that one land from across the room.",
+      "Clean run. Now come here, the sun is still warm on the floor.",
+      "Green. No wasted motion. That's how I like it.",
+    },
+    trial_failed = {
+      "Red. The blade slipped, it happens. Breathe and draw again.",
+      "A test failed. I can read it already, it's a small one.",
+      "Don't flinch. We reset the room and run it again.",
+      "That one fought back. Good, now we know where it hides.",
+    },
+    ci_passed = {
+      "{branch} cleared CI. Sharp and quiet, like a good strike.",
+      "CI passed {branch}. I knew before it finished. I always do.",
+      "{branch} is green. Training's over, you're taking me out.",
+    },
+    ci_failed = {
+      "{branch} failed CI. The simulation cheated, not you.",
+      "Red on {branch}. Show me the logs, I'll find the flaw.",
+      "{branch} went down in CI. Up, the room is resetting.",
+    },
+    pushed = {
+      "{branch} is out. One clean cut, no hesitation.",
+      "Pushed {branch}. I like the way you commit to things.",
+      "{branch} is gone. Let the next round come.",
+    },
+    boss_felled = {
+      "{boss} is down. That's what a focused mind does.",
+      "{boss} never stood a chance against the two of us.",
+      "That was {boss}. Sheathe it, we earned the evening.",
+    },
+  },
 }

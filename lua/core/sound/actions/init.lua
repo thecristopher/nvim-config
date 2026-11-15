@@ -11,6 +11,7 @@ M.EVENTS = {
   "title",
   "door",
   "fog",
+  "curtain",
   "rest",
   "boss",
   "merchant",

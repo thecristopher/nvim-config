@@ -239,9 +239,7 @@ describe("characters", function()
   it("keeps every region's portrait on disk", function()
     local root = vim.fn.getcwd() .. "/images/portraits/"
     for _, region in ipairs(actions.regions()) do
-      if not region.private then
-        assert.equal(1, vim.fn.filereadable(root .. region.portrait), region.portrait)
-      end
+      assert.equal(1, vim.fn.filereadable(root .. region.portrait), region.portrait)
     end
   end)
 

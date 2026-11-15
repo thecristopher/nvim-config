@@ -1,6 +1,7 @@
 -- A boss health bar for buffers that stay full of errors. The region's boss shows up after the
 -- errors linger, every fix lands as a hit with a gold chip of damage, and the last fix fells it.
--- Worlds where the boss is a stalker draw a hall instead, with the boss walking toward you.
+-- Worlds where the boss is a stalker draw a hall instead, with the boss walking toward you, and
+-- worlds where it steals the scene draw a row of broken hearts that every fix mends.
 local actions = require("core.boss.actions")
 local motion = require("core.motion")
 
@@ -13,6 +14,9 @@ local stages = {}
 local view
 local animation
 local hunt
+
+-- steps a freshly mended heart glows through on its way back to plain pink
+local GLOW_LEVELS = 4
 
 local function palette()
   return require("core.themes").palette()
@@ -32,10 +36,26 @@ local function define_highlights()
   vim.api.nvim_set_hl(0, "EldenBossFill", vim.tbl_extend("force", clear, { fg = p.red }))
   vim.api.nvim_set_hl(0, "EldenBossChip", vim.tbl_extend("force", clear, { fg = p.yellow }))
   vim.api.nvim_set_hl(0, "EldenBossEmpty", vim.tbl_extend("force", clear, { fg = p.surface2 }))
+  -- the scene's hearts: broken ones gray, mended ones in her pink, fresh ones glowing toward light
+  vim.api.nvim_set_hl(0, "EldenBossBroken", vim.tbl_extend("force", clear, { fg = p.overlay1 }))
+  vim.api.nvim_set_hl(0, "EldenBossMended", vim.tbl_extend("force", clear, { fg = p.pink }))
+  local blend = require("core.themes.actions").blend
+  for level = 1, GLOW_LEVELS do
+    local glow = blend(blend(p.yellow, "#FFFFFF", 0.7), p.pink, level / GLOW_LEVELS)
+    vim.api.nvim_set_hl(
+      0,
+      "EldenBossFresh" .. level,
+      vim.tbl_extend("force", clear, { fg = glow, bold = true })
+    )
+  end
 end
 
 local function stalker_mode()
   return require("core.franchise").mechanic("boss") == "stalker"
+end
+
+local function scene_mode()
+  return require("core.franchise").mechanic("boss") == "scene"
 end
 
 local function enabled()
@@ -139,6 +159,33 @@ local function hall_line(hall)
   return text, marks
 end
 
+local HEART_GROUPS = { broken = "EldenBossBroken", mended = "EldenBossMended" }
+
+-- the hearts mended by the last fixes, scaled when one heart stands for several errors
+local function fresh_hearts(fight, hearts, glow)
+  if glow <= 0 then
+    return 0
+  end
+  return math.min(hearts.mended, math.ceil((fight.damage or 0) * hearts.total / fight.peak))
+end
+
+local function heart_line(fight, width)
+  local moment = now()
+  local hearts = actions.hearts(fight.errors, fight.peak, width)
+  local glow = actions.mend_glow(fight.hit_at and moment - fight.hit_at or nil)
+  local shown = actions.hearts_shown(hearts.total, moment - fight.entered_at)
+  local row = actions.heart_row(hearts, fresh_hearts(fight, hearts, glow), shown)
+  local fresh_group = "EldenBossFresh" .. math.max(1, math.ceil(glow * GLOW_LEVELS))
+  local text = (" "):rep(math.max(0, math.floor((width - hearts.total * actions.HEART_CELLS) / 2)))
+  local marks = {}
+  for _, heart in ipairs(row) do
+    local piece = heart.glyph .. " "
+    table.insert(marks, { #text, #text + #heart.glyph, HEART_GROUPS[heart.state] or fresh_group })
+    text = text .. piece
+  end
+  return text, marks
+end
+
 local function paint(header, name_end, line, marks)
   vim.api.nvim_buf_set_lines(view.buf, 0, -1, false, { header, line })
   vim.api.nvim_buf_clear_namespace(view.buf, ns, 0, -1)
@@ -195,6 +242,11 @@ local function render(fight)
   end
   if stalker_mode() then
     return render_stalker(fight)
+  end
+  if scene_mode() then
+    local line, marks = heart_line(fight, view.width)
+    local header = actions.scene_header(fight.name, fight.health, view.width)
+    return paint(header, #fight.name, line, marks)
   end
   local frame = actions.frame(fight, now())
   local header = actions.header(fight.name, frame.damage, view.width)

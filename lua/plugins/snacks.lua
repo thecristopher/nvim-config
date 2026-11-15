@@ -113,6 +113,7 @@ return {
         layouts = {
           grace = require("core.chrome.picker").GRACE,
           inventory = require("core.chrome.picker").INVENTORY,
+          vanity = require("core.chrome.picker").VANITY,
         },
         layout = {
           cycle = true,

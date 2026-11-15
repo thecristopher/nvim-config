@@ -1,7 +1,6 @@
 -- __title__, one region per palette. Every palette fills the same catppuccin slots,
 -- yellow is the region accent, rosewater is functions, lavender is types, green is strings.
--- Drop the portrait into images/portraits/ with the name below, or mark the region private = true
--- and drop it into the private portraits folder when it shows someone real.
+-- Drop the portrait into images/portraits/ with the name below.
 return {
   {
     name = "first_region",

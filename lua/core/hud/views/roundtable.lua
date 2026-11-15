@@ -331,46 +331,7 @@ local function rule(label, width)
 end
 
 local function quest(model, plan)
-  local status = model.status or {}
-  local width = plan.body_width
-  local last_selected, change = parts.quest_selection(model)
-  local title = rule(model.focus == "quest" and "Current Quest ▼" or "Current Quest  j", width)
-  if model.focus == "quest" then
-    title[1][2] = "EldenHudTitle"
-  end
-  local rows = {
-    title,
-    hud.indent({
-      parts.quest_line(
-        status,
-        width - 2,
-        "No quest here, p travels to one of your " .. (model.sites or "projects")
-      ),
-    }, 1)[1],
-  }
-  if status.last_file then
-    local bg = last_selected and "EldenHudSlotSel" or nil
-    table.insert(rows, {
-      { last_selected and "▶ " or "  ", "EldenHudFrameSel" },
-      { "󰘍 last  ", "EldenHudDim", bg = bg, spot = last_selected and "cursor" or nil },
-      {
-        hud.fit(status.last_file, width - 12),
-        last_selected and "EldenHudBanner" or "EldenHudName",
-        bg = bg,
-      },
-    })
-  else
-    table.insert(rows, {})
-  end
-  vim.list_extend(
-    rows,
-    hud.indent(parts.changes(status.changes or {}, width - 4, plan.quest_rows, change), 2)
-  )
-  -- a fixed height, so the stage never shifts when the changes arrive from git
-  while #rows < 3 + plan.quest_rows do
-    table.insert(rows, {})
-  end
-  return rows
+  return parts.quest(model, plan.body_width, plan.quest_rows, rule)
 end
 
 local function panes(model, plan)

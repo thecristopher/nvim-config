@@ -47,17 +47,19 @@ local function change_chunks(line, width, selected)
   }
 end
 
---- Lays changed files (porcelain lines) in two columns, as many rows as given. When they do not
+--- Lays changed files (porcelain lines) in two columns, or one in a narrow card, as many rows as given. When they do not
 --- all fit, the last cell says how many more there are, and while one is selected the page that
 --- holds it is shown instead.
 ---@param changes string[]
 ---@param width integer
 ---@param rows integer
 ---@param selected? integer the selected change, when the quest has the focus
+---@param columns? integer 1 or 2, two by default
 ---@return table[] rows of chunks
-function M.changes(changes, width, rows, selected)
-  local column = math.floor((width - 2) / 2)
-  local capacity = rows * 2
+function M.changes(changes, width, rows, selected, columns)
+  columns = columns or 2
+  local column = columns == 1 and width or math.floor((width - 2) / 2)
+  local capacity = rows * columns
   if capacity == 0 then
     return {}
   end
@@ -154,6 +156,54 @@ function M.quest_line(status, width, fallback)
     { "● ", count and count > 0 and "EldenHudKey" or "EldenHudDim" },
     { tally, "EldenHudCount" },
   }, width)
+end
+
+--- The quest you left open: its title, the project line, the last file and the changed files,
+--- always the same height so the stage never shifts when the changes arrive from git.
+---@param model table
+---@param width integer
+---@param change_rows integer rows the changed files may take
+---@param rule fun(label: string, width: integer): table[] the view's own title row
+---@return table[] rows
+function M.quest(model, width, change_rows, rule)
+  local status = model.status or {}
+  local last_selected, change = M.quest_selection(model)
+  local title = rule(model.focus == "quest" and "Current Quest ▼" or "Current Quest  j", width)
+  if model.focus == "quest" then
+    title[1][2] = "EldenHudTitle"
+  end
+  local rows = {
+    title,
+    hud.indent({
+      M.quest_line(
+        status,
+        width - 2,
+        "No quest here, p travels to one of your " .. (model.sites or "projects")
+      ),
+    }, 1)[1],
+  }
+  if status.last_file then
+    local bg = last_selected and "EldenHudSlotSel" or nil
+    table.insert(rows, {
+      { last_selected and "▶ " or "  ", "EldenHudFrameSel" },
+      { "󰘍 last  ", "EldenHudDim", bg = bg, spot = last_selected and "cursor" or nil },
+      {
+        hud.fit(status.last_file, width - 12),
+        last_selected and "EldenHudBanner" or "EldenHudName",
+        bg = bg,
+      },
+    })
+  else
+    table.insert(rows, {})
+  end
+  vim.list_extend(
+    rows,
+    hud.indent(M.changes(status.changes or {}, width - 4, change_rows, change), 2)
+  )
+  while #rows < 3 + change_rows do
+    table.insert(rows, {})
+  end
+  return rows
 end
 
 --- The footer under the whole stage: the player message and the stats, both centered.

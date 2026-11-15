@@ -61,44 +61,4 @@ function M.refresh_statusline()
   end)
 end
 
---- Picks the first folder that holds a portrait, so private portraits outside the repo win over
---- the ones it ships.
----@param file string|nil the portrait's file name, like "claire.jpg"
----@param dirs string[] folders to look in, in order
----@param readable fun(path: string): boolean
----@return string|nil path nil when no folder has it
-function M.find_portrait(file, dirs, readable)
-  if not file then
-    return nil
-  end
-  for _, dir in ipairs(dirs) do
-    local path = dir .. "/" .. file
-    if readable(path) then
-      return path
-    end
-  end
-  return nil
-end
-
---- The folders portraits live in: the private one first (`vim.g.eldentree_portraits_dir`, or
---- eldentree/portraits in stdpath data), never committed, then images/portraits in the config.
----@return string[]
-function M.portrait_dirs()
-  return {
-    vim.g.eldentree_portraits_dir or (vim.fn.stdpath("data") .. "/eldentree/portraits"),
-    vim.fn.stdpath("config") .. "/images/portraits",
-  }
-end
-
---- Where a portrait is on disk. A portrait no folder holds points at the config's folder, so a
---- readability check on it still says no.
----@param file string the portrait's file name
----@return string
-function M.portrait_path(file)
-  local found = M.find_portrait(file, M.portrait_dirs(), function(path)
-    return vim.fn.filereadable(path) == 1
-  end)
-  return found or (M.portrait_dirs()[2] .. "/" .. file)
-end
-
 return M

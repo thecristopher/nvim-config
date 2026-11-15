@@ -1,13 +1,14 @@
 -- Elizabeth's stages, one role per palette, each drawn from the light of its own photo. Every
 -- palette fills the same catppuccin slots, yellow is the stage accent, rosewater is functions,
--- lavender is types, green is strings. The portraits are private: they live in the private
--- portraits folder (stdpath data, eldentree/portraits), never in the repo.
+-- lavender is types, green is strings. All four photos share the same golden hour through the
+-- window, so peach stays warm on every stage while the accent changes with the costume. The
+-- figure is the whole photo, for the dressing room mirror, the portrait the crop everything else uses.
 return {
   {
     name = "westview",
     character = "Scarlet Witch",
     portrait = "elizabeth_scarlet_witch.jpg",
-    private = true,
+    figure = "elizabeth_scarlet_witch_figure.jpg",
     title = "Westview",
     tagline = "golden hour behind a scarlet hex",
     palette = {
@@ -44,7 +45,7 @@ return {
     name = "separate_ways",
     character = "Ada",
     portrait = "elizabeth_ada.jpg",
-    private = true,
+    figure = "elizabeth_ada_figure.jpg",
     title = "Separate Ways",
     tagline = "a red dress crossing the castle dark",
     palette = {
@@ -81,7 +82,7 @@ return {
     name = "moonrise_towers",
     character = "Shadowheart",
     portrait = "elizabeth_shadowheart.jpg",
-    private = true,
+    figure = "elizabeth_shadowheart_figure.jpg",
     title = "Moonrise Towers",
     tagline = "moonlight on silver and old leather",
     palette = {
@@ -112,6 +113,43 @@ return {
       sapphire = "#6890C4",
       sky = "#A0C4E0",
       pink = "#D898B0",
+    },
+  },
+  {
+    name = "danger_room",
+    character = "Psylocke",
+    portrait = "elizabeth_psylocke.jpg",
+    figure = "elizabeth_psylocke_figure.jpg",
+    title = "Danger Room",
+    tagline = "a psychic blade and a red sash",
+    palette = {
+      base = "#0B0A12",
+      mantle = "#08070D",
+      crust = "#040408",
+      surface0 = "#181726",
+      surface1 = "#211F33",
+      surface2 = "#2B2940",
+      overlay0 = "#48455F",
+      overlay1 = "#66637F",
+      overlay2 = "#86839F",
+      subtext0 = "#A6A3BD",
+      subtext1 = "#C3C0D6",
+      text = "#E4E2F0",
+      -- the indigo suit is the accent, the red sash is the errors
+      yellow = "#8C88FF",
+      peach = "#EDB874",
+      green = "#A0C8A6",
+      teal = "#7CB8B4",
+      lavender = "#B3A6F0",
+      mauve = "#C99AE0",
+      red = "#FF5C6C",
+      maroon = "#FF8090",
+      rosewater = "#EAC6C0",
+      flamingo = "#E6A29A",
+      blue = "#7FA4F0",
+      sapphire = "#6A8EE0",
+      sky = "#9EC6EE",
+      pink = "#E896C0",
     },
   },
 }

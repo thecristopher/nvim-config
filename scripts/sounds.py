@@ -220,6 +220,184 @@ def er_region():
     return mix((gong, 0.6, 0.0), (pad, 0.6, 0.15)), HALL
 
 
+# Elizabeth: a dressing room and a stage. Music box notes, velvet curtains, applause and the
+# clapperboard, with a heartbeat for the villain.
+STAGE = "aecho=0.8:0.7:60|160|340:0.4|0.25|0.12"
+
+# notes by name, so the melodies read like a score
+NOTE = {
+    "C5": 523.25, "D5": 587.33, "E5": 659.25, "F5": 698.46, "G5": 783.99, "A5": 880.0,
+    "B5": 987.77, "C6": 1046.5, "D6": 1174.66, "E6": 1318.51, "G6": 1567.98, "A4": 440.0,
+    "E4": 329.63, "C4": 261.63, "G4": 392.0, "A3": 220.0,
+}
+
+
+def music_box(name, seconds=1.2):
+    """A music box tine: a bright bell with a quick fade."""
+    return decay(bell(NOTE[name], seconds), seconds * 0.35)
+
+
+def melody(names, gap, seconds=1.2):
+    """Plays notes one after another, gap seconds apart."""
+    return mix(*[(music_box(name, seconds), 0.6, index * gap) for index, name in enumerate(names)])
+
+
+def clap(seed):
+    """One hand clap: a short burst of bright noise."""
+    burst = decay(noise(0.06, seed=seed), 0.012)
+    return lowpass(highpass(burst, 700), 4200)
+
+
+def applause(seconds, density, seed=3):
+    """A crowd clapping, density claps per second scattered at random."""
+    rng = random.Random(seed)
+    layers = [(silence(seconds), 1.0, 0.0)]
+    for index in range(int(seconds * density)):
+        when = rng.uniform(0.0, seconds)
+        # the crowd swells in and settles out
+        swell = math.sin(math.pi * when / seconds)
+        layers.append((clap(seed * 1000 + index), 0.25 + 0.5 * swell, when))
+    return mix(*layers)
+
+
+def velvet(seconds, seed, rising=True):
+    """Heavy fabric sliding along a rail: low noise whose brightness rises or falls."""
+    span = seconds * RATE
+
+    def cutoff(index):
+        into = index / span
+        return 180 + 900 * (into if rising else 1 - into)
+
+    return envelope(lowpass(noise(seconds, seed=seed), cutoff), attack=0.15, release=0.3)
+
+
+def clapper():
+    """The clapperboard snapping shut: two hard clicks a hair apart."""
+    snap = decay(highpass(noise(0.05, seed=77), 1500), 0.006)
+    body = decay(tone(180, 0.08, glide_to=90), 0.02)
+    return mix((snap, 1.0, 0.0), (body, 0.6, 0.0), (snap, 0.7, 0.025))
+
+
+def el_title():
+    tune = melody(["C5", "E5", "G5", "C6", "E6", "D6", "C6"], 0.22, 1.6)
+    pad = envelope(er_choir_pad([261.63, 329.63, 392.0], 2.6, 1600), attack=0.8, release=1.0)
+    return mix((tune, 0.9, 0.0), (pad, 0.35, 0.4)), STAGE
+
+
+def el_curtain():
+    closing = mix((velvet(0.9, 11, rising=True), 0.8, 0.0), (velvet(0.9, 12, rising=True), 0.6, 0.05))
+    meet = thump(70, 0.3)
+    opening = mix((velvet(1.0, 13, rising=False), 0.8, 0.0), (velvet(1.0, 14, rising=False), 0.6, 0.04))
+    return mix((closing, 1.0, 0.0), (meet, 0.5, 0.85), (opening, 1.0, 1.4)), ROOM
+
+
+def el_rest():
+    lullaby = melody(["E5", "C5", "D5", "G4", "C5", "E5", "D5", "C5"], 0.5, 1.8)
+    return lullaby, STAGE
+
+
+def el_boss():
+    layers, at = [], 0.0
+    for gap in (0.7, 0.6, 0.5, 0.42, 0.36):
+        layers += [(thump(50, 0.35), 0.9, at), (thump(46, 0.3), 0.55, at + 0.16)]
+        at += gap
+    dread = envelope(lowpass(chord([110.0, 116.54], at + 0.5, "saw"), 500), attack=0.8, release=0.6)
+    return mix((dread, 0.5, 0.0), *layers), STAGE
+
+
+def el_felled():
+    return mix((applause(1.6, 40, seed=5), 0.8, 0.0), (music_box("G6", 1.0), 0.5, 0.05)), STAGE
+
+
+def el_great():
+    crowd = applause(3.2, 70, seed=9)
+    swell = envelope(er_choir_pad([261.63, 329.63, 392.0, 523.25], 3.0, 2600), attack=0.6, release=1.2)
+    return mix((crowd, 0.9, 0.0), (swell, 0.55, 0.2), (melody(["C6", "E6", "G6"], 0.14), 0.5, 0.3)), STAGE
+
+
+def el_died():
+    falling = melody(["E5", "C5", "A4", "E4"], 0.32, 1.6)
+    return mix((clapper(), 1.0, 0.0), (falling, 0.7, 0.35)), STAGE
+
+
+def el_grace():
+    return melody(["C5", "E5", "G5", "C6", "E6"], 0.11, 1.4), STAGE
+
+
+def el_cleansed():
+    sparkle = melody(["G5", "B5", "D6", "G6"], 0.07, 1.0)
+    shimmer = envelope(lowpass(noise(1.0, seed=17), lambda index: 2000 + 3000 * index / RATE), 0.3, 0.5)
+    return mix((sparkle, 0.8, 0.0), (highpass(shimmer, 1800), 0.2, 0.1)), STAGE
+
+
+def el_region():
+    swish = velvet(0.6, 21, rising=True)
+    return mix((swish, 0.7, 0.0), (melody(["A4", "C5", "E5"], 0.09, 1.4), 0.7, 0.45)), STAGE
+
+
+def el_zone():
+    return music_box("E6", 1.4), STAGE
+
+
+def el_phantom():
+    pad = envelope(er_choir_pad([440.0, 554.37, 659.25], 2.0, 1400), attack=1.2, release=0.7)
+    return pad, STAGE
+
+
+def el_continue():
+    return melody(["G5", "C6"], 0.18, 1.4), STAGE
+
+
+def el_summon():
+    return melody(["C5", "D5", "E5", "G5", "A5", "C6", "D6", "E6"], 0.06, 1.2), STAGE
+
+
+def el_comfort():
+    return melody(["E5", "C5"], 0.35, 1.6), STAGE
+
+
+def el_bought():
+    return mix((music_box("C6", 0.8), 0.7, 0.0), (music_box("G6", 0.8), 0.6, 0.08)), ROOM
+
+
+def el_welcome():
+    return melody(["G5", "E5", "G5", "C6"], 0.14, 1.2), STAGE
+
+
+def el_merchant():
+    return melody(["C6", "G5"], 0.16, 1.0), STAGE
+
+
+def el_weapon():
+    return applause(1.0, 30, seed=29), STAGE
+
+
+def el_expedition():
+    hush = envelope(lowpass(noise(1.4, seed=31), lambda index: 1200 - 900 * index / (1.4 * RATE)), 0.05, 1.0)
+    return mix((clapper(), 1.0, 0.0), (hush, 0.35, 0.2)), ROOM
+
+
+def el_hud_open():
+    return mix((velvet(0.35, 41, rising=True), 0.6, 0.0), (music_box("C6", 0.6), 0.5, 0.2)), ROOM
+
+
+def el_hud_close():
+    return mix((velvet(0.35, 43, rising=False), 0.6, 0.0), (music_box("G5", 0.6), 0.4, 0.15)), ROOM
+
+
+def el_hud_move():
+    tick = decay(highpass(noise(0.03, seed=47), 2500), 0.004)
+    return mix((tick, 0.6, 0.0), (music_box("E6", 0.25), 0.25, 0.0)), ROOM
+
+
+def el_hud_select():
+    return music_box("C6", 0.5), ROOM
+
+
+def el_hud_back():
+    return music_box("G5", 0.5), ROOM
+
+
 RECIPES = {
     # title, door, rest (the save room), continue, grace (the typewriter saving), died (game over), merchant,
     # bought, welcome, weapon, summon, comfort, expedition and the hud_ inventory sounds are clips from the game, so they are not built here
@@ -231,6 +409,16 @@ RECIPES = {
     "elden_ring": {
         "great": er_great, "cleansed": er_cleansed,
         "fog": er_fog, "boss": er_boss, "region": er_region,
+    },
+    # every one of hers is built here, nothing is a clip
+    "elizabeth": {
+        "title": el_title, "curtain": el_curtain, "rest": el_rest, "boss": el_boss,
+        "felled": el_felled, "great": el_great, "died": el_died, "grace": el_grace,
+        "cleansed": el_cleansed, "region": el_region, "zone": el_zone, "phantom": el_phantom,
+        "continue": el_continue, "summon": el_summon, "comfort": el_comfort, "bought": el_bought,
+        "welcome": el_welcome, "merchant": el_merchant, "weapon": el_weapon,
+        "expedition": el_expedition, "hud_open": el_hud_open, "hud_close": el_hud_close,
+        "hud_move": el_hud_move, "hud_select": el_hud_select, "hud_back": el_hud_back,
     },
 }
 

@@ -206,3 +206,77 @@ describe("stalker_header", function()
     assert.is_truthy(header:match("^Mr%. X%s+right behind you$"))
   end)
 end)
+
+describe("hearts", function()
+  it("breaks one heart per error at the start of the scene", function()
+    assert.same({ total = 5, mended = 0 }, actions.hearts(5, 5, 80))
+  end)
+
+  it("mends a heart for every fix Claire lands", function()
+    assert.same({ total = 5, mended = 2 }, actions.hearts(3, 5, 80))
+  end)
+
+  it("shares hearts among errors when the stage is too narrow for all of them", function()
+    local hearts = actions.hearts(40, 40, 20)
+    assert.equal(10, hearts.total)
+    assert.equal(0, hearts.mended)
+  end)
+
+  it("keeps a heart broken while a single error is left", function()
+    assert.equal(9, actions.hearts(1, 40, 20).mended)
+  end)
+end)
+
+describe("hearts_shown", function()
+  it("brings the hearts on one after another as the villain walks on", function()
+    assert.equal(0, actions.hearts_shown(6, 0))
+    assert.equal(6, actions.hearts_shown(6, actions.ENTRANCE_MS))
+  end)
+end)
+
+describe("mend_glow", function()
+  it("glows brightest right as Inde fixes it", function()
+    assert.equal(1, actions.mend_glow(0))
+  end)
+
+  it("settles once the hit is over", function()
+    assert.near(0, actions.mend_glow(actions.hit_duration()), 0.0001)
+  end)
+
+  it("stays dark before anything was mended", function()
+    assert.equal(0, actions.mend_glow(nil))
+  end)
+end)
+
+describe("heart_row", function()
+  it("puts the mended hearts first and the freshest of them last", function()
+    local row = actions.heart_row({ total = 4, mended = 2 }, 1, 4)
+    assert.same(
+      { "mended", "fresh", "broken", "broken" },
+      vim.tbl_map(function(heart)
+        return heart.state
+      end, row)
+    )
+  end)
+
+  it("draws a broken heart for every error left", function()
+    local row = actions.heart_row({ total = 3, mended = 0 }, 0, 3)
+    assert.equal(actions.HEARTS.broken, row[3].glyph)
+  end)
+
+  it("only shows the hearts that already walked on", function()
+    assert.equal(2, #actions.heart_row({ total = 5, mended = 0 }, 0, 2))
+  end)
+end)
+
+describe("scene_header", function()
+  it("lets the villain steal the spotlight at full strength", function()
+    assert.is_truthy(actions.scene_header("Agatha", 1, 60):find("steals the spotlight", 1, true))
+  end)
+
+  it("sends the villain off stage once Malenia is nearly done", function()
+    local header = actions.scene_header("Agatha", 0.1, 60)
+    assert.is_truthy(header:find("^Agatha"))
+    assert.is_truthy(header:find("exit stage left", 1, true))
+  end)
+end)

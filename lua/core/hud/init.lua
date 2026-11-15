@@ -14,8 +14,11 @@ local function style()
   return require("core.franchise").current().skin.dashboard
 end
 
+-- every view in core/hud/views a skin can name, anything else falls back to the roundtable
+local VIEWS = { roundtable = true, inventory = true, wardrobe = true }
+
 local function view()
-  return require("core.hud.views." .. (style() == "inventory" and "inventory" or "roundtable"))
+  return require("core.hud.views." .. (VIEWS[style()] and style() or "roundtable"))
 end
 
 -- the HUD lives in whichever window shows its buffer, so a split that moves on to another buffer
@@ -119,8 +122,13 @@ local function stats()
   )
 end
 
+-- the region's image for the view in use, and whether it is a whole figure
+local function portrait_image()
+  return actions.image_for(require("core.themes").current(), view().SHOWS_FIGURES == true)
+end
+
 local function portrait_file()
-  return require("core.utils").portrait_path(require("core.themes").current().portrait)
+  return vim.fn.stdpath("config") .. "/images/portraits/" .. (portrait_image() or "")
 end
 
 -- a region without its portrait yet, or a terminal that can draw neither pixels nor chafa, goes without
@@ -168,6 +176,8 @@ local function model()
     date = os.date("%A %d %B  ·  %H:%M"),
     stats = state.stats,
     portrait = portrait_available(),
+    figure = select(2, portrait_image()),
+    examine = require("core.franchise").current().chrome.examine,
     status = quest_status,
     selected = M.selected(),
   }
