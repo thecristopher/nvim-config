@@ -310,6 +310,7 @@ Every leader key lives in one list, `lua/core/leader/actions/init.lua`, grouped 
 | `<leader>cw`                | Replace the word under the cursor in this file (`<C-w>` clears the prefilled word) |
 | `<leader>uc` / `<leader>uC` | Toggle the `.env` cloak, or peek one line                                          |
 | `[y` / `]y`                 | Right after a paste, swap it for the older or newer yank                           |
+| `x` / `c` / `p` in visual   | Never touch the clipboard: only a yank or a `d` cut lands in it, and pasting over a selection twice pastes the same thing twice |
 | `<C-n>`                     | Add a cursor on the next match (multicursor)                                       |
 | `<A-Up>` / `<A-Down>`       | Add a cursor above or below                                                        |
 | `<leader>Ma`                | Add a cursor on every match                                                        |

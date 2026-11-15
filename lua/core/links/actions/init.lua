@@ -2,13 +2,30 @@
 -- file:line references Claude Code prints. Pure logic only.
 local M = {}
 
-local URL = "https?://[%w%-%._~:/%?#%[%]@!%$&'%*%+,;=%%]+"
+local URL = "https?://[%w%-%._~:/%?#%[%]@!%$&'%(%)%*%+,;=%%]+"
 
 -- a path with an extension, like lua/core/links/init.lua, ~/notes.md or /tmp/a.lua
 local FILE = "[%w%._%-/~]*[%w_%-]%.%a[%w]*"
 
 -- punctuation that ends a sentence around a link, never part of it
 local TRAILING = "[%.,;:!%?'%]]+$"
+
+-- a closing parenthesis belongs to the url only when the url opened it, like a wiki page
+-- named Malenia_(Elden_Ring); the one closing "(see http://localhost:3000)" does not
+local function trim(url)
+  while true do
+    local trimmed = url:gsub(TRAILING, "")
+    local _, opened = trimmed:gsub("%(", "")
+    local _, closed = trimmed:gsub("%)", "")
+    if trimmed:sub(-1) == ")" and closed > opened then
+      trimmed = trimmed:sub(1, -2)
+    end
+    if trimmed == url then
+      return url
+    end
+    url = trimmed
+  end
+end
 
 local function urls_in(line)
   local links = {}
@@ -18,7 +35,7 @@ local function urls_in(line)
     if not first then
       return links
     end
-    local url = line:sub(first, last):gsub(TRAILING, "")
+    local url = trim(line:sub(first, last))
     links[#links + 1] = { url = url, first = first, last = first + #url - 1 }
     from = last + 1
   end
@@ -102,15 +119,62 @@ function M.url_at(line, column)
   return link and link.url
 end
 
---- Returns the last url printed in the lines, nil when there is none.
----@param lines string[] oldest first, like a terminal buffer
+-- a terminal line that fills its whole width runs on in the next one
+local function wraps(line, width)
+  return width ~= nil and vim.fn.strdisplaywidth(line or "") >= width
+end
+
+--- Joins the terminal lines a long line was wrapped over, the way it was printed.
+---@param lines string[]
+---@param row integer 1 based, any line of the wrapped run
+---@param width integer|nil the terminal's width, nil to take the line alone
+---@return string text, integer offset bytes before the row's own line in the text
+function M.logical_line(lines, row, width)
+  local first, last = row, row
+  while first > 1 and wraps(lines[first - 1], width) do
+    first = first - 1
+  end
+  while last < #lines and wraps(lines[last], width) do
+    last = last + 1
+  end
+  local text, offset = "", 0
+  for index = first, last do
+    if index == row then
+      offset = #text
+    end
+    text = text .. lines[index]
+  end
+  return text, offset
+end
+
+--- The url under a column even when the terminal wrapped it over several lines.
+---@param lines string[]
+---@param row integer 1 based
+---@param column integer 1 based byte column in that row
+---@param width integer|nil the terminal's width
 ---@return string|nil
-function M.last_url(lines)
-  for index = #lines, 1, -1 do
-    local links = urls_in(lines[index] or "")
+function M.url_across_lines(lines, row, column, width)
+  local text, offset = M.logical_line(lines, row, width)
+  return M.url_at(text, offset + column)
+end
+
+--- Returns the last url printed in the lines, nil when there is none. With the terminal's width,
+--- a url wrapped over several lines comes back whole.
+---@param lines string[] oldest first, like a terminal buffer
+---@param width? integer
+---@return string|nil
+function M.last_url(lines, width)
+  local index = #lines
+  while index >= 1 do
+    local text = M.logical_line(lines, index, width)
+    local links = urls_in(text)
     if #links > 0 then
       return links[#links].url
     end
+    -- step over the whole wrapped run, not line by line inside it
+    repeat
+      index = index - 1
+    until index < 1 or not wraps(lines[index], width)
   end
   return nil
 end

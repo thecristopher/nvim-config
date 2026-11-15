@@ -360,7 +360,9 @@ end
 --- The work waiting where you stand: the repo, its branch, what changed and the last file touched.
 ---@return { project?: string, branch?: string, changes?: string[], last_file?: string, filetype?: string }
 function M.quest()
-  local latest = vim.v.oldfiles[1]
+  local root = require("core.repos").root()
+  -- the quest is the project's, so its last file is the last one touched inside it
+  local latest = hud_actions.last_in(vim.v.oldfiles, root)
   local quest = {
     last_path = latest,
     -- whether the last file can be opened, so the views and the walkable items agree on it
@@ -369,7 +371,6 @@ function M.quest()
     -- the HUD's own buffer says nothing about the work, the last file you touched does
     filetype = latest and vim.filetype.match({ filename = latest }) or nil,
   }
-  local root = require("core.repos").root()
   if not root then
     return quest
   end

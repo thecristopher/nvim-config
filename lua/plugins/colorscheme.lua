@@ -117,6 +117,10 @@ return {
           NormalFloat = { fg = c.text, bg = c.mantle },
           -- Popup menu
           Pmenu = { fg = c.text, bg = c.surface0 },
+          -- the completion menu wears the same frame as every other float, so it and its
+          -- documentation beside it read as one piece
+          BlinkCmpMenu = { fg = c.text, bg = c.mantle },
+          BlinkCmpMenuBorder = { fg = c.yellow, bg = c.mantle },
           PmenuSel = { fg = c.base, bg = c.yellow },
           PmenuSbar = { bg = c.surface1 },
           PmenuThumb = { bg = c.yellow },

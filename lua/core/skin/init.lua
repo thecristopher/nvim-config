@@ -27,7 +27,7 @@ local function apply_signs()
   local severity = vim.diagnostic.severity
   vim.diagnostic.config({
     signs = { text = actions.sign_text(M.current().signs, severity) },
-    float = { border = M.border(), source = true, header = "", prefix = "" },
+    float = { border = M.border(), source = "if_many", header = "", prefix = "" },
   })
 end
 

@@ -467,4 +467,21 @@ function M.sunk(groups, base, blend, amount)
   return out
 end
 
+--- The last file touched inside a project, the newest of the recent files under its root. Outside a
+--- project, or when none of them lives there, the newest one anywhere.
+---@param oldfiles string[] newest first, like v:oldfiles
+---@param root string|nil the project's root
+---@return string|nil
+function M.last_in(oldfiles, root)
+  if root then
+    local prefix = root:gsub("/$", "") .. "/"
+    for _, path in ipairs(oldfiles) do
+      if path:sub(1, #prefix) == prefix then
+        return path
+      end
+    end
+  end
+  return oldfiles[1]
+end
+
 return M

@@ -327,3 +327,31 @@ describe("hint_chunks", function()
     assert.same({ { "Inde", "Label" } }, hud.hint_chunks({ "Inde" }, 10, "Key", "Label"))
   end)
 end)
+
+describe("last_in", function()
+  local oldfiles = {
+    "/Users/claire/.claude/desk.html",
+    "/Users/claire/love-letters/notes/anniversary.md",
+    "/Users/claire/love-letters-old/draft.md",
+  }
+
+  it("picks the last file Claire touched inside the project", function()
+    assert.equal(
+      "/Users/claire/love-letters/notes/anniversary.md",
+      hud.last_in(oldfiles, "/Users/claire/love-letters")
+    )
+  end)
+
+  it("never mistakes a sibling folder that starts the same for the project", function()
+    local recent =
+      { "/Users/claire/love-letters-old/draft.md", "/Users/claire/love-letters/vows.md" }
+    assert.equal(
+      "/Users/claire/love-letters/vows.md",
+      hud.last_in(recent, "/Users/claire/love-letters")
+    )
+  end)
+
+  it("falls back to the newest file anywhere outside a project", function()
+    assert.equal("/Users/claire/.claude/desk.html", hud.last_in(oldfiles, nil))
+  end)
+end)

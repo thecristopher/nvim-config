@@ -1,5 +1,13 @@
 -- Editor quality-of-life: navigation, text manipulation, diagnostics
 
+-- a yanky put that glows on landing, for an expr mapping
+local function put(plug)
+  return function()
+    require("core.chrome.yank").prime_put()
+    return plug
+  end
+end
+
 return {
   -- ── Flash: lightning-fast navigation ──────────────────────────────
   {
@@ -537,11 +545,31 @@ return {
   {
     "gbprod/yanky.nvim",
     event = "VeryLazy",
-    -- the TextYankPost autocmd in core/autocmds already flashes yanks
-    opts = { highlight = { on_put = false, on_yank = false } },
+    -- the TextYankPost autocmd in core/autocmds flashes yanks, puts glow through core/chrome/yank
+    opts = function()
+      return {
+        highlight = { on_put = true, on_yank = false, timer = require("core.chrome.yank").DURATION },
+      }
+    end,
     keys = {
-      { "p", "<Plug>(YankyPutAfter)", mode = { "n", "x" }, desc = "Put after" },
-      { "P", "<Plug>(YankyPutBefore)", mode = { "n", "x" }, desc = "Put before" },
+      { "p", put("<Plug>(YankyPutAfter)"), mode = "n", expr = true, desc = "Put after" },
+      { "P", put("<Plug>(YankyPutBefore)"), mode = "n", expr = true, desc = "Put before" },
+      -- over a selection both put before, which never yanks the replaced text: pasting twice in a
+      -- row pastes the same thing twice, not what the first paste replaced
+      {
+        "p",
+        put("<Plug>(YankyPutBefore)"),
+        mode = "x",
+        expr = true,
+        desc = "Put over (keep register)",
+      },
+      {
+        "P",
+        put("<Plug>(YankyPutBefore)"),
+        mode = "x",
+        expr = true,
+        desc = "Put over (keep register)",
+      },
       { "[y", "<Plug>(YankyCycleForward)", desc = "Paste the older yank instead" },
       { "]y", "<Plug>(YankyCycleBackward)", desc = "Paste the newer yank instead" },
       { "<leader>fy", "<cmd>YankyRingHistory<cr>", mode = { "n", "x" }, desc = "Yank history" },
