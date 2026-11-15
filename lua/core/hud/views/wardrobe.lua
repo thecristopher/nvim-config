@@ -304,8 +304,7 @@ end
 local function sheet_head(model, width)
   local status = model.status or {}
   if not status.project then
-    local fallback = "No quest here, p travels to one of your " .. (model.sites or "projects")
-    return { { { hud.fit(fallback, width), "EldenHudDim" } }, {} }
+    return { { { hud.fit(parts.word(model, "no_quest"), width), "EldenHudDim" } }, {} }
   end
   local count = status.changes and #status.changes or nil
   local tally = count == nil and "counting…" or count == 0 and "clean" or (count .. " changed")
@@ -344,7 +343,8 @@ end
 local function call_sheet(model, plan, width)
   local focused = model.focus == "quest"
   local inner = width - 4
-  local label = focused and "Current Quest ▼" or "Current Quest  j"
+  local quest = parts.word(model, "quest")
+  local label = focused and quest .. " ▼" or quest .. "  j"
   local rows = { top_edge(label, nil, width, focused) }
   for _, line in ipairs(sheet_head(model, inner)) do
     table.insert(rows, framed(line, width, focused))
@@ -374,7 +374,7 @@ local function columns(model, plan)
     items = model.tabs[model.tab].items,
     width = plan.rack_width,
     rows = plan.rack_rows,
-    empty = "Nothing on the rack yet",
+    empty = parts.word(model, "empty"),
   })
   vim.list_extend(rack, close_up(model, plan.rack_width))
   local stages, stage_grid = list_box(model, {
@@ -383,7 +383,7 @@ local function columns(model, plan)
     items = model.chest.items,
     width = plan.stages_width,
     rows = plan.stage_rows,
-    empty = "No stage found yet",
+    empty = parts.word(model, "no_sites"),
   })
   vim.list_extend(stages, call_sheet(model, plan, plan.stages_width))
   return rack, stages, { items = rack_grid, chest = stage_grid }
@@ -469,10 +469,6 @@ local function rail(model, width)
   return { rail_row, tags }
 end
 
--- most important first, a narrow screen drops them from the end
-local HINTS =
-  { "⏎ Use", "K Check", "C Combine", "⇥ Tabs", "hjkl Move", "j Quest", "s Session", "q Quit" }
-
 local function sides(model, plan)
   local rack, stages, grids = columns(model, plan)
   if plan.shape ~= "between" then
@@ -498,7 +494,9 @@ local function body(model, plan)
   local side_rows, grids = sides(model, plan)
   vim.list_extend(rows, side_rows)
   table.insert(rows, {})
-  local hints = hud.hint_chunks(HINTS, width, "EldenHudKey", "EldenHudHint")
+  -- most important first, a narrow screen drops them from the end
+  local hints =
+    hud.hint_chunks(parts.hints(model, parts.USE_HINTS), width, "EldenHudKey", "EldenHudHint")
   table.insert(rows, hud.center(hints, width))
   return rows, grids
 end

@@ -402,7 +402,7 @@ describe("wardrobe", function()
   end)
 
   it("says so when the rack is empty", function()
-    assert.is_truthy(line_of(wardrobe.render(model({ tab = 2 })), "Nothing on the rack yet"))
+    assert.is_truthy(line_of(wardrobe.render(model({ tab = 2 })), "Nothing here yet"))
   end)
 
   it("rings the mirror with bulbs between the rack and the stages", function()
@@ -504,5 +504,36 @@ describe("image_for", function()
 
   it("falls back to Malenia's portrait when she has no figure", function()
     assert.same({ "malenia.jpg", false }, { actions.image_for({ portrait = "malenia.jpg" }, true) })
+  end)
+end)
+
+describe("words", function()
+  local parts = require("core.hud.views.parts")
+
+  it("speaks the plain line when the model brings no words", function()
+    assert.equal("Current Quest", parts.word({}, "quest"))
+  end)
+
+  it("speaks the franchise's word when the model brings one", function()
+    assert.equal("Tonight's Scene", parts.word({ words = { quest = "Tonight's Scene" } }, "quest"))
+  end)
+
+  it("fills the sites into the plain line", function()
+    assert.is_truthy(parts.word({ sites = "Stages" }, "no_quest"):find("Stages", 1, true))
+  end)
+
+  it("writes the hints in the franchise's words", function()
+    local hints = parts.hints(
+      { words = { hint_use = "Wear" } },
+      { { "⏎", "use" }, { "q", "quit" } }
+    )
+    assert.same({ "⏎ Wear", "q Quit" }, hints)
+  end)
+
+  it("titles the dressing room's call sheet with Elizabeth's words", function()
+    local view =
+      wardrobe.render(model({ words = { quest = "Tonight's Scene", hint_use = "Wear" } }))
+    assert.is_truthy(line_of(view, "Tonight's Scene"))
+    assert.is_truthy(line_of(view, "⏎ Wear"))
   end)
 end)

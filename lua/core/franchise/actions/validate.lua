@@ -157,6 +157,18 @@ local function check_choices(lore, problems)
   unknown_choice((lore.skin or {}).border, M.BORDERS, "skin.border", problems)
 end
 
+-- every line of lua/core/franchise/lines.lua, said in the franchise's own words
+local function check_lines(lore, problems)
+  local keys = vim.tbl_keys(require("core.franchise.lines"))
+  table.sort(keys)
+  for _, key in ipairs(keys) do
+    local line = (lore.lines or {})[key]
+    if line == nil or line == "" or (type(line) == "table" and #line == 0) then
+      table.insert(problems, ("lines[%q] is missing"):format(key))
+    end
+  end
+end
+
 local function missing_keys(tbl, keys, label, problems)
   for _, key in ipairs(keys) do
     if tbl == nil or tbl[key] == nil then
@@ -291,6 +303,7 @@ function M.problems(lore, portrait_exists)
   missing_keys(lore, M.LISTS, "lore", problems)
   missing_keys(lore.coach, M.COACH, "coach", problems)
   check_choices(lore, problems)
+  check_lines(lore, problems)
   check_words(lore, problems)
   check_music(lore, problems)
   check_chrome(lore, problems)

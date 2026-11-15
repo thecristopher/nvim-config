@@ -7,6 +7,7 @@ return {
   regions = require("core.franchise.lore.__name__.regions"),
   skin = require("core.franchise.lore.__name__.skin"),
   voices = require("core.franchise.lore.__name__.voices"),
+  lines = require("core.franchise.lore.__name__.lines"),
 
   -- which version of each mechanic this world plays
   mechanics = {

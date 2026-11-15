@@ -10,6 +10,7 @@ return {
   regions = require("core.franchise.lore.elizabeth.regions"),
   skin = require("core.franchise.lore.elizabeth.skin"),
   voices = require("core.franchise.lore.elizabeth.voices"),
+  lines = require("core.franchise.lore.elizabeth.lines"),
 
   -- which version of each mechanic this world plays
   mechanics = {

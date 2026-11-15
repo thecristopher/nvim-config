@@ -6,6 +6,7 @@ return {
   regions = require("core.franchise.lore.elden_ring.regions"),
   skin = require("core.franchise.lore.elden_ring.skin"),
   voices = require("core.franchise.lore.elden_ring.voices"),
+  lines = require("core.franchise.lore.elden_ring.lines"),
 
   -- which version of each mechanic this world plays
   mechanics = {

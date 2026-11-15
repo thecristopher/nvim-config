@@ -148,6 +148,12 @@ describe("problems", function()
     assert.is_true(mentions(validate.problems(broken), "skin.border is bold"))
   end)
 
+  it("notices a line Claire never says in her own words", function()
+    local broken = lore()
+    broken.lines["commit.drafting"] = nil
+    assert.is_true(mentions(validate.problems(broken), 'lines["commit.drafting"] is missing'))
+  end)
+
   it("notices a missing skin piece", function()
     local broken = lore()
     broken.skin = vim.deepcopy(broken.skin)

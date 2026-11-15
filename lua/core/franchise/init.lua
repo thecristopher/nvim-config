@@ -39,6 +39,41 @@ function M.mechanic(name)
   return M.current().mechanics[name]
 end
 
+-- what every line can use: the region's character, what the world calls you and its name
+local function common_vars()
+  local lore = M.current()
+  return {
+    character = require("core.themes").current().character,
+    traveler = lore.words.traveler,
+    world = lore.title,
+  }
+end
+
+--- Returns what the franchise says for a key, in its own words, like "commit.drafting".
+--- See lua/core/franchise/lines.lua for every key and its plain line.
+---@param key string
+---@param vars table<string, any>|nil values for the line's own holes, like branch or number
+---@return string
+function M.line(key, vars)
+  local all = vim.tbl_extend("force", common_vars(), vars or {})
+  return actions.line(M.current().lines, require("core.franchise.lines"), key, all, math.random())
+end
+
+--- Returns every line under a prefix, keyed by what follows it, like lines("hud").quest.
+---@param prefix string like "hud"
+---@param vars table<string, any>|nil values for the lines' own holes
+---@return table<string, string>
+function M.lines(prefix, vars)
+  local found = {}
+  for key in pairs(require("core.franchise.lines")) do
+    local name = key:match("^" .. vim.pesc(prefix) .. "%.(.+)$")
+    if name then
+      found[name] = M.line(key, vars)
+    end
+  end
+  return found
+end
+
 --- Switches franchise for the rest of the day and repaints the editor in it.
 --- Everything that dresses up per franchise listens to the EldentreeFranchise event.
 ---@param name string franchise name
@@ -87,7 +122,7 @@ function M.create(text)
 
   vim.fn.mkdir(dir, "p")
   local template = vim.fn.stdpath("config") .. "/lua/core/franchise/template/"
-  for _, file in ipairs({ "init.lua", "regions.lua", "skin.lua", "voices.lua" }) do
+  for _, file in ipairs({ "init.lua", "regions.lua", "skin.lua", "voices.lua", "lines.lua" }) do
     local text_lines = vim.fn.readfile(template .. file)
     local filled =
       vim.split(actions.fill_template(table.concat(text_lines, "\n"), name), "\n", { plain = true })

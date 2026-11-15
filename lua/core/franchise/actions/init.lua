@@ -136,4 +136,33 @@ function M.fill_template(text, name)
   return (text:gsub("__name__", name):gsub("__title__", M.title(name)))
 end
 
+--- Fills a line's holes, like {character} or {branch}, leaving the ones it has no value for.
+---@param text string
+---@param vars table<string, any>|nil
+---@return string
+function M.fill(text, vars)
+  return (
+    text:gsub("{(%w+)}", function(name)
+      local value = (vars or {})[name]
+      return value ~= nil and tostring(value) or nil
+    end)
+  )
+end
+
+--- Returns what a franchise says for a key: its own line, or the plain one when it has none.
+--- A line that is a list picks one of its entries.
+---@param lines table<string, string|string[]>|nil the lore's lines
+---@param defaults table<string, string|string[]> the plain lines
+---@param key string like "commit.drafting"
+---@param vars table<string, any>|nil values for the holes
+---@param roll number|nil between 0 and 1, which entry of a list to say, the first by default
+---@return string
+function M.line(lines, defaults, key, vars, roll)
+  local text = (lines or {})[key] or defaults[key] or key
+  if type(text) == "table" then
+    text = text[math.min(#text, math.floor((roll or 0) * #text) + 1)] or key
+  end
+  return M.fill(text, vars)
+end
+
 return M

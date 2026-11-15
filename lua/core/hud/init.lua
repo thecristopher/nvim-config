@@ -104,11 +104,11 @@ end
 
 local function greeting()
   local hour = tonumber(os.date("%H"))
-  local part = hour < 5 and "The night is long"
-    or hour < 12 and "Good morning"
-    or hour < 18 and "Good afternoon"
-    or "Good evening"
-  return part .. ", " .. require("core.franchise").current().words.traveler
+  local part = hour < 5 and "night"
+    or hour < 12 and "morning"
+    or hour < 18 and "afternoon"
+    or "evening"
+  return require("core.franchise").line("hud.greeting_" .. part)
 end
 
 local function stats()
@@ -178,6 +178,8 @@ local function model()
     portrait = portrait_available(),
     figure = select(2, portrait_image()),
     examine = require("core.franchise").current().chrome.examine,
+    -- every label and hint in the franchise's own words
+    words = require("core.franchise").lines("hud", { sites = words.sites }),
     status = quest_status,
     selected = M.selected(),
   }

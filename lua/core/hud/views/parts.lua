@@ -4,6 +4,42 @@ local hud = require("core.hud.actions")
 
 local M = {}
 
+--- Returns what the HUD calls something in the franchise's words, from the model, or the plain
+--- line when the model brings none (see lua/core/franchise/lines.lua, the keys after "hud.").
+---@param model table
+---@param key string like "quest" or "hint_use"
+---@return string
+function M.word(model, key)
+  local said = (model.words or {})[key]
+  if said then
+    return said
+  end
+  local plain = require("core.franchise.lines")["hud." .. key] or key
+  return require("core.franchise.actions").fill(plain, { sites = model.sites or "projects" })
+end
+
+--- Builds the key hints in the franchise's words, most important first.
+---@param model table
+---@param keys { [1]: string, [2]: string }[] each key and the word after "hint_", like { "K", "check" }
+---@return string[] hints like "K Check"
+function M.hints(model, keys)
+  return vim.tbl_map(function(pair)
+    return pair[1] .. " " .. M.word(model, "hint_" .. pair[2])
+  end, keys)
+end
+
+-- the hints the roundtable and the dressing room show, Enter uses the item
+M.USE_HINTS = {
+  { "⏎", "use" },
+  { "K", "check" },
+  { "C", "combine" },
+  { "⇥", "tabs" },
+  { "hjkl", "move" },
+  { "j", "quest" },
+  { "s", "session" },
+  { "q", "quit" },
+}
+
 --- Letterspaces the champion's name as wide as the room allows: carved, then banner style, then plain.
 ---@param character string
 ---@param width integer
@@ -168,18 +204,15 @@ end
 function M.quest(model, width, change_rows, rule)
   local status = model.status or {}
   local last_selected, change = M.quest_selection(model)
-  local title = rule(model.focus == "quest" and "Current Quest ▼" or "Current Quest  j", width)
+  local quest = M.word(model, "quest")
+  local title = rule(model.focus == "quest" and quest .. " ▼" or quest .. "  j", width)
   if model.focus == "quest" then
     title[1][2] = "EldenHudTitle"
   end
   local rows = {
     title,
     hud.indent({
-      M.quest_line(
-        status,
-        width - 2,
-        "No quest here, p travels to one of your " .. (model.sites or "projects")
-      ),
+      M.quest_line(status, width - 2, M.word(model, "no_quest")),
     }, 1)[1],
   }
   if status.last_file then

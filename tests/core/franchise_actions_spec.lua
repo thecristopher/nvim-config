@@ -359,3 +359,56 @@ describe("fill_template", function()
     )
   end)
 end)
+
+describe("fill", function()
+  it("writes Claire's name into her line", function()
+    assert.equal(
+      "Claire types your commit",
+      actions.fill("{character} types your commit", { character = "Claire" })
+    )
+  end)
+
+  it("leaves a hole it has no value for", function()
+    assert.equal("Pushing {branch}", actions.fill("Pushing {branch}", {}))
+  end)
+end)
+
+describe("line", function()
+  local defaults = { ["commit.ready"] = "Draft ready", ["commit.drafting"] = "Drafting…" }
+
+  it("says the franchise's own words when it has them", function()
+    local lines = { ["commit.ready"] = "Lines ready for Inde" }
+    assert.equal("Lines ready for Inde", actions.line(lines, defaults, "commit.ready"))
+  end)
+
+  it("falls back to the plain line when the franchise has none", function()
+    assert.equal("Draft ready", actions.line({}, defaults, "commit.ready"))
+  end)
+
+  it("picks one of several lines by the roll", function()
+    local lines = { ["commit.drafting"] = { "Malenia writes…", "Claire types…" } }
+    assert.equal("Malenia writes…", actions.line(lines, defaults, "commit.drafting", nil, 0))
+    assert.equal("Claire types…", actions.line(lines, defaults, "commit.drafting", nil, 0.99))
+  end)
+
+  it("fills the holes of the line it picks", function()
+    local lines = { ["pr.pushing"] = "Sending '{branch}' to the studio…" }
+    local said = actions.line(lines, defaults, "pr.pushing", { branch = "anniversary" })
+    assert.equal("Sending 'anniversary' to the studio…", said)
+  end)
+end)
+
+describe("every franchise's lines", function()
+  for _, name in ipairs(actions.all_names()) do
+    it(("gives %s every line in its own words, with no em dash"):format(name), function()
+      local lines = actions.lore(name).lines
+      for key in pairs(require("core.franchise.lines")) do
+        local line = lines[key]
+        assert.is_truthy(line, key)
+        for _, text in ipairs(type(line) == "table" and line or { line }) do
+          assert.is_falsy(text:find("—", 1, true), key)
+        end
+      end
+    end)
+  end
+end)
