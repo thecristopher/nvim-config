@@ -431,6 +431,34 @@ describe("wardrobe", function()
     assert.equal(split.plan.indent, split.anchors.portrait.col - 2)
   end)
 
+  it("puts her at center stage on a wide screen, the rail and the sign beside her", function()
+    local wide =
+      wardrobe.render(model({ width = 160, height = 48, portrait = true, figure = true }))
+    assert.equal("center", wide.plan.shape)
+    local mirror = wide.anchors.portrait
+    assert.is_true(mirror.col > wide.plan.indent + wide.plan.rack_width)
+    assert.is_true(line_of(wide, "R O U N D T A B L E") < line_of(wide, "Current Quest"))
+  end)
+
+  it("lets her photo take nearly the whole height of the screen", function()
+    local wide =
+      wardrobe.render(model({ width = 160, height = 48, portrait = true, figure = true }))
+    assert.is_true(wide.anchors.portrait.height >= 48 - 12)
+  end)
+
+  it("never gives her less than the share of the tallest photo any shape allows", function()
+    for _, size in ipairs({ { 120, 40 }, { 160, 48 }, { 200, 50 }, { 99, 39 } }) do
+      local view = wardrobe.render(
+        model({ width = size[1], height = size[2], portrait = true, figure = true })
+      )
+      local room = size[2] - 2 - 3 - wardrobe.MIRROR_ROWS - wardrobe.NAME_ROWS
+      assert.is_true(
+        view.anchors.portrait.height >= math.floor(room * 0.75),
+        size[1] .. "x" .. size[2]
+      )
+    end
+  end)
+
   it("shows her whole figure, taller than wide, when the region has one", function()
     local mirror = wardrobe.render(
       model({ width = 200, height = 50, portrait = true, figure = true })

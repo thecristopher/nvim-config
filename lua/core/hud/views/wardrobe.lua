@@ -1,8 +1,8 @@
--- Elizabeth's dressing room. A marquee sign over a clothes rail the tabs hang from as tags, the
--- rack of the tab's pieces in a cabinet with a close up of the selected piece under it, the
--- stages on the other side with the call sheet of the quest you left open, and her whole figure
--- in a vanity mirror ringed with bulbs over a dressing table with her name. Everything sits
--- centered on screen at any size. Pure: model in, rows out.
+-- Elizabeth's dressing room, with her at center stage: her whole figure in a vanity mirror ringed
+-- with bulbs over a dressing table with her name, as tall as the screen allows. On its left the
+-- clothes rail the tabs hang from as tags, over the rack of the tab's pieces and a close up of the
+-- selected one; on its right the marquee sign over the stages and the call sheet of the quest you
+-- left open. Everything sits centered on screen at any size. Pure: model in, rows out.
 local hud = require("core.hud.actions")
 local parts = require("core.hud.views.parts")
 
@@ -10,12 +10,15 @@ local M = {}
 
 M.MARGIN = 2
 M.GAP = 3
-M.TAB_WIDTH = 6
--- compact is how narrow a column may get when the mirror needs the room
-M.RACK_WIDTH = { compact = 22, min = 28, max = 44 }
-M.STAGE_WIDTH = { compact = 26, min = 32, max = 50 }
--- comfort is how tall the mirror must stand between the columns before another shape is tried
-M.PORTRAIT = { min = 4, comfort = 16, max = 34 }
+M.TAB_WIDTH = { min = 4, max = 6 }
+-- compact is how narrow a column may get when the mirror stands aside everything, center is how
+-- narrow it may get beside the mirror at center stage (the stages hold the sign, so they need more)
+M.RACK_WIDTH = { compact = 22, center = 34, max = 44 }
+M.STAGE_WIDTH = { compact = 26, center = 45, max = 50 }
+-- she is the star: the mirror takes center stage while its portrait stands at least this share of
+-- the tallest one any shape allows
+M.PORTRAIT = { min = 4, max = 60 }
+M.CENTER_SHARE = 0.85
 -- the bulbs ring the portrait: a bulb and a space on each side, a row of bulbs above and below
 M.MIRROR_COLS = 4
 M.MIRROR_ROWS = 2
@@ -25,10 +28,13 @@ M.QUEST_CHANGE_ROWS = 3
 -- above the columns the sign, a gap, the rail and its tags and a gap; under them a gap and the hints
 M.TOP_ROWS = 7
 M.BOTTOM_ROWS = 2
+-- at center stage the rail tops the rack (rail, tags, gap) and the sign tops the stages (sign, gap)
+M.RAIL_ROWS = 3
+M.SIGN_ROWS = 4
 -- the close up card holds the piece's name and two lines about it
 M.CLOSE_UP_ROWS = 3
--- the columns grow no taller than this when nothing beside them asks for more
-M.SIDE_MAX = 22
+-- the columns grow no taller than this, so a tall mirror is flanked by cabinets, not empty towers
+M.SIDE_MAX = { beside = 22, center = 30 }
 -- the marker, key, icon and gap before a piece's name
 M.ROW_PREFIX = 7
 -- the narrowest a column of changed files reads well at
@@ -44,20 +50,22 @@ local function fixed_rows()
   return M.TOP_ROWS + M.BOTTOM_ROWS
 end
 
--- a frame takes a row above and below what it holds
-local function rack_rows_for(side)
-  return side - 2 - (M.CLOSE_UP_ROWS + 2)
+-- the rack's frame, the close up card and, at center stage, the rail above them
+local function rack_rows_for(side, center)
+  return side - 2 - (M.CLOSE_UP_ROWS + 2) - (center and M.RAIL_ROWS or 0)
 end
 
--- the call sheet's title is its top edge, then the project, the branch, the last file, the
--- changes and the bottom edge
-local function stage_rows_for(side, quest_rows)
-  return side - 2 - (4 + quest_rows + 1)
+-- the stages' frame and the call sheet: its top edge, the project, the branch, the last file,
+-- the changes and its bottom edge, and at center stage the sign above them
+local function stage_rows_for(side, quest_rows, center)
+  return side - 2 - (4 + quest_rows + 1) - (center and M.SIGN_ROWS or 0)
 end
 
 -- the shortest columns that still show three pieces and two stages
-local function side_min(quest_rows)
-  return math.max(3 + 2 + M.CLOSE_UP_ROWS + 2, 2 + 2 + 4 + quest_rows + 1)
+local function side_min(quest_rows, center)
+  local rack = 3 + 2 + M.CLOSE_UP_ROWS + 2 + (center and M.RAIL_ROWS or 0)
+  local stages = 2 + 2 + 4 + quest_rows + 1 + (center and M.SIGN_ROWS or 0)
+  return math.max(rack, stages)
 end
 
 -- the bulbs need one on both corners, so the mirror is always an odd number of cells wide
@@ -75,21 +83,22 @@ local function body_width(rack, stage)
 end
 
 -- the rack and the stages share the width the mirror leaves, the stages taking a little more
-local function column_widths(space)
-  local rack = hud.clamp(math.floor((space - M.GAP) * 0.45), M.RACK_WIDTH.compact, M.RACK_WIDTH.max)
-  local stage = hud.clamp(space - M.GAP - rack, M.STAGE_WIDTH.compact, M.STAGE_WIDTH.max)
+---@param size "compact"|"center" the narrowest each column may get
+local function column_widths(space, size)
+  local rack = hud.clamp(math.floor((space - M.GAP) * 0.45), M.RACK_WIDTH[size], M.RACK_WIDTH.max)
+  local stage = hud.clamp(space - M.GAP - rack, M.STAGE_WIDTH[size], M.STAGE_WIDTH.max)
   return rack, stage
 end
 
--- the cells and rows a shape leaves the portrait: between the columns, aside the whole body as
--- tall as the screen, or above the whole body
+-- the cells and rows a shape leaves the portrait: at center stage between the columns as tall as
+-- the screen, aside the whole body, or above it
 local function mirror_room(shape, inner, room, quest_rows)
   local ring = M.MIRROR_ROWS + M.NAME_ROWS
   -- one more cell for the padding an even width gets
   local cols = M.MIRROR_COLS + 1
-  if shape == "between" then
-    local columns = body_width(M.RACK_WIDTH.min, M.STAGE_WIDTH.min)
-    return inner - columns - 2 * M.GAP - cols, room - fixed_rows() - ring
+  if shape == "center" then
+    local columns = body_width(M.RACK_WIDTH.center, M.STAGE_WIDTH.center)
+    return inner - columns - 2 * M.GAP - cols, room - M.BOTTOM_ROWS - ring
   end
   if shape == "aside" then
     local columns = body_width(M.RACK_WIDTH.compact, M.STAGE_WIDTH.compact)
@@ -107,26 +116,33 @@ local function fit_portrait(model, shape, inner, room, quest_rows)
   return hud.portrait_fit(width, math.min(height, M.PORTRAIT.max), M.PORTRAIT.min, ratio)
 end
 
--- how tall both columns stand: as tall as the mirror between them up to SIDE_MAX, so a tall
--- mirror is flanked by two cabinets instead of two empty towers, or what the room leaves
+-- how tall both columns stand: as tall as the mirror beside them up to SIDE_MAX, or what the
+-- room leaves
 local function side_for(shape, portrait, room, quest_rows)
-  local low = side_min(quest_rows)
-  if shape == "between" then
-    return hud.clamp(mirror_height(portrait), low, math.max(low, M.SIDE_MAX))
+  if shape == "center" then
+    local low = side_min(quest_rows, true)
+    return hud.clamp(mirror_height(portrait), low, math.max(low, M.SIDE_MAX.center))
   end
+  local low = side_min(quest_rows)
   local above = shape == "above" and mirror_height(portrait) + 1 or 0
-  return hud.clamp(room - fixed_rows() - above, low, M.SIDE_MAX)
+  return hud.clamp(room - fixed_rows() - above, low, M.SIDE_MAX.beside)
 end
 
 -- the width the columns leave beside the mirror, by where the mirror stands
 local function columns_space(shape, inner, mirror)
-  if shape == "between" then
-    return inner - mirror - 2 * M.GAP + M.GAP
+  if shape == "center" then
+    return inner - mirror - M.GAP
   end
   if shape == "aside" then
     return inner - mirror - M.GAP
   end
   return inner
+end
+
+-- the tags share the rail, narrower when there are many tabs on a narrow rack
+local function tab_width(model, width)
+  local tabs = math.max(1, #(model.tabs or {}))
+  return hud.clamp(math.floor((width - 4) / tabs), M.TAB_WIDTH.min, M.TAB_WIDTH.max)
 end
 
 local function shape_plan(model, shape)
@@ -138,9 +154,11 @@ local function shape_plan(model, shape)
     or 0
   local portrait = fit_portrait(model, shape, inner, room, quest_rows)
   local placed = portrait and shape or "none"
+  local center = placed == "center"
   local mirror = portrait and mirror_width(portrait) or 0
-  local rack, stage = column_widths(columns_space(placed, inner, mirror))
-  local width = body_width(rack, stage) + (placed == "between" and mirror + M.GAP or 0)
+  local rack, stage =
+    column_widths(columns_space(placed, inner, mirror), center and "center" or "compact")
+  local width = body_width(rack, stage) + (center and mirror + M.GAP or 0)
   local stage_width = width + (placed == "aside" and mirror + M.GAP or 0)
   local side = side_for(placed, portrait, room, quest_rows)
   return {
@@ -150,9 +168,10 @@ local function shape_plan(model, shape)
     mirror_width = mirror,
     rack_width = rack,
     stages_width = stage,
+    tab_width = tab_width(model, center and rack or width),
     side_rows = side,
-    rack_rows = rack_rows_for(side),
-    stage_rows = stage_rows_for(side, quest_rows),
+    rack_rows = rack_rows_for(side, center),
+    stage_rows = stage_rows_for(side, quest_rows, center),
     quest_rows = quest_rows,
     body_width = width,
     stage_width = stage_width,
@@ -161,22 +180,23 @@ local function shape_plan(model, shape)
 end
 
 -- every way the dressing room can stand, the one it is known for first
-local SHAPES = { "between", "aside", "above" }
+local SHAPES = { "center", "aside", "above" }
 
---- Decides how big everything is for a window: the mirror, both columns and the call sheet. The
---- mirror stands between the columns whenever it can be comfortably tall there, otherwise every
---- shape is tried and the one where the portrait stands tallest wins.
+--- Decides how big everything is for a window. She is the star: every shape is tried, and the
+--- mirror takes center stage between the columns as long as its portrait stands at least
+--- CENTER_SHARE of the tallest one, otherwise the shape where it stands tallest wins.
 ---@param model table needs width, height and portrait, figure when the image is a whole figure
----@return table plan { shape, portrait?, stacked, mirror_width, rack_width, stages_width, side_rows, rack_rows, stage_rows, quest_rows, body_width, stage_width, indent }
+---@return table plan { shape, portrait?, stacked, mirror_width, rack_width, stages_width, tab_width, side_rows, rack_rows, stage_rows, quest_rows, body_width, stage_width, indent }
 function M.plan(model)
   local plans = vim.tbl_map(function(shape)
     return shape_plan(model, shape)
   end, SHAPES)
-  local between = plans[1]
-  if between.portrait and between.portrait.height >= M.PORTRAIT.comfort then
-    return between
+  local center, best = plans[1], hud.biggest_portrait(plans) or plans[1]
+  local tallest = best.portrait and best.portrait.height or 0
+  if center.portrait and center.portrait.height >= tallest * M.CENTER_SHARE then
+    return center
   end
-  return hud.biggest_portrait(plans) or between
+  return best
 end
 
 -- frames ----------------------------------------------------------------------------------
@@ -444,14 +464,14 @@ local function sign(model, width)
 end
 
 -- the tabs hang from a rail as tags, the active one from a heavier hook
-local function rail(model, width)
-  local half = math.floor(M.TAB_WIDTH / 2)
+local function rail(model, width, tag_width)
+  local half = math.floor(tag_width / 2)
   local rail_row = { { "╓─", "EldenHudRule" } }
   local tags = { { "  " } }
   for index, tab in ipairs(model.tabs) do
     local active = index == model.tab
     table.insert(rail_row, {
-      ("─"):rep(half) .. (active and "┳" or "┬") .. ("─"):rep(M.TAB_WIDTH - half - 1),
+      ("─"):rep(half) .. (active and "┳" or "┬") .. ("─"):rep(tag_width - half - 1),
       active and "EldenHudRuleSel" or "EldenHudRule",
     })
     table.insert(tags, { (" "):rep(half - 1) })
@@ -459,49 +479,68 @@ local function rail(model, width)
       (active and "┗" or "╰") .. hud.pad(vim.trim(tab.icon), 1) .. (active and "┛" or "╯"),
       active and "EldenHudTabSel" or "EldenHudTab",
     })
-    table.insert(tags, { (" "):rep(M.TAB_WIDTH - half - 2) })
+    table.insert(tags, { (" "):rep(tag_width - half - 2) })
   end
-  local used = 2 + #model.tabs * M.TAB_WIDTH
+  local used = 2 + #model.tabs * tag_width
   table.insert(rail_row, { ("─"):rep(math.max(0, width - used - 1)) .. "╖", "EldenHudRule" })
+  -- which tab out of how many, when the rail has room left for it
   local position = ("%d / %d"):format(model.tab, #model.tabs)
-  table.insert(tags, { (" "):rep(math.max(1, width - used - #position - 1)) })
-  table.insert(tags, { position, "EldenHudDim" })
+  if width - used >= #position + 2 then
+    table.insert(tags, { (" "):rep(width - used - #position - 1) })
+    table.insert(tags, { position, "EldenHudDim" })
+  end
   return { rail_row, tags }
 end
 
-local function sides(model, plan)
-  local rack, stages, grids = columns(model, plan)
-  if plan.shape ~= "between" then
-    return hud.beside(rack, plan.rack_width, stages, M.GAP), grids
-  end
-  local mirror_rows = mirror(model, plan)
-  local height = math.max(#mirror_rows, plan.side_rows)
-  local right = hud.beside(
-    hud.middle(mirror_rows, height),
-    plan.mirror_width,
-    hud.middle(stages, height),
-    M.GAP
-  )
-  return hud.beside(hud.middle(rack, height), plan.rack_width, right, M.GAP), grids
-end
-
-local function body(model, plan)
-  local width = plan.body_width
-  local rows = sign(model, width)
-  table.insert(rows, {})
-  vim.list_extend(rows, rail(model, width))
-  table.insert(rows, {})
-  local side_rows, grids = sides(model, plan)
-  vim.list_extend(rows, side_rows)
-  table.insert(rows, {})
+local function hint_row(model, width)
   -- most important first, a narrow screen drops them from the end
   local hints =
     hud.hint_chunks(parts.hints(model, parts.USE_HINTS), width, "EldenHudKey", "EldenHudHint")
-  table.insert(rows, hud.center(hints, width))
+  return hud.center(hints, width)
+end
+
+-- center stage: the rail tops the rack, the sign tops the stages, and the mirror stands between
+-- them as tall as the screen allows, the columns centered beside it
+local function center_stage(model, plan)
+  local rack, stages, grids = columns(model, plan)
+  local left = rail(model, plan.rack_width, plan.tab_width)
+  table.insert(left, {})
+  vim.list_extend(left, rack)
+  local right = sign(model, plan.stages_width)
+  table.insert(right, {})
+  vim.list_extend(right, stages)
+  local mirror_rows = mirror(model, plan)
+  local height = math.max(#mirror_rows, #left, #right)
+  local inner =
+    hud.beside(hud.middle(mirror_rows, height), plan.mirror_width, hud.middle(right, height), M.GAP)
+  local rows = hud.beside(hud.middle(left, height), plan.rack_width, inner, M.GAP)
+  table.insert(rows, {})
+  table.insert(rows, hint_row(model, plan.body_width))
   return rows, grids
 end
 
--- the mirror above or aside the whole body, when it does not stand between the columns
+-- the sign over the rail over both columns, for the shapes where the mirror stands elsewhere
+local function stacked_body(model, plan)
+  local width = plan.body_width
+  local rows = sign(model, width)
+  table.insert(rows, {})
+  vim.list_extend(rows, rail(model, width, plan.tab_width))
+  table.insert(rows, {})
+  local rack, stages, grids = columns(model, plan)
+  vim.list_extend(rows, hud.beside(rack, plan.rack_width, stages, M.GAP))
+  table.insert(rows, {})
+  table.insert(rows, hint_row(model, width))
+  return rows, grids
+end
+
+local function body(model, plan)
+  if plan.shape == "center" then
+    return center_stage(model, plan)
+  end
+  return stacked_body(model, plan)
+end
+
+-- the mirror above or aside the whole body, when it does not take center stage
 local function place_mirror(model, plan, rows)
   if plan.shape == "above" then
     local left = math.floor((plan.body_width - plan.mirror_width) / 2)
