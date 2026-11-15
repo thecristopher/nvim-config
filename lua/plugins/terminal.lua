@@ -36,7 +36,7 @@ return {
       auto_scroll = true,
       float_opts = {
         border = require("core.skin.actions").toggleterm_border(require("core.skin").border()),
-        winblend = 8,
+        winblend = 0,
         width = function()
           return math.floor(vim.o.columns * 0.85)
         end,

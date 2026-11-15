@@ -99,7 +99,7 @@ end
 local glow_level = 1
 
 function M.grace()
-  return ("%%#EldenGraceGlow%d#✦ %s"):format(glow_level, require("core.themes").current().title)
+  return ("%%#EldenGraceGlow%d#󰫢 %s"):format(glow_level, require("core.themes").current().title)
 end
 
 -- every step of the breath gets its own group once, so breathing never redefines a highlight

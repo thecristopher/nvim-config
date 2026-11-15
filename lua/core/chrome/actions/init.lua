@@ -133,4 +133,21 @@ function M.cmdline_formats(chrome, glyphs, ornament)
   }
 end
 
+-- the column code should stay within when the buffer sets no textwidth
+M.RULER_DEFAULT = 100
+
+---The last column code should reach: the buffer's textwidth, or the default when it has none.
+---@param textwidth integer
+---@return integer
+function M.ruler_limit(textwidth)
+  return textwidth > 0 and textwidth or M.RULER_DEFAULT
+end
+
+---The match pattern for the part of every line that runs past the limit.
+---@param limit integer
+---@return string
+function M.overflow_pattern(limit)
+  return ("\\%%>%dv.\\+"):format(limit)
+end
+
 return M

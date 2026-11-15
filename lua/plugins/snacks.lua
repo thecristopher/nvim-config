@@ -21,7 +21,13 @@ return {
         margin = { top = 0, right = 1, bottom = 0 },
         padding = true,
         sort = { "level", "added" },
-        icons = { error = "󰅚 ", warn = "󰊌 ", info = "󰋽 ", debug = "󰒄 ", trace = "✎ " },
+        icons = {
+          error = "󰅚 ",
+          warn = "󰊌 ",
+          info = "󰋽 ",
+          debug = "󰒄 ",
+          trace = "󰏫 ",
+        },
         -- the game's messages: the franchise's word for the level and the hour, see core/chrome
         style = function(buf, notif, ctx)
           require("core.chrome.notify").style(buf, notif, ctx)
@@ -30,12 +36,30 @@ return {
       },
 
       -- ── Indent guides ──────────────────────────────────────────────
+      -- the region's rainbow per level and its gold scope, drawn only on the visible lines and
+      -- cached, where indent-blankline recomputed the scope on every cursor move (~0.4 ms, 10 ms peaks)
       indent = {
-        enabled = false, -- replaced by indent-blankline.nvim (rainbow palette)
-        indent = { char = "│", hl = "IblIndent" },
-        scope = { enabled = true, char = "│", hl = "IblScope", underline = false },
+        enabled = true,
+        indent = {
+          char = "│",
+          hl = {
+            "EldenIndent1",
+            "EldenIndent2",
+            "EldenIndent3",
+            "EldenIndent4",
+            "EldenIndent5",
+            "EldenIndent6",
+          },
+        },
+        scope = { enabled = true, char = "│", hl = "EldenIndentScope", underline = false },
         chunk = { enabled = false },
-        animate = { enabled = false },
+        -- the scope draws itself in from the top, and stills with <leader>um like everything else
+        animate = {
+          enabled = true,
+          style = "out",
+          easing = "outQuad",
+          duration = { step = 15, total = 180 },
+        },
         filter = function(buf)
           return vim.g.snacks_indent ~= false
             and vim.b[buf].snacks_indent ~= false
@@ -46,7 +70,9 @@ return {
       -- ── Smooth scroll ──────────────────────────────────────────────
       scroll = {
         enabled = true,
-        animate = { duration = { step = 12, total = 180 }, easing = "linear" },
+        -- one step per 60 Hz frame, the same beat as core/motion, and a curve that leaves fast
+        -- and settles: 12 ms steps meant ~15 full redraws per half page for no visible gain
+        animate = { duration = { step = 16, total = 160 }, easing = "outCubic" },
         animate_repeat = { delay = 120, duration = { step = 5, total = 50 }, easing = "linear" },
         filter = function(buf)
           return vim.g.snacks_scroll ~= false
@@ -60,7 +86,8 @@ return {
         enabled = true,
         debounce = 150,
         notify_jump = false,
-        modes = { "n", "i", "c" },
+        -- references light up while you look, not while you type: in insert every pause asked the LSP
+        modes = { "n" },
       },
 
       -- ── Status column ──────────────────────────────────────────────
@@ -137,7 +164,7 @@ return {
         "<leader>ff",
         function()
           -- open buffers, recent files and the rest of the repo in one list, the ones you use most first
-          Snacks.picker.smart({ filter = { cwd = true } })
+          Snacks.picker.smart({ title = "Files", filter = { cwd = true } })
         end,
         desc = "Find files (smart)",
       },

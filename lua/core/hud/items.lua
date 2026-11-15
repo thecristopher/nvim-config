@@ -248,7 +248,7 @@ function M.messages()
   return vim.tbl_map(function(entry)
     local path = root .. "/" .. entry.file
     return {
-      icon = "✎",
+      icon = "󰏫",
       icon_hl = "EldenMessage",
       name = entry.text,
       count = entry.line,
@@ -270,7 +270,7 @@ function M.regions()
   local current = require("core.themes").current().name
   local items = vim.tbl_map(function(region)
     return {
-      icon = region.name == current and "✦" or "◈",
+      icon = region.name == current and "󰫢" or "◈",
       name = region.title,
       desc = region.tagline .. ", watched over by " .. region.character .. ".",
       use = function()
@@ -284,7 +284,7 @@ function M.regions()
   local franchise = require("core.franchise.actions")
   for _, name in ipairs(franchise.names()) do
     table.insert(items, {
-      icon = "⚑",
+      icon = "󰈻",
       name = franchise.lore(name).title,
       desc = "Wake up in " .. franchise.lore(name).title .. " for the rest of the day.",
       use = function()
@@ -427,7 +427,7 @@ function M.quest_items(quest)
   local list = {}
   if quest.last_ready then
     table.insert(list, {
-      icon = "↳",
+      icon = "󰘍",
       name = vim.fs.basename(quest.last_path),
       desc = "Pick up where you left off: " .. quest.last_file .. ".",
       use = function()
@@ -542,10 +542,10 @@ function M.tabs(style)
       nil
   end
   return {
-    { title = "Tools", icon = "⚒", items = M.actions() },
+    { title = "Tools", icon = "󱌣", items = M.actions() },
     { title = "Recent", icon = "󰋚", items = M.recent() },
     { title = "Key Items", icon = "󰌆", items = M.git() },
-    { title = "Messages", icon = "✎", items = M.messages() },
+    { title = "Messages", icon = "󰏫", items = M.messages() },
     { title = "Regions", icon = "◈", items = M.regions() },
     {
       title = require("core.franchise").current().coach.lessons,

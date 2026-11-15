@@ -32,7 +32,7 @@ M.ENTRIES = {
     cmd = "BrowseFolders",
   },
   {
-    icon = "▦ ",
+    icon = "󰕰 ",
     name = "Map",
     desc = "Folders as rooms, red with errors left",
     key = "<leader>jm",
@@ -109,14 +109,14 @@ M.ENTRIES = {
     cmd = "Phantom",
   },
   {
-    icon = "✎ ",
+    icon = "󰏫 ",
     name = "Inscribe",
     desc = "Leave a message on this line",
     key = "<leader>mw",
     cmd = "Inscribe",
   },
   {
-    icon = "✎ ",
+    icon = "󰏫 ",
     name = "Inscriptions",
     desc = "Every message left in this repo",
     key = "<leader>ml",
@@ -255,6 +255,52 @@ end
 ---@return string
 function M.search_text(entry)
   return table.concat({ entry.name, entry.desc, entry.key or "" }, " ")
+end
+
+-- the widest a column may grow, so one long description never pushes every key off screen
+M.MAX_NAME = 22
+M.MAX_DESC = 42
+
+---How wide the name, description and key columns are, name and description capped.
+---@param entries PaletteEntry[]
+---@return { name: integer, desc: integer, key: integer }
+function M.column_widths(entries)
+  local widths = { name = 0, desc = 0, key = 0 }
+  for _, entry in ipairs(entries) do
+    widths.name = math.max(widths.name, vim.fn.strdisplaywidth(entry.name))
+    widths.desc = math.max(widths.desc, vim.fn.strdisplaywidth(entry.desc))
+    widths.key = math.max(widths.key, vim.fn.strdisplaywidth(entry.key or ""))
+  end
+  widths.name = math.min(widths.name, M.MAX_NAME)
+  widths.desc = math.min(widths.desc, M.MAX_DESC)
+  return widths
+end
+
+-- the icon, the gaps between columns and the picker's own frame around the rows
+local ROW_CHROME = 2 + 2 + 2 + 6
+
+---How wide the palette window has to be to show every column, never wider than the screen.
+---@param widths { name: integer, desc: integer, key: integer }
+---@param columns integer the editor's width
+---@return integer
+function M.window_width(widths, columns)
+  return math.min(widths.name + widths.desc + widths.key + ROW_CHROME, columns - 4)
+end
+
+---Fits text to a column: cut with an ellipsis when too long, padded with spaces when short.
+---@param text string
+---@param width integer display cells
+---@return string
+function M.fit(text, width)
+  local cells = vim.fn.strdisplaywidth(text)
+  if cells <= width then
+    return text .. (" "):rep(width - cells)
+  end
+  local cut = vim.fn.strcharpart(text, 0, width - 1)
+  while vim.fn.strdisplaywidth(cut) > width - 1 do
+    cut = vim.fn.strcharpart(cut, 0, vim.fn.strchars(cut) - 1)
+  end
+  return cut .. "…" .. (" "):rep(width - 1 - vim.fn.strdisplaywidth(cut))
 end
 
 return M

@@ -325,7 +325,8 @@ return {
       win = {
         border = require("core.skin").border(),
         padding = { 1, 2 },
-        wo = { winblend = 10 },
+        -- opaque: with blend the code behind ghosted through every label and made them hard to read
+        wo = { winblend = 0 },
       },
       layout = { align = "center" },
       show_help = true,
@@ -345,6 +346,11 @@ return {
         gg = { icon = "󰊢", color = "orange" },
       }))
       wk.add({
+        -- the four harpoon jumps would fill the first page, the harpoon group names them instead
+        { "<leader>1", hidden = true },
+        { "<leader>2", hidden = true },
+        { "<leader>3", hidden = true },
+        { "<leader>4", hidden = true },
         { "[", group = "prev" },
         { "]", group = "next" },
         { "g", group = "goto" },
@@ -408,52 +414,6 @@ return {
           follow(vim.api.nvim_get_mode().mode)
         end,
       })
-    end,
-  },
-
-  -- ── indent-blankline: rainbow indent guides in region colors ───────
-  {
-    "lukas-reineke/indent-blankline.nvim",
-    main = "ibl",
-    event = { "BufReadPost", "BufNewFile" },
-    opts = {
-      indent = { char = "│", tab_char = "│" },
-      scope = { enabled = true, char = "│" },
-      exclude = {
-        filetypes = {
-          "help",
-          "alpha",
-          "dashboard",
-          "neo-tree",
-          "Trouble",
-          "trouble",
-          "lazy",
-          "mason",
-          "notify",
-          "toggleterm",
-          "snacks_dashboard",
-          "eldentree_hud",
-          "bigfile",
-        },
-      },
-    },
-    config = function(_, opts)
-      local hooks = require("ibl.hooks")
-      local names = {}
-      for level = 1, 6 do
-        table.insert(names, "IBLRainbow" .. level)
-      end
-      -- ibl reruns this on every ColorScheme, which keeps the rainbow on the current region
-      hooks.register(hooks.type.HIGHLIGHT_SETUP, function()
-        local p = palette()
-        for level, color in ipairs(require("core.themes.actions").indent_guides(p)) do
-          vim.api.nvim_set_hl(0, names[level], { fg = color })
-        end
-        vim.api.nvim_set_hl(0, "IBLScope", { fg = p.yellow, bold = true })
-      end)
-      opts.indent.highlight = names
-      opts.scope.highlight = { "IBLScope" }
-      require("ibl").setup(opts)
     end,
   },
 

@@ -64,7 +64,7 @@ function M.render(buf)
   for _, message in ipairs(actions.for_file(read_store(), repo, file)) do
     if message.line <= line_count then
       local id = vim.api.nvim_buf_set_extmark(buf, ns, message.line - 1, 0, {
-        virt_text = { { "  ✎ " .. message.text, "EldenMessage" } },
+        virt_text = { { "  󰏫 " .. message.text, "EldenMessage" } },
         virt_text_pos = "eol",
         hl_mode = "combine",
       })
@@ -185,7 +185,7 @@ function M.pick()
     items = items,
     format = function(item)
       return {
-        { "✎ ", "EldenMessage" },
+        { "󰏫 ", "EldenMessage" },
         { item.message, "SnacksPickerFile" },
         { "  " .. item.where, "SnacksPickerDir" },
       }

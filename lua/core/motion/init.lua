@@ -191,6 +191,19 @@ function M.toggle()
   )
 end
 
+-- the plugins that animate on their own (snacks scroll and indent, mini.animate, the smear
+-- trail) follow the same switch, so <leader>um and an expedition still everything at once
+local function follow_plugins()
+  local on = vim.g.eldentree_motion ~= false
+  vim.g.snacks_animate = on
+  vim.g.minianimate_disable = not on
+  -- only when smear already loaded, requiring it here would load the plugin early
+  local smear = package.loaded["smear_cursor"]
+  if smear then
+    smear.enabled = on
+  end
+end
+
 local function set_focus(value)
   return function()
     focused = value
@@ -204,10 +217,21 @@ function M.setup()
   vim.api.nvim_create_autocmd("FocusGained", { group = group, callback = set_focus(true) })
   -- loops subscribed before the UI attached, or while motion was off, start ticking here
   vim.api.nvim_create_autocmd("UIEnter", { group = group, callback = arm })
-  vim.api.nvim_create_autocmd(
-    "User",
-    { group = group, pattern = "EldentreeMotion", callback = arm }
-  )
+  vim.api.nvim_create_autocmd("User", {
+    group = group,
+    pattern = "EldentreeMotion",
+    callback = function()
+      follow_plugins()
+      arm()
+    end,
+  })
+  -- smear and mini.animate load late, a switch set before they arrived reaches them here
+  vim.api.nvim_create_autocmd("User", {
+    group = group,
+    pattern = "VeryLazy",
+    once = true,
+    callback = follow_plugins,
+  })
   vim.api.nvim_create_user_command("Motion", M.toggle, { desc = "Toggle Eldentree animations" })
 end
 

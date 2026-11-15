@@ -78,14 +78,14 @@ return {
       to = "yellow",
     },
     haligtree = {
-      glyphs = { "·", "✿", "❀" },
+      glyphs = { "·", "󰉊", "󰧰" },
       drift = "fall",
       speed = { 0.8, 2.0 },
       from = "red",
       to = "yellow",
     },
     raya_lucaria = {
-      glyphs = { "·", "✧", "✦" },
+      glyphs = { "·", "󰫣", "󰫢" },
       drift = "float",
       speed = { 0.2, 0.6 },
       from = "lavender",
@@ -99,14 +99,14 @@ return {
       to = "yellow",
     },
     limgrave = {
-      glyphs = { "·", "∙", "❦" },
+      glyphs = { "·", "∙", "󱌃" },
       drift = "fall",
       speed = { 0.8, 2.2 },
       from = "peach",
       to = "yellow",
     },
     farum_azula = {
-      glyphs = { "·", "✧", "ϟ" },
+      glyphs = { "·", "󰫣", "󰉁" },
       drift = "float",
       speed = { 0.3, 0.9 },
       from = "lavender",

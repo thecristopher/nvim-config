@@ -342,7 +342,7 @@ local function quest(model, plan)
     local bg = last_selected and "EldenHudSlotSel" or nil
     table.insert(rows, {
       { last_selected and "▶ " or "  ", "EldenHudFrameSel" },
-      { "↳ last  ", "EldenHudDim", bg = bg, spot = last_selected and "cursor" or nil },
+      { "󰘍 last  ", "EldenHudDim", bg = bg, spot = last_selected and "cursor" or nil },
       {
         hud.fit(status.last_file, width - 12),
         last_selected and "EldenHudBanner" or "EldenHudName",

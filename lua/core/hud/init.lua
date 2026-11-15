@@ -111,7 +111,10 @@ local function portrait_available()
   if vim.fn.filereadable(portrait_file()) == 0 then
     return false
   end
-  return vim.fn.executable("chafa") == 1 or require("core.terminal").can_draw(portrait_file())
+  local terminal = require("core.terminal")
+  return vim.fn.executable("chafa") == 1
+    or terminal.awaiting_images()
+    or terminal.can_draw(portrait_file())
 end
 
 local function model()

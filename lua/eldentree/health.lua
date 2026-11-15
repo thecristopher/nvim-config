@@ -31,7 +31,7 @@ local function check_terminal()
   local terminal = require("core.terminal")
   vim.health.info("running in " .. terminal.name())
   local has_magick = vim.fn.executable("magick") == 1 or vim.fn.executable("convert") == 1
-  if terminal.supports_images() and has_magick then
+  if terminal.supports_images({ wait = true }) and has_magick then
     vim.health.ok("portraits render as real images")
   elseif terminal.supports_images() and vim.fn.executable("chafa") == 1 then
     vim.health.warn(

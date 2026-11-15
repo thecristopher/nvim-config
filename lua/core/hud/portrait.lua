@@ -7,6 +7,8 @@ local M = {}
 
 local rendered = {}
 local views = {}
+-- slot -> the show() arguments asked for while the terminal had not said whether it draws pixels
+local waiting = {}
 
 local function close_window(view)
   if not view then
@@ -20,6 +22,7 @@ end
 ---@param slot string|nil defaults to "hud"
 function M.close(slot)
   slot = slot or "hud"
+  waiting[slot] = nil
   close_window(views[slot])
   views[slot] = nil
 end
@@ -141,6 +144,11 @@ function M.show(parent, file, anchor, slot, opts)
   if vim.fn.filereadable(file) == 0 or not vim.api.nvim_win_is_valid(parent) then
     return
   end
+  -- drawing on a guess would make snacks settle on the wrong terminal, the image waits for the answer
+  if require("core.terminal").awaiting_images() then
+    waiting[slot] = { parent, file, anchor, slot, opts }
+    return
+  end
   local view = open_view(parent, anchor, key, slot)
   view.drawn = { parent = parent, file = file, anchor = anchor }
   if
@@ -175,10 +183,25 @@ local function redraw_pixels()
   end
 end
 
+-- the images asked for while the terminal had not answered are drawn now that it has
+local function draw_waiting()
+  local pending = waiting
+  waiting = {}
+  for _, args in pairs(pending) do
+    M.show(unpack(args, 1, 5))
+  end
+end
+
+local group = vim.api.nvim_create_augroup("eldentree_portrait", { clear = true })
 vim.api.nvim_create_autocmd("User", {
-  group = vim.api.nvim_create_augroup("eldentree_portrait", { clear = true }),
+  group = group,
   pattern = "EldentreeTerminalSettled",
   callback = redraw_pixels,
+})
+vim.api.nvim_create_autocmd("User", {
+  group = group,
+  pattern = "EldentreeImagesKnown",
+  callback = draw_waiting,
 })
 
 return M

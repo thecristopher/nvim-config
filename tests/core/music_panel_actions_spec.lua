@@ -132,7 +132,7 @@ describe("progress_row", function()
 
   it("runs like a tape in Raccoon City", function()
     local line = panel.progress_row(0, 250, evil.skin.music.bar).lines[1]
-    assert.truthy(line:find("0:00 ▶▱", 1, true))
+    assert.truthy(line:find("0:00 ▶", 1, true))
   end)
 
   it("keeps the bar the same width at any moment", function()

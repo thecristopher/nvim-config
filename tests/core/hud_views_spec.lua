@@ -20,7 +20,7 @@ local function model(overrides)
     tabs = {
       {
         title = "Tools",
-        icon = "⚒",
+        icon = "󱌣",
         items = {
           item("Love letter", { key = "f" }),
           item("Playlist", { count = 12 }),
@@ -204,7 +204,7 @@ describe("roundtable", function()
 
   it("titles the open tab and draws every tab icon", function()
     assert.is_truthy(text(view):find("Tools", 1, true))
-    assert.is_truthy(text(view):find("⚒", 1, true))
+    assert.is_truthy(text(view):find("󱌣", 1, true))
   end)
 
   it("frames the selected slot in heavy gold", function()

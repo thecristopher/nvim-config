@@ -72,3 +72,54 @@ describe("wants_args with a fed key", function()
     assert.is_false(actions.wants_args({ feed = "<leader>jt" }))
   end)
 end)
+
+describe("column_widths", function()
+  it("takes the longest name and description", function()
+    local entries = {
+      { name = "HUD", desc = "The inventory" },
+      { name = "Chronicle", desc = "Claire and Inde's weeks" },
+    }
+    assert.same({ name = 9, desc = 23, key = 0 }, actions.column_widths(entries))
+  end)
+
+  it("never grows past its cap", function()
+    local entries = { { name = ("Malenia"):rep(10), desc = ("blade of Miquella "):rep(10) } }
+    local widths = actions.column_widths(entries)
+    assert.equal(actions.MAX_NAME, widths.name)
+    assert.equal(actions.MAX_DESC, widths.desc)
+  end)
+end)
+
+describe("fit", function()
+  it("pads a short name to its column", function()
+    assert.equal("HUD   ", actions.fit("HUD", 6))
+  end)
+
+  it("cuts a long description with an ellipsis and keeps the width", function()
+    local fitted = actions.fit("A love letter from Inde to Claire", 12)
+    assert.equal("A love lett…", fitted)
+    assert.equal(12, vim.fn.strdisplaywidth(fitted))
+  end)
+
+  it("counts wide characters by their cells", function()
+    assert.equal(6, vim.fn.strdisplaywidth(actions.fit("₧ 453", 6)))
+  end)
+end)
+
+describe("column_widths keys", function()
+  it("measures the longest key", function()
+    local entries =
+      { { name = "HUD", desc = "x", key = "<leader>jh" }, { name = "Map", desc = "y" } }
+    assert.equal(10, actions.column_widths(entries).key)
+  end)
+end)
+
+describe("window_width", function()
+  it("fits every column of Claire's palette", function()
+    assert.equal(10 + 30 + 10 + 12, actions.window_width({ name = 10, desc = 30, key = 10 }, 200))
+  end)
+
+  it("never runs wider than the screen", function()
+    assert.equal(76, actions.window_width({ name = 22, desc = 42, key = 12 }, 80))
+  end)
+end)

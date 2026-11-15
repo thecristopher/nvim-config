@@ -17,7 +17,12 @@ M.GROUPS = {
   { prefix = "f", name = "find", icon = { icon = "", color = "green" } },
   { prefix = "g", name = "git", icon = { icon = "󰊢", color = "orange" } },
   { prefix = "gh", name = "hunks", icon = { icon = "󰊢", color = "yellow" }, owner = "plugins" },
-  { prefix = "h", name = "harpoon", icon = { icon = "󱡀", color = "cyan" }, owner = "plugins" },
+  {
+    prefix = "h",
+    name = "harpoon (1-4 jump)",
+    icon = { icon = "󱡀", color = "cyan" },
+    owner = "plugins",
+  },
   { prefix = "j", name = "journey", icon = { icon = "󰮫", color = "yellow" } },
   {
     prefix = "k",
@@ -25,7 +30,7 @@ M.GROUPS = {
     icon = { icon = "󰓥", color = "red" },
     owner = "plugins",
   },
-  { prefix = "m", name = "messages and threads", icon = { icon = "✎", color = "orange" } },
+  { prefix = "m", name = "messages and threads", icon = { icon = "󰏫", color = "orange" } },
   {
     prefix = "M",
     name = "multicursor",

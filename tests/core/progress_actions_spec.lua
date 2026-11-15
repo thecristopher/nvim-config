@@ -1,6 +1,6 @@
 local actions = require("core.progress.actions")
 
-local re = { done = "▰", head = "▶", left = "▱" }
+local re = { done = "", head = "▶", left = "" }
 
 local function cells(bar)
   return vim.fn.strchars(bar)
@@ -8,11 +8,11 @@ end
 
 describe("progress bar", function()
   it("fills up to the fraction it knows", function()
-    assert.are.equal("▰▰▶▱", actions.bar(0.5, 0, re, 4))
+    assert.are.equal("▶", actions.bar(0.5, 0, re, 4))
   end)
 
   it("is full once the work is done", function()
-    assert.are.equal("▰▰▰▰", actions.bar(1, 0, re, 4))
+    assert.are.equal("", actions.bar(1, 0, re, 4))
   end)
 
   it("sweeps while the end is unknown, and keeps moving", function()

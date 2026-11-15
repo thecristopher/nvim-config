@@ -39,6 +39,7 @@ return {
       custom_highlights = function(c)
         local t = require("core.themes.actions").derive(c)
         local rainbow = require("core.themes.actions").rainbow(c)
+        local guides = require("core.themes.actions").indent_guides(c)
         local function mode_color(mode)
           return require("core.themes.actions").mode_look(c, t, mode).number
         end
@@ -143,6 +144,14 @@ return {
           -- Indent scope line: very subtle
           IblIndent = { fg = t.indent },
           IblScope = { fg = t.indent_scope },
+          -- snacks.indent guides: the rainbow faded toward the background, the scope in full gold
+          EldenIndent1 = { fg = guides[1] },
+          EldenIndent2 = { fg = guides[2] },
+          EldenIndent3 = { fg = guides[3] },
+          EldenIndent4 = { fg = guides[4] },
+          EldenIndent5 = { fg = guides[5] },
+          EldenIndent6 = { fg = guides[6] },
+          EldenIndentScope = { fg = c.yellow, style = { "bold" } },
           -- Rainbow delimiters share the indent rainbow so nesting reads the same everywhere
           EldenRainbow1 = { fg = rainbow[1] },
           EldenRainbow2 = { fg = rainbow[2] },
@@ -298,7 +307,6 @@ return {
         grug_far = true,
         harpoon = true,
         illuminate = { enabled = false }, -- handled by snacks.words
-        indent_blankline = { enabled = true, scope_color = "yellow", colored_indent_levels = false },
         lsp_trouble = true,
         mason = true,
         mini = { enabled = true, indentscope_color = "" },

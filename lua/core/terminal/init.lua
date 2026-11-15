@@ -17,36 +17,51 @@ function M.name()
 end
 
 -- snacks asks the terminal what it can draw and, asked synchronously, waits up to 1.5 s for the
--- answer. The question goes out in the background instead and the terminal's name answers meanwhile
-local images_known = false
-local images_asked = false
+-- answer, so the question goes out in the background. Until it is answered nothing may touch
+-- snacks' image code: it would work out its environment without the answer (Ghostty is only known
+-- from it) and keep that wrong answer for the whole session
+local images = { asked = false, known = false }
 
-local function ask_terminal_about_images()
-  if images_asked then
-    return
-  end
-  images_asked = true
-  local guess = actions.images(M.name())
-  pcall(Snacks.image.terminal.detect, function()
-    images_known = true
-    local ok, supported = pcall(Snacks.image.supports_terminal)
-    -- the portrait was drawn on the guess, a wrong guess draws it again the right way
-    if ok and supported ~= guess then
-      vim.schedule(function()
-        require("core.hud.portrait").close()
-        require("core.hud").refresh()
-      end)
-    end
+local function images_answered()
+  images.known = true
+  -- anything that read snacks' environment while the question was out cached it without the answer
+  pcall(function()
+    Snacks.image.terminal._env = nil
   end)
+  vim.api.nvim_exec_autocmds("User", { pattern = "EldentreeImagesKnown", modeline = false })
 end
 
---- Tells whether portraits can be drawn as real images instead of chafa's half blocks.
---- Never blocks: until the terminal answers, its name decides.
+local function ask_terminal_about_images()
+  if images.asked then
+    return
+  end
+  images.asked = true
+  local ok = pcall(Snacks.image.terminal.detect, vim.schedule_wrap(images_answered))
+  if not ok then
+    images.known = true
+  end
+end
+
+--- Whether pixels should wait: the terminal has not answered yet and its name says it can draw them.
+--- `User EldentreeImagesKnown` fires once it answers.
 ---@return boolean
-function M.supports_images()
+function M.awaiting_images()
   ask_terminal_about_images()
-  if not images_known then
-    return actions.images(M.name())
+  return not images.known and actions.images(M.name())
+end
+
+--- Tells whether portraits can be drawn as real images instead of chafa's half blocks. Answers
+--- false while the terminal has not replied, unless opts.wait asks to block for the answer.
+---@param opts? { wait: boolean }
+---@return boolean
+function M.supports_images(opts)
+  ask_terminal_about_images()
+  if not images.known then
+    if not (opts and opts.wait) then
+      return false
+    end
+    pcall(Snacks.image.terminal.detect)
+    images_answered()
   end
   local ok, supported = pcall(Snacks.image.supports_terminal)
   if ok then

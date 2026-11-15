@@ -121,7 +121,7 @@ function M.keys()
     { icon = "󰏗 ", key = "m", desc = "Mason", action = ":Mason", slot = "Mason" },
     { icon = "󰐥 ", key = "q", desc = "Quit", action = ":qa", slot = "Quit" },
     {
-      icon = "▦ ",
+      icon = "󰕰 ",
       key = "a",
       desc = "Project Map",
       action = function()

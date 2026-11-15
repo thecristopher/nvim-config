@@ -96,3 +96,29 @@ describe("cmdline_formats", function()
     assert.equal(" ▐ Search ▌ ", formats.search_up.title)
   end)
 end)
+
+describe("ruler_limit", function()
+  it("follows the buffer's textwidth when Claire set one for her letters", function()
+    assert.equal(72, actions.ruler_limit(72))
+  end)
+
+  it("falls back to the default when there is none", function()
+    assert.equal(actions.RULER_DEFAULT, actions.ruler_limit(0))
+  end)
+end)
+
+describe("overflow_pattern", function()
+  it("matches what runs past the limit", function()
+    assert.equal([[\%>100v.\+]], actions.overflow_pattern(100))
+  end)
+
+  it("catches the overflow of Inde's long love note and nothing before it", function()
+    local line = ("x"):rep(100) .. " and one more promise"
+    local start = vim.fn.match(line, actions.overflow_pattern(100))
+    assert.equal(100, start)
+  end)
+
+  it("leaves a line that fits alone", function()
+    assert.equal(-1, vim.fn.match(("x"):rep(100), actions.overflow_pattern(100)))
+  end)
+end)

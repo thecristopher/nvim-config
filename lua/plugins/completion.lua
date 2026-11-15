@@ -14,7 +14,8 @@ return {
   },
   {
     "saghen/blink.cmp",
-    version = "v0.*",
+    -- v0 called client.request, deprecated since nvim 0.11, and nvim warned on every completion
+    version = "1.*",
     event = { "InsertEnter", "CmdlineEnter" },
     dependencies = { "rafamadriz/friendly-snippets", "fang2hou/blink-copilot" },
     opts = {
@@ -118,7 +119,7 @@ return {
         max_typos = function(keyword)
           return math.floor(#keyword / 4)
         end,
-        use_frecency = true,
+        frecency = { enabled = true },
         use_proximity = true,
         sorts = { "score", "sort_text" },
         prebuilt_binaries = { download = true },
