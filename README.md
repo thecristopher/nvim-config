@@ -284,7 +284,7 @@ Every leader key lives in one list, `lua/core/leader/actions/init.lua`, grouped 
 | Key                         | Action                                                                                        |
 | --------------------------- | --------------------------------------------------------------------------------------------- |
 | `<leader>fp`                | Sites of Grace. Enter travels, `<C-f>` `<C-g>` `<C-o>` travel and open files, grep or recent  |
-| `<leader>ff` / `<leader>fa` | Find files / all files, hidden and ignored too. `file:line` jumps to the line                 |
+| `<leader>ff` / `<leader>fa` | Smart find (open buffers, recent and repo files, the ones you use most first) / all files, hidden and ignored too. `file:line` jumps to the line |
 | `<leader>fr`                | Recent files in this repo, `<C-a>` flips to everywhere                                        |
 | `<leader>f.`                | Resume the last picker where you left it                                                      |
 | `<leader>fy`                | Yank history                                                                                  |

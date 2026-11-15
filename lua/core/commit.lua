@@ -160,7 +160,7 @@ function M.open()
 
   if #diff > MAX_DIFF then
     diff = vim.trim(vim.fn.system({ "git", "diff", "--cached", "--stat" }))
-      .. "\n\n[diff truncated — stat only]"
+      .. "\n\n[diff truncated, stat only]"
   end
 
   local log = recent_log()

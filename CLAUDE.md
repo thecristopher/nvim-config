@@ -1,4 +1,4 @@
-# Eldentree — nvim-config
+# Eldentree, nvim-config
 
 This is Cristopher's personal Neovim configuration. The my-style guide is always active for
 every session in this repo (see the style section below).

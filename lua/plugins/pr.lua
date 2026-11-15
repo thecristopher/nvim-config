@@ -1,4 +1,4 @@
--- PR helper — draft, edit, and create/update a GitHub PR without leaving nvim.
+-- PR helper: draft, edit, and create/update a GitHub PR without leaving nvim.
 -- <leader>pp: pick source + destination branches and preview the diff (Snacks
 -- pickers), then Claude drafts a title + description from the commit log/diff
 -- and opens it in an editable buffer; :w pushes (if needed) and runs gh pr create/edit.

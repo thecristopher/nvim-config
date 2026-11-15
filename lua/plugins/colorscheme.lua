@@ -284,15 +284,19 @@ return {
         }
       end,
       -- ── Plugin integrations ────────────────────────────────────────
+      -- listed by hand, detecting them scans every plugin on each start and costs ~6 ms
+      auto_integrations = false,
       integrations = {
         blink_cmp = true,
         bufferline = true,
         dashboard = true,
         dap = true,
+        diffview = true,
         dropbar = { enabled = true, color_mode = true },
         flash = true,
         gitsigns = true,
         grug_far = true,
+        harpoon = true,
         illuminate = { enabled = false }, -- handled by snacks.words
         indent_blankline = { enabled = true, scope_color = "yellow", colored_indent_levels = false },
         lsp_trouble = true,
@@ -318,6 +322,8 @@ return {
         neotree = true,
         noice = true,
         notify = true,
+        nvim_surround = true,
+        rainbow_delimiters = true,
         render_markdown = true,
         snacks = true,
         treesitter = true,

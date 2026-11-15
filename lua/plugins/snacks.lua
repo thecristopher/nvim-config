@@ -1,4 +1,4 @@
--- snacks.nvim — folke's all-in-one quality-of-life suite
+-- snacks.nvim: folke's quality of life suite
 
 return {
   {
@@ -80,6 +80,8 @@ return {
       input = { enabled = true },
       picker = {
         enabled = true,
+        -- files you open often and files in this repo rise to the top of every picker
+        matcher = { frecency = true, cwd_bonus = true },
         -- each franchise lays the picker out its own way and frames its titles, see core/chrome
         layouts = {
           grace = require("core.chrome.picker").GRACE,
@@ -134,9 +136,10 @@ return {
       {
         "<leader>ff",
         function()
-          Snacks.picker.files()
+          -- open buffers, recent files and the rest of the repo in one list, the ones you use most first
+          Snacks.picker.smart({ filter = { cwd = true } })
         end,
-        desc = "Find files",
+        desc = "Find files (smart)",
       },
       {
         "<leader>fa",

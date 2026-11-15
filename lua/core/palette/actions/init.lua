@@ -6,7 +6,8 @@ local M = {}
 ---@field name string
 ---@field desc string
 ---@field key? string the mapping that does the same, shown so it sticks
----@field cmd string ex command the entry runs
+---@field cmd? string ex command the entry runs
+---@field feed? string a mapping the entry presses instead of running a command
 
 ---@type PaletteEntry[]
 M.ENTRIES = {
@@ -211,7 +212,42 @@ M.ENTRIES = {
 ---@param entry PaletteEntry
 ---@return boolean
 function M.wants_args(entry)
-  return entry.cmd:sub(-1) == " "
+  return entry.cmd ~= nil and entry.cmd:sub(-1) == " "
+end
+
+local DEFAULT_ICON = "󰌌 "
+
+---The curated entries plus a row for every leader binding they do not already show, so the
+---palette reaches every key in the leader map.
+---@param entries PaletteEntry[]
+---@param bindings LeaderBinding[]
+---@param group_of fun(key: string): LeaderGroup|nil
+---@return PaletteEntry[]
+function M.with_bindings(entries, bindings, group_of)
+  local shown = {}
+  for _, entry in ipairs(entries) do
+    if entry.key then
+      shown[entry.key] = true
+    end
+  end
+  local all = vim.list_extend({}, entries)
+  for _, binding in ipairs(bindings) do
+    local lhs = "<leader>" .. binding.key
+    local normal = binding.mode == nil or binding.mode == "n"
+    if normal and binding.key ~= "<leader>" and not shown[lhs] then
+      shown[lhs] = true
+      local group = group_of(binding.key)
+      local icon = binding.icon or (group and group.icon)
+      table.insert(all, {
+        icon = icon and (icon.icon .. " ") or DEFAULT_ICON,
+        name = binding.desc,
+        desc = group and group.name or "leader",
+        key = lhs,
+        feed = lhs,
+      })
+    end
+  end
+  return all
 end
 
 ---The text the picker matches on: name, what it does and its key.
