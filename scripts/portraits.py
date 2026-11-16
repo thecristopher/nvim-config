@@ -26,9 +26,12 @@ WIDTH = 828
 HEIGHT = 1008
 FIGURE_WIDTH = 662
 FIGURE_HEIGHT = 1186
-# contrast and color lifted so the portraits survive half block rendering, the sharpening kept
-# light because real pixels show its halos
+# contrast and color lifted so the painted portraits survive half block rendering, the sharpening
+# kept light because real pixels show its halos
 LIFT = "eq=contrast=1.15:saturation=1.25,unsharp=5:5:0.4"
+# photos already carry their own color: the lift turned skin orange and hair into a black block, so
+# they only get a touch of sharpening
+PHOTO_LIFT = "unsharp=3:3:0.25"
 
 # name: (face x, face y, crop height), all as fractions of the original image
 FACES = {
@@ -49,6 +52,15 @@ FACES = {
     "ranni": (0.425, 0.233, 0.32),
     "wesker": (0.50, 0.36, 0.60),
 }
+
+
+# names that are real photos rather than game art
+PHOTOS = {"elizabeth_ada", "elizabeth_psylocke", "elizabeth_scarlet_witch", "elizabeth_shadowheart"}
+
+
+def lift_for(name):
+    """Returns the ffmpeg filters that finish a portrait, gentler for photos than for game art."""
+    return PHOTO_LIFT if name in PHOTOS else LIFT
 
 
 # names whose whole photo is also kept as a figure
@@ -98,12 +110,12 @@ def size_of(path):
     return int(width), int(height)
 
 
-def render(source, box, size, target):
-    """Crops a box out of the original, scales it to size and lifts it into target."""
+def render(source, box, size, target, lift):
+    """Crops a box out of the original, scales it to size and finishes it with lift into target."""
     width, height, left, top = box
     subprocess.run(
         ["ffmpeg", "-loglevel", "error", "-y", "-i", source, "-vf",
-         f"crop={width}:{height}:{left}:{top},scale={size[0]}:{size[1]}:flags=lanczos,{LIFT}",
+         f"crop={width}:{height}:{left}:{top},scale={size[0]}:{size[1]}:flags=lanczos,{lift}",
          "-frames:v", "1", "-q:v", "2", "-pix_fmt", "yuvj444p", target],
         check=True,
     )
@@ -114,11 +126,13 @@ def build(name):
     source = source_of(name)
     size = size_of(source)
     portraits = os.path.join(IMAGES, "portraits")
-    render(source, crop_box(size, FACES[name]), (WIDTH, HEIGHT), os.path.join(portraits, name + ".jpg"))
+    lift = lift_for(name)
+    portrait = os.path.join(portraits, name + ".jpg")
+    render(source, crop_box(size, FACES[name]), (WIDTH, HEIGHT), portrait, lift)
     if name in FIGURES:
         figure = (FIGURE_WIDTH, FIGURE_HEIGHT)
         box = crop_box(size, (0.5, 0.5, 1.0), figure)
-        render(source, box, figure, os.path.join(portraits, name + "_figure.jpg"))
+        render(source, box, figure, os.path.join(portraits, name + "_figure.jpg"), lift)
 
 
 def main():
