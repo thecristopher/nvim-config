@@ -70,3 +70,50 @@ describe("progress", function()
     assert.equal(3, total)
   end)
 end)
+
+describe("wings", function()
+  it("gathers Claire's lone top folders into the grounds and keeps real wings apart", function()
+    local rooms = actions.rooms(
+      root,
+      { "docs/a.md", "lua/core/a.lua", "lua/plugins/b.lua" },
+      {},
+      {}
+    )
+    local wings = actions.wings(rooms)
+    assert.same({ actions.GROUNDS, "lua" }, {
+      wings[1].name,
+      wings[2].name,
+    })
+    assert.equal(2, #wings[2].rooms)
+  end)
+end)
+
+describe("layout", function()
+  local glyphs = { left = "◇", cleared = "◆" }
+  local rooms = actions.rooms(root, files, { ["lua/core/dates.lua"] = 1 }, {})
+
+  it("draws every room as a box under its wing", function()
+    local drawn = actions.layout(rooms, { width = 80, glyphs = glyphs })
+    assert.equal(2, #drawn.rooms)
+    assert.is_truthy(drawn.lines[2]:find("╭", 1, true))
+  end)
+
+  it("marks the room Malenia stands in", function()
+    local drawn = actions.layout(rooms, { width = 80, here = "lua/core", glyphs = glyphs })
+    assert.is_truthy(table.concat(drawn.lines, "\n"):find(actions.HERE, 1, true))
+  end)
+
+  it("keeps every line inside a narrow window", function()
+    local drawn = actions.layout(rooms, { width = 24, glyphs = glyphs })
+    for _, line in ipairs(drawn.lines) do
+      assert.is_true(vim.fn.strdisplaywidth(line) <= 24)
+    end
+  end)
+
+  it("finds the room under Inde's cursor on any row of its box", function()
+    local drawn = actions.layout(rooms, { width = 80, glyphs = glyphs })
+    local spot = drawn.rooms[1]
+    assert.equal(spot.key, actions.room_at(drawn.rooms, spot.row + 1, spot.col + 3))
+    assert.is_nil(actions.room_at(drawn.rooms, 0, 0))
+  end)
+end)

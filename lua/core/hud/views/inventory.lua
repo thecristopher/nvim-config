@@ -1,6 +1,8 @@
--- The Resident Evil hub: the STATUS panel with the survivor's portrait standing tall over their name
--- and area, the item grid under plate tabs with the COMMAND menu, the DATA of the
--- quest you left open, and the selected item's name across the bottom like the old item banners.
+-- The Resident Evil hub: the STATUS panel with the survivor's portrait standing tall over their name,
+-- area and condition, the attaché case under plate tabs (one lattice of cells where the important
+-- items take two or four, empty cells waiting with a dot and counts in green ammo digits) with the
+-- COMMAND menu, the DATA of the quest you left open, and the selected item's name across the bottom
+-- like the old item banners, its description struck in by the typewriter beside the ink ribbons.
 -- Everything sits centered on screen at any size. Pure: model in, rows out.
 local hud = require("core.hud.actions")
 local parts = require("core.hud.views.parts")
@@ -16,8 +18,10 @@ M.STATUS_MIN = 42
 M.COLUMNS = { min = 2, max = 4 }
 M.GRID_ROWS = { min = 1, max = 4 }
 M.PORTRAIT = { min = 4, max = 32 }
--- the STATUS frame around the portrait: borders, gaps, the name and the area
-M.STATUS_ROWS = 7
+-- the STATUS frame around the portrait: borders, gaps, the name, the area and the condition
+M.STATUS_ROWS = 8
+-- the carriage of the typewriter, sitting after the last letter it struck
+M.CARET = "▌"
 -- under the stage: a gap, the banner, two lines of description, the hints, a gap and the message
 M.FOOTER_ROWS = 7
 M.DATA_ROWS = 5
@@ -50,7 +54,8 @@ local function items_width(columns)
   return columns * M.SLOT_WIDTH + 1 + M.MENU_WIDTH
 end
 
--- rows the right column takes besides the grid: plates, gaps and the DATA box
+-- rows the right column takes besides the grid: the plates and their gap, the case's bottom wall
+-- and the DATA box. A gap between the case and DATA comes only from rows left over
 local function fixed_rows(change_rows)
   return 2 + 1 + 2 + M.DATA_ROWS + change_rows
 end
@@ -111,7 +116,9 @@ local function shape_plan(model, shape)
     M.GRID_ROWS.max
   )
   local stage_width = beside + items_width(columns)
+  local spare = room - above - fixed_rows(change_rows) - grid_rows * M.SLOT_HEIGHT
   return {
+    gap = spare >= 1,
     portrait = portrait,
     status_width = status_width,
     columns = columns,
@@ -176,7 +183,17 @@ local function status_line(model, plan)
     end
     table.insert(rows, {})
   end
-  table.insert(rows, hud.center(hud.clip(name, plan.status_width), plan.status_width))
+  if model.condition then
+    table.insert(name, { "  ·  " .. model.condition.word, model.condition.hl })
+  end
+  -- the name first, then the area and the condition while each fits whole
+  local line = { name[1] }
+  for index = 2, #name do
+    if hud.width(line) + hud.width({ name[index] }) <= plan.status_width then
+      table.insert(line, name[index])
+    end
+  end
+  table.insert(rows, hud.center(line, plan.status_width))
   table.insert(rows, {})
   return rows
 end
@@ -204,10 +221,10 @@ local function status_panel(model, plan)
       inner
     )
   )
-  table.insert(
-    body,
-    hud.center({ { hud.fit(status.area or "", inner - 2), "EldenHudSection" } }, inner)
-  )
+  table.insert(body, parts.whole_line(status.area, "EldenHudSection", inner))
+  -- the condition the old STATUS screens printed under the survivor, in its own color
+  local condition = model.condition
+  table.insert(body, condition and hud.center({ { condition.word, condition.hl } }, inner) or {})
   return boxed("STATUS", body, plan.status_width)
 end
 
@@ -226,55 +243,196 @@ local function tab_plates(model)
   return row
 end
 
-local function slot(item, selected)
-  local frame = selected and FRAMES.selected or FRAMES.normal
-  local inner = M.SLOT_WIDTH - 2
-  local bg = selected and "EldenHudSlotSel" or nil
-  local icon = hud.pad(vim.trim(item.icon or "·"), 2)
-  local key = item.key and ("[" .. item.key .. "]") or ""
-  local count = item.count and tostring(item.count) or ""
-  return {
-    { { frame.tl .. frame.h:rep(inner) .. frame.tr, frame.hl } },
-    {
-      { frame.v, frame.hl },
-      { " ", bg = bg },
-      { icon, item.icon_hl or "EldenHudIcon", bg = bg, spot = selected and "cursor" or nil },
-      {
-        hud.pad(item.slot or item.name, inner - 3),
-        selected and "EldenHudName" or "EldenHudDesc",
-        bg = bg,
-      },
-      { frame.v, frame.hl },
-    },
-    {
-      { frame.v, frame.hl },
-      { " ", bg = bg },
-      { key, "EldenHudKey", bg = bg },
-      { (" "):rep(inner - 2 - #key - #count), bg = bg },
-      { count, "EldenHudCount", bg = bg },
-      { " ", bg = bg },
-      { frame.v, frame.hl },
-    },
-    { { frame.bl .. frame.h:rep(inner) .. frame.br, frame.hl } },
-  }
+-- the attaché case ---------------------------------------------------------------------------
+-- drawn on a canvas of cells: every wall and joint of the lattice first, then each item's text in
+-- the room its cells leave, then the canvas turns back into rows of chunks
+
+local function blank_canvas(height, width)
+  local canvas = {}
+  for y = 1, height do
+    canvas[y] = {}
+    for x = 1, width do
+      canvas[y][x] = { " " }
+    end
+  end
+  return canvas
 end
 
-local function grid(items, cursor, columns, offset, visible)
-  local rows = {}
-  local last_row = math.ceil(#items / columns) - 1
-  for grid_row = offset, math.min(offset + visible - 1, last_row) do
-    local band = { {}, {}, {}, {} }
-    for col = 1, columns do
-      local index = grid_row * columns + col
-      if items[index] then
-        for line, chunks in ipairs(slot(items[index], index == cursor)) do
-          vim.list_extend(band[line], chunks)
-        end
+-- writes text from a cell on, one character per cell, a wide one leaving the next cell empty
+local function write(canvas, y, x, text, hl, bg, spot)
+  for index = 0, vim.fn.strchars(text) - 1 do
+    local char = vim.fn.strcharpart(text, index, 1)
+    if canvas[y] and canvas[y][x] then
+      canvas[y][x] = { char, hl, bg = bg, spot = index == 0 and spot or nil }
+      local wide = vim.api.nvim_strwidth(char) > 1
+      if wide and canvas[y][x + 1] then
+        canvas[y][x + 1] = { "", hl, bg = bg }
+      end
+      x = x + (wide and 2 or 1)
+    end
+  end
+end
+
+-- who owns a cell of the case as the window shows it: an item's index, false for an empty cell
+-- and "out" past the case or the rows in view
+local function owner(case, first, last, row, col)
+  if row < first or row > last or col < 1 or col > case.columns then
+    return "out"
+  end
+  return (case.cells[row] or {})[col] or false
+end
+
+local function walled(a, b)
+  if a == "out" and b == "out" then
+    return false
+  end
+  return a ~= b or a == false
+end
+
+-- a wall glows with the selected item, stays plain beside any item and fades between empty cells
+local function wall_hl(a, b, selected)
+  if a == selected or b == selected then
+    return "EldenHudFrameSel", 3
+  end
+  if type(a) == "number" or type(b) == "number" then
+    return "EldenHudFrame", 2
+  end
+  return "EldenHudCase", 1
+end
+
+local function strongest(walls)
+  local best, rank = "EldenHudCase", 0
+  for _, wall in ipairs(walls) do
+    if wall.on and wall.rank > rank then
+      best, rank = wall.hl, wall.rank
+    end
+  end
+  return best
+end
+
+local function segment(a, b, selected)
+  local on = walled(a, b)
+  local hl, rank = wall_hl(a, b, selected)
+  return { on = on, hl = hl, rank = rank }
+end
+
+-- the wall leaving a joint to the right and the one leaving it downward, as far as the next joint
+local function wall_runs(canvas, y, x, right, down)
+  for step = 1, M.SLOT_WIDTH - 1 do
+    if right.on and canvas[y][x + step] then
+      canvas[y][x + step] = { "═", right.hl }
+    end
+  end
+  for step = 1, M.SLOT_HEIGHT - 1 do
+    if down.on and canvas[y + step] then
+      canvas[y + step][x] = { "║", down.hl }
+    end
+  end
+end
+
+-- the joints and walls around every cell of the rows in view
+local function draw_walls(canvas, case, view)
+  local function at(row, col)
+    return owner(case, view.first, view.last, view.first + row - 1, col)
+  end
+  for r = 1, view.rows + 1 do
+    for c = 1, case.columns + 1 do
+      local nw, ne, sw, se = at(r - 1, c - 1), at(r - 1, c), at(r, c - 1), at(r, c)
+      local up, down = segment(nw, ne, view.selected), segment(sw, se, view.selected)
+      local left, right = segment(nw, sw, view.selected), segment(ne, se, view.selected)
+      local y, x = (r - 1) * M.SLOT_HEIGHT + 1, (c - 1) * M.SLOT_WIDTH + 1
+      canvas[y][x] = {
+        hud.joint(up.on, down.on, left.on, right.on),
+        strongest({ up, down, left, right }),
+      }
+      wall_runs(canvas, y, x, right, down)
+    end
+  end
+end
+
+-- an item's text in the room its cells leave inside the walls
+local function draw_item(canvas, item, spot, view)
+  local top = (spot.row - view.first) * M.SLOT_HEIGHT + 2
+  local left = (spot.col - 1) * M.SLOT_WIDTH + 2
+  local width = spot.w * M.SLOT_WIDTH - 1
+  local height = spot.h * M.SLOT_HEIGHT - 1
+  local selected = item == view.selected_item
+  local bg = selected and "EldenHudSlotSel" or nil
+  for y = top, top + height - 1 do
+    if y > top - 1 and canvas[y] and y > 1 and y < #canvas then
+      for x = left, left + width - 1 do
+        canvas[y][x] = { " ", bg = bg }
       end
     end
-    vim.list_extend(rows, band)
   end
-  return rows
+  local icon = hud.pad(vim.trim(item.icon or "·"), 2)
+  write(canvas, top, left + 1, icon, item.icon_hl or "EldenHudIcon", bg, selected and "cursor")
+  local name = hud.fit_name(item.slot or item.name, width - 5)
+  write(canvas, top, left + 4, name, selected and "EldenHudName" or "EldenHudDesc", bg)
+  if spot.w > 1 and item.category and vim.api.nvim_strwidth(item.category) <= width - 5 then
+    write(canvas, top + 1, left + 4, item.category, "EldenHudSection", bg)
+  end
+  local bottom = top + height - 1
+  local key = item.key and ("[" .. item.key .. "]") or ""
+  write(canvas, bottom, left + 1, key, "EldenHudKey", bg)
+  local count = item.count and tostring(item.count) or ""
+  write(canvas, bottom, left + width - 1 - vim.fn.strchars(count), count, "EldenHudAmmo", bg)
+end
+
+-- an empty cell waits with a dot in its middle
+local function draw_empty(canvas, view, row, col)
+  local y = (row - view.first) * M.SLOT_HEIGHT + 3
+  local x = (col - 1) * M.SLOT_WIDTH + math.floor(M.SLOT_WIDTH / 2) + 1
+  if canvas[y] and canvas[y][x] then
+    canvas[y][x] = { "·", "EldenHudCase" }
+  end
+end
+
+-- one row of the canvas as chunks, cells sharing a look joined into one
+local function canvas_row(cells)
+  local chunks = {}
+  for _, cell in ipairs(cells) do
+    local last = chunks[#chunks]
+    if last and not cell.spot and last[2] == cell[2] and last.bg == cell.bg then
+      last[1] = last[1] .. cell[1]
+    else
+      table.insert(chunks, { cell[1], cell[2], bg = cell.bg, spot = cell.spot })
+    end
+  end
+  return chunks
+end
+
+--- Draws the attaché case for the rows in view.
+---@param items table[]
+---@param case table from hud.pack
+---@param cursor integer the selected item
+---@param offset integer first cell row in view, from 0
+---@param visible integer cell rows in view
+---@return table[] rows of chunks
+local function case_rows(items, case, cursor, offset, visible)
+  local view = {
+    first = offset + 1,
+    last = offset + visible,
+    rows = visible,
+    selected = items[cursor] and cursor or nil,
+    selected_item = items[cursor],
+  }
+  local canvas = blank_canvas(visible * M.SLOT_HEIGHT + 1, case.columns * M.SLOT_WIDTH + 1)
+  draw_walls(canvas, case, view)
+  for row = view.first, view.last do
+    for col = 1, case.columns do
+      if not (case.cells[row] or {})[col] then
+        draw_empty(canvas, view, row, col)
+      end
+    end
+  end
+  for index, item in ipairs(items) do
+    local spot = case.places[index]
+    if spot.row + spot.h - 1 >= view.first and spot.row <= view.last then
+      draw_item(canvas, item, spot, view)
+    end
+  end
+  return vim.tbl_map(canvas_row, canvas)
 end
 
 local function command_menu(menu)
@@ -300,10 +458,14 @@ local function data_box(model, plan)
   local width = plan.items_width
   local value = width - 2 - 8
   local last_selected, change = parts.quest_selection(model)
+  -- a value whole, its part before the first dot, or a name cut where it breaks
   local function field(label, text, hl)
+    text = text or "·"
+    local shown = hud.first_fit({ text, text:match("^(.-)%s+·") }, value)
+      or hud.fit_name(text, value)
     return {
       { " " .. hud.pad(label, 7), "EldenHudDim" },
-      { hud.fit(text or "·", value), hl or "EldenHudName" },
+      { shown, hl or "EldenHudName" },
     }
   end
   local last = field("LAST", status.last_file)
@@ -311,7 +473,7 @@ local function data_box(model, plan)
     last = {
       { " " .. hud.pad("▶ LAST", 7), "EldenHudFrameSel" },
       {
-        hud.fit(status.last_file, value),
+        hud.fit_name(status.last_file, value),
         "EldenHudBanner",
         bg = "EldenHudSlotSel",
         spot = "cursor",
@@ -343,24 +505,29 @@ end
 local function items_column(model, plan, stretch)
   local items = model.tabs[model.tab].items
   local cursor = model.cursor.items or 1
-  local cursor_row = math.floor((cursor - 1) / plan.columns)
-  local offset = hud.scroll(cursor_row, plan.grid_rows, model.offset.items or 0)
-  local slots = grid(items, cursor, plan.columns, offset, plan.grid_rows)
-  if #items == 0 then
-    slots = { {}, { { "  " .. parts.word(model, "empty"), "EldenHudDim" } } }
-  end
+  local case = hud.pack(items, plan.columns)
+  local offset = hud.case_scroll(case.places[cursor], plan.grid_rows, model.offset.items or 0)
+  local slots = case_rows(items, case, cursor, offset, plan.grid_rows)
   local rows = { tab_plates(model), {} }
-  local grid_area = hud.beside(slots, plan.columns * M.SLOT_WIDTH, command_menu(model.menu), 1)
-  -- the grid keeps its height whatever the tab holds, so nothing below it moves
-  while #grid_area < plan.grid_rows * M.SLOT_HEIGHT do
+  local grid_area = hud.beside(slots, plan.columns * M.SLOT_WIDTH + 1, command_menu(model.menu), 0)
+  -- the case keeps its height whatever the tab holds, so nothing below it moves
+  while #grid_area < plan.grid_rows * M.SLOT_HEIGHT + 1 do
     table.insert(grid_area, {})
   end
   vim.list_extend(rows, grid_area)
-  for _ = 0, stretch or 0 do
+  for _ = 1, (plan.gap and 1 or 0) + (stretch or 0) do
     table.insert(rows, {})
   end
   vim.list_extend(rows, data_box(model, plan))
-  return rows, { columns = plan.columns, count = #items, offset = offset, cursor_row = cursor_row }
+  local spot = case.places[cursor]
+  return rows,
+    {
+      columns = plan.columns,
+      count = #items,
+      offset = offset,
+      cursor_row = spot and spot.row - 1 or 0,
+      case = case,
+    }
 end
 
 -- the DATA entries walk one after another, the last file first, then every change with room
@@ -376,18 +543,47 @@ end
 
 -- the bottom ------------------------------------------------------------------------------
 
-local function banner(item, width)
-  -- spaced first and cut after, the spacing works on bytes and would split a cut ellipsis
-  local name = item and hud.fit(require("core.banner.actions").spaced(item.name), width - 8) or ""
-  local side = math.max(2, math.floor((width - vim.api.nvim_strwidth(name) - 4) / 2))
-  local rows = {
-    {
-      { ("═"):rep(side) .. "╡ ", "EldenHudFrame" },
-      { name, "EldenHudBanner" },
-      { " ╞" .. ("═"):rep(width - side - vim.api.nvim_strwidth(name) - 4), "EldenHudFrame" },
-    },
+-- the ink ribbons sit at the right end of the banner's rule, like the count beside the typewriter
+local function ribbon_tail(ribbons, room)
+  if not ribbons then
+    return { { ("═"):rep(room), "EldenHudFrame" } }
+  end
+  local note = (" %s ×%d "):format(ribbons.word, ribbons.count)
+  local width = vim.api.nvim_strwidth(note)
+  if room < width + 6 then
+    return { { ("═"):rep(room), "EldenHudFrame" } }
+  end
+  return {
+    { ("═"):rep(room - width - 2), "EldenHudFrame" },
+    { note, "EldenHudAmmo" },
+    { "══", "EldenHudFrame" },
   }
-  local lines = item and hud.wrap(item.desc or "", width - 2) or {}
+end
+
+-- "Ink Ribbon" becomes "I N K   R I B B O N", letter by letter so accents stay whole
+local function spaced(text)
+  return table.concat(vim.fn.split(vim.fn.toupper(text), "\\zs"), " ")
+end
+
+local function banner(item, width, typed, ribbons)
+  -- spaced when it fits, plain capitals when it does not, cut where it breaks as a last resort
+  local upper = item and vim.fn.toupper(item.name) or ""
+  local name = item
+      and (hud.first_fit({ spaced(item.name), upper }, width - 8) or hud.fit_name(upper, width - 8))
+    or ""
+  local side = math.max(2, math.floor((width - vim.api.nvim_strwidth(name) - 4) / 2))
+  local head = {
+    { ("═"):rep(side) .. "╡ ", "EldenHudFrame" },
+    { name, "EldenHudBanner" },
+    { " ╞", "EldenHudFrame" },
+  }
+  vim.list_extend(head, ribbon_tail(ribbons, width - side - vim.api.nvim_strwidth(name) - 4))
+  local rows = { head }
+  local lines = hud.typed_with_caret(
+    item and hud.wrap_rows(item.desc or "", width - 2, 2) or {},
+    typed,
+    M.CARET
+  )
   for index = 1, 2 do
     table.insert(rows, hud.center({ { lines[index] or "", "EldenHudDesc" } }, width))
   end
@@ -425,7 +621,7 @@ function M.render(model)
     rows = hud.beside(hud.middle(status, height), plan.status_width, items, M.GAP)
   end
   table.insert(rows, {})
-  vim.list_extend(rows, banner(parts.selected(model), plan.stage_width))
+  vim.list_extend(rows, banner(parts.selected(model), plan.stage_width, model.typed, model.ribbons))
   table.insert(
     rows,
     hud.center(
@@ -433,14 +629,9 @@ function M.render(model)
       plan.stage_width
     )
   )
-  table.insert(rows, {})
-  table.insert(
-    rows,
-    hud.center(
-      { { hud.fit(model.message or "", plan.stage_width), "SnacksDashboardDesc" } },
-      plan.stage_width
-    )
-  )
+  -- the song playing sits in the gap over the message
+  table.insert(rows, parts.player(model.music, plan.stage_width) or {})
+  table.insert(rows, parts.whole_line(model.message, "SnacksDashboardDesc", plan.stage_width))
   local lines, marks, spots = hud.compose(hud.indent(rows, plan.indent))
 
   local cursor = spots.cursor or spots.fallback

@@ -7,8 +7,8 @@ return {
   ornament = { "󰋑 ", " 󰋑" },
   -- rounded pills, like the bulbs around her mirror
   statusline = {
-    section = { left = "", right = "" },
-    component = { left = "", right = "" },
+    section = { left = "\u{E0B4}", right = "\u{E0B6}" },
+    component = { left = "\u{E0B5}", right = "\u{E0B7}" },
   },
   -- bufferline separator_style
   tabs = "slope",
@@ -39,6 +39,32 @@ return {
     keys = { breadcrumb = "󰋕", separator = "›", group = "󰋑 " },
     scrollbar = { "◉" },
     spinner = { frames = { "◉○○", "○◉○", "○○◉", "○◉○" }, interval = 160 },
+    -- past the end of the buffer, and the lines between windows
+    eob = " ",
+    split = { vert = "┊", horiz = "┈" },
+  },
+  -- the explorer: a hem of dotted guides, lipstick notes and hearts that fill once a room is cleared
+  tree = {
+    indent = "┊",
+    last = "╰",
+    collapsed = "▸",
+    expanded = "▾",
+    folder = { closed = "󰉋", open = "󰝰", empty = "󰉖" },
+    thread = "󰍩",
+    message = "󱎵",
+    left = "󰋕",
+    cleared = "󰋑",
+  },
+  -- the code's own signature: keywords in her pinks, bold functions like names in lights, strings
+  -- and comments in a soft italic like lines of a script
+  syntax = {
+    keyword = { color = "pink", style = {} },
+    ["function"] = { color = "func", style = { "bold" } },
+    type = { color = "mauve", style = {} },
+    string = { color = "green", style = { "italic" } },
+    constant = { color = "peach", style = {} },
+    comment = { color = "comment", style = { "italic" } },
+    property = { color = "rosewater", style = {} },
   },
   -- the snacks picker layout, see lua/plugins/snacks.lua: the preview is the vanity mirror
   picker = "vanity",

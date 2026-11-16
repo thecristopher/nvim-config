@@ -236,7 +236,10 @@ local function write_ghostty(settings)
     return nil
   end
   vim.fn.mkdir(vim.fs.dirname(GHOSTTY_FILE), "p")
-  vim.fn.writefile(lines, GHOSTTY_FILE)
+  -- written aside and renamed over, so Ghostty (or another nvim) never reads half a file
+  local staged = ("%s.%d.tmp"):format(GHOSTTY_FILE, own_pid())
+  vim.fn.writefile(lines, staged)
+  vim.uv.fs_rename(staged, GHOSTTY_FILE)
   return vim.system(
     { "osascript", "-e", actions.ghostty_reload_script() },
     {},
@@ -367,13 +370,21 @@ local function restore()
   -- other nvims still wear the skin, so only the last one to leave hands Ghostty its own look back
   if wants_ghostty() and worn.ghostty and #unregister_instance() == 0 then
     local reloading = write_ghostty(nil)
-    -- waits so the reload is not cut off when nvim exits right after
+    -- waits a moment so the reload is not cut off when nvim exits right after, but never long
+    -- enough to make quitting feel stuck
     if reloading then
-      reloading:wait(2000)
+      reloading:wait(500)
     end
   end
   -- the terminal is back to its own look, so the next apply has to send everything again
   worn = {}
+end
+
+-- a suspended nvim hands the shell its own background back but leaves Ghostty's file alone:
+-- reloading it twice (now and on resume) would lay out the fonts again and drop every image
+local function suspend()
+  send(actions.reset_background())
+  worn.background = nil
 end
 
 function M.setup()
@@ -402,10 +413,8 @@ function M.setup()
     { group = group, pattern = "EldentreeFranchise", callback = M.apply }
   )
   vim.api.nvim_create_autocmd({ "UIEnter", "VimResume" }, { group = group, callback = M.apply })
-  vim.api.nvim_create_autocmd(
-    { "VimLeavePre", "VimSuspend" },
-    { group = group, callback = restore }
-  )
+  vim.api.nvim_create_autocmd("VimLeavePre", { group = group, callback = restore })
+  vim.api.nvim_create_autocmd("VimSuspend", { group = group, callback = suspend })
 end
 
 return M

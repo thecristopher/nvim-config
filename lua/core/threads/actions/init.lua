@@ -136,6 +136,35 @@ function M.at(threads, path, line)
   return nil
 end
 
+-- a review lands while you work, so the threads are asked again once they are this old
+M.TTL_MS = 5 * 60 * 1000
+
+--- Tells whether a repo's threads are old enough to ask GitHub again.
+---@param fetched_at integer|nil uv.now() of the last answer, nil when never asked
+---@param now integer
+---@return boolean
+function M.stale(fetched_at, now)
+  return fetched_at == nil or now - fetched_at >= M.TTL_MS
+end
+
+--- The line of the next (or previous) open thread in a file, from the cursor line.
+---@param threads table[]
+---@param path string relative to the repo root
+---@param line integer cursor line, 1 based
+---@param direction 1|-1
+---@return integer|nil nil when no thread lies that way
+function M.neighbor(threads, path, line, direction)
+  local best
+  for _, thread in ipairs(M.for_file(threads, path)) do
+    local at = thread.line
+    local ahead = at and (direction == 1 and at > line or direction == -1 and at < line)
+    if ahead and (not best or math.abs(at - line) < math.abs(best - line)) then
+      best = at
+    end
+  end
+  return best
+end
+
 --- Splits "owner/name" the way `gh repo view --json nameWithOwner` prints it.
 ---@param name_with_owner string|nil
 ---@return string|nil owner

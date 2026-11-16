@@ -28,55 +28,92 @@ local function split_chars(text)
   return vim.fn.split(text, "\\zs")
 end
 
--- every cell in the float, as { char, group } rows
-local function layout(kind, subtitle, width)
+-- the shadow every cell starts on, already quantized into the band's levels
+local function ground(kind, geometry, width)
   local rows = {}
-  for row = 0, actions.HEIGHT - 1 do
+  for row = 0, geometry.height - 1 do
     local cells = {}
     for col = 0, width - 1 do
-      local level =
-        actions.quantize(actions.band_alpha(row, col, width, actions.HEIGHT), actions.BAND_LEVELS)
-      cells[col + 1] = { " ", "EldenBand" .. level }
+      local alpha = actions.ground_alpha(kind, row, col, width, geometry.height)
+      cells[col + 1] = { " ", "EldenBand" .. actions.quantize(alpha, actions.BAND_LEVELS) }
     end
     rows[row + 1] = cells
   end
+  return rows
+end
 
-  local text = actions.spaced(kind.text)
+-- writes text into a row of cells from a display column, one cell per character
+local function put_text(rows, row, col, text, group)
+  for offset, char in ipairs(split_chars(text)) do
+    if rows[row + 1] and rows[row + 1][col + offset] then
+      rows[row + 1][col + offset] = { char, group }
+    end
+  end
+end
+
+local function put_letters(rows, geometry, text, width)
   local start = actions.center_col(width, #text)
   local letters = {}
   for offset, char in ipairs(split_chars(text)) do
     if char ~= " " and start + offset <= width then
       table.insert(letters, start + offset - 1)
-      rows[actions.TEXT_ROW + 1][start + offset] = { char, "EldenBannerL" .. #letters }
+      rows[geometry.text + 1][start + offset] = { char, "EldenBannerL" .. #letters }
     end
   end
+  return letters
+end
 
+local function put_drips(rows, geometry, letters)
+  for _, drip in ipairs(actions.drips(letters)) do
+    for depth = 1, drip.length do
+      local glyph = depth == drip.length and "▾" or "│"
+      rows[geometry.text + depth + 1][drip.col + 1] = { glyph, "EldenBannerDrip" .. depth }
+    end
+  end
+end
+
+local function put_rule(rows, geometry, text, width)
+  local length = math.min(width, #text + 16)
+  local rule_start = actions.center_col(width, length)
+  for index = 1, length do
+    local level = actions.quantize(actions.rule_alpha(index, length), actions.BAND_LEVELS)
+    rows[geometry.rule + 1][rule_start + index] = { "─", "EldenBannerRule" .. level }
+  end
+end
+
+local SLATE_GROUPS = {
+  open = "EldenBannerOpen",
+  hinge = "EldenBannerOpen",
+  shut = "EldenBannerShut",
+  slate = "EldenBannerSlate",
+}
+
+-- every cell in the float, as { char, group } rows
+local function layout(kind, subtitle, width, geometry)
+  local rows = ground(kind, geometry, width)
+  local text = actions.spaced(kind.text)
+  local letters = put_letters(rows, geometry, text, width)
   if kind.drip then
-    for _, drip in ipairs(actions.drips(letters)) do
-      for depth = 1, drip.length do
-        local glyph = depth == drip.length and "▾" or "│"
-        rows[actions.TEXT_ROW + depth + 1][drip.col + 1] = { glyph, "EldenBannerDrip" .. depth }
-      end
-    end
+    put_drips(rows, geometry, letters)
   end
-
   if kind.rule then
-    local length = math.min(width, #text + 16)
-    local rule_start = actions.center_col(width, length)
-    for index = 1, length do
-      local level = actions.quantize(actions.rule_alpha(index, length), actions.BAND_LEVELS)
-      rows[actions.RULE_ROW + 1][rule_start + index] = { "─", "EldenBannerRule" .. level }
+    put_rule(rows, geometry, text, width)
+  end
+  if geometry.slate then
+    for _, piece in ipairs(actions.slate(#text, width)) do
+      put_text(rows, geometry.slate + piece.row, piece.col, piece.text, SLATE_GROUPS[piece.part])
     end
   end
-
   if subtitle and subtitle ~= "" then
-    local chars = split_chars(vim.fn.strcharpart(subtitle, 0, width - 8))
-    local sub_start = actions.center_col(width, #chars)
-    for offset, char in ipairs(chars) do
-      rows[actions.SUB_ROW + 1][sub_start + offset] = { char, "EldenBannerSub" }
-    end
+    local chars = vim.fn.strcharpart(subtitle, 0, width - 8)
+    put_text(
+      rows,
+      geometry.sub,
+      actions.center_col(width, vim.fn.strchars(chars)),
+      chars,
+      "EldenBannerSub"
+    )
   end
-
   return rows, letters
 end
 
@@ -117,12 +154,19 @@ end
 local function update_groups(state, elapsed)
   local p = palette()
   local kind = state.kind
-  local band = p.crust
+  -- a blackout sinks the whole screen to true black, the band rests on the region's darkest tone
+  local band = kind.look == "blackout" and "#000000" or p.crust
   local target = color.to_int(p[kind.color] or p.yellow)
   local band_int = color.to_int(band)
   local opacity = actions.envelope(elapsed, kind)
-  local text_alpha =
-    actions.band_alpha(actions.TEXT_ROW, math.floor(state.width / 2), state.width, actions.HEIGHT)
+  local geometry = state.geometry
+  local text_alpha = actions.ground_alpha(
+    kind,
+    geometry.text,
+    math.floor(state.width / 2),
+    state.width,
+    geometry.height
+  )
   local text_blend = actions.blend_for(text_alpha * kind.band * opacity)
 
   for level = 0, actions.BAND_LEVELS do
@@ -147,6 +191,26 @@ local function update_groups(state, elapsed)
   for depth = 1, kind.drip and actions.DRIP_DEPTH or 0 do
     vim.api.nvim_set_hl(0, "EldenBannerDrip" .. depth, {
       fg = color.mix(band_int, target, actions.drip_alpha(depth, elapsed, kind)),
+      bg = band,
+      blend = text_blend,
+    })
+  end
+
+  if geometry.slate then
+    local open, shut = actions.clapper_alpha(elapsed, kind)
+    local chalk = color.to_int(p.text)
+    vim.api.nvim_set_hl(
+      0,
+      "EldenBannerOpen",
+      { fg = color.mix(band_int, chalk, open), bg = band, blend = text_blend }
+    )
+    vim.api.nvim_set_hl(
+      0,
+      "EldenBannerShut",
+      { fg = color.mix(band_int, chalk, shut), bg = band, blend = text_blend }
+    )
+    vim.api.nvim_set_hl(0, "EldenBannerSlate", {
+      fg = color.mix(band_int, chalk, opacity * 0.85),
       bg = band,
       blend = text_blend,
     })
@@ -199,8 +263,9 @@ function M.show(name, opts)
 
   close(current)
   local width = vim.o.columns
-  local rows, letters = layout(kind, opts.subtitle, width)
-  local state = { kind = kind, width = width, letters = letters }
+  local geometry = actions.geometry(kind, vim.o.lines - vim.o.cmdheight - 1)
+  local rows, letters = layout(kind, opts.subtitle, width, geometry)
+  local state = { kind = kind, width = width, letters = letters, geometry = geometry }
   update_groups(state, 0)
 
   state.buf = vim.api.nvim_create_buf(false, true)
@@ -209,10 +274,11 @@ function M.show(name, opts)
 
   state.win = vim.api.nvim_open_win(state.buf, false, {
     relative = "editor",
-    row = math.max(0, math.floor((vim.o.lines - actions.HEIGHT) * 0.4)),
+    row = kind.look == "blackout" and 0
+      or math.max(0, math.floor((vim.o.lines - geometry.height) * 0.4)),
     col = 0,
     width = width,
-    height = actions.HEIGHT,
+    height = geometry.height,
     style = "minimal",
     border = "none",
     focusable = false,
@@ -293,10 +359,9 @@ function M.setup()
   watch_diagnostics()
   vim.api.nvim_create_user_command("Banner", function(cmd)
     -- a rehearsal, so no runes are won or lost
-    M.show(
-      cmd.args ~= "" and cmd.args or "felled",
-      { subtitle = require("core.franchise").current().words.salute, reward = false }
-    )
+    local name = cmd.args ~= "" and cmd.args or "felled"
+    local salute = require("core.franchise").current().words.salute
+    M.show(name, { subtitle = actions.preview_subtitle(name, salute), reward = false })
   end, {
     nargs = "?",
     complete = function()

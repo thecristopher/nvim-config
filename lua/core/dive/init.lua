@@ -41,7 +41,7 @@ local function hover()
   install_tome()
   local ok, captures = pcall(vim.treesitter.get_captures_at_cursor, 0)
   tome.category = actions.item_category(ok and captures or {})
-  local title = " ◈ " .. vim.fn.expand("<cword>") .. " "
+  local title = " " .. require("core.skin").title(vim.fn.expand("<cword>")) .. " "
   vim.lsp.buf.hover({
     border = require("core.skin").border(),
     max_width = 90,

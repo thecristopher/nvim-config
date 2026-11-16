@@ -38,8 +38,16 @@ end
 function M.catppuccin_opts(base_opts, region)
   local opts = vim.deepcopy(base_opts)
   opts.color_overrides = { mocha = region.palette }
-  -- one cache per region, so previewing regions loads compiled colors instead of recompiling
-  opts.compile_path = vim.fn.stdpath("cache") .. "/catppuccin/" .. region.name
+  -- a franchise whose syntax signature writes upright (a typewriter has no italics) strips them all
+  local syntax = require("core.skin").current().syntax or {}
+  opts.no_italic = syntax.italic == false
+  -- one cache per franchise and region, so previewing regions loads compiled colors instead of
+  -- recompiling, and two franchises never share a region's compiled colors
+  opts.compile_path = vim.fn.stdpath("cache")
+    .. "/catppuccin/"
+    .. require("core.franchise").name()
+    .. "/"
+    .. region.name
   return opts
 end
 
@@ -87,6 +95,17 @@ function M.apply(name, opts)
     save(region.name)
   end
 
+  -- the new region's character greets you once its colors are in place, registered before the fade
+  -- since a stilled fade settles at once
+  if opts.announce then
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "EldentreeRegionSettled",
+      once = true,
+      callback = function()
+        require("core.voice").say("region_arrived")
+      end,
+    })
+  end
   if not M.painted then
     M.painted = true
     load_colorscheme(region)

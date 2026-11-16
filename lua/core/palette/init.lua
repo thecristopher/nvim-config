@@ -38,7 +38,8 @@ function M.open()
   end, entries)
 
   Snacks.picker({
-    title = require("core.skin").title(require("core.franchise").current().words.arts),
+    -- the picker layout already frames every title in the skin's ornaments
+    title = require("core.franchise").current().words.arts,
     items = items,
     format = formatter(widths),
     layout = { preset = "select", layout = { width = actions.window_width(widths, vim.o.columns) } },

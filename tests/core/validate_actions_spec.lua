@@ -18,6 +18,18 @@ describe("problems", function()
     assert.same({}, validate.problems(lore()))
   end)
 
+  it("notices a hub key the safe room forgot to name", function()
+    local broken = lore()
+    broken.hud.keys.f.slot = nil
+    assert.is_true(mentions(validate.problems(broken), "hud.keys.f.slot"))
+  end)
+
+  it("notices the safe room without a word for its condition", function()
+    local broken = lore()
+    broken.hud.stats.danger = nil
+    assert.is_true(mentions(validate.problems(broken), "hud.stats.danger"))
+  end)
+
   it("notices a region without a boss", function()
     local broken = lore()
     broken.bosses.raccoon_city = nil
@@ -124,7 +136,21 @@ describe("problems", function()
     dressed.mechanics.travel = "curtain"
     dressed.mechanics.status = "heartbeat"
     dressed.mechanics.rest = "golden_hour"
+    dressed.words.intermission = "Intermission"
+    dressed.words.back_soon = "Back in five"
     assert.same({}, validate.problems(dressed))
+  end)
+
+  it("asks a golden hour rest for its intermission card", function()
+    local broken = lore()
+    broken.mechanics.rest = "golden_hour"
+    assert.is_true(mentions(validate.problems(broken), "words.intermission is missing"))
+  end)
+
+  it("notices a banner look nobody draws", function()
+    local broken = lore()
+    broken.banner_styles = { died = { look = "confetti" } }
+    assert.is_true(mentions(validate.problems(broken), "banner_styles.died.look is confetti"))
   end)
 
   it("notices a HUD view that does not exist", function()

@@ -55,6 +55,45 @@ function M.theme(region, franchise_title)
   }
 end
 
+-- a turn shorter than this ended while you were still watching, so it needs no call back
+M.LONG_TURN_S = 20
+-- permission prompts that come in a burst ring once
+M.PERMISSION_QUIET_S = 30
+
+--- Decides whether a hook's sound plays: never during an expedition, the end of a turn only when
+--- the turn was long enough to look away (or nobody knows when it began), and a permission
+--- prompt only when the last one rang a while ago.
+---@param event string hook event name
+---@param ctx { now: number, turn_started?: number, last_permission?: number, expedition_until?: number } seconds since the epoch
+---@return boolean
+function M.should_play(event, ctx)
+  if ctx.expedition_until and ctx.now < ctx.expedition_until then
+    return false
+  end
+  if event == "Stop" then
+    return not ctx.turn_started or ctx.now - ctx.turn_started >= M.LONG_TURN_S
+  end
+  if event == "PermissionRequest" then
+    return not ctx.last_permission or ctx.now - ctx.last_permission >= M.PERMISSION_QUIET_S
+  end
+  return true
+end
+
+--- Reads a number of seconds kept in a state file line, nil when there is none.
+---@param line string|nil
+---@return number|nil
+function M.stamp(line)
+  return tonumber(vim.trim(line or ""))
+end
+
+--- Makes a session id safe to use as a file name.
+---@param id string|nil
+---@return string
+function M.session_file(id)
+  local safe = tostring(id or "default"):gsub("[^%w%-_]", "")
+  return safe ~= "" and safe or "default"
+end
+
 --- Picks the franchise sound for a Claude Code hook event.
 ---@param event string hook event name, like "Stop"
 ---@param travel string the franchise's travel mechanic, "fog" or "door"

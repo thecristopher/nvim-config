@@ -32,7 +32,40 @@ describe("pick", function()
   end)
 end)
 
+describe("MOMENTS", function()
+  it("asks every region for the new moments Claire and Malenia speak at", function()
+    for _, moment in ipairs({
+      "committed",
+      "pr_opened",
+      "region_arrived",
+      "morning",
+      "conflicts_cleared",
+      "woke",
+    }) do
+      assert.truthy(vim.tbl_contains(actions.MOMENTS, moment), moment)
+    end
+  end)
+end)
+
+describe("morning_due", function()
+  it("greets Inde on the first nvim of the day", function()
+    assert.is_true(actions.morning_due("2026-11-15", "2026-11-16"))
+    assert.is_true(actions.morning_due(nil, "2026-11-16"))
+  end)
+
+  it("says good morning to Claire only once a day", function()
+    assert.is_false(actions.morning_due("2026-11-16\n", "2026-11-16"))
+  end)
+end)
+
 describe("fill", function()
+  it("writes the number of Inde's pull request into Malenia's line", function()
+    assert.equal(
+      "PR #42 stands before the judges.",
+      actions.fill("PR #{number} stands before the judges.", { number = "42" })
+    )
+  end)
+
   it("writes the branch into Claire's line", function()
     assert.equal(
       "anniversary-playlist made it out clean.",

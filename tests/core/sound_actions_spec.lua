@@ -29,6 +29,52 @@ describe("pick", function()
       return 1
     end))
   end)
+
+  it("never plays the same variant of Malenia's death twice in a row", function()
+    local first = function()
+      return 1
+    end
+    assert.equal("died_2.mp3", actions.pick(files, "died", first, "died.wav"))
+    assert.equal("died.wav", actions.pick(files, "died", first, "died_2.mp3"))
+  end)
+
+  it("replays the only door Claire has, there is nothing else to pick", function()
+    assert.equal(
+      "door.aiff",
+      actions.pick(files, "door", function()
+        return 1
+      end, "door.aiff")
+    )
+  end)
+end)
+
+describe("channel", function()
+  it("keeps every inventory sound on the HUD's channel", function()
+    assert.equal("hud", actions.channel("hud_move"))
+    assert.equal("moment", actions.channel("felled"))
+  end)
+end)
+
+describe("arbitrate", function()
+  it("plays Inde's banner when nothing else is sounding", function()
+    assert.same({ true, false }, { actions.arbitrate("felled", nil) })
+  end)
+
+  it("cuts the last tick when Claire moves through the inventory again", function()
+    assert.same({ true, true }, { actions.arbitrate("hud_move", "hud_select") })
+  end)
+
+  it("lets Malenia's death cut a boss theme short", function()
+    assert.same({ true, true }, { actions.arbitrate("died", "boss") })
+  end)
+
+  it("keeps a zone chime quiet while Malenia is being felled", function()
+    assert.same({ false, false }, { actions.arbitrate("zone", "felled") })
+  end)
+
+  it("lets a moment replace another of the same weight", function()
+    assert.same({ true, true }, { actions.arbitrate("great", "felled") })
+  end)
 end)
 
 describe("EVENTS", function()

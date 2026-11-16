@@ -7,6 +7,8 @@ return {
   skin = require("core.franchise.lore.resident_evil.skin"),
   voices = require("core.franchise.lore.resident_evil.voices"),
   lines = require("core.franchise.lore.resident_evil.lines"),
+  -- what the HUD calls its keys, tabs and items, see lua/core/hud
+  hud = require("core.franchise.lore.resident_evil.hud"),
 
   -- which version of each mechanic this world plays
   mechanics = {
@@ -54,6 +56,7 @@ return {
   -- the now playing panel's title and what its lyrics say while they are not there
   music = {
     title = "Save Room",
+    now_playing = "Tape obtained",
     loading = "Searching the files…",
     missing = "No file on this song",
     instrumental = "Instrumental tape",
@@ -70,7 +73,17 @@ return {
 
   -- how a banner kind moves in this world, merged over its defaults
   banner_styles = {
-    died = { drip = true, stagger = 0, letter_ms = 500, fade_in = 300, duration = 4600 },
+    -- no band: the whole screen slowly sinks to black and the words bleed out of it
+    died = {
+      look = "blackout",
+      drip = true,
+      band = 1,
+      stagger = 0,
+      letter_ms = 900,
+      fade_in = 1500,
+      fade_out = 1400,
+      duration = 5600,
+    },
   },
 
   -- who stalks each location when errors pile up
@@ -130,6 +143,7 @@ return {
     title = "Radio Transmissions",
     resolved = "Transmission answered",
     none = "No open transmissions on this PR",
+    no_pr = "No channel open, this branch has no PR yet",
   },
 
   -- who guards a merge conflict, and how many conflicted files the repo still holds
@@ -168,6 +182,17 @@ return {
 
   -- the days you fought, as a grid
   chronicle = { title = "Mission Log" },
+
+  -- the HUD's trophies: foes felled from the bestiary, the best rank, the days fought and the
+  -- longest streak of days in a row, from the chronicle
+  trophies = {
+    title = "Records",
+    felled = "Enemies killed",
+    rank = "Best rank",
+    days = "Days survived",
+    streak = "Longest streak",
+    empty = "No records yet",
+  },
 
   banners = {
     felled = "THREAT NEUTRALIZED",
@@ -293,6 +318,8 @@ return {
     search = "Search",
     examine = "Examine",
     history = "Radio Log",
+    -- the explorer's title over the tree
+    tree = "Map",
     notify = {
       info = "Radio",
       warn = "Caution",
@@ -321,6 +348,8 @@ return {
     arts = "Commands",
     ink_ribbons = "Ink Ribbons",
     typewriter = "Will you use an Ink Ribbon?",
+    -- small at the bottom of the screen while the door opens
+    loading = "Now Loading",
     last_run = "Last run",
     -- the results line: the rank, the saves and the errors fixed
     rank = "Rank",

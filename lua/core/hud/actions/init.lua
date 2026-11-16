@@ -85,6 +85,91 @@ function M.fit(text, width)
   return vim.fn.strcharpart(text, 0, width - 1) .. "…"
 end
 
+-- where a name may be cut: after a space, a slash, a dash, an underscore or a dot
+local BREAK = "[%s/%-_%.]"
+
+--- Cuts a name (a path, a branch, a title) only where it breaks, marking the cut with an ellipsis,
+--- so "bugfix/elizabeth-portraits" becomes "bugfix/…" and never "bugfix/eliz…".
+---@param text string
+---@param width integer
+---@return string|nil nil when not even its first piece fits
+function M.fit_words(text, width)
+  if vim.api.nvim_strwidth(text) <= width then
+    return text
+  end
+  local best
+  for index = 1, #text do
+    if text:sub(index, index):match(BREAK) then
+      local head = text:sub(1, index):gsub("%s+$", "")
+      if head ~= "" and vim.api.nvim_strwidth(head) + 1 > width then
+        break
+      end
+      best = head ~= "" and head or best
+    end
+  end
+  return best and (best .. "…") or nil
+end
+
+--- Cuts a name at a break when it can, at the width only when one piece is wider than everything,
+--- for names that must show something.
+---@param text string
+---@param width integer
+---@return string
+function M.fit_name(text, width)
+  return M.fit_words(text, width) or M.fit(text, width)
+end
+
+--- The first of the forms that fits whole, longest first, like a date that shortens to the day.
+--- A form left nil (one that does not apply) is skipped.
+---@param forms (string|nil)[]
+---@param width integer
+---@return string|nil nil when none fits
+function M.first_fit(forms, width)
+  for index = 1, table.maxn(forms) do
+    local form = forms[index]
+    if form and form ~= "" and vim.api.nvim_strwidth(form) <= width then
+      return form
+    end
+  end
+  return nil
+end
+
+--- Wraps a sentence into at most a number of rows, nil when it cannot fit whole: a word wider than
+--- the width or more rows than allowed.
+---@param text string
+---@param width integer
+---@param rows integer
+---@return string[]|nil
+function M.wrap_whole(text, width, rows)
+  for word in (text or ""):gmatch("%S+") do
+    if vim.api.nvim_strwidth(word) > width then
+      return nil
+    end
+  end
+  local lines = M.wrap(text, width)
+  return #lines <= rows and lines or nil
+end
+
+--- Wraps a description into at most a number of rows, ending the last one on a whole word with an
+--- ellipsis when the rest does not fit.
+---@param text string
+---@param width integer
+---@param rows integer
+---@return string[]
+function M.wrap_rows(text, width, rows)
+  local lines = M.wrap(text, width)
+  if #lines <= rows then
+    return lines
+  end
+  local kept = vim.list_slice(lines, 1, rows)
+  local words = vim.split(kept[rows], " ", { trimempty = true })
+  while #words > 1 and vim.api.nvim_strwidth(table.concat(words, " ") .. "…") > width do
+    table.remove(words)
+  end
+  kept[rows] = table.concat(words, " ") .. "…"
+  return kept
+end
+
 --- Pads text with spaces to a display width, cutting it first when it is too long.
 ---@param text string
 ---@param width integer
@@ -273,6 +358,20 @@ function M.image_for(region, shows_figures)
   return region.portrait, false
 end
 
+--- Picks the converted copies of an image that are older than the image itself.
+---@param source_mtime integer seconds the image was last written
+---@param copies { file: string, mtime: integer|nil }[] mtime nil when the copy does not exist yet
+---@return string[] files to throw away
+function M.stale_copies(source_mtime, copies)
+  local stale = {}
+  for _, copy in ipairs(copies) do
+    if copy.mtime and copy.mtime < source_mtime then
+      table.insert(stale, copy.file)
+    end
+  end
+  return stale
+end
+
 --- Joins key hints into one line, leaving out whole hints from the end until it fits.
 ---@param hints string[] most important first
 ---@param width integer cells available
@@ -453,6 +552,18 @@ function M.hud_groups(p, blend, plates)
     EldenHudBulb = { fg = blend(p.peach, p.base, 0.45) },
     EldenHudBulbLit = { fg = blend(p.peach, "#FFFFFF", 0.65), bold = true },
     EldenHudDesk = { fg = p.surface1 },
+    -- the dressing room's spotlight spills softly onto the pieces beside the selected one
+    EldenHudSpotNear = { bg = blend(p.yellow, p.base, 0.06) },
+    -- the Roundtable: the light that runs along the selected frame, the item's category and its lore
+    EldenHudGlint = { fg = blend(p.yellow, "#FFFFFF", 0.55), bold = true },
+    EldenHudCategory = { fg = p.peach, italic = true },
+    EldenHudFlavor = { fg = p.overlay1, italic = true },
+    -- the attaché case: its empty cells, the green ammo digits and the survivor's condition
+    EldenHudCase = { fg = p.surface1 },
+    EldenHudAmmo = { fg = p.green, bold = true },
+    EldenHudFine = { fg = p.green, bold = true },
+    EldenHudCaution = { fg = p.peach, bold = true },
+    EldenHudDanger = { fg = p.red, bold = true },
   }
 end
 
@@ -503,6 +614,391 @@ function M.last_in(oldfiles, root)
     end
   end
   return oldfiles[1]
+end
+
+-- the description types itself in when the selection lands, quick enough to never be waited on
+M.TYPING = { per_char = 18, max = 400 }
+
+--- How long a description of this many characters takes to type itself in.
+---@param length integer characters
+---@return integer milliseconds
+function M.typing_ms(length)
+  return math.min(M.TYPING.max, math.max(0, length) * M.TYPING.per_char)
+end
+
+--- Keeps the first count characters of the wrapped lines and blanks the rest, so every line keeps
+--- its width and centered text never shifts while it types in.
+---@param lines string[]
+---@param count integer|nil characters shown so far, nil shows them all
+---@return string[]
+function M.reveal(lines, count)
+  if count == nil then
+    return lines
+  end
+  local out, left = {}, count
+  for index, line in ipairs(lines) do
+    local chars = vim.fn.strchars(line)
+    if left >= chars then
+      out[index] = line
+    else
+      local shown = vim.fn.strcharpart(line, 0, math.max(0, left))
+      out[index] = shown .. (" "):rep(vim.api.nvim_strwidth(line) - vim.api.nvim_strwidth(shown))
+    end
+    left = left - chars
+  end
+  return out
+end
+
+--- Puts a caret right after the characters typed so far, over the blank the reveal left there, the
+--- way a typewriter's carriage sits after the last letter it struck.
+---@param lines string[] the wrapped text
+---@param count integer|nil characters shown so far, nil when the whole text is out
+---@param caret string one cell wide
+---@return string[] the revealed lines with the caret
+function M.typed_with_caret(lines, count, caret)
+  local revealed = M.reveal(lines, count)
+  if count == nil then
+    return revealed
+  end
+  local left = count
+  for index, line in ipairs(lines) do
+    local chars = vim.fn.strchars(line)
+    if left < chars then
+      local shown = revealed[index]
+      revealed[index] = vim.fn.strcharpart(shown, 0, left)
+        .. caret
+        .. vim.fn.strcharpart(shown, left + 1)
+      return revealed
+    end
+    left = left - chars
+  end
+  return revealed
+end
+
+--- Lays a row out with a note pinned to its right edge, like the runes held at the top of the
+--- screen. The note stays out when the row leaves it no room.
+---@param chunks table[] the row, already laid out from the left
+---@param note table[] chunks for the right edge
+---@param width integer
+---@return table[] chunks
+function M.corner(chunks, note, width)
+  local used, size = M.width(chunks), M.width(note)
+  if size == 0 or used + size + 2 > width then
+    return chunks
+  end
+  local row = M.pad_chunks(chunks, width - size)
+  return vim.list_extend(row, note)
+end
+
+--- Says how long ago something happened, in the words a person would use.
+---@param seconds integer
+---@return string
+function M.ago(seconds)
+  local units = {
+    { 86400, "day" },
+    { 3600, "hour" },
+    { 60, "minute" },
+  }
+  for _, unit in ipairs(units) do
+    local count = math.floor(seconds / unit[1])
+    if count >= 1 then
+      return ("%d %s%s ago"):format(count, unit[2], count == 1 and "" or "s")
+    end
+  end
+  return "just now"
+end
+
+--- Names files so two with the same name never look alike: the bare name when it is the only one,
+--- the parent folder with it when another shares it.
+---@param paths string[]
+---@return string[] labels in the same order
+function M.file_labels(paths)
+  local seen = {}
+  for _, path in ipairs(paths) do
+    local name = vim.fs.basename(path)
+    seen[name] = (seen[name] or 0) + 1
+  end
+  return vim.tbl_map(function(path)
+    local name = vim.fs.basename(path)
+    if seen[name] < 2 then
+      return name
+    end
+    return vim.fs.basename(vim.fs.dirname(path)) .. "/" .. name
+  end, paths)
+end
+
+--- Tells whether every label and value fits whole in two columns of this width.
+---@param pairs { [1]: string, [2]: string }[]
+---@param width integer
+---@return boolean
+function M.stat_rows_fit(pairs, width)
+  local half = math.floor((width - 2) / 2)
+  for _, pair in ipairs(pairs) do
+    if vim.api.nvim_strwidth(pair[1]) + 1 + vim.api.nvim_strwidth(pair[2]) > half then
+      return false
+    end
+  end
+  return true
+end
+
+--- Two columns of label and value pairs, like the attributes on an equipment screen.
+---@param pairs { [1]: string, [2]: string }[] in reading order, filled down the left column first
+---@param width integer
+---@return table[] rows of chunks
+function M.stat_rows(pairs, width)
+  local half = math.floor((width - 2) / 2)
+  local rows = math.ceil(#pairs / 2)
+  local out = {}
+  local function cell(pair)
+    if not pair then
+      return {}
+    end
+    local value = M.fit(pair[2], math.max(1, half - 2))
+    local label = M.fit(pair[1], math.max(1, half - vim.api.nvim_strwidth(value) - 1))
+    local gap = math.max(1, half - vim.api.nvim_strwidth(label) - vim.api.nvim_strwidth(value))
+    return {
+      { label, "EldenHudDim" },
+      { (" "):rep(gap) },
+      { value, "EldenHudName" },
+    }
+  end
+  for row = 1, rows do
+    local left = M.pad_chunks(cell(pairs[row]), half + 2)
+    out[row] = vim.list_extend(left, cell(pairs[row + rows]))
+  end
+  return out
+end
+
+--- Splits a run of frame characters so a glint lights the cells around one spot of it.
+---@param text string the frame run, one character per cell
+---@param hl string its resting group
+---@param at integer|nil the glint's cell inside the run, from 0, nil when no glint passes
+---@param glint_hl string
+---@return table[] chunks
+function M.glint_run(text, hl, at, glint_hl)
+  local length = vim.fn.strchars(text)
+  if not at or at < 0 or at >= length then
+    return { { text, hl } }
+  end
+  local from, to = math.max(0, at - 1), math.min(length, at + 2)
+  return {
+    { vim.fn.strcharpart(text, 0, from), hl },
+    { vim.fn.strcharpart(text, from, to - from), glint_hl },
+    { vim.fn.strcharpart(text, to), hl },
+  }
+end
+
+--- Where a float opens beside the selection: to its right past the slot, to its left when the right
+--- has no room, in the middle of the screen when nothing is selected.
+---@param at { row: integer, col: integer }|nil the selection's screen cell
+---@param size { width: integer, height: integer } the float with its border
+---@param screen { columns: integer, lines: integer, gap: integer } gap is how far past the cursor the slot ends
+---@return { row: integer, col: integer }
+function M.float_beside(at, size, screen)
+  local middle = {
+    row = math.max(0, math.floor((screen.lines - size.height) / 2) - 1),
+    col = math.max(0, math.floor((screen.columns - size.width) / 2)),
+  }
+  if not at then
+    return middle
+  end
+  local row = M.clamp(at.row - 1, 0, math.max(0, screen.lines - size.height - 2))
+  local right = at.col + screen.gap
+  if right + size.width <= screen.columns then
+    return { row = row, col = right }
+  end
+  local left = at.col - size.width - 3
+  if left >= 0 then
+    return { row = row, col = left }
+  end
+  return middle
+end
+
+--- Breaks text into pages for a reader: long lines wrapped at the width, a page as tall as height.
+---@param lines string[]
+---@param width integer
+---@param height integer
+---@return string[][] pages, at least one
+function M.pages(lines, width, height)
+  local wrapped = {}
+  for _, line in ipairs(lines) do
+    local expanded = line:gsub("\t", "  ")
+    if vim.api.nvim_strwidth(expanded) <= width then
+      table.insert(wrapped, " " .. expanded)
+    else
+      for _, piece in ipairs(M.wrap(expanded, width)) do
+        table.insert(wrapped, " " .. piece)
+      end
+    end
+  end
+  local pages = {}
+  for first = 1, math.max(1, #wrapped), height do
+    table.insert(pages, vim.list_slice(wrapped, first, first + height - 1))
+  end
+  return pages
+end
+
+-- the attaché case --------------------------------------------------------------------------
+
+local function fits(cells, row, col, size, columns)
+  if col + size.w - 1 > columns then
+    return false
+  end
+  for r = row, row + size.h - 1 do
+    for c = col, col + size.w - 1 do
+      if cells[r] and cells[r][c] then
+        return false
+      end
+    end
+  end
+  return true
+end
+
+local function place(cells, index, row, col, size)
+  for r = row, row + size.h - 1 do
+    cells[r] = cells[r] or {}
+    for c = col, col + size.w - 1 do
+      cells[r][c] = index
+    end
+  end
+end
+
+local function first_fit(cells, size, columns)
+  local row = 1
+  while true do
+    for col = 1, columns do
+      if fits(cells, row, col, size, columns) then
+        return row, col
+      end
+    end
+    row = row + 1
+  end
+end
+
+--- Packs items into the cells of an attaché case: each takes its size (1x1 by default, wider or
+--- taller for the important ones) at the first spot it fits, reading row by row.
+---@param items { size?: { w: integer, h: integer } }[]
+---@param columns integer
+---@return { cells: table<integer, table<integer, integer>>, places: { row: integer, col: integer, w: integer, h: integer }[], rows: integer, columns: integer }
+function M.pack(items, columns)
+  local cells, places, rows = {}, {}, 0
+  for index, item in ipairs(items) do
+    local size = item.size or { w = 1, h = 1 }
+    size = { w = math.min(size.w or 1, columns), h = size.h or 1 }
+    local row, col = first_fit(cells, size, columns)
+    place(cells, index, row, col, size)
+    places[index] = { row = row, col = col, w = size.w, h = size.h }
+    rows = math.max(rows, row + size.h - 1)
+  end
+  return { cells = cells, places = places, rows = rows, columns = columns }
+end
+
+-- the cells right next to an item on one side, in reading order
+local function neighbors(spot, direction)
+  local out = {}
+  if direction == "h" or direction == "l" then
+    local col = direction == "h" and spot.col - 1 or spot.col + spot.w
+    for row = spot.row, spot.row + spot.h - 1 do
+      table.insert(out, { row, col })
+    end
+  else
+    local row = direction == "k" and spot.row - 1 or spot.row + spot.h
+    for col = spot.col, spot.col + spot.w - 1 do
+      table.insert(out, { row, col })
+    end
+  end
+  return out
+end
+
+--- Moves through the case: to the nearest item on that side, stepping over empty cells.
+---@param case table from M.pack
+---@param index integer the item selected now
+---@param direction string h, j, k or l
+---@return integer|nil the next item, nil when the move leaves the case through that edge
+function M.case_move(case, index, direction)
+  local spot = case.places[index]
+  local step = M.MOVES[direction]
+  if not spot or not step then
+    return nil
+  end
+  local starts = neighbors(spot, direction)
+  for distance = 0, math.max(case.rows, case.columns) do
+    for _, start in ipairs(starts) do
+      local row, col = start[1] + step[1] * distance, start[2] + step[2] * distance
+      if row < 1 or row > case.rows or col < 1 or col > case.columns then
+        return nil
+      end
+      local found = (case.cells[row] or {})[col]
+      if found and found ~= index then
+        return found
+      end
+    end
+  end
+  return nil
+end
+
+--- How far the case scrolls so the whole selected item shows, moving as little as possible.
+---@param spot { row: integer, h: integer }|nil the selected item's place
+---@param visible integer cell rows that fit
+---@param offset integer first cell row shown now, from 0
+---@return integer
+function M.case_scroll(spot, visible, offset)
+  if not spot then
+    return 0
+  end
+  local top, bottom = spot.row - 1, spot.row + spot.h - 2
+  if top < offset then
+    return top
+  end
+  if bottom >= offset + visible then
+    return math.max(0, bottom - visible + 1)
+  end
+  return offset
+end
+
+-- the double line joints by which arms leave them: up, down, left, right
+local JOINTS = {
+  ["0000"] = " ",
+  ["1100"] = "║",
+  ["1000"] = "║",
+  ["0100"] = "║",
+  ["0011"] = "═",
+  ["0010"] = "═",
+  ["0001"] = "═",
+  ["0101"] = "╔",
+  ["0110"] = "╗",
+  ["1001"] = "╚",
+  ["1010"] = "╝",
+  ["1101"] = "╠",
+  ["1110"] = "╣",
+  ["0111"] = "╦",
+  ["1011"] = "╩",
+  ["1111"] = "╬",
+}
+
+--- The double line joint where walls meet, from the arms that leave it.
+---@param up boolean
+---@param down boolean
+---@param left boolean
+---@param right boolean
+---@return string
+function M.joint(up, down, left, right)
+  local function bit(on)
+    return on and "1" or "0"
+  end
+  return JOINTS[bit(up) .. bit(down) .. bit(left) .. bit(right)]
+end
+
+--- How many cells of a bar are filled for a song this far along.
+---@param elapsed number|nil seconds
+---@param duration number|nil seconds
+---@param width integer cells
+---@return integer|nil nil when the song says nothing of its length
+function M.bar_fill(elapsed, duration, width)
+  if not elapsed or not duration or duration <= 0 then
+    return nil
+  end
+  return math.floor(math.min(elapsed / duration, 1) * width + 0.5)
 end
 
 return M

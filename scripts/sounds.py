@@ -8,6 +8,8 @@ Usage:
     python3 scripts/sounds.py                 # every franchise
     python3 scripts/sounds.py resident_evil   # just one
     python3 scripts/sounds.py --clips         # finish the game clips listed in CLIPS
+    python3 scripts/sounds.py --clips resident_evil   # just one franchise's clips
+    python3 scripts/sounds.py --variants      # derive the VARIANTS of the frequent sounds again
     python3 scripts/sounds.py --import ~/Downloads/clip.mp3 elden_ring bought
 """
 
@@ -363,7 +365,8 @@ def el_weapon():
 def el_expedition():
     # the clapperboard calls the take and the set goes quiet
     hush = envelope(lowpass(noise(1.4, seed=31), lambda index: 1200 - 900 * index / (1.4 * RATE)), 0.05, 1.0)
-    return mix((clapper(), 1.0, 0.0), (hush, 0.25, 0.2)), ROOM, MOMENT
+    # one sharp clap peaks long before it sounds loud, so it is compressed before it is evened out
+    return mix((clapper(), 1.0, 0.0), (hush, 0.25, 0.2)), ROOM, dict(MOMENT, compress=True)
 
 
 def el_hud_open():
@@ -537,14 +540,16 @@ CLIPS = {
         "title": {}, "continue": {}, "comfort": {}, "grace": {}, "door": {}, "expedition": {},
         "merchant": {}, "welcome": {}, "bought": {}, "weapon": {"max": 4.0},
         "died": {"max": 5.5}, "rest": {"loudness": -26}, "phantom": {}, "summon": {},
-        "hud_open": {"loudness": None}, "hud_close": {"loudness": None},
-        "hud_move": {"loudness": None}, "hud_select": {"loudness": None},
-        "hud_back": {"loudness": None},
+        # the HUD clips keep their body but lose the transients that made them startle, so they sit
+        # with the built HUD sounds of the other worlds (peaks of -15 dB, -18 for every move)
+        "hud_open": {"loudness": None, "peak": -15}, "hud_close": {"loudness": None, "peak": -15},
+        "hud_move": {"loudness": None, "peak": -18}, "hud_select": {"loudness": None, "peak": -15},
+        "hud_back": {"loudness": None, "peak": -15},
     },
 }
 
 # the clip finishing everything starts from: trims both ends, evens out to the moments' loudness
-CLIP_FINISH = {"max": None, "fade": 0.8, "loudness": -24}
+CLIP_FINISH = {"max": None, "fade": 0.8, "loudness": -24, "peak": None}
 LEAD = "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.02"
 
 
@@ -576,10 +581,25 @@ def refine(path, finish, scratch):
         check=True,
     )
     level(staged, scratch, {"loudness": finish["loudness"], "gain": 0})
+    if finish["peak"] is not None:
+        tame_peaks(staged, scratch, finish["peak"])
     target = os.path.splitext(path)[0] + ".wav"
     shutil.move(staged, target)
     if target != path:
         os.remove(path)
+
+
+def tame_peaks(path, scratch, peak_db):
+    """Holds a sound's peaks under peak_db without lifting the rest, safe to run again."""
+    limit = 10 ** (peak_db / 20)
+    tamed = os.path.join(scratch, "tamed.wav")
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", path,
+         "-af", f"alimiter=limit={limit:.5f}:attack=1:release=30:level=false",
+         "-ac", "1", "-ar", str(RATE), tamed],
+        check=True,
+    )
+    shutil.move(tamed, path)
 
 
 def clip_path(franchise, event):
@@ -588,9 +608,11 @@ def clip_path(franchise, event):
     return found[0] if found else None
 
 
-def refine_clips(scratch):
-    """Finishes every clip listed in CLIPS."""
+def refine_clips(scratch, franchises=None):
+    """Finishes every clip listed in CLIPS, or only the clips of the franchises given."""
     for franchise, events in CLIPS.items():
+        if franchises and franchise not in franchises:
+            continue
         for event, finish in events.items():
             path = clip_path(franchise, event)
             if not path:
@@ -611,6 +633,41 @@ def import_clip(source, franchise, event, scratch):
     print(f"{franchise}/{event}.wav imported")
 
 
+# ── variants ─────────────────────────────────────────────────────────────────────
+# The sounds heard hundreds of times a day get a few siblings, each a hair higher or lower and a
+# touch quicker or slower, so they never repeat exactly. Pitch moves by playing at another rate,
+# then the tempo is set back to where it was plus the timing nudge. Variants are files named
+# <event>_2.wav and on, which core/sound already picks among.
+
+VARIANTS = {
+    "hud_move": [(0.97, 1.0), (1.03, 0.98), (1.06, 1.02)],
+    "hud_select": [(0.98, 1.0), (1.03, 0.98)],
+    "grace": [(0.985, 1.0), (1.015, 1.0)],
+}
+
+
+def variant_filter(pitch, timing):
+    """The ffmpeg chain that shifts a sound's pitch by a ratio and stretches its time by another."""
+    return f"asetrate={RATE * pitch:.0f},aresample={RATE},atempo={timing / pitch:.4f}"
+
+
+def derive_variants(franchises):
+    """Writes the VARIANTS of every franchise's frequent sounds from their main file."""
+    for franchise in franchises:
+        for event, shifts in VARIANTS.items():
+            source = os.path.join(ROOT, franchise, event + ".wav")
+            if not os.path.exists(source):
+                continue
+            for index, (pitch, timing) in enumerate(shifts, start=2):
+                target = os.path.join(ROOT, franchise, f"{event}_{index}.wav")
+                subprocess.run(
+                    ["ffmpeg", "-y", "-loglevel", "error", "-i", source,
+                     "-af", variant_filter(pitch, timing), "-ac", "1", "-ar", str(RATE), target],
+                    check=True,
+                )
+            print(f"{franchise}/{event} has {len(shifts)} variants")
+
+
 # ── writing ──────────────────────────────────────────────────────────────────────
 
 
@@ -628,11 +685,11 @@ def write_wav(path, samples):
 # how a recipe is finished unless it asks otherwise: the tail left for its echoes, the loudness it
 # is evened out to (None keeps it as built, for short sounds loudnorm cannot measure), a gain in dB
 # applied after, and whether the silence at its end is cut
-FINISH = {"pad": 0.6, "loudness": -24, "gain": 0, "trim": False}
+FINISH = {"pad": 0.6, "loudness": -24, "gain": 0, "trim": False, "lead": False, "compress": False}
 
 # what every sound of a franchise is finished with: Elizabeth's are all built here, so none rings
 # longer than the moment it belongs to
-FRANCHISE_FINISH = {"elizabeth": {"trim": True}}
+FRANCHISE_FINISH = {"elizabeth": {"trim": True, "lead": True}}
 
 # trims the silence an echo leaves at the end, read backwards so the start stays untouched
 TRIM = "areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.06,areverse"
@@ -641,6 +698,11 @@ TRIM = "areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silen
 def ffmpeg(source, target, chain, finish):
     """Runs a file through an ffmpeg filter chain into a mono wav, leaving a tail for the echoes."""
     steps = [f"apad=pad_dur={finish['pad']}", chain]
+    # the silence before the first sound is cut, so it lands on its moment instead of after it
+    if finish["lead"]:
+        steps.insert(0, LEAD)
+    if finish["compress"]:
+        steps.append("acompressor=threshold=-42dB:ratio=20:attack=0.5:release=120:makeup=10")
     if finish["trim"]:
         steps.append(TRIM)
     steps.append("alimiter=limit=0.9")
@@ -689,7 +751,10 @@ def main():
     args = sys.argv[1:]
     with tempfile.TemporaryDirectory() as scratch:
         if args[:1] == ["--clips"]:
-            return refine_clips(scratch)
+            refine_clips(scratch, args[1:])
+            return derive_variants(args[1:] or list(CLIPS))
+        if args[:1] == ["--variants"]:
+            return derive_variants(args[1:] or list(RECIPES))
         if args[:1] == ["--import"]:
             if len(args) != 4:
                 sys.exit("usage: sounds.py --import SOURCE FRANCHISE EVENT")
@@ -699,6 +764,7 @@ def main():
             for event, recipe in RECIPES[franchise].items():
                 build(franchise, event, recipe, scratch)
                 print(f"{franchise}/{event}.wav ok")
+        derive_variants(args or list(RECIPES))
 
 
 if __name__ == "__main__":

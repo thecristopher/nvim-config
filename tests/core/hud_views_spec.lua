@@ -440,10 +440,17 @@ describe("wardrobe", function()
     assert.is_true(line_of(wide, "R O U N D T A B L E") < line_of(wide, "Current Quest"))
   end)
 
-  it("lets her photo take nearly the whole height of the screen", function()
+  it("keeps her photo to a share of the screen, like the other franchises' portraits", function()
     local wide =
       wardrobe.render(model({ width = 160, height = 48, portrait = true, figure = true }))
-    assert.is_true(wide.anchors.portrait.height >= 48 - 12)
+    local room = 48 - 2 - 3 - wardrobe.MIRROR_ROWS - wardrobe.NAME_ROWS
+    assert.is_true(wide.anchors.portrait.height <= math.floor(room * wardrobe.PORTRAIT_SHARE))
+  end)
+
+  it("never lets her photo grow past the tallest portrait the other views draw", function()
+    local huge =
+      wardrobe.render(model({ width = 400, height = 120, portrait = true, figure = true }))
+    assert.is_true(huge.anchors.portrait.height <= wardrobe.PORTRAIT.max)
   end)
 
   it("never gives her less than the share of the tallest photo any shape allows", function()
@@ -452,8 +459,9 @@ describe("wardrobe", function()
         model({ width = size[1], height = size[2], portrait = true, figure = true })
       )
       local room = size[2] - 2 - 3 - wardrobe.MIRROR_ROWS - wardrobe.NAME_ROWS
+      local share = wardrobe.PORTRAIT_SHARE * wardrobe.CENTER_SHARE
       assert.is_true(
-        view.anchors.portrait.height >= math.floor(room * 0.75),
+        view.anchors.portrait.height >= math.floor(room * share),
         size[1] .. "x" .. size[2]
       )
     end
@@ -514,6 +522,46 @@ describe("wardrobe", function()
   behaves_on_any_screen(wardrobe.render)
 end)
 
+describe("typewriter and player", function()
+  local views = { roundtable = roundtable, inventory = inventory, wardrobe = wardrobe }
+  local song = {
+    title = "Lullaby for Malenia",
+    artist = "Inde Navarrete",
+    elapsed = 60,
+    duration = 120,
+    playing = true,
+    bar = { done = "━", head = "◈", left = "─" },
+  }
+
+  for name, view in pairs(views) do
+    it(name .. " types the Playlist note in a few letters at a time", function()
+      local typing = text(view.render(model({ typed = 6 })))
+      assert.is_truthy(typing:find("A note", 1, true))
+      assert.is_falsy(typing:find("A note for", 1, true))
+      assert.is_truthy(text(view.render(model())):find("A note for Inde", 1, true))
+    end)
+
+    it(name .. " shows the song Claire is playing", function()
+      local playing = view.render(model({ music = song, stats = "Neovim 0.12" }))
+      assert.is_truthy(text(playing):find("Lullaby for Malenia", 1, true))
+      assert.is_true(has_mark(playing, "EldenMusicBarHead"))
+    end)
+  end
+
+  it("lets the song take the stats' row and gives it back when the music stops", function()
+    assert.is_falsy(
+      text(roundtable.render(model({ music = song, stats = "Neovim 0.12" }))):find(
+        "Neovim 0.12",
+        1,
+        true
+      )
+    )
+    assert.is_truthy(
+      text(roundtable.render(model({ stats = "Neovim 0.12" }))):find("Neovim 0.12", 1, true)
+    )
+  end)
+end)
+
 describe("image_for", function()
   local actions = require("core.hud.actions")
   local westview =
@@ -563,5 +611,223 @@ describe("words", function()
       wardrobe.render(model({ words = { quest = "Tonight's Scene", hint_use = "Wear" } }))
     assert.is_truthy(line_of(view, "Tonight's Scene"))
     assert.is_truthy(line_of(view, "⏎ Wear"))
+  end)
+end)
+
+describe("each world's own look", function()
+  it("lays the Roundtable's item out with its category and a line of lore", function()
+    local tools = {
+      {
+        title = "Tools",
+        icon = "󱌣",
+        items = {
+          item(
+            "Seek the Realm",
+            { category = "Tool", flavor = "Even a lost letter leaves a trace." }
+          ),
+        },
+      },
+    }
+    local view = roundtable.render(model({ tabs = tools, cursor = { items = 1, chest = 1 } }))
+    local name_row = view.lines[line_of(view, " Seek the Realm") + 1]
+    assert.is_truthy(vim.trim(name_row):match("Tool$"))
+    assert.is_truthy(line_of(view, "Even a lost letter leaves a trace."))
+    assert.is_true(has_mark(view, "EldenHudFlavor"))
+  end)
+
+  it("keeps the runes held in the Roundtable's corner", function()
+    local view = roundtable.render(model())
+    assert.equal(line_of(view, "R O U N D T A B L E"), line_of(view, "₧ 600"))
+  end)
+
+  it("runs the glint along Malenia's selected frame", function()
+    assert.is_true(has_mark(roundtable.render(model({ glint = 0.5 })), "EldenHudGlint"))
+    assert.is_false(has_mark(roundtable.render(model()), "EldenHudGlint"))
+  end)
+
+  it("stands Malenia's attributes under her plaque on a tall screen", function()
+    local attributes = { { "Level", "S" }, { "Vigor", "14" }, { "Mind", "2" }, { "Arcane", "5" } }
+    local tall = roundtable.render(
+      model({ width = 220, height = 70, portrait = true, attributes = attributes })
+    )
+    assert.is_true(tall.plan.attributes)
+    assert.is_truthy(line_of(tall, "Vigor"))
+  end)
+
+  it("gives the attributes the footer's row when the plaque has no room for them", function()
+    local attributes = { { "Level", "S" }, { "Vigor", "14" } }
+    local short = roundtable.render(
+      model({ width = 140, height = 45, portrait = true, attributes = attributes })
+    )
+    assert.is_false(short.plan.attributes)
+    assert.is_truthy(line_of(short, "Vigor"))
+  end)
+
+  it("never cuts a word on Malenia's plaque, however narrow it gets", function()
+    local attributes = { { "Level", "C" }, { "Runes", "0" }, { "Vigor", "1" }, { "Mind", "1" } }
+    for _, size in ipairs({ { 75, 30 }, { 90, 26 }, { 110, 30 }, { 190, 50 } }) do
+      local view = roundtable.render(model({
+        width = size[1],
+        height = size[2],
+        portrait = true,
+        attributes = attributes,
+        greeting = "The night is long, Tarnished",
+        date = "Monday 16 November  ·  00:59",
+        date_short = "Mon 16  ·  00:59",
+        date_day = "Mon 16",
+        clock = "00:59",
+      }))
+      for _, line in ipairs(view.lines) do
+        local cut = line:find("…", 1, true)
+          and (line:find("Mon", 1, true) or line:find("night", 1, true) or line:find("Le", 1, true))
+        assert.is_falsy(cut, ("%dx%d: %s"):format(size[1], size[2], line))
+      end
+    end
+  end)
+
+  it("lets the greeting go when it cannot fit whole in two rows", function()
+    local view = roundtable.render(model({
+      width = 75,
+      height = 30,
+      portrait = true,
+      greeting = "The night is long, Tarnished",
+    }))
+    if view.plan.portrait and view.plan.portrait.width < 14 then
+      assert.is_falsy(line_of(view, "The night is"))
+    end
+  end)
+
+  it("draws Claire's attaché case as one lattice of shared walls", function()
+    local case = {
+      {
+        title = "ITEM",
+        items = {
+          item("Love letter", { size = { w = 2, h = 1 } }),
+          item("Playlist", { count = 12 }),
+          item("Roses"),
+        },
+      },
+    }
+    local view = inventory.render(model({ tabs = case, width = 160 }))
+    local drawn = text(view)
+    assert.is_truthy(drawn:find("╦", 1, true))
+    assert.is_truthy(drawn:find("╬", 1, true))
+    assert.is_true(has_mark(view, "EldenHudAmmo"))
+    assert.is_true(has_mark(view, "EldenHudCase"))
+    assert.truthy(view.grids.items.case)
+  end)
+
+  it("prints the survivor's condition under her name in STATUS", function()
+    local view =
+      inventory.render(model({ condition = { word = "CAUTION", hl = "EldenHudCaution" } }))
+    assert.is_truthy(line_of(view, "CAUTION"))
+    assert.is_true(has_mark(view, "EldenHudCaution"))
+  end)
+
+  it("counts the ink ribbons on the banner and strikes the typewriter's caret", function()
+    local view =
+      inventory.render(model({ ribbons = { word = "INK RIBBON", count = 3 }, typed = 4 }))
+    assert.is_truthy(line_of(view, "INK RIBBON ×3"))
+    assert.is_truthy(line_of(view, "A no▌"))
+  end)
+
+  it("keeps accents whole when the banner spaces a name", function()
+    local files = { { title = "FILE", items = { item("Cuándo disparar") } } }
+    local view = inventory.render(model({ tabs = files, cursor = { items = 1, chest = 1 } }))
+    assert.is_truthy(line_of(view, "C U Á N D O"))
+  end)
+
+  it("fills Elizabeth's call sheet with scene, cast, location and call", function()
+    local view = wardrobe.render(model({
+      character = "Scarlet Witch",
+      session_start = "21:40",
+      hud = { stats = { scene = "SCENE", cast = "CAST", location = "LOCATION", call = "CALL" } },
+    }))
+    assert.equal(line_of(view, "SCENE"), line_of(view, "feature/claire-and-inde"))
+    assert.equal(line_of(view, "CAST"), line_of(view, "Scarlet Witch"))
+    assert.equal(line_of(view, "LOCATION"), line_of(view, "love-letters"))
+    assert.is_truthy(line_of(view, "since 21:40"))
+  end)
+
+  it("starts every stage's branch in the same column", function()
+    local chest = {
+      title = "Stages",
+      items = {
+        item("haligtree", { key = "1", branch = "anniversary-dinner" }),
+        item("raccoon-city-letters", { key = "2", branch = "first-date" }),
+      },
+    }
+    local view = wardrobe.render(model({ chest = chest, width = 160 }))
+    local function column_of(needle)
+      local line = view.lines[line_of(view, needle) + 1]
+      return vim.api.nvim_strwidth(line:sub(1, line:find(needle, 1, true) - 1))
+    end
+    assert.equal(column_of("anniversary"), column_of("first-da"))
+  end)
+
+  it("lets the spotlight spill onto the pieces beside the selected one", function()
+    assert.is_true(has_mark(wardrobe.render(model()), "EldenHudSpotNear"))
+  end)
+end)
+
+describe("whole words", function()
+  local hud = require("core.hud.actions")
+
+  it("cuts Inde's branch only where it breaks", function()
+    assert.equal("bugfix/…", hud.fit_words("bugfix/elizabeth-portraits", 12))
+    assert.equal("bugfix/elizabeth-…", hud.fit_words("bugfix/elizabeth-portraits", 19))
+    assert.is_nil(hud.fit_words("anniversary", 5))
+  end)
+
+  it("shortens the date to the day before it would cut it", function()
+    assert.equal("Mon 16", hud.first_fit({ "Monday 16 November", "Mon 16" }, 10))
+    assert.is_nil(hud.first_fit({ "Monday 16 November" }, 5))
+  end)
+
+  it("keeps Claire's greeting whole in two rows or not at all", function()
+    assert.same(
+      { "The night is", "long, Claire" },
+      hud.wrap_whole("The night is long, Claire", 12, 2)
+    )
+    assert.is_nil(hud.wrap_whole("The night is long, Claire", 8, 2))
+  end)
+
+  it("ends a long letter to Malenia on a whole word", function()
+    local lines = hud.wrap_rows("one two three four five six", 9, 2)
+    assert.same({ "one two", "three…" }, lines)
+  end)
+
+  it("knows when Malenia's attributes fit whole beside each other", function()
+    assert.is_true(hud.stat_rows_fit({ { "Vigor", "14" } }, 22))
+    assert.is_false(hud.stat_rows_fit({ { "Endurance", "120" } }, 13))
+  end)
+
+  it("keeps the stage's name whole and lets its branch go on a narrow rack", function()
+    local chest = {
+      title = "Stages",
+      items = {
+        item("nvim-config", { key = "1", branch = "bugfix/elizabeth-portraits", count = 201 }),
+      },
+    }
+    local view = wardrobe.render(model({ chest = chest, width = 75, height = 30 }))
+    assert.is_truthy(line_of(view, "nvim-config"))
+    assert.is_falsy(line_of(view, "nvim-conf…"))
+    assert.is_falsy(line_of(view, " b…"))
+  end)
+
+  it("drops the changes from the call time before cutting it", function()
+    local view = wardrobe.render(model({ width = 75, height = 30, session_start = "00:59" }))
+    for _, line in ipairs(view.lines) do
+      if line:find("since", 1, true) then
+        assert.is_falsy(line:find("…", 1, true), line)
+      end
+    end
+  end)
+end)
+
+describe("forms that do not apply", function()
+  it("skips a date form left out and lands on Malenia's hour", function()
+    local hud = require("core.hud.actions")
+    assert.equal("00:59", hud.first_fit({ nil, "Mon 16  ·  00:59", nil, "00:59" }, 6))
   end)
 end)

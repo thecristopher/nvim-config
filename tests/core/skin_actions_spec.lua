@@ -70,10 +70,36 @@ describe("glyph options", function()
     assert.equal(" ", fill.eob)
   end)
 
+  it("draws the lines between Claire's windows and past her letter's end in the skin", function()
+    local fill = actions.fillchars(vim.tbl_extend("force", glyphs, {
+      eob = "·",
+      split = { vert = "║", horiz = "═" },
+    }))
+    assert.equal("·", fill.eob)
+    assert.equal("║", fill.vert)
+    assert.equal("═", fill.horiz)
+  end)
+
   it("hands which-key only the three marks it draws", function()
     assert.same(
       { breadcrumb = "▶", separator = "▸", group = "▪ " },
       actions.which_key_icons(glyphs)
     )
+  end)
+end)
+
+describe("forget_resolved_opts", function()
+  it("lets Claire's bufferline read the new franchise's tabs on the next setup", function()
+    local plugin = { _ = { cache = { opts = { separator_style = "thick" }, keys = { "x" } } } }
+    actions.forget_resolved_opts(plugin)
+    assert.is_nil(plugin._.cache.opts)
+    assert.same({ "x" }, plugin._.cache.keys)
+  end)
+
+  it("leaves a plugin lazy never resolved alone", function()
+    assert.has_no.errors(function()
+      actions.forget_resolved_opts({ _ = {} })
+      actions.forget_resolved_opts(nil)
+    end)
   end)
 end)

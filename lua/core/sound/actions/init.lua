@@ -66,18 +66,75 @@ function M.candidates(files, event)
   end, files)
 end
 
---- Picks one of the event's files, a different variant each time when there are several.
+--- Picks one of the event's files, never the one that played last time when there are several.
 ---@param files string[]
 ---@param event string
 ---@param rand fun(n: integer): integer returns 1..n
+---@param last string|nil the file this event played last time
 ---@return string|nil
-function M.pick(files, event, rand)
+function M.pick(files, event, rand, last)
   local candidates = M.candidates(files, event)
   table.sort(candidates)
+  if #candidates > 1 and last then
+    candidates = vim.tbl_filter(function(file)
+      return file ~= last
+    end, candidates)
+  end
   if #candidates == 0 then
     return nil
   end
   return candidates[rand(#candidates)]
+end
+
+-- how much a moment weighs: a bigger one cuts a smaller one short, a smaller one waits its turn
+-- by staying quiet. Anything not listed weighs 1
+M.WEIGHT = {
+  died = 6,
+  felled = 5,
+  great = 5,
+  boss = 4,
+  title = 3,
+  rest = 3,
+  grace = 3,
+  cleansed = 3,
+  door = 3,
+  fog = 3,
+  curtain = 3,
+  merchant = 2,
+  welcome = 2,
+  bought = 2,
+  weapon = 2,
+  expedition = 2,
+}
+
+--- The channel an event plays on: every HUD sound shares one, every other moment the other.
+---@param event string
+---@return "hud"|"moment"
+function M.channel(event)
+  return event:match("^hud_") and "hud" or "moment"
+end
+
+--- How much a moment weighs against another, see M.WEIGHT.
+---@param event string
+---@return integer
+function M.weight(event)
+  return M.WEIGHT[event] or 1
+end
+
+--- Decides whether an event plays over what its channel is playing, and whether that gets cut.
+--- A HUD sound always replaces the last one, so holding a key ticks instead of buzzing. A moment
+--- plays when the channel is quiet or it weighs at least as much as the one playing, cutting it.
+---@param event string
+---@param playing string|nil the event still playing on the same channel
+---@return boolean play, boolean cut
+function M.arbitrate(event, playing)
+  if not playing then
+    return true, false
+  end
+  if M.channel(event) == "hud" or M.weight(event) >= M.weight(playing) then
+    return true, true
+  end
+  return false, false
 end
 
 --- The first event with at least one file, nil when none of them has any.

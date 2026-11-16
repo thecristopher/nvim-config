@@ -37,21 +37,15 @@ return {
       },
 
       -- ── Indent guides ──────────────────────────────────────────────
-      -- the region's rainbow per level and its gold scope, drawn only on the visible lines and
-      -- cached, where indent-blankline recomputed the scope on every cursor move (~0.4 ms, 10 ms peaks)
+      -- one quiet tone for every level and only the scope in the accent: the rainbow lives on the
+      -- brackets, where it tells nesting apart. Drawn only on the visible lines and cached, where
+      -- indent-blankline recomputed the scope on every cursor move (~0.4 ms, 10 ms peaks)
       indent = {
         enabled = true,
         indent = {
           -- the skin's guide, see skin.glyphs, swapped live by core/skin/glyphs
           char = require("core.skin").glyphs().indent,
-          hl = {
-            "EldenIndent1",
-            "EldenIndent2",
-            "EldenIndent3",
-            "EldenIndent4",
-            "EldenIndent5",
-            "EldenIndent6",
-          },
+          hl = "SnacksIndent",
         },
         scope = {
           enabled = true,
@@ -60,13 +54,8 @@ return {
           underline = false,
         },
         chunk = { enabled = false },
-        -- the scope draws itself in from the top, and stills with <leader>um like everything else
-        animate = {
-          enabled = true,
-          style = "out",
-          easing = "outQuad",
-          duration = { step = 15, total = 180 },
-        },
+        -- the scope appears at once: drawing it in replayed on every scope change while moving around
+        animate = { enabled = false },
         filter = function(buf)
           return vim.g.snacks_indent ~= false
             and vim.b[buf].snacks_indent ~= false
@@ -108,7 +97,9 @@ return {
       },
 
       -- ── Images: real pixels on kitty, Ghostty and WezTerm, an info page elsewhere ──
-      image = { enabled = true },
+      -- the float was only a fallback for terminals without placeholders, and in terminals with no
+      -- images at all it opened a 1 cell wide frame through the text. Inline images stay
+      image = { enabled = true, doc = { float = false } },
 
       -- ── Input / Picker / Lazygit ──────────────────────────────────
       input = { enabled = true },

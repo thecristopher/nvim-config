@@ -55,7 +55,10 @@ local function resetup(plugin, module)
   if not ok or not config.spec.plugins[plugin] then
     return
   end
-  local opts = require("lazy.core.plugin").values(config.spec.plugins[plugin], "opts", false)
+  local spec = config.spec.plugins[plugin]
+  -- lazy keeps the opts it resolved the first time, which still hold the old franchise's skin
+  actions.forget_resolved_opts(spec)
+  local opts = require("lazy.core.plugin").values(spec, "opts", false)
   pcall(function()
     require(module).setup(opts)
   end)

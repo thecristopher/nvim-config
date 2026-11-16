@@ -41,19 +41,37 @@ function M.typed(text, elapsed)
   return vim.fn.strcharpart(text, 0, chars), chars >= length
 end
 
+-- the grace's menu, the first entry lit like the game's cursor and the rest waiting under it
+local function grace_menu(words, mark)
+  local lines = {}
+  for index, entry in ipairs(words.grace_menu or {}) do
+    local first = index == 1
+    table.insert(lines, {
+      text = (first and mark or (" "):rep(vim.fn.strdisplaywidth(mark))) .. entry,
+      group = first and "EldenRestTitle" or "EldenRestSub",
+      gap = first and 2 or 0,
+      menu = true,
+    })
+  end
+  return lines
+end
+
 local function grace_lines(words, region_title)
-  return {
+  local mark = ((require("core.franchise").current().skin or {}).ornament or { "◈ " })[1]
+  local lines = {
     { text = "󰫢", group = "EldenRestTitle", gap = 0 },
     { text = banner.spaced(words.site), group = "EldenRestTitle", gap = 1 },
     { text = region_title, group = "EldenRestSub", gap = 1 },
-    { text = words.rise, group = "EldenRestHint", gap = 3 },
   }
+  vim.list_extend(lines, grace_menu(words, mark))
+  table.insert(lines, { text = words.rise, group = "EldenRestHint", gap = 3 })
+  return lines
 end
 
 -- the safe room asks before it saves, and counts the ribbons you have used this run
 local function typewriter_lines(words, region_title, ribbons)
   return {
-    { text = "▣", group = "EldenRestTitle", gap = 0 },
+    { text = "󰼭", group = "EldenRestTitle", gap = 0 },
     { text = banner.spaced(words.site), group = "EldenRestTitle", gap = 1 },
     { text = region_title, group = "EldenRestSub", gap = 1 },
     { text = words.typewriter, group = "EldenRestTitle", gap = 2, typed = true },
@@ -62,13 +80,38 @@ local function typewriter_lines(words, region_title, ribbons)
   }
 end
 
--- the stage lights go down to the afternoon sun, and the heart waits under it
-local function golden_hour_lines(words, region_title)
+-- a card's line: its text centered between the card's sides
+local function card_line(text, inner, group)
+  local free = inner - vim.fn.strdisplaywidth(text)
+  local left = math.floor(free / 2)
   return {
-    { text = "󰋑", group = "EldenRestTitle", gap = 0 },
-    { text = banner.spaced(words.site), group = "EldenRestTitle", gap = 1 },
-    { text = region_title, group = "EldenRestSub", gap = 1 },
-    { text = words.rise, group = "EldenRestHint", gap = 3 },
+    text = "│" .. (" "):rep(left) .. text .. (" "):rep(free - left) .. "│",
+    group = group,
+    gap = 0,
+  }
+end
+
+-- the stage lights go down to the afternoon sun and an intermission card hangs in front of the
+-- curtain, the heart on it waiting for the show to go on
+local function golden_hour_lines(words, region_title)
+  local title = banner.spaced(words.intermission or words.site)
+  local texts = { "󰋑", title, region_title, words.back_soon or "" }
+  local inner = 0
+  for _, text in ipairs(texts) do
+    inner = math.max(inner, vim.fn.strdisplaywidth(text))
+  end
+  inner = inner + 8
+  return {
+    { text = "╭" .. ("─"):rep(inner) .. "╮", group = "EldenRestSub", gap = 0 },
+    card_line("", inner, "EldenRestSub"),
+    card_line("󰋑", inner, "EldenRestTitle"),
+    card_line(title, inner, "EldenRestTitle"),
+    card_line("", inner, "EldenRestSub"),
+    card_line(region_title, inner, "EldenRestSub"),
+    card_line(words.back_soon or "", inner, "EldenRestSub"),
+    card_line("", inner, "EldenRestSub"),
+    { text = "╰" .. ("─"):rep(inner) .. "╯", group = "EldenRestSub", gap = 0 },
+    { text = words.rise, group = "EldenRestHint", gap = 2 },
   }
 end
 
@@ -89,11 +132,18 @@ function M.layout(width, height, region_title, opts)
   opts = opts or {}
   local words = require("core.franchise").current().words
   local lines = lines_for(opts.style, words, region_title, opts.ribbons)
-  local row = math.floor(height * 0.4)
+  local row = math.max(0, math.floor(height * 0.4) - math.floor(#lines / 3))
+  -- a menu is one block: centered as a whole, its entries lined up on the left
+  local menu_width = 0
+  for _, line in ipairs(lines) do
+    if line.menu then
+      menu_width = math.max(menu_width, vim.fn.strdisplaywidth(line.text))
+    end
+  end
   local placed = {}
   for _, line in ipairs(lines) do
     row = row + line.gap
-    local width_of = vim.fn.strdisplaywidth(line.text)
+    local width_of = line.menu and menu_width or vim.fn.strdisplaywidth(line.text)
     table.insert(placed, {
       row = row,
       col = banner.center_col(width, width_of),

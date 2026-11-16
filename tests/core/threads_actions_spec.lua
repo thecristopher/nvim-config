@@ -111,3 +111,35 @@ describe("split_repo", function()
     assert.is_nil(actions.split_repo(""))
   end)
 end)
+
+describe("stale", function()
+  it("asks GitHub the first time Claire opens the repo", function()
+    assert.is_true(actions.stale(nil, 1000))
+  end)
+
+  it("trusts a fresh answer and asks again once it is old", function()
+    assert.is_false(actions.stale(1000, 1000 + actions.TTL_MS - 1))
+    assert.is_true(actions.stale(1000, 1000 + actions.TTL_MS))
+  end)
+end)
+
+describe("neighbor", function()
+  local threads = {
+    { path = "love.lua", line = 4 },
+    { path = "love.lua", line = 20 },
+    { path = "love.lua", line = 12 },
+    { path = "rot.lua", line = 8 },
+  }
+
+  it("jumps to the next note Inde left below the cursor", function()
+    assert.equal(12, actions.neighbor(threads, "love.lua", 5, 1))
+  end)
+
+  it("jumps back to the closest note above Malenia's cursor", function()
+    assert.equal(12, actions.neighbor(threads, "love.lua", 19, -1))
+  end)
+
+  it("finds nothing past Claire's last note", function()
+    assert.is_nil(actions.neighbor(threads, "love.lua", 20, 1))
+  end)
+end)

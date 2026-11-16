@@ -21,11 +21,11 @@ return {
       no_bold = false,
       no_underline = false,
       styles = {
-        comments = { "italic" },
+        comments = {},
         conditionals = {},
         loops = {},
         functions = {},
-        keywords = { "bold" },
+        keywords = {},
         strings = {},
         variables = {},
         numbers = {},
@@ -40,51 +40,66 @@ return {
         local t = require("core.themes.actions").derive(c)
         local rainbow = require("core.themes.actions").rainbow(c)
         local guides = require("core.themes.actions").indent_guides(c)
+        -- the franchise's syntax signature: which color and style each role of the code wears
+        local syntax =
+          require("core.themes.actions").syntax(c, require("core.skin").current().syntax)
+        local function role(name)
+          return { fg = syntax[name].fg, style = syntax[name].style }
+        end
         local function mode_color(mode)
           return require("core.themes.actions").mode_look(c, t, mode).number
         end
         return {
           -- Base vim groups first: treesitter captures and LSP semantic tokens link back to these,
-          -- so painting them here keeps every language and every highlighter on the same colors
-          Keyword = { fg = c.yellow, style = { "bold" } },
-          Statement = { fg = c.yellow, style = { "bold" } },
-          Conditional = { fg = c.yellow, style = { "bold" } },
-          Repeat = { fg = c.yellow, style = { "bold" } },
-          Exception = { fg = c.yellow, style = { "bold" } },
-          Include = { fg = c.yellow, style = {} },
-          Function = { fg = c.rosewater, style = {} },
-          Type = { fg = c.lavender, style = {} },
-          StorageClass = { fg = c.lavender, style = {} },
-          Structure = { fg = c.lavender, style = {} },
-          Number = { fg = c.blue, style = {} },
-          Float = { fg = c.blue, style = {} },
-          Boolean = { fg = c.sky, style = { "bold" } },
+          -- so painting them here keeps every language and every highlighter on the same colors.
+          -- Colors and styles come from the franchise's syntax signature (skin.syntax)
+          Keyword = role("keyword"),
+          Statement = role("keyword"),
+          Conditional = role("keyword"),
+          Repeat = role("keyword"),
+          Exception = role("keyword"),
+          Include = role("keyword"),
+          Function = role("function"),
+          Type = role("type"),
+          StorageClass = role("type"),
+          Structure = role("type"),
+          Number = role("constant"),
+          Float = role("constant"),
+          Boolean = role("constant"),
+          Constant = role("constant"),
           Operator = { fg = c.subtext1, style = {} },
           Delimiter = { fg = c.overlay1, style = {} },
           -- Keywords catppuccin paints directly instead of linking to the base groups above
-          ["@keyword.function"] = { fg = c.yellow, style = { "bold" } },
-          ["@keyword.operator"] = { fg = c.yellow, style = {} },
-          ["@keyword.return"] = { fg = c.yellow, style = { "bold" } },
-          ["@keyword.export"] = { fg = c.yellow, style = { "bold" } },
-          -- Functions: warm rosewater-gold, builtins in italic
-          ["@function.builtin"] = { fg = c.rosewater, style = { "italic" } },
-          -- Types: arcane purple
-          ["@type.builtin"] = { fg = c.lavender, style = { "italic" } },
-          ["@constructor"] = { fg = c.mauve, style = {} },
-          -- Strings: Sites of Grace green
-          ["@string"] = { fg = c.green, style = {} },
+          ["@keyword"] = role("keyword"),
+          ["@keyword.function"] = role("keyword"),
+          ["@keyword.operator"] = role("keyword"),
+          ["@keyword.return"] = role("keyword"),
+          ["@keyword.export"] = role("keyword"),
+          ["@keyword.conditional"] = role("keyword"),
+          ["@keyword.repeat"] = role("keyword"),
+          ["@function"] = role("function"),
+          ["@function.call"] = role("function"),
+          ["@function.method"] = role("function"),
+          ["@function.method.call"] = role("function"),
+          ["@function.builtin"] = role("function"),
+          ["@type"] = role("type"),
+          ["@type.builtin"] = role("type"),
+          ["@constructor"] = role("type"),
+          ["@string"] = role("string"),
           ["@string.special"] = { fg = c.teal, style = {} },
-          ["@character"] = { fg = c.green, style = {} },
-          -- Comments: mist and fog, italic
-          ["@comment"] = { fg = c.overlay0, style = { "italic" } },
-          Comment = { fg = c.overlay0, style = { "italic" } },
-          -- Variables: parchment (no special color)
+          ["@character"] = role("string"),
+          ["@number"] = role("constant"),
+          ["@boolean"] = role("constant"),
+          ["@constant"] = role("constant"),
+          ["@constant.builtin"] = role("constant"),
+          ["@comment"] = role("comment"),
+          Comment = role("comment"),
+          -- Variables: plain text, the brightest thing on screen
           ["@variable"] = { fg = c.text, style = {} },
-          ["@variable.builtin"] = { fg = c.peach, style = { "italic" } },
+          ["@variable.builtin"] = { fg = c.peach, style = {} },
           ["@variable.parameter"] = { fg = c.subtext0, style = {} },
-          -- Properties/fields: slightly dimmer gold
-          ["@property"] = { fg = c.rosewater, style = {} },
-          ["@variable.member"] = { fg = c.rosewater, style = {} },
+          ["@property"] = role("property"),
+          ["@variable.member"] = role("property"),
           -- Punctuation: dim, unobtrusive
           ["@punctuation.bracket"] = { fg = c.overlay2, style = {} },
           -- ── Editor chrome ─────────────────────────────────────────
@@ -106,21 +121,26 @@ return {
           -- Visual selection: warm dark gold
           Visual = { bg = t.visual },
           VisualNOS = { bg = t.visual },
-          -- Search: gold highlight
-          Search = { fg = c.base, bg = c.yellow, style = { "bold" } },
+          -- Search: the accent, or a neighbor of it when the accent sits too close to the error color
+          Search = { fg = c.base, bg = t.search, style = { "bold" } },
           IncSearch = { fg = c.base, bg = c.rosewater, style = { "bold" } },
           CurSearch = { fg = c.base, bg = c.peach, style = { "bold" } },
           -- Matching brackets: gold
           MatchParen = { fg = c.yellow, style = { "bold", "underline" } },
-          -- Floating windows: dark mantle with gold border
-          FloatBorder = { fg = c.yellow, bg = c.mantle },
+          -- Floating windows: dark mantle, the frame a softened accent so the accent itself marks focus
+          FloatBorder = { fg = t.border, bg = c.mantle },
+          -- the scope header sits on the panel color, a thin line under it instead of a whole row
+          TreesitterContext = { bg = t.panel },
+          TreesitterContextLineNumber = { fg = c.overlay1, bg = t.panel },
+          TreesitterContextBottom = { underline = true, sp = c.surface2 },
+          TreesitterContextLineNumberBottom = { underline = true, sp = c.surface2 },
           NormalFloat = { fg = c.text, bg = c.mantle },
           -- Popup menu
           Pmenu = { fg = c.text, bg = c.surface0 },
           -- the completion menu wears the same frame as every other float, so it and its
           -- documentation beside it read as one piece
           BlinkCmpMenu = { fg = c.text, bg = c.mantle },
-          BlinkCmpMenuBorder = { fg = c.yellow, bg = c.mantle },
+          BlinkCmpMenuBorder = { fg = t.border, bg = c.mantle },
           PmenuSel = { fg = c.base, bg = c.yellow },
           PmenuSbar = { bg = c.surface1 },
           PmenuThumb = { bg = c.yellow },
@@ -185,7 +205,7 @@ return {
           SnacksDashboardTitle = { fg = c.rosewater, style = { "bold" } },
           SnacksPickerGitBranch = { fg = c.green, style = { "italic" } },
           -- Snacks pickers and notifications wear the region's accent, see core/chrome
-          SnacksPickerBorder = { fg = c.yellow, bg = c.mantle },
+          SnacksPickerBorder = { fg = t.border, bg = c.mantle },
           SnacksPickerTitle = { fg = c.yellow, bg = c.mantle, style = { "bold" } },
           SnacksPickerListTitle = { fg = c.yellow, bg = c.mantle, style = { "bold" } },
           SnacksPickerInputTitle = { fg = c.yellow, bg = c.mantle, style = { "bold" } },
@@ -206,9 +226,9 @@ return {
           SnacksNotifierBorderError = { fg = c.red },
           SnacksNotifierFooterError = { fg = c.overlay0, style = { "italic" } },
           -- Glance: the peek window reads like an old tome left open on the desk
-          GlanceBorderTop = { fg = c.yellow, bg = c.mantle },
-          GlancePreviewBorderBottom = { fg = c.yellow, bg = c.mantle },
-          GlanceListBorderBottom = { fg = c.yellow, bg = c.mantle },
+          GlanceBorderTop = { fg = t.border, bg = c.mantle },
+          GlancePreviewBorderBottom = { fg = t.border, bg = c.mantle },
+          GlanceListBorderBottom = { fg = t.border, bg = c.mantle },
           GlancePreviewNormal = { bg = t.glance_preview },
           GlancePreviewCursorLine = { bg = t.glance_cursorline },
           GlancePreviewMatch = { fg = c.base, bg = c.yellow, style = { "bold" } },
@@ -230,13 +250,13 @@ return {
           DropBarMenuCurrentContext = { bg = c.surface0 },
           -- Which-key
           WhichKey = { fg = c.yellow },
-          WhichKeyBorder = { fg = c.yellow, bg = c.mantle },
+          WhichKeyBorder = { fg = t.border, bg = c.mantle },
           WhichKeyGroup = { fg = c.rosewater, style = { "bold" } },
           WhichKeyDesc = { fg = c.subtext0 },
           WhichKeyNormal = { fg = c.text, bg = c.mantle },
           -- Trouble
           TroubleNormal = { bg = c.mantle },
-          TroubleBorder = { fg = c.yellow, bg = c.mantle },
+          TroubleBorder = { fg = t.border, bg = c.mantle },
           -- Notify
           NotifyERRORBorder = { fg = c.red },
           NotifyWARNBorder = { fg = c.peach },
@@ -244,7 +264,7 @@ return {
           NotifyDEBUGBorder = { fg = c.overlay1 },
           NotifyTRACEBorder = { fg = c.mauve },
           -- Noice
-          NoiceCmdlinePopupBorder = { fg = c.yellow },
+          NoiceCmdlinePopupBorder = { fg = t.border },
           NoiceCmdlinePopupTitle = { fg = c.yellow, style = { "bold" } },
           NoiceConfirmBorder = { fg = c.peach },
           NoiceLspProgressSpinner = { fg = c.yellow },
@@ -289,7 +309,7 @@ return {
           MultiCursorDisabledSign = { fg = c.overlay1 },
           -- Hover: the docs read like an item description, name in gold and the category below
           EldenTome = { fg = c.text, bg = c.mantle },
-          EldenTomeBorder = { fg = c.yellow, bg = c.mantle },
+          EldenTomeBorder = { fg = t.border, bg = c.mantle },
           EldenTomeTitle = { fg = c.yellow, bg = c.mantle, style = { "bold" } },
           EldenTomeFooter = { fg = c.overlay2, bg = c.mantle, style = { "italic" } },
           -- Illuminate

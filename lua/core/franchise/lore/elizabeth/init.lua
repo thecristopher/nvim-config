@@ -1,6 +1,7 @@
 -- Elizabeth: everything the config says and shows while she plays her roles. Each region is a
--- stage and a costume, the Scarlet Witch, Ada, Shadowheart and Psylocke, and the world speaks
--- like a set: curtains between stages, a heart for a status and the afternoon sun to rest in.
+-- stage and a costume (the Scarlet Witch, Ada, Shadowheart, Psylocke, Samus, Magik, She-Hulk,
+-- Triss, Jill, Malenia, Power Girl, Raven and Mai), and the world speaks like a set: curtains
+-- between stages, a heart for a status and the afternoon sun to rest in.
 return {
   name = "elizabeth",
   title = "Elizabeth",
@@ -11,6 +12,8 @@ return {
   skin = require("core.franchise.lore.elizabeth.skin"),
   voices = require("core.franchise.lore.elizabeth.voices"),
   lines = require("core.franchise.lore.elizabeth.lines"),
+  -- what the HUD calls its keys, tabs and items, see lua/core/hud
+  hud = require("core.franchise.lore.elizabeth.hud"),
 
   -- which version of each mechanic this world plays
   mechanics = {
@@ -35,15 +38,6 @@ return {
     leave = "I know my lines",
   },
 
-  -- what the dressing room calls the HUD's tabs, the lessons tab takes coach.lessons
-  hud_tabs = {
-    tools = "Vanity",
-    recent = "Recent Takes",
-    keys = "Props",
-    messages = "Notes",
-    regions = "Roles",
-  },
-
   -- Claude Code's statusline bars and spinner (claude/install.lua merges the verbs into settings)
   claude = {
     bars = { five_hour = "HEX", seven_day = "MOON" },
@@ -59,12 +53,22 @@ return {
       "Rehearsing the scene",
       "Finding the light",
       "Tying the cape",
+      "Charging the paralyzer",
+      "Opening a stepping disc",
+      "Objecting",
+      "Resting at grace",
+      "Checking the Samurai Edge",
+      "Waiting on the bloom",
+      "Smoothing the cape",
+      "Raising the hood",
+      "Folding the fan",
     },
   },
 
   -- the now playing panel's title and what its lyrics say while they are not there
   music = {
     title = "Her Playlist",
+    now_playing = "Now on stage",
     loading = "Humming the first notes…",
     missing = "No words for this one",
     instrumental = "Just the melody",
@@ -76,6 +80,15 @@ return {
     separate_ways = "Pesanta",
     moonrise_towers = "Ketheric Thorm",
     danger_room = "Mister Sinister",
+    zebes = "Ridley",
+    limbo = "Belasco",
+    courtroom = "Titania",
+    limgrave = "Margit",
+    raccoon_city = "Nemesis",
+    haligtree = "Radahn",
+    earth_two = "Darkseid",
+    azarath = "Trigon",
+    shiranui = "Geese Howard",
   },
 
   -- drift says where particles travel, speed is rows per second,
@@ -113,6 +126,78 @@ return {
       from = "lavender",
       to = "yellow",
     },
+    -- spores drifting down through the caverns
+    zebes = {
+      glyphs = { "·", "∘", "˙" },
+      drift = "fall",
+      speed = { 0.4, 1.2 },
+      from = "teal",
+      to = "yellow",
+    },
+    -- embers off a stepping disc, rising out of Limbo
+    limbo = {
+      glyphs = { "·", "∙", "•" },
+      drift = "rise",
+      speed = { 1.8, 4.2 },
+      from = "peach",
+      to = "yellow",
+    },
+    -- gamma sparks, quick and bright like an objection
+    courtroom = {
+      glyphs = { "·", "∙", "•" },
+      drift = "rise",
+      speed = { 2.2, 4.8 },
+      from = "green",
+      to = "yellow",
+    },
+    -- grace motes floating over the first site of grace
+    limgrave = {
+      glyphs = { "·", "∙", "˙" },
+      drift = "float",
+      speed = { 0.3, 0.8 },
+      from = "peach",
+      to = "yellow",
+    },
+    -- ash falling over the burning city
+    raccoon_city = {
+      glyphs = { "·", "˙", "∙" },
+      drift = "fall",
+      speed = { 0.8, 2.0 },
+      from = "overlay2",
+      to = "peach",
+    },
+    -- scarlet rot drifting down from the tree
+    haligtree = {
+      glyphs = { "·", "∙", "•" },
+      drift = "fall",
+      speed = { 0.6, 1.6 },
+      from = "red",
+      to = "yellow",
+    },
+    -- dust in the sun of a whole other earth, barely moving
+    earth_two = {
+      glyphs = { "·", "∙", "˙" },
+      drift = "float",
+      speed = { 0.2, 0.6 },
+      from = "peach",
+      to = "yellow",
+    },
+    -- soul self sparks rising from her cloak
+    azarath = {
+      glyphs = { "·", "∘", "˙" },
+      drift = "rise",
+      speed = { 0.8, 2.0 },
+      from = "lavender",
+      to = "yellow",
+    },
+    -- sparks off the fan of fire
+    shiranui = {
+      glyphs = { "·", "∙", "•" },
+      drift = "rise",
+      speed = { 2.0, 4.6 },
+      from = "red",
+      to = "yellow",
+    },
   },
 
   -- the CI run of the branch, in the statusline
@@ -123,6 +208,7 @@ return {
     title = "Director's Notes",
     resolved = "Note taken",
     none = "No notes on this PR",
+    no_pr = "No premiere yet, this branch has no PR",
   },
 
   -- who guards a merge conflict, and how many conflicted files the repo still holds
@@ -151,6 +237,17 @@ return {
       "Torn Seam",
       "Lost Prop",
       "Stage Fright",
+      "Metroid",
+      "Space Pirate",
+      "Demon of Limbo",
+      "Wrecking Crew",
+      "Godrick Soldier",
+      "Licker",
+      "Zombie Dog",
+      "Kindred of Rot",
+      "Parademon",
+      "Shadow Demon",
+      "Fatal Fury",
     },
   },
 
@@ -164,12 +261,28 @@ return {
   -- the days you worked, as a grid
   chronicle = { title = "Call Sheet" },
 
+  -- the HUD's trophies: foes felled from the bestiary, the best rank, the days fought and the
+  -- longest streak of days in a row, from the chronicle
+  trophies = {
+    title = "Awards",
+    felled = "Villains upstaged",
+    rank = "Best review",
+    days = "Show days",
+    streak = "Longest run",
+    empty = "No awards yet, the season just began",
+  },
+
   banners = {
     felled = "VILLAIN DEFEATED",
     great = "STANDING OVATION",
     died = "CUT!",
     grace = "NEW STAGE FOUND",
     cleansed = "HEX BROKEN",
+  },
+
+  -- CUT! comes with the film slate: its stick is raised over the words and snaps shut on them
+  banner_styles = {
+    died = { look = "clapper", stagger = 0, letter_ms = 300, fade_in = 250, duration = 3400 },
   },
 
   hub_messages = {
@@ -183,14 +296,19 @@ return {
     "Focus the blade, then focus the diff",
     "The Danger Room resets, your tests should too",
     "The cape is velvet, the code is not",
-    "What are you buying? A cleaner commit?",
     "Shadowheart doesn't trust that regex",
     "Westview had fewer side effects",
     "Lights, camera, refactor",
-    "Your inventory is full of TODOs, love",
     "She already knew the bug was there",
     "Save the scene before the next costume change",
     "The moon says merge on Monday",
+    "Samus would have scanned that first",
+    "Limbo is closer than your deadline",
+    "Objection: that test proves nothing",
+    "Jill has one more way out of this bug",
+    "Power Girl lifts the build, you lift the coffee",
+    "Azarath Metrion Zinthos, compile",
+    "Mai fans the flames of a green build",
   },
 
   -- the blanks she fills when she leaves a note on a line
@@ -250,6 +368,19 @@ return {
     "The Dressing Room",
     "Backstage",
     "Golden Hour Hallway",
+    "Planet Zebes",
+    "Chozo Ruins",
+    "Limbo",
+    "The Courtroom",
+    "Limgrave",
+    "Church of Elleh",
+    "Raccoon City",
+    "Clock Tower",
+    "Elphael",
+    "Earth-Two",
+    "Azarath",
+    "Titans Tower",
+    "Shiranui Dojo",
   },
 
   -- what the thing under the cursor would be in her wardrobe, most specific capture first
@@ -285,6 +416,8 @@ return {
     search = "Search",
     examine = "Close up",
     history = "Call Sheet",
+    -- the explorer's title over the tree
+    tree = "Backstage",
     notify = {
       info = "Cue",
       warn = "Careful",
@@ -311,6 +444,9 @@ return {
     motion_off = "Freeze frame",
     map = "Map",
     arts = "Commands",
+    -- the card hung in front of the curtain while she rests
+    intermission = "Intermission",
+    back_soon = "Back in five, the show goes on",
     last_run = "Last take",
     -- the results line: the critic's review, the rehearsals saved and the retakes that fixed a line
     rank = "Review",

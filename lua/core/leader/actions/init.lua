@@ -12,9 +12,9 @@ local M = {}
 M.GROUPS = {
   { prefix = "a", name = "claude", icon = { icon = "󰚩", color = "orange" }, owner = "plugins" },
   { prefix = "b", name = "buffer", icon = { icon = "󰓩", color = "cyan" } },
-  { prefix = "c", name = "code", icon = { icon = "", color = "orange" } },
-  { prefix = "D", name = "debug", icon = { icon = "", color = "red" }, owner = "plugins" },
-  { prefix = "f", name = "find", icon = { icon = "", color = "green" } },
+  { prefix = "c", name = "code", icon = { icon = "󰅩", color = "orange" } },
+  { prefix = "D", name = "debug", icon = { icon = "󰃤", color = "red" }, owner = "plugins" },
+  { prefix = "f", name = "find", icon = { icon = "󰍉", color = "green" } },
   { prefix = "g", name = "git", icon = { icon = "󰊢", color = "orange" } },
   { prefix = "gh", name = "hunks", icon = { icon = "󰊢", color = "yellow" }, owner = "plugins" },
   {
@@ -40,12 +40,12 @@ M.GROUPS = {
   {
     prefix = "p",
     name = "pull requests",
-    icon = { icon = "", color = "purple" },
+    icon = { icon = "󰘧", color = "purple" },
     owner = "plugins",
   },
   { prefix = "s", name = "windows", icon = { icon = "󱂬", color = "blue" } },
   { prefix = "S", name = "sessions", icon = { icon = "󰆓", color = "azure" }, owner = "plugins" },
-  { prefix = "t", name = "terminal", icon = { icon = "", color = "red" } },
+  { prefix = "t", name = "terminal", icon = { icon = "󰆍", color = "red" } },
   { prefix = "T", name = "tests", icon = { icon = "󰙨", color = "green" } },
   { prefix = "u", name = "toggles", icon = { icon = "󰔡", color = "cyan" } },
   {

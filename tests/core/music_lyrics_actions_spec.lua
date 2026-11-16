@@ -108,3 +108,29 @@ describe("sung", function()
     assert.equal(0, lyrics.sung(quick, 0, 0.5, nil))
   end)
 end)
+
+describe("ticker_line", function()
+  local serenade = {
+    kind = "synced",
+    lines = {
+      { time = 2, text = "Claire leaves a love note on the save room desk" },
+      { time = 6, text = "" },
+      { time = 9, text = "Inde reads it twice" },
+    },
+  }
+
+  it("sings the verse of Claire's love note while it plays", function()
+    assert.equal("Claire leaves a love note on the save room desk", lyrics.ticker_line(serenade, 3))
+  end)
+
+  it("stays quiet before the first verse and in the silence between them", function()
+    assert.is_nil(lyrics.ticker_line(serenade, 1))
+    assert.is_nil(lyrics.ticker_line(serenade, 7))
+  end)
+
+  it("leaves plain or missing lyrics to the song's name", function()
+    assert.is_nil(lyrics.ticker_line({ kind = "plain", lines = { "Malenia hums" } }, 3))
+    assert.is_nil(lyrics.ticker_line(false, 3))
+    assert.is_nil(lyrics.ticker_line(serenade, nil))
+  end)
+end)

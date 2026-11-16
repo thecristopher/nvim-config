@@ -86,7 +86,7 @@ describe("describe", function()
 
   it("names the phantom in the title", function()
     assert.equal(
-      " ◈ Phantom of Leon Kennedy ",
+      "Phantom of Leon Kennedy",
       actions.describe(leon, "other", 1700000000 + 3600).title
     )
   end)
@@ -103,10 +103,7 @@ describe("describe", function()
   end)
 
   it("speaks of your past self for your own lines", function()
-    assert.equal(
-      " ◈ Bloodstain of your past self ",
-      actions.describe(leon, "self", 1700000000).title
-    )
+    assert.equal("Bloodstain of your past self", actions.describe(leon, "self", 1700000000).title)
   end)
 end)
 

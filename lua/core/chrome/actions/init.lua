@@ -255,17 +255,82 @@ function M.terminal_title(bufname)
   return number and (title .. " #" .. number) or title
 end
 
--- the narrowest editor each statusline piece still shows in: on a narrow screen the least needed
--- leave first, instead of lualine cutting the whole bar short with "<"
+-- the narrowest editor each statusline piece still shows in, in three tiers: everything from 170
+-- columns, a working bar from 120 (mode, branch, path, diagnostics, language, position, plus CI
+-- and the diff as room allows) and a minimal one below 120 (mode, path, diagnostics, position).
+-- Pieces leave in order instead of lualine cutting the whole bar short with "<"
 M.STATUSLINE_MIN = {
-  music = 150,
-  btb = 135,
-  ci = 120,
-  runes = 110,
-  diff = 100,
-  status = 90,
-  language = 80,
+  music = 170,
+  btb = 170,
+  runes = 170,
+  status = 150,
+  diff = 140,
+  ci = 130,
+  language = 120,
+  branch = 120,
 }
+
+-- the columns the other pieces of each tier take, so the path gets what is left. A wider tier
+-- shows more pieces, so its path never gets less than the tier under it had at its widest
+local PATH_RESERVE = {
+  { min = 170, reserve = 110 },
+  { min = 120, reserve = 85 },
+  { min = 0, reserve = 40 },
+}
+M.PATH_MIN = 16
+M.BRANCH_MAX = 24
+
+--- How many columns the file's path may take in a statusline this wide.
+---@param columns integer
+---@return integer
+function M.path_budget(columns)
+  for index, tier in ipairs(PATH_RESERVE) do
+    if columns >= tier.min then
+      local below = PATH_RESERVE[index + 1]
+      local floor = below and (tier.min - 1 - below.reserve) or M.PATH_MIN
+      return math.max(M.PATH_MIN, floor, columns - tier.reserve)
+    end
+  end
+  return M.PATH_MIN
+end
+
+local function cut_end(text, max)
+  if vim.fn.strchars(text) <= max then
+    return text
+  end
+  return vim.fn.strcharpart(text, 0, math.max(1, max - 1)) .. "…"
+end
+
+--- Fits a path in a width, dropping folders from the front first so the file's name always shows.
+---@param path string
+---@param max integer columns
+---@return string
+function M.fit_path(path, max)
+  if vim.fn.strdisplaywidth(path) <= max then
+    return path
+  end
+  local parts = vim.split(path, "/", { plain = true })
+  local kept = parts[#parts]
+  if vim.fn.strdisplaywidth(kept) + 2 > max then
+    return cut_end(kept, max)
+  end
+  for index = #parts - 1, 1, -1 do
+    local longer = parts[index] .. "/" .. kept
+    if vim.fn.strdisplaywidth(longer) + 2 > max then
+      break
+    end
+    kept = longer
+  end
+  return "…/" .. kept
+end
+
+--- Shortens a long branch name, so it never pushes the path off the bar.
+---@param branch string
+---@param max? integer characters, M.BRANCH_MAX by default
+---@return string
+function M.short_branch(branch, max)
+  return cut_end(branch, max or M.BRANCH_MAX)
+end
 
 ---Whether a statusline piece fits an editor this wide.
 ---@param piece string a key of STATUSLINE_MIN, anything else always shows

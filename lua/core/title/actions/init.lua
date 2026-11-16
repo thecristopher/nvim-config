@@ -48,20 +48,186 @@ M.FONT = {
 
 M.GAP = { "   ", "   ", "   ", "   ", "   " }
 
---- Writes text in big block letters.
+-- five rows per letter drawn in thin strokes, the lettering of the Lands Between
+M.THIN = {
+  A = { "╭───╮", "│   │", "├───┤", "│   │", "╵   ╵" },
+  B = { "┬───╮", "│   │", "├───┤", "│   │", "┴───╯" },
+  C = { "╭───╴", "│    ", "│    ", "│    ", "╰───╴" },
+  D = { "┬───╮", "│   │", "│   │", "│   │", "┴───╯" },
+  E = { "┬───╴", "│    ", "├──╴ ", "│    ", "┴───╴" },
+  F = { "┬───╴", "│    ", "├──╴ ", "│    ", "╵    " },
+  G = { "╭───╴", "│    ", "│  ╶┐", "│   │", "╰───╯" },
+  H = { "╷   ╷", "│   │", "├───┤", "│   │", "╵   ╵" },
+  I = { "╶┬╴", " │ ", " │ ", " │ ", "╶┴╴" },
+  J = { "  ╶┬╴", "   │ ", "   │ ", "╷  │ ", "╰──╯ " },
+  K = { "╷   ╱", "│  ╱ ", "├─┤  ", "│  ╲ ", "╵   ╲" },
+  L = { "╷    ", "│    ", "│    ", "│    ", "┴───╴" },
+  M = { "┬╮ ╭┬", "│╰┬╯│", "│ ╵ │", "│   │", "╵   ╵" },
+  N = { "┬╮  ╷", "│╲  │", "│ ╲ │", "│  ╲│", "╵  ╰┴" },
+  O = { "╭───╮", "│   │", "│   │", "│   │", "╰───╯" },
+  P = { "┬───╮", "│   │", "├───╯", "│    ", "╵    " },
+  Q = { "╭───╮", "│   │", "│   │", "│ ╲ │", "╰──╲╯" },
+  R = { "┬───╮", "│   │", "├─┬─╯", "│ ╰╮ ", "╵  ╰╴" },
+  S = { "╭───╴", "│    ", "╰───╮", "    │", "╶───╯" },
+  T = { "╶─┬─╴", "  │  ", "  │  ", "  │  ", "  ╵  " },
+  U = { "╷   ╷", "│   │", "│   │", "│   │", "╰───╯" },
+  V = { "╷   ╷", "│   │", "╲   ╱", " ╲ ╱ ", "  ╵  " },
+  W = { "╷   ╷", "│   │", "│ ╷ │", "│╭┴╮│", "╰╯ ╰╯" },
+  X = { "╲   ╱", " ╲ ╱ ", "  ╳  ", " ╱ ╲ ", "╱   ╲" },
+  Y = { "╲   ╱", " ╲ ╱ ", "  │  ", "  │  ", "  ╵  " },
+  Z = { "╶───╱", "   ╱ ", "  ╱  ", " ╱   ", "╱───╴" },
+}
+
+--- The font a title style writes with: thin strokes under the shimmer, solid blocks otherwise.
+---@param style string|nil skin.title.style
+---@return table<string, string[]>
+function M.font_for(style)
+  return style == "shimmer" and M.THIN or M.FONT
+end
+
+--- Writes text in big letters, block letters unless another font is given.
 ---@param text string
+---@param font? table<string, string[]> M.FONT by default
 ---@return string[] rows one per line of the font, all the same width
-function M.big(text)
+function M.big(text, font)
+  font = font or M.FONT
   local rows = { "", "", "", "", "" }
   local first = true
   for char in text:upper():gmatch(".") do
-    local glyph = M.FONT[char] or M.GAP
+    local glyph = font[char] or M.GAP
     for row = 1, M.HEIGHT do
       rows[row] = rows[row] .. (first and "" or " ") .. glyph[row]
     end
     first = false
   end
   return rows
+end
+
+-- the ring ------------------------------------------------------------------------------------
+
+-- the stroke for the directions a cell connects to, rounded where a line turns
+local JOINTS = {
+  ["lr"] = "─",
+  ["ud"] = "│",
+  ["dr"] = "╭",
+  ["dl"] = "╮",
+  ["ur"] = "╰",
+  ["ul"] = "╯",
+  ["udr"] = "├",
+  ["udl"] = "┤",
+  ["dlr"] = "┬",
+  ["ulr"] = "┴",
+  ["udlr"] = "┼",
+  ["d"] = "╷",
+  ["u"] = "╵",
+}
+
+local function joint(directions)
+  local key = ""
+  for _, direction in ipairs({ "u", "d", "l", "r" }) do
+    if directions[direction] then
+      key = key .. direction
+    end
+  end
+  return JOINTS[key] or " "
+end
+
+local function connect(canvas, row, col, ...)
+  canvas[row] = canvas[row] or {}
+  canvas[row][col] = canvas[row][col] or {}
+  for _, direction in ipairs({ ... }) do
+    canvas[row][col][direction] = true
+  end
+end
+
+-- joins two cells on the same row or column with a straight stroke
+local function segment(canvas, from_row, from_col, to_row, to_col)
+  if from_row == to_row then
+    local step = to_col > from_col and 1 or -1
+    for col = from_col, to_col - step, step do
+      connect(canvas, from_row, col, step > 0 and "r" or "l")
+      connect(canvas, from_row, col + step, step > 0 and "l" or "r")
+    end
+    return
+  end
+  local step = to_row > from_row and 1 or -1
+  for row = from_row, to_row - step, step do
+    connect(canvas, row, from_col, step > 0 and "d" or "u")
+    connect(canvas, row + step, from_col, step > 0 and "u" or "d")
+  end
+end
+
+--- Where the arch crosses each row: its left and right columns, widest at the bottom row.
+---@param rows integer
+---@param cols integer
+---@return { left: integer, right: integer }[] one per row, top first
+function M.arch(rows, cols)
+  local center, reach = (cols - 1) / 2, (cols - 1) / 2
+  local spans = {}
+  for row = 0, rows - 1 do
+    local height = (rows - 1 - row + 0.6) / rows
+    local half = reach * math.sqrt(math.max(0, 1 - height * height))
+    spans[row + 1] =
+      { left = math.floor(center - half + 0.5), right = math.ceil(center + half - 0.5) }
+  end
+  return spans
+end
+
+-- the arc's height at most, and how much wider than the name it reaches
+M.RING_ROWS = 5
+M.RING_REACH = 16
+
+--- Draws the arc of the ring over the title as a thin stroke: a half circle that steps down at
+--- both ends and keeps going past the last row, so the name sits under it.
+---@param rows integer how many text rows tall the arc is
+---@param cols integer how many columns wide
+---@return string[] rows all `cols` wide
+function M.ring(rows, cols)
+  local canvas = {}
+  local spans = M.arch(rows, cols)
+  segment(canvas, 0, spans[1].left, 0, spans[1].right)
+  for row = 2, rows do
+    local above, here = spans[row - 1], spans[row]
+    segment(canvas, row - 2, above.left, row - 1, above.left)
+    segment(canvas, row - 1, above.left, row - 1, here.left)
+    segment(canvas, row - 2, above.right, row - 1, above.right)
+    segment(canvas, row - 1, above.right, row - 1, here.right)
+  end
+  -- the ring carries on down beside the letters
+  connect(canvas, rows - 1, spans[rows].left, "d")
+  connect(canvas, rows - 1, spans[rows].right, "d")
+  local out = {}
+  for row = 0, rows - 1 do
+    local chars = {}
+    for col = 0, cols - 1 do
+      chars[col + 1] = canvas[row] and canvas[row][col] and joint(canvas[row][col]) or " "
+    end
+    out[row + 1] = table.concat(chars)
+  end
+  return out
+end
+
+-- a failing light ----------------------------------------------------------------------------
+
+M.FLICKER = { period = 1100, every = 3 }
+
+--- How bright a failing light is at a moment: steady most of the time, with a short stutter
+--- (a drop, a catch and a second drop) on every few periods.
+---@param elapsed number
+---@return number from 0 to 1
+function M.flicker(elapsed)
+  local period = math.floor(elapsed / M.FLICKER.period)
+  if (period * 7) % M.FLICKER.every ~= 0 then
+    return 1
+  end
+  local into = elapsed % M.FLICKER.period
+  if into < 70 then
+    return 0.25
+  end
+  if into >= 130 and into < 170 then
+    return 0.55
+  end
+  return 1
 end
 
 --- Tells whether the title already showed today for this franchise.

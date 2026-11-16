@@ -55,16 +55,17 @@ return {
       signs = {
         add = { text = "▎" },
         change = { text = "▎" },
-        delete = { text = "" },
-        topdelete = { text = "" },
+        -- a removed line leaves a thin line where it was: under the line above it, or over the first
+        delete = { text = "▁" },
+        topdelete = { text = "▔" },
         changedelete = { text = "▎" },
         untracked = { text = "▎" },
       },
       signs_staged = {
         add = { text = "▎" },
         change = { text = "▎" },
-        delete = { text = "" },
-        topdelete = { text = "" },
+        delete = { text = "▁" },
+        topdelete = { text = "▔" },
         changedelete = { text = "▎" },
       },
       signs_staged_enable = true,
@@ -76,10 +77,12 @@ return {
       auto_attach = true,
       attach_to_untracked = false,
       current_line_blame = true,
+      -- the blame waits until you stop to read and sits at the window's edge, so it never crowds the
+      -- code or the inline diagnostics at the end of the line, and never flashes while moving
       current_line_blame_opts = {
         virt_text = true,
-        virt_text_pos = "eol",
-        delay = 600,
+        virt_text_pos = "right_align",
+        delay = 1500,
         ignore_whitespace = true,
         virt_text_priority = 100,
       },

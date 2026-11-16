@@ -48,3 +48,19 @@ describe("lets_through", function()
     assert.is_false(actions.lets_through(nil))
   end)
 end)
+
+describe("started", function()
+  it("counts Malenia's long block in minutes", function()
+    assert.equal(
+      "Rolling, 25 minutes on the clock",
+      actions.started("Rolling, %d minutes on the clock", 25)
+    )
+  end)
+
+  it("says a single minute for Inde's quick date", function()
+    assert.equal(
+      "Rolling, 1 minute on the clock",
+      actions.started("Rolling, %d minutes on the clock", 1)
+    )
+  end)
+end)

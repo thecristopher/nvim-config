@@ -9,6 +9,8 @@ local M = {}
 local ns = vim.api.nvim_create_namespace("eldentree_hud")
 local state
 local stdin_given = false
+-- when this nvim started, the call time on the dressing room's call sheet
+local session_start = os.date("%H:%M")
 
 local function style()
   return require("core.franchise").current().skin.dashboard
@@ -88,6 +90,16 @@ end
 
 -- model ----------------------------------------------------------------------------------
 
+-- the review threads still open on the branch's PR, nil without one or before GitHub answered
+local function open_threads()
+  local ok, threads = pcall(require, "core.threads")
+  if not ok or type(threads.count) ~= "function" then
+    return nil
+  end
+  local found, count = pcall(threads.count)
+  return found and count or nil
+end
+
 local function status()
   local region = require("core.themes").current()
   local last = require("core.results").last()
@@ -95,11 +107,80 @@ local function status()
     character = region.character,
     area = region.title,
     purse = require("core.runes").held(),
+    threads = open_threads(),
     last_run = last and ("Rank %s  ·  %s"):format(
       last.rank,
       require("core.results.actions").duration(last.seconds)
     ) or nil,
   })
+end
+
+-- the world's HUD words: what each view calls its stats, tabs and kinds
+local function hud_lore()
+  return require("core.franchise").current().hud or {}
+end
+
+local function read_chronicle()
+  local ok, lines = pcall(vim.fn.readfile, vim.fn.stdpath("state") .. "/eldentree_chronicle.json")
+  local decoded_ok, decoded = pcall(vim.json.decode, ok and table.concat(lines, "\n") or "")
+  return decoded_ok and type(decoded) == "table" and decoded or {}
+end
+
+-- the language servers at work right now, one per name
+local function servers()
+  local names = {}
+  for _, client in ipairs(vim.lsp.get_clients()) do
+    names[client.name] = true
+  end
+  return vim.tbl_count(names)
+end
+
+-- the champion's attributes on the Roundtable, read from what the run already counts
+local function attributes()
+  local said = hud_lore().stats or {}
+  local run = require("core.results").current()
+  local streak =
+    require("core.hud.actions.trophies").current_streak(read_chronicle(), os.date("%Y-%m-%d"))
+  local held = require("core.runes").held():gsub("^%S+%s+", "")
+  return {
+    { said.level or "Level", require("core.results.actions").rank(run) or "-" },
+    { said.runes or "Runes", held },
+    { said.vigor or "Vigor", tostring(run.saves) },
+    { said.mind or "Mind", tostring(servers()) },
+    { said.endurance or "Endurance", tostring(streak) },
+    { said.arcane or "Arcane", tostring(run.fixes) },
+  }
+end
+
+local CONDITION_HL =
+  { fine = "EldenHudFine", caution = "EldenHudCaution", danger = "EldenHudDanger" }
+
+-- the survivor's condition, read from every open buffer's diagnostics the way the ECG reads one
+local function condition()
+  local severity = vim.diagnostic.severity
+  local counts = vim.diagnostic.count(nil)
+  local key =
+    require("core.ecg.actions").condition(counts[severity.ERROR] or 0, counts[severity.WARN] or 0)
+  local said = hud_lore().stats or {}
+  return { word = said[key] or key:upper(), hl = CONDITION_HL[key] }
+end
+
+-- what only one view draws: the Roundtable's attributes, the safe room's condition and ribbons
+local function view_extras()
+  if style() == "roundtable" then
+    return { attributes = attributes() }
+  end
+  if style() == "inventory" then
+    local words = require("core.franchise").current().words
+    return {
+      condition = condition(),
+      ribbons = {
+        word = (hud_lore().stats or {}).ribbons or words.ink_ribbons or "INK RIBBON",
+        count = require("core.results").current().saves,
+      },
+    }
+  end
+  return {}
 end
 
 local function greeting()
@@ -142,6 +223,27 @@ local function portrait_available()
     or terminal.can_draw(portrait_file())
 end
 
+-- the song playing, as the mini player draws it, nil while nothing plays or core/music has no
+-- now_playing yet
+local function now_playing()
+  local ok, music = pcall(require, "core.music")
+  if not ok or type(music.now_playing) ~= "function" then
+    return nil
+  end
+  local track = music.now_playing()
+  if type(track) ~= "table" or not track.title then
+    return nil
+  end
+  return {
+    title = track.title,
+    artist = track.artist ~= "" and track.artist or nil,
+    elapsed = music.elapsed(),
+    duration = track.duration,
+    playing = track.playing,
+    bar = require("core.skin").current().music.bar,
+  }
+end
+
 local function model()
   -- the items may have changed since the HUD was left, the cursor never points past them
   state.cursor.items =
@@ -157,7 +259,7 @@ local function model()
   end
   local region = require("core.themes").current()
   local words = require("core.franchise").current().words
-  return {
+  return vim.tbl_extend("force", view_extras(), {
     width = vim.api.nvim_win_get_width(state.win),
     height = vim.api.nvim_win_get_height(state.win),
     tabs = state.tabs,
@@ -174,6 +276,11 @@ local function model()
     sites = words.sites,
     greeting = greeting(),
     date = os.date("%A %d %B  ·  %H:%M"),
+    date_short = os.date("%a %d  ·  %H:%M"),
+    date_day = os.date("%a %d"),
+    clock = os.date("%H:%M"),
+    session_start = session_start,
+    hud = hud_lore(),
     stats = state.stats,
     portrait = portrait_available(),
     figure = select(2, portrait_image()),
@@ -182,7 +289,12 @@ local function model()
     words = require("core.franchise").lines("hud", { sites = words.sites }),
     status = quest_status,
     selected = M.selected(),
-  }
+    -- how much of the description has typed itself in, nil once it is whole
+    typed = state.typed,
+    -- how far the glint has run along the selected frame, nil once it settled
+    glint = state.glint,
+    music = now_playing(),
+  })
 end
 
 -- drawing --------------------------------------------------------------------------------
@@ -341,6 +453,57 @@ local function sound(event)
   require("core.sound").play(event)
 end
 
+-- how long the glint takes to run along the Roundtable's selected frame
+local GLINT_MS = 300
+
+-- the new selection settles in on core/motion's clock: its description types itself in and, on the
+-- Roundtable, a glint runs along its frame. Whole at once while motion is stilled, and each frame
+-- redraws only when another character landed or the glint moved a cell
+local settling
+local function settle_selection()
+  if settling then
+    settling:stop()
+  end
+  local item = M.selected()
+  local length = item and vim.fn.strchars(item.desc or "") or 0
+  local typing = actions.typing_ms(length)
+  local glints = style() == "roundtable" and state.focus == "items"
+  local duration = math.max(typing, glints and GLINT_MS or 0)
+  local shown = state
+  if duration == 0 then
+    state.typed, state.glint = nil, nil
+    return M.refresh()
+  end
+  settling = require("core.motion").tween({
+    duration = duration,
+    easing = "linear",
+    frame_ms = 32,
+    on_frame = function(_, raw)
+      if state ~= shown then
+        return
+      end
+      local elapsed = raw * duration
+      local typed = elapsed < typing and math.floor(elapsed / typing * length) or nil
+      local glint = glints and elapsed < GLINT_MS and math.floor(elapsed / GLINT_MS * 18) / 18
+        or nil
+      if typed == state.typed and glint == state.glint and raw > 0 then
+        return
+      end
+      state.typed, state.glint = typed, glint
+      M.refresh()
+    end,
+  })
+end
+
+-- the next slot in that direction: through the attaché case's cells, or the plain grid
+local function next_slot(grid, direction)
+  local index = state.cursor[state.focus] or 1
+  if grid.case then
+    return actions.case_move(grid.case, index, direction)
+  end
+  return actions.grid_move(index, grid.count, grid.columns, direction)
+end
+
 local function move(direction)
   if state.menu then
     move_menu(direction)
@@ -348,15 +511,14 @@ local function move(direction)
     return M.refresh()
   end
   local grid = state.grids[state.focus]
-  local next_index = grid
-    and actions.grid_move(state.cursor[state.focus] or 1, grid.count, grid.columns, direction)
+  local next_index = grid and next_slot(grid, direction)
   if next_index then
     state.cursor[state.focus] = next_index
   elseif not cross_panes(direction) then
     return
   end
   sound("hud_move")
-  M.refresh()
+  settle_selection()
   pulse_selection()
 end
 
@@ -365,21 +527,25 @@ local function switch_tab(step)
   state.focus, state.menu = "items", nil
   state.cursor.items, state.offset.items = 1, 0
   sound("hud_move")
-  M.refresh()
+  settle_selection()
   pulse_tab()
 end
 
 -- using items ----------------------------------------------------------------------------
 
-local function show_details(title, lines)
-  if not lines or #lines == 0 then
-    return
+-- where the selected slot sits on screen, so a float can open beside it instead of over it
+local function selection_on_screen()
+  if not valid() then
+    return nil
   end
-  local width = 30
-  for _, line in ipairs(lines) do
-    width = math.max(width, vim.api.nvim_strwidth(line) + 2)
-  end
-  width = math.min(width, vim.o.columns - 8)
+  local origin = vim.api.nvim_win_get_position(state.win)
+  local cursor = vim.api.nvim_win_get_cursor(state.win)
+  local line = vim.api.nvim_buf_get_lines(state.buf, cursor[1] - 1, cursor[1], false)[1] or ""
+  local col = vim.api.nvim_strwidth(line:sub(1, cursor[2]))
+  return { row = origin[1] + cursor[1] - 1, col = origin[2] + col }
+end
+
+local function float_buffer(lines)
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
   vim.api.nvim_buf_set_lines(
@@ -392,7 +558,79 @@ local function show_details(title, lines)
     end, lines)
   )
   vim.bo[buf].modifiable = false
+  return buf
+end
+
+-- the keys that close a float, and the portrait stepping aside while it is open, since the
+-- terminal paints images over every window
+local function close_on(buf, win, keys)
+  for _, key in ipairs(keys) do
+    vim.keymap.set("n", key, function()
+      pcall(vim.api.nvim_win_close, win, true)
+    end, { buffer = buf, nowait = true })
+  end
+  M.hide_portrait(true)
+  vim.api.nvim_create_autocmd("WinClosed", {
+    pattern = tostring(win),
+    once = true,
+    callback = function()
+      vim.schedule(function()
+        M.hide_portrait(false)
+      end)
+    end,
+  })
+end
+
+local function show_details(title, lines)
+  if not lines or #lines == 0 then
+    return
+  end
+  local width = 30
+  for _, line in ipairs(lines) do
+    width = math.max(width, vim.api.nvim_strwidth(line) + 2)
+  end
+  width = math.min(width, vim.o.columns - 8)
   local height = math.min(#lines, vim.o.lines - 8)
+  local place = actions.float_beside(
+    selection_on_screen(),
+    { width = width + 2, height = height + 2 },
+    { columns = vim.o.columns, lines = vim.o.lines, gap = 18 }
+  )
+  local buf = float_buffer(lines)
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    style = "minimal",
+    border = require("core.skin").border(),
+    title = " " .. require("core.skin").title(title) .. " ",
+    title_pos = "center",
+    width = width,
+    height = height,
+    row = place.row,
+    col = place.col,
+  })
+  close_on(buf, win, { "q", "<Esc>", "K" })
+end
+
+-- the head of a file, read for the safe room's file reader
+local READER_HEAD = 400
+
+local function file_head(path)
+  if not path or vim.fn.filereadable(path) == 0 then
+    return {}
+  end
+  local ok, lines = pcall(vim.fn.readfile, path, "", READER_HEAD)
+  return ok and lines or {}
+end
+
+-- the safe room's file reader: the item's details and the file itself, a page at a time, turned
+-- with h and l like the files of the old games
+local function show_reader(title, lines)
+  local width = math.min(76, vim.o.columns - 8)
+  local height = math.max(6, math.min(20, vim.o.lines - 10))
+  local pages = actions.pages(lines, width - 2, height)
+  local page = 1
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].bufhidden = "wipe"
   local win = vim.api.nvim_open_win(buf, true, {
     relative = "editor",
     style = "minimal",
@@ -404,10 +642,60 @@ local function show_details(title, lines)
     row = math.floor((vim.o.lines - height) / 2) - 1,
     col = math.floor((vim.o.columns - width) / 2),
   })
-  for _, key in ipairs({ "q", "<Esc>", "K" }) do
-    vim.keymap.set("n", key, function()
+  local function turn(step)
+    page = actions.clamp(page + step, 1, #pages)
+    vim.bo[buf].modifiable = true
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, pages[page])
+    vim.bo[buf].modifiable = false
+    vim.api.nvim_win_set_config(win, {
+      footer = (" ◀ %d / %d ▶ "):format(page, #pages),
+      footer_pos = "center",
+    })
+    if step ~= 0 then
+      sound("hud_move")
+    end
+  end
+  turn(0)
+  for keys, step in pairs({ [{ "l", "<Right>", "j" }] = 1, [{ "h", "<Left>", "k" }] = -1 }) do
+    for _, key in ipairs(keys) do
+      vim.keymap.set("n", key, function()
+        turn(step)
+      end, { buffer = buf, nowait = true })
+    end
+  end
+  close_on(buf, win, { "q", "<Esc>", "K" })
+end
+
+-- the word that floats over the Roundtable for a moment when you use an item, like an item obtained
+local TOAST_MS = 900
+
+local function toast(item)
+  local word = hud_lore().used
+  if style() ~= "roundtable" or not word or not item.name then
+    return
+  end
+  local text = (" %s  ·  %s "):format(word, item.name)
+  local width = vim.api.nvim_strwidth(text)
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].bufhidden = "wipe"
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { text })
+  vim.api.nvim_buf_set_extmark(buf, ns, 0, 0, { end_col = #text, hl_group = "EldenHudTitle" })
+  local ok, win = pcall(vim.api.nvim_open_win, buf, false, {
+    relative = "editor",
+    style = "minimal",
+    border = require("core.skin").border(),
+    focusable = false,
+    noautocmd = true,
+    zindex = 250,
+    width = width,
+    height = 1,
+    row = math.floor(vim.o.lines / 3),
+    col = math.floor((vim.o.columns - width) / 2),
+  })
+  if ok then
+    vim.defer_fn(function()
       pcall(vim.api.nvim_win_close, win, true)
-    end, { buffer = buf, nowait = true })
+    end, TOAST_MS)
   end
 end
 
@@ -416,6 +704,7 @@ local function use(item)
     return
   end
   state.menu = nil
+  toast(item)
   item.use()
   vim.schedule(function()
     M.refresh(true)
@@ -423,9 +712,20 @@ local function use(item)
 end
 
 local function check(item)
-  if item and item.check then
-    show_details(item.name, item.check())
+  if not item or not item.check then
+    return
   end
+  -- the safe room reads every item like one of its files, the file's own lines after its details
+  if style() == "inventory" then
+    local lines = item.check()
+    local head = file_head(item.path)
+    if #head > 0 then
+      vim.list_extend(lines, { "", ("─"):rep(20), "" })
+      vim.list_extend(lines, head)
+    end
+    return show_reader(item.name, lines)
+  end
+  show_details(item.name, item.check())
 end
 
 local function combine(item)
@@ -581,9 +881,41 @@ local function window_options(win)
   end
 end
 
+-- the mini player's bar moves on its own, so it is looked at every few seconds and the HUD redraws
+-- only when another cell of the bar filled
+local PLAYER_CHECK_MS = 3000
+local PLAYER_CELLS = require("core.hud.views.parts").PLAYER_BAR - 1
+local function follow_player()
+  local shown, last
+  shown = state
+  return require("core.motion").loop({
+    interval = PLAYER_CHECK_MS,
+    on_tick = function()
+      if state ~= shown then
+        return false
+      end
+      local music = now_playing()
+      local seen = music
+          and table.concat({
+            music.title,
+            tostring(music.playing),
+            tostring(actions.bar_fill(music.elapsed, music.duration, PLAYER_CELLS)),
+          }, "|")
+        or ""
+      if last and seen ~= last then
+        M.refresh()
+      end
+      last = seen
+    end,
+  })
+end
+
 local function cleanup()
   if not state then
     return
+  end
+  if state.player then
+    state.player:stop()
   end
   require("core.hud.portrait").close()
   require("core.hub").stop()
@@ -656,16 +988,63 @@ function M.hide_portrait(hidden)
   end
 end
 
---- Opens the HUD in the current window.
+-- a float (a notification history, a picker) cannot hold the HUD, so it opens in the window the
+-- float was opened from, or the first regular window of the tab
+local function regular_window()
+  local function regular(win)
+    return vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_config(win).relative == ""
+  end
+  local current = vim.api.nvim_get_current_win()
+  if regular(current) then
+    return current
+  end
+  local previous = vim.fn.win_getid(vim.fn.winnr("#"))
+  if previous ~= 0 and regular(previous) then
+    return previous
+  end
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if regular(win) then
+      return win
+    end
+  end
+  return current
+end
+
+-- the empty buffer an empty start leaves, which would stay in the tabs as [No Name] for good
+local function blank_start(buf)
+  if not vim.api.nvim_buf_is_valid(buf) or not vim.bo[buf].buflisted then
+    return false
+  end
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  return vim.api.nvim_buf_get_name(buf) == ""
+    and vim.bo[buf].buftype == ""
+    and not vim.bo[buf].modified
+    and #lines == 1
+    and lines[1] == ""
+end
+
+local function wipe_blank_start(buf)
+  if blank_start(buf) and #vim.fn.win_findbuf(buf) == 0 then
+    pcall(vim.api.nvim_buf_delete, buf, {})
+  end
+end
+
+--- Opens the HUD in the current window, or the regular window under a focused float.
 function M.open()
   if valid() then
     return M.refresh(true)
   end
   cleanup()
+  local win = regular_window()
+  if win ~= vim.api.nvim_get_current_win() then
+    vim.api.nvim_set_current_win(win)
+  end
+  local replaced = vim.api.nvim_win_get_buf(win)
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
   vim.bo[buf].swapfile = false
-  vim.api.nvim_win_set_buf(0, buf)
+  vim.api.nvim_win_set_buf(win, buf)
+  wipe_blank_start(replaced)
   vim.bo[buf].filetype = "eldentree_hud"
   window_options(0)
   local tab, cursor = actions.resume_place(last_place, style())
@@ -687,6 +1066,7 @@ function M.open()
   M.refresh(true)
   entrance()
   require("core.hub").start(buf)
+  state.player = follow_player()
 end
 
 -- an empty start, no files and nothing piped in, opens the HUD instead of a blank buffer
@@ -726,6 +1106,14 @@ function M.setup()
       end
       define_highlights()
       M.refresh(true)
+    end,
+  })
+  -- a new song, or the same one paused, shows on the mini player right away
+  vim.api.nvim_create_autocmd("User", {
+    group = group,
+    pattern = "EldentreeMusicChanged",
+    callback = function()
+      M.refresh()
     end,
   })
   vim.api.nvim_create_user_command("Hud", M.open, { desc = "Open the inventory HUD" })

@@ -51,11 +51,28 @@ describe("text_alpha", function()
 end)
 
 describe("layout", function()
-  it("centers every line", function()
+  it("centers every line outside the grace menu", function()
     for _, line in ipairs(actions.layout(120, 40, "Raya Lucaria")) do
       local width = vim.fn.strdisplaywidth(line.text)
-      assert.is_true(math.abs((line.col + width / 2) - 60) <= 1, line.text)
+      if
+        not vim.tbl_contains(
+          require("core.franchise").current().words.grace_menu,
+          vim.trim(line.text:gsub("^◈ ", ""))
+        )
+      then
+        assert.is_true(math.abs((line.col + width / 2) - 60) <= 1, line.text)
+      end
     end
+  end)
+
+  it("lines Melina's grace menu up on the left, with the first entry lit", function()
+    local menu = vim.tbl_filter(function(line)
+      return line.text:find("Pass Time", 1, true) or line.text:find("Level Up", 1, true)
+    end, actions.layout(120, 40, "Raya Lucaria"))
+    assert.equal(2, #menu)
+    assert.equal(menu[1].col, menu[2].col)
+    assert.equal("EldenRestTitle", menu[1].group)
+    assert.equal("EldenRestSub", menu[2].group)
   end)
 
   it("names the region you are resting in", function()
@@ -113,7 +130,16 @@ end)
 describe("golden hour", function()
   it("rests under the heart in the afternoon sun", function()
     local layout = actions.layout(120, 40, "Westview", { style = "golden_hour" })
-    assert.equal("󰋑", layout[1].text)
+    assert.is_truthy(layout[3].text:find("󰋑", 1, true))
+  end)
+
+  it("hangs an intermission card whose sides line up while Inde naps", function()
+    local layout = actions.layout(120, 40, "Westview", { style = "golden_hour" })
+    local card = vim.list_slice(layout, 1, 9)
+    for _, line in ipairs(card) do
+      assert.equal(vim.fn.strdisplaywidth(card[1].text), vim.fn.strdisplaywidth(line.text))
+      assert.equal(card[1].col, line.col)
+    end
   end)
 end)
 

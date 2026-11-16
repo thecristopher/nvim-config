@@ -75,18 +75,33 @@ describe("render", function()
     return vim.tbl_extend("force", { lore = lore, region = lore.regions[1] }, extra or {})
   end
 
-  it("shows only the model on the first row", function()
+  it("puts the model beside the region's character under the franchise's mark", function()
     local top = plain(statusline.render(MALENIA_SESSION, ctx(elden))[1])
-    assert.equal("󰚩 Opus 5.5", top)
+    assert.equal("󰚩 Opus 5.5  ◈ " .. elden.regions[1].character, top)
   end)
 
-  it("leaves the branch, the song, the region and the runes to the editor's statusline", function()
-    local extra = { branch = "feature/love-letter", song = "Inde · Shared Playlist" }
+  it("names Inde's branch only when Claude runs outside nvim", function()
+    local outside =
+      plain(statusline.render(MALENIA_SESSION, ctx(elden, { branch = "feature/love-letter" }))[1])
+    assert.truthy(outside:find("󰘬 feature/love-letter", 1, true))
+    local inside = plain(statusline.render(MALENIA_SESSION, ctx(elden))[1])
+    assert.falsy(inside:find("󰘬", 1, true))
+  end)
+
+  it("leaves the song, the region and the runes to the editor's statusline", function()
+    local extra = { song = "Inde · Shared Playlist" }
     local top = plain(statusline.render(MALENIA_SESSION, ctx(elden, extra))[1])
-    assert.falsy(top:find("feature/love-letter", 1, true))
     assert.falsy(top:find("Shared Playlist", 1, true))
     assert.falsy(top:find(haligtree.title, 1, true))
-    assert.falsy(top:find("◈", 1, true))
+  end)
+
+  it("says what Claire's session has cost and how long it ran", function()
+    local session = vim.tbl_extend("force", MALENIA_SESSION, {
+      cost = { total_cost_usd = 1.5, total_duration_ms = 75 * 60000 },
+    })
+    local bottom = plain(statusline.render(session, ctx(raccoon))[2])
+    assert.truthy(bottom:find("$1.50", 1, true))
+    assert.truthy(bottom:find("󰔛 1h 15m", 1, true))
   end)
 
   it("draws FP and stamina in the Lands Between, with no HP bar", function()
@@ -106,6 +121,64 @@ describe("render", function()
   it("leaves out the bars a session does not report yet", function()
     local rows = statusline.render({ model = { display_name = "Opus 5.5" } }, ctx(elden))
     assert.equal(1, #rows)
+  end)
+end)
+
+describe("duration", function()
+  it("counts Malenia's short session in minutes", function()
+    assert.equal("12m", statusline.duration(12 * 60000))
+  end)
+
+  it("stays quiet when the session did not say", function()
+    assert.is_nil(statusline.duration(nil))
+  end)
+end)
+
+describe("branch", function()
+  it("reads Claire's branch out of HEAD", function()
+    assert.equal("feature/anniversary", statusline.branch("ref: refs/heads/feature/anniversary"))
+  end)
+
+  it("gives nil for a detached head", function()
+    assert.is_nil(statusline.branch("4f2a9c1"))
+  end)
+end)
+
+describe("should_play", function()
+  local now = 1000
+
+  it("calls Inde back when a long turn ends", function()
+    assert.is_true(actions.should_play("Stop", { now = now, turn_started = now - 60 }))
+  end)
+
+  it("stays quiet when a short turn ends while Claire is still watching", function()
+    assert.is_false(actions.should_play("Stop", { now = now, turn_started = now - 5 }))
+  end)
+
+  it("still rings when nobody knows when the turn began", function()
+    assert.is_true(actions.should_play("Stop", { now = now }))
+  end)
+
+  it("rings a burst of permission prompts once", function()
+    assert.is_false(
+      actions.should_play("PermissionRequest", { now = now, last_permission = now - 4 })
+    )
+    assert.is_true(
+      actions.should_play("PermissionRequest", { now = now, last_permission = now - 90 })
+    )
+  end)
+
+  it("keeps Malenia's expedition silent", function()
+    local ctx = { now = now, turn_started = now - 300, expedition_until = now + 600 }
+    assert.is_false(actions.should_play("Stop", ctx))
+    assert.is_false(actions.should_play("StopFailure", ctx))
+  end)
+end)
+
+describe("session_file", function()
+  it("keeps only safe characters of Claire's session id", function()
+    assert.equal("abc-123", actions.session_file("abc-123/../"))
+    assert.equal("default", actions.session_file(nil))
   end)
 end)
 

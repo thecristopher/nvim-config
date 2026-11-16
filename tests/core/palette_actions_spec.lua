@@ -123,3 +123,41 @@ describe("window_width", function()
     assert.equal(76, actions.window_width({ name = 22, desc = 42, key = 12 }, 80))
   end)
 end)
+
+describe("command_names", function()
+  it("reads the commands Claire's module defines, on one line or two", function()
+    local source = table.concat({
+      'vim.api.nvim_create_user_command("Anniversary", open, {})',
+      "vim.api.nvim_create_user_command(",
+      '  "LoveNote",',
+      "  write,",
+    }, "\n")
+    assert.same({ "Anniversary", "LoveNote" }, actions.command_names(source))
+  end)
+end)
+
+describe("missing_commands", function()
+  local entries = { { cmd = "Anniversary" }, { cmd = "Music " } }
+
+  it("finds the command Inde added without a palette row", function()
+    assert.same(
+      { "LoveNote" },
+      actions.missing_commands({ "Anniversary", "Music", "LoveNote" }, entries, {})
+    )
+  end)
+
+  it("respects the commands Malenia keeps out on purpose", function()
+    assert.same({}, actions.missing_commands({ "LoveNote" }, entries, { LoveNote = "internal" }))
+  end)
+end)
+
+describe("every core command", function()
+  it("has a palette row or a reason to stay out", function()
+    local names = {}
+    for _, file in ipairs(vim.fn.globpath("lua/core", "**/*.lua", false, true)) do
+      vim.list_extend(names, actions.command_names(table.concat(vim.fn.readfile(file), "\n")))
+    end
+    assert.is_true(#names > 20)
+    assert.same({}, actions.missing_commands(names, actions.ENTRIES, actions.UNLISTED))
+  end)
+end)

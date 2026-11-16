@@ -34,6 +34,25 @@ function M.resolve(override, on_path, fallbacks, is_executable)
   return nil
 end
 
+-- a draft that takes longer than this is stuck, and the progress bar would spin forever
+M.TIMEOUT_MS = 180000
+-- vim.system sets this code when it stops a process at its timeout
+M.TIMEOUT_CODE = 124
+
+--- Turns a run that hit the timeout into a result that says so, leaving every other one alone.
+---@param result { code: integer, stdout: string|nil, stderr: string|nil }
+---@return { code: integer, stdout: string|nil, stderr: string|nil }
+function M.explain(result)
+  if result.code ~= M.TIMEOUT_CODE then
+    return result
+  end
+  return {
+    code = result.code,
+    stdout = "",
+    stderr = ("claude gave no answer in %d minutes and was stopped"):format(M.TIMEOUT_MS / 60000),
+  }
+end
+
 -- the prompt rides on stdin because cmd.exe cuts arguments at the first newline and caps them at 8k
 function M.command(bin)
   return { bin, "-p", "--disallowedTools", M.DISALLOWED_TOOLS }

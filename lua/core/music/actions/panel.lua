@@ -35,7 +35,22 @@ function M.fit(text, width)
   if vim.fn.strchars(text) <= width then
     return text
   end
-  return vim.fn.strcharpart(text, 0, width - 1) .. "…"
+  local cut = vim.fn.strcharpart(text, 0, width - 1)
+  local at_word_end = vim.fn.strcharpart(text, width - 1, 1):match("^%s") ~= nil
+  -- a cut at the last space reads as a phrase, unless that space leaves most of the room empty
+  local last_space = cut:match(".*()%s")
+  local phrase = last_space and vim.fn.strchars(cut:sub(1, last_space - 1)) or 0
+  if not at_word_end and phrase >= math.floor(width * 0.6) then
+    cut = vim.trim(cut:sub(1, last_space - 1))
+  end
+  return cut .. "…"
+end
+
+--- Tells whether the editor is wide enough to hold the panel beside its edge.
+---@param columns integer vim.o.columns
+---@return boolean
+function M.fits(columns)
+  return columns >= M.WIDTH + 4
 end
 
 --- Tells how tall the panel is, shorter when the lyrics are hidden.

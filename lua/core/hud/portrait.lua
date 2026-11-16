@@ -92,7 +92,26 @@ local function send_again(file)
   end)
 end
 
+local function mtime(file)
+  local stat = vim.uv.fs_stat(file)
+  return stat and stat.mtime.sec or nil
+end
+
+-- snacks keeps its converted copy by path alone, so a recropped image would show its old pixels
+-- forever, the copies older than the image are thrown away before snacks looks for them
+local function forget_stale_copies(file)
+  pcall(function()
+    local copies = vim.tbl_map(function(step)
+      return { file = step.file, mtime = mtime(step.file) }
+    end, Snacks.image.convert.convert({ src = file }).steps)
+    for _, stale in ipairs(require("core.hud.actions").stale_copies(mtime(file) or 0, copies)) do
+      vim.fs.rm(stale)
+    end
+  end)
+end
+
 local function draw_with_pixels(view, file, anchor, fresh)
+  forget_stale_copies(file)
   if fresh then
     send_again(file)
   end

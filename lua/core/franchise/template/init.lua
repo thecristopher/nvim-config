@@ -8,6 +8,8 @@ return {
   skin = require("core.franchise.lore.__name__.skin"),
   voices = require("core.franchise.lore.__name__.voices"),
   lines = require("core.franchise.lore.__name__.lines"),
+  -- what the HUD calls its keys, tabs and items, see lua/core/hud
+  hud = require("core.franchise.lore.__name__.hud"),
 
   -- which version of each mechanic this world plays
   mechanics = {
@@ -40,6 +42,7 @@ return {
   -- the now playing panel's title and what its lyrics say while they are not there
   music = {
     title = "Now playing",
+    now_playing = "Now playing",
     loading = "Looking for the lyrics…",
     missing = "No lyrics for this one",
     instrumental = "Instrumental",
@@ -69,6 +72,8 @@ return {
     title = "Review threads",
     resolved = "Thread resolved",
     none = "No open threads on this PR",
+    -- when the branch has no PR at all
+    no_pr = "This branch has no PR yet",
   },
 
   -- who guards a merge conflict, and how many conflicted files are left
@@ -81,6 +86,17 @@ return {
   expedition = { name = "Focus", started = "Focus for %d minutes", ended = "Focus over" },
 
   chronicle = { title = "Chronicle" },
+
+  -- the HUD's trophies: foes felled from the bestiary, the best rank, the days fought and the
+  -- longest streak of days in a row, from the chronicle
+  trophies = {
+    title = "Trophies",
+    felled = "Enemies defeated",
+    rank = "Best rank",
+    days = "Days played",
+    streak = "Longest streak",
+    empty = "No trophies yet",
+  },
 
   banners = {
     felled = "ENEMY FELLED",
@@ -130,6 +146,8 @@ return {
     examine = "Preview",
     -- the title of the notification history
     history = "Notification History",
+    -- the explorer's title over the tree
+    tree = "Explorer",
     notify = { info = "Info", warn = "Warning", error = "Error", debug = "Debug", trace = "Trace" },
   },
 
@@ -150,5 +168,7 @@ return {
     motion_off = "The world stands still",
     map = "Map",
     arts = "Commands",
+    -- the menu that waits while you rest (rest = "embers")
+    grace_menu = { "Pass time", "Level up", "Sort items" },
   },
 }

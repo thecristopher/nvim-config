@@ -243,3 +243,63 @@ describe("cover_name", function()
     assert.are_not.equal(actions.cover_name(note), actions.cover_name(date))
   end)
 end)
+
+describe("track_key", function()
+  it("names Inde's anniversary song by artist and title", function()
+    local song = { artist = "Inde Navarrete", title = "Anniversary", playing = true }
+    assert.equal("inde navarrete|anniversary", actions.track_key(song))
+  end)
+
+  it("hears the same song whichever player capitalized Claire's title", function()
+    local cider = { artist = "Claire Redfield", title = "First Date" }
+    local music = { artist = "Claire Redfield", title = "First date" }
+    assert.equal(actions.track_key(cider), actions.track_key(music))
+  end)
+
+  it("gives nil while nothing plays", function()
+    assert.is_nil(actions.track_key(nil))
+  end)
+end)
+
+describe("announces", function()
+  it("announces the next song of Claire's shared playlist", function()
+    assert.is_true(actions.announces("Claire|First Date", "Claire|Second Date", true))
+  end)
+
+  it("keeps the first song heard at startup quiet", function()
+    assert.is_false(actions.announces(nil, "Malenia|Waterfowl Dance", true))
+  end)
+
+  it("stays quiet when the same song comes back after a pause", function()
+    assert.is_false(actions.announces("Malenia|Scarlet Bloom", "Malenia|Scarlet Bloom", true))
+  end)
+
+  it("stays quiet while nobody looks at the editor or nothing plays", function()
+    assert.is_false(actions.announces("Claire|First Date", "Claire|Second Date", false))
+    assert.is_false(actions.announces("Claire|First Date", nil, true))
+  end)
+
+  it("stays quiet while the panel or the HUD already names Inde's song", function()
+    assert.is_false(actions.announces("Inde|Love Note", "Inde|Date Night", true, true))
+  end)
+end)
+
+describe("notice", function()
+  it("names the song and Malenia on one line, apart", function()
+    local song = { artist = "Malenia", title = "Waterfowl Dance" }
+    assert.equal("◈ Waterfowl Dance · Malenia", actions.notice(song, "◈"))
+  end)
+
+  it("leaves the artist line out when nobody is credited", function()
+    assert.equal("■ Love Note", actions.notice({ artist = "", title = "Love Note" }, "■"))
+  end)
+end)
+
+describe("lyric_label", function()
+  it("sings Claire's line after the playing note", function()
+    assert.equal(
+      "󰎈 Meet me at the clock tower",
+      actions.lyric_label("Meet me at the clock tower", 40)
+    )
+  end)
+end)

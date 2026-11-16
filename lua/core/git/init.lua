@@ -8,13 +8,24 @@ local function notify(msg, level)
   vim.notify(msg, level or vim.log.levels.INFO, { title = "Git", id = "eldentree_git" })
 end
 
+---The repo the keys act on: the one the buffer belongs to, so a file opened from another repo
+---commits, pushes and stashes there instead of in nvim's cwd.
+---@return string
+function M.repo()
+  return vim.fs.root(0, ".git") or require("core.repos").root() or vim.uv.cwd()
+end
+
+local function git(args, root)
+  return vim.list_extend({ "git", "-C", root or M.repo() }, args)
+end
+
 local function git_ok(args)
-  vim.fn.system(vim.list_extend({ "git" }, args))
+  vim.fn.system(git(args))
   return vim.v.shell_error == 0
 end
 
 local function git_out(args)
-  local out = vim.fn.system(vim.list_extend({ "git" }, args))
+  local out = vim.fn.system(git(args))
   if vim.v.shell_error ~= 0 then
     return nil
   end
@@ -32,7 +43,7 @@ end
 ---@param task? EldenProgress the progress bar that reports the failure, a plain notification otherwise
 local function run(args, on_ok, task)
   vim.system(
-    vim.list_extend({ "git" }, args),
+    git(args),
     { text = true },
     vim.schedule_wrap(function(result)
       if result.code ~= 0 then
@@ -96,13 +107,15 @@ end
 
 ---Stages every change related to the code: tracked edits, deletions and new files,
 ---leaving untracked secrets and noise (.env, logs, swap files) out.
+---@param root string|nil the repo, M.repo() when nil
 ---@return string[]|nil staged nil when git add failed
 ---@return string[] skipped
-function M.stage_related()
+function M.stage_related(root)
+  root = root or M.repo()
   -- vim.system keeps the NUL separators that vim.fn.system would mangle
   local status = vim
-    .system({ "git", "status", "--porcelain=v1", "-z", "--untracked-files=all" }, { text = true })
-    :wait()
+    .system(git({ "status", "--porcelain=v1", "-z", "--untracked-files=all" }, root), { text = true })
+    :wait(10000)
   if status.code ~= 0 then
     return nil, {}
   end
@@ -111,7 +124,8 @@ function M.stage_related()
   if #stage == 0 then
     return stage, skipped
   end
-  if not git_ok(vim.list_extend({ "add", "-A", "--" }, stage)) then
+  vim.fn.system(git(vim.list_extend({ "add", "-A", "--" }, stage), root))
+  if vim.v.shell_error ~= 0 then
     return nil, skipped
   end
   return stage, skipped
@@ -178,10 +192,13 @@ function M.push()
   end
   local branch = M.current_branch()
   local task = progress("Pushing " .. branch .. "…")
+  local root = M.repo()
   run(actions.push_args(M.has_upstream()), function()
     task:done("Pushed " .. branch)
     require("core.voice").say("pushed", { branch = branch })
     require("core.ci").soon()
+    -- a push can outdate threads or answer them, GitHub needs a moment to catch up
+    require("core.threads").refresh(root, 8000)
   end, task)
 end
 

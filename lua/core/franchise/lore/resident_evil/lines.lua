@@ -41,6 +41,7 @@ return {
   ["commit.nothing"] = "Nothing to save.",
   ["commit.left_out"] = "Left in the item box: {files}",
   ["commit.fell"] = "the save failed",
+  ["commit.committing"] = "Saving at the typewriter…",
 
   ["pr.title"] = "Transmission",
   ["pr.commits"] = "Reading the field reports…",

@@ -3,7 +3,8 @@
 -- and the theme. Pure logic only, the caller reads and writes the file.
 local M = {}
 
-M.HOOK_EVENTS = { "Stop", "StopFailure", "PermissionRequest" }
+-- UserPromptSubmit plays nothing, it stamps when a turn began so Stop knows whether it was long
+M.HOOK_EVENTS = { "UserPromptSubmit", "Stop", "StopFailure", "PermissionRequest" }
 -- the usage limits move on their own, so the statusline also refreshes on a timer
 M.REFRESH_SECONDS = 10
 

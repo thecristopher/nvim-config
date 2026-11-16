@@ -56,3 +56,16 @@ describe("command", function()
     )
   end)
 end)
+
+describe("explain", function()
+  it("says Claude ran out of time instead of failing silently on Claire's draft", function()
+    local result = actions.explain({ code = actions.TIMEOUT_CODE, stdout = "half a love note" })
+    assert.equal("", result.stdout)
+    assert.truthy(result.stderr:find("3 minutes", 1, true))
+  end)
+
+  it("leaves Inde's finished draft untouched", function()
+    local done = { code = 0, stdout = "Add anniversary reminder", stderr = "" }
+    assert.same(done, actions.explain(done))
+  end)
+end)

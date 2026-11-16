@@ -41,6 +41,7 @@ return {
   ["commit.nothing"] = "Nothing to inscribe.",
   ["commit.left_out"] = "Left behind at the grace: {files}",
   ["commit.fell"] = "the inscription was lost",
+  ["commit.committing"] = "Etching it into the Erdtree…",
 
   ["pr.title"] = "Summoning Pool",
   ["pr.commits"] = "Reading the runes of every commit…",

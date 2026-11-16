@@ -33,6 +33,15 @@ au("BufReadPost", {
 
 -- core/resize puts the layout back when the terminal resizes, it knows the tree and Claude panel
 
+-- o and O open a fresh line, not another comment: filetype plugins add "o" to formatoptions, and a
+-- new line under a comment kept turning code into comments. Enter inside a comment still continues it
+au("FileType", {
+  group = aug("formatoptions"),
+  callback = function()
+    vim.opt_local.formatoptions:remove({ "o" })
+  end,
+})
+
 -- Close utility windows with q
 au("FileType", {
   group = aug("close_with_q"),

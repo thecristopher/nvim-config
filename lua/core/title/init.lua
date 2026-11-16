@@ -22,12 +22,14 @@ local function paint_groups(elapsed)
   local title = color.to_int(scene.title.color)
   local alpha = actions.alpha(elapsed)
   local ground = color.mix(color.to_int(p.base), veil, alpha)
+  -- Raccoon City's sign hangs on a failing light, the letters stutter now and then
+  local light = scene.title.style == "drip" and actions.flicker(elapsed) or 1
   for level = 1, actions.LEVELS do
     local glint = color.mix(title, 0xFFFFFF, (level - 1) / (actions.LEVELS - 1) * 0.65)
     vim.api.nvim_set_hl(
       0,
       "EldenTitle" .. level,
-      { fg = color.mix(veil, glint, alpha), bg = ground, bold = true }
+      { fg = color.mix(veil, glint, alpha * light), bg = ground, bold = true }
     )
   end
   vim.api.nvim_set_hl(
@@ -58,11 +60,14 @@ local function paint_groups(elapsed)
   vim.api.nvim_set_hl(0, "EldenTitleVeil", { bg = ground })
 end
 
--- one row of block letters as chunks, every solid cell taking the shimmer's level at its column
-local function row_chunks(text, elapsed)
-  local chunks, width = {}, vim.fn.strdisplaywidth(text)
+-- one row of letters as chunks, every cell taking the shimmer's level at its column; `offset` is
+-- where the row starts against the widest piece, so the ring and the letters shimmer as one
+local function row_chunks(text, elapsed, offset)
+  local chunks = {}
+  local width = scene.shimmer_width
   for col, char in ipairs(vim.fn.split(text, "\\zs")) do
-    local level = scene.title.style == "shimmer" and actions.shimmer_level(col - 1, elapsed, width)
+    local level = scene.title.style == "shimmer"
+        and actions.shimmer_level(col - 1 + (offset or 0), elapsed, width)
       or 1
     local group = "EldenTitle" .. level
     local last = chunks[#chunks]
@@ -117,8 +122,11 @@ local function draw(elapsed)
   end
   paint_groups(elapsed)
   vim.api.nvim_buf_clear_namespace(scene.buf, ns, 0, -1)
+  for index, text in ipairs(scene.ring) do
+    put(scene.top - #scene.ring + index - 1, scene.ring_col, row_chunks(text, elapsed, 0))
+  end
   for index, text in ipairs(scene.rows) do
-    put(scene.top + index - 1, scene.col, row_chunks(text, elapsed))
+    put(scene.top + index - 1, scene.col, row_chunks(text, elapsed, scene.col - scene.ring_col))
   end
   if scene.title.style == "drip" then
     draw_drips(elapsed)
@@ -136,9 +144,9 @@ local function draw(elapsed)
   put(scene.height - 3, banner.center_col(scene.width, #hint), { { hint, "EldenTitleHint" } })
 end
 
--- block letters when they fit, the letterspaced name when the window is too narrow for them
-local function title_rows(text, width)
-  local rows = actions.big(text)
+-- big letters when they fit, the letterspaced name when the window is too narrow for them
+local function title_rows(text, width, style)
+  local rows = actions.big(text, actions.font_for(style))
   if vim.fn.strdisplaywidth(rows[1]) <= width - 4 then
     return rows
   end
@@ -148,11 +156,21 @@ end
 local function open_scene()
   local width, height = vim.o.columns, vim.o.lines
   scene = { width = width, height = height, title = lore().skin.title }
-  scene.rows = title_rows(scene.title.text, width)
+  scene.rows = title_rows(scene.title.text, width, scene.title.style)
   scene.drips = #scene.rows > 1 and actions.drips(scene.rows[#scene.rows]) or {}
-  scene.bulbs = actions.bulbs(vim.fn.strdisplaywidth(scene.rows[1]), #scene.rows)
+  local letters_width = vim.fn.strdisplaywidth(scene.rows[1])
+  scene.bulbs = actions.bulbs(letters_width, #scene.rows)
   scene.top = math.floor(height * 0.32)
-  scene.col = banner.center_col(width, vim.fn.strdisplaywidth(scene.rows[1]))
+  scene.col = banner.center_col(width, letters_width)
+  -- the Lands Between write their name under the arc of the ring
+  scene.ring = {}
+  local ring_rows = math.min(actions.RING_ROWS, scene.top - 1)
+  if scene.title.style == "shimmer" and #scene.rows > 1 and ring_rows >= 3 then
+    scene.ring = actions.ring(ring_rows, math.min(width - 2, letters_width + actions.RING_REACH))
+  end
+  local ring_width = scene.ring[1] and vim.fn.strdisplaywidth(scene.ring[1]) or letters_width
+  scene.ring_col = banner.center_col(width, ring_width)
+  scene.shimmer_width = math.max(ring_width, letters_width)
 
   scene.buf = vim.api.nvim_create_buf(false, true)
   vim.bo[scene.buf].bufhidden = "wipe"

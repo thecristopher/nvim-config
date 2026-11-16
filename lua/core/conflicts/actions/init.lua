@@ -33,4 +33,7 @@ function M.boss_name(words, files_left)
   return ("%s  ·  %s"):format(words.boss, words.left:format(files_left))
 end
 
+-- the files git leaves in its directory while a merge, rebase or cherry pick waits on conflicts
+M.IN_PROGRESS = { "MERGE_HEAD", "REBASE_HEAD", "CHERRY_PICK_HEAD" }
+
 return M

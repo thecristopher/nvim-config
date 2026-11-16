@@ -1,5 +1,6 @@
--- :Map opens the project map in a float, one row per room. Red rooms still hide errors or TODOs,
--- blue rooms are cleared, and <CR> walks into one with the file picker.
+-- :Map opens the project map in a float: every top folder is a wing and every room a box in it, red
+-- while errors or TODOs hide inside, blue once cleared, the room you stand in marked. Tab steps
+-- between rooms and <CR> walks into one with the file picker.
 local actions = require("core.map.actions")
 
 local M = {}
@@ -8,9 +9,19 @@ local ns = vim.api.nvim_create_namespace("eldentree_map")
 
 local function define_highlights()
   local p = require("core.themes").palette()
-  vim.api.nvim_set_hl(0, "EldenMapLeft", { fg = p.red, bold = true })
-  vim.api.nvim_set_hl(0, "EldenMapCleared", { fg = p.sapphire, bold = true })
-  vim.api.nvim_set_hl(0, "EldenMapPath", { fg = p.overlay1, italic = true })
+  local groups = {
+    EldenMapLeft = { fg = p.red },
+    EldenMapLeftName = { fg = p.red, bold = true },
+    EldenMapCleared = { fg = p.sapphire },
+    EldenMapClearedName = { fg = p.text, bold = true },
+    EldenMapHere = { fg = p.yellow },
+    EldenMapHereName = { fg = p.yellow, bold = true },
+    EldenMapPath = { fg = p.overlay1, italic = true },
+    EldenMapWing = { fg = p.subtext0, bold = true },
+  }
+  for name, attrs in pairs(groups) do
+    vim.api.nvim_set_hl(0, name, attrs)
+  end
 end
 
 local function git_lines(root, args)
@@ -54,47 +65,82 @@ function M.rooms_from(root, gathered)
   return actions.rooms(root, gathered.files, gathered.todos, open_errors())
 end
 
-local function render(rooms)
-  local name_width = 0
-  for _, room in ipairs(rooms) do
-    name_width = math.max(name_width, vim.api.nvim_strwidth(room.name))
+-- the zone of the file you were in before opening the map, nil outside the project
+local function here(root)
+  local file = vim.api.nvim_buf_get_name(0)
+  return file ~= "" and require("core.zones.actions").zone_key(vim.fs.normalize(file), root) or nil
+end
+
+local function paint(buf, drawn)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, drawn.lines)
+  for _, mark in ipairs(drawn.marks) do
+    vim.api.nvim_buf_set_extmark(
+      buf,
+      ns,
+      mark.row,
+      mark.col,
+      { end_col = mark.end_col, hl_group = mark.group }
+    )
   end
-  local lines, marks = {}, {}
-  for index, room in ipairs(rooms) do
-    local glyph = room.cleared and "■" or "□"
-    local name = room.name .. (" "):rep(name_width - vim.api.nvim_strwidth(room.name))
-    local line = (" %s %s  %s  %s"):format(glyph, name, room.key, actions.leftovers(room))
-    lines[index] = line
-    local name_end = 1 + #glyph + 1 + #name
-    marks[index] = {
-      { 0, name_end, room.cleared and "EldenMapCleared" or "EldenMapLeft" },
-      { name_end + 2, name_end + 2 + #room.key, "EldenMapPath" },
-    }
+  vim.bo[buf].modifiable = false
+end
+
+-- moves the cursor onto the name of the next (or previous) room
+local function step(win, drawn, direction)
+  local cursor = vim.api.nvim_win_get_cursor(win)
+  local current = actions.room_at(drawn.rooms, cursor[1] - 1, cursor[2])
+  local index = 0
+  for at, spot in ipairs(drawn.rooms) do
+    if spot.key == current then
+      index = at
+    end
   end
-  return lines, marks
+  local target = drawn.rooms[(index - 1 + direction) % #drawn.rooms + 1]
+  vim.api.nvim_win_set_cursor(win, { target.row + 1, target.col + 2 })
+end
+
+local function map_keys(buf, win, drawn, root)
+  local close = function()
+    pcall(vim.api.nvim_win_close, win, true)
+  end
+  local function map(lhs, fn)
+    vim.keymap.set("n", lhs, fn, { buffer = buf, nowait = true })
+  end
+  map("q", close)
+  map("<Esc>", close)
+  map("<Tab>", function()
+    step(win, drawn, 1)
+  end)
+  map("<S-Tab>", function()
+    step(win, drawn, -1)
+  end)
+  map("<CR>", function()
+    local cursor = vim.api.nvim_win_get_cursor(win)
+    local key = actions.room_at(drawn.rooms, cursor[1] - 1, cursor[2])
+    if not key then
+      return
+    end
+    close()
+    Snacks.picker.files({ cwd = root .. "/" .. key })
+  end)
 end
 
 local function open_float(rooms, root)
-  local lines, marks = render(rooms)
+  local glyphs = require("core.skin").current().tree
+  local here_key = here(root)
+  local drawn = actions.layout(rooms, {
+    width = math.max(20, vim.o.columns - 8),
+    here = here_key,
+    glyphs = { left = glyphs.left, cleared = glyphs.cleared },
+  })
   local width = 20
-  for _, line in ipairs(lines) do
-    width = math.max(width, vim.api.nvim_strwidth(line) + 2)
+  for _, line in ipairs(drawn.lines) do
+    width = math.max(width, vim.api.nvim_strwidth(line))
   end
+  width = math.min(width, vim.o.columns - 4)
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  for row, line_marks in ipairs(marks) do
-    for _, mark in ipairs(line_marks) do
-      vim.api.nvim_buf_set_extmark(
-        buf,
-        ns,
-        row - 1,
-        mark[1],
-        { end_col = mark[2], hl_group = mark[3] }
-      )
-    end
-  end
-  vim.bo[buf].modifiable = false
+  paint(buf, drawn)
 
   local cleared, total = actions.progress(rooms)
   local words = require("core.franchise").current().words
@@ -102,10 +148,10 @@ local function open_float(rooms, root)
     relative = "editor",
     style = "minimal",
     border = require("core.skin").border(),
-    width = math.min(width, vim.o.columns - 4),
-    height = math.min(#lines, vim.o.lines - 6),
+    width = width,
+    height = math.max(1, math.min(#drawn.lines, vim.o.lines - 6)),
     row = 2,
-    col = math.floor((vim.o.columns - width) / 2),
+    col = math.floor((vim.o.columns - width) / 2) - 1,
     title = " " .. require("core.skin").title(
       ("%s · %s"):format(words.map, require("core.themes").current().title)
     ) .. " ",
@@ -113,18 +159,15 @@ local function open_float(rooms, root)
     footer = (" %d of %d rooms cleared "):format(cleared, total),
     footer_pos = "center",
   })
-  vim.wo[win].cursorline = true
-
-  local close = function()
-    pcall(vim.api.nvim_win_close, win, true)
+  map_keys(buf, win, drawn, root)
+  -- the map opens on the room you stand in, or on the first one
+  for _, spot in ipairs(drawn.rooms) do
+    if spot.key == here_key then
+      vim.api.nvim_win_set_cursor(win, { spot.row + 1, spot.col + 2 })
+      return
+    end
   end
-  vim.keymap.set("n", "q", close, { buffer = buf, nowait = true })
-  vim.keymap.set("n", "<Esc>", close, { buffer = buf, nowait = true })
-  vim.keymap.set("n", "<CR>", function()
-    local room = rooms[vim.api.nvim_win_get_cursor(win)[1]]
-    close()
-    Snacks.picker.files({ cwd = root .. "/" .. room.key })
-  end, { buffer = buf, nowait = true })
+  step(win, drawn, 1)
 end
 
 --- Returns the rooms of a project, red or blue, for anything else that wants to draw them.

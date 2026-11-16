@@ -4,6 +4,9 @@ local actions = require("core.expedition.actions")
 
 local M = {}
 
+-- when the running block ends, in epoch seconds, for the Claude Code hooks (core/claude_ui)
+M.STATE_FILE = vim.fn.stdpath("state") .. "/eldentree_expedition"
+
 local block = nil
 
 local function words()
@@ -56,6 +59,7 @@ function M.stop()
   stop_timer()
   local ending = block
   block = nil
+  os.remove(M.STATE_FILE)
   wake(ending.saved, ending.wrapper)
   require("core.utils").refresh_statusline()
   local segment = actions.segment(ending.run, require("core.results").current())
@@ -80,12 +84,19 @@ function M.start(arg)
   if block then
     M.stop()
   end
-  vim.notify(words().started:format(minutes), vim.log.levels.INFO, { title = words().name })
+  vim.notify(
+    actions.started(words().started, minutes),
+    vim.log.levels.INFO,
+    { title = words().name }
+  )
   -- the last sound before the quiet
   require("core.sound").play("expedition")
   local saved = hush()
+  local ends_at = os.time() + minutes * 60
+  -- Claude Code's hooks run in their own process and read this to stay quiet too
+  require("core.utils").write_state(M.STATE_FILE, { tostring(ends_at) })
   block = {
-    ends_at = os.time() + minutes * 60,
+    ends_at = ends_at,
     run = require("core.results").current(),
     saved = saved,
     wrapper = vim.notify,
@@ -123,7 +134,13 @@ function M.setup()
   end, { nargs = "?", desc = "A focus block, :Expedition stop ends it" })
   vim.api.nvim_create_autocmd("VimLeavePre", {
     group = vim.api.nvim_create_augroup("eldentree_expedition", { clear = true }),
-    callback = stop_timer,
+    callback = function()
+      stop_timer()
+      -- a block left behind by a closed nvim would keep Claude's hooks quiet for nothing
+      if block then
+        os.remove(M.STATE_FILE)
+      end
+    end,
   })
 end
 
