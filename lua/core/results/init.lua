@@ -33,7 +33,7 @@ function M.summary()
   if not lore.mechanics.ranking or not last then
     return nil
   end
-  return actions.summary(lore.words.last_run, last)
+  return actions.summary(lore.words, last)
 end
 
 local function finish()

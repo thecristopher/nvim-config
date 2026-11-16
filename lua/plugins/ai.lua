@@ -93,6 +93,9 @@ return {
       { "<leader>af", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
       { "<leader>aF", "<cmd>ClaudeFullscreen<cr>", desc = "Claude fullscreen" },
       { "<leader>am", "<cmd>ClaudeCodeSelectModel<cr>", desc = "Select model" },
+      -- both only shape a new Claude, an open one is shown as it is
+      { "<leader>ar", "<cmd>ClaudeCode --resume<cr>", desc = "Resume a conversation" },
+      { "<leader>aC", "<cmd>ClaudeCode --continue<cr>", desc = "Continue the last conversation" },
       -- Context
       { "<leader>ab", "<cmd>ClaudeCodeAdd<cr>", desc = "Add buffer to context" },
       {
@@ -102,6 +105,20 @@ return {
         mode = "v",
       },
       { "<leader>at", "<cmd>ClaudeCodeTreeAdd<cr>", desc = "Add file from tree" },
+      {
+        "<leader>al",
+        function()
+          require("core.claude_context").send_function()
+        end,
+        desc = "Send this function",
+      },
+      {
+        "<leader>ae",
+        function()
+          require("core.claude_context").send_diagnostics()
+        end,
+        desc = "Ask to fix diagnostics",
+      },
       -- Diffs
       { "<leader>aa", "<cmd>ClaudeCodeDiffAccept<cr>", desc = "Accept diff" },
       { "<leader>ad", "<cmd>ClaudeCodeDiffDeny<cr>", desc = "Deny diff" },

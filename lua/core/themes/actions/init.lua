@@ -194,15 +194,20 @@ function M.cursor_group(mode)
   return M.CURSOR_GROUPS[(mode or "n"):sub(1, 1)] or "Cursor"
 end
 
---- Returns the guicursor value that paints each mode with its cursor group.
+-- the shapes a skin without its own cursor wears
+M.CURSOR_SHAPES = { normal = "block", insert = "ver25", replace = "hor20" }
+
+--- Returns the guicursor value that paints each mode with its cursor group, in the skin's shapes.
+---@param shapes { normal: string, insert: string, replace: string }|nil skin.cursor, guicursor shapes with any blink
 ---@return string
-function M.guicursor()
+function M.guicursor(shapes)
+  shapes = vim.tbl_extend("force", M.CURSOR_SHAPES, shapes or {})
   return table.concat({
-    "n-sm:block-Cursor",
+    "n-sm:" .. shapes.normal .. "-Cursor",
     "o:hor50-Cursor",
     "v:block-" .. M.CURSOR_GROUPS.v,
-    "i-ci-ve:ver25-" .. M.CURSOR_GROUPS.i,
-    "r-cr:hor20-" .. M.CURSOR_GROUPS.R,
+    "i-ci-ve:" .. shapes.insert .. "-" .. M.CURSOR_GROUPS.i,
+    "r-cr:" .. shapes.replace .. "-" .. M.CURSOR_GROUPS.R,
     "c:ver25-" .. M.CURSOR_GROUPS.c,
     "t:block-blinkon500-blinkoff500-TermCursor",
   }, ",")

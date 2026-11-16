@@ -60,17 +60,20 @@ function M.fixed(before, after)
   return math.max(0, (before or after) - after)
 end
 
---- Builds the dashboard line for a stored run.
----@param label string like "Last run"
+--- Builds the dashboard line for a stored run in the franchise's words.
+---@param words { last_run: string, rank: string, saves: string, fixes: string } lore.words
 ---@param run { seconds: integer, saves: integer, fixes: integer, rank: string }
 ---@return string
-function M.summary(label, run)
-  return ("%s  ·  Rank %s  ·  %s  ·  %d saves  ·  %d fixes"):format(
-    label,
+function M.summary(words, run)
+  return ("%s  ·  %s %s  ·  %s  ·  %d %s  ·  %d %s"):format(
+    words.last_run,
+    words.rank,
     run.rank,
     M.duration(run.seconds),
     run.saves,
-    run.fixes
+    words.saves,
+    run.fixes,
+    words.fixes
   )
 end
 

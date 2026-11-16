@@ -13,6 +13,8 @@ return {
     opts = function()
       -- the filetype icon with the language servers, so the filetype never shows twice
       local chrome = require("core.chrome.actions")
+      -- read on every setup, so a franchise switch redraws the bar in its own glyphs
+      local skin = require("core.skin")
       -- a piece that leaves the bar first when the editor gets narrow
       local function wide(piece)
         return function()
@@ -143,7 +145,12 @@ return {
             {
               "diagnostics",
               sources = { "nvim_diagnostic" },
-              symbols = { error = "󰅚 ", warn = "󰊌 ", hint = "󰌶 ", info = "󰋽 " },
+              symbols = {
+                error = skin.icon("error") .. " ",
+                warn = skin.icon("warn") .. " ",
+                hint = skin.icon("hint") .. " ",
+                info = skin.icon("info") .. " ",
+              },
             },
             {
               cond = wide("language"),
@@ -224,7 +231,8 @@ return {
           right_trunc_marker = "",
           diagnostics = "nvim_lsp",
           diagnostics_indicator = function(_, _, diag)
-            local icons = { error = "󰅚 ", warning = "󰊌 " }
+            local skin = require("core.skin")
+            local icons = { error = skin.icon("error") .. " ", warning = skin.icon("warn") .. " " }
             local s = {}
             for k, n in pairs(diag) do
               if icons[k] then
@@ -285,6 +293,8 @@ return {
       messages = { enabled = true, view = "notify", view_error = "notify", view_warn = "notify" },
       popupmenu = { enabled = true, backend = "nui" },
       notify = { enabled = false }, -- use snacks.notifier instead
+      -- every spinner turns in the skin's frames, registered under this name by core/skin/glyphs
+      format = { spinner = { name = require("core.skin.glyphs").SPINNER } },
       lsp = {
         progress = { enabled = true, view = "mini" },
         override = {
@@ -333,6 +343,7 @@ return {
         vim.cmd([[messages clear]])
       end
       require("noice").setup(opts)
+      require("core.skin.glyphs").register_spinner(require("core.skin").glyphs())
       -- nvim 0.12 sends a "restart" ui event with no group_type shape, and noice errors on it,
       -- which leaves the UI detached after :restart, so events noice cannot parse are skipped
       local noice_ui = require("noice.ui")
@@ -354,11 +365,8 @@ return {
       preset = "modern",
       delay = 300,
       plugins = { marks = true, registers = true, spelling = { enabled = true, suggestions = 20 } },
-      icons = {
-        breadcrumb = "»",
-        separator = "➜",
-        group = "+",
-      },
+      -- the skin's marks, swapped live by core/skin/glyphs
+      icons = require("core.skin.actions").which_key_icons(require("core.skin").glyphs()),
       win = {
         border = require("core.skin").border(),
         padding = { 1, 2 },
@@ -493,7 +501,7 @@ return {
         "bigfile",
       },
       handlers = {
-        cursor = { enable = true, symbols = { "⎺", "⎻", "⎼", "⎽" } },
+        cursor = { enable = true, symbols = require("core.skin").glyphs().scrollbar },
         search = { enable = true },
         diagnostic = { enable = true, min_severity = vim.diagnostic.severity.WARN },
         gitsigns = { enable = true, signs = { add = "│", change = "│", delete = "-" } },

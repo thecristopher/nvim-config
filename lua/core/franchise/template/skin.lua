@@ -11,6 +11,29 @@ return {
   -- bufferline separator_style: "slant", "slope", "thick", "thin" or "padded_slant"
   tabs = "slant",
   signs = { error = "●", warn = "▲", hint = "◆", info = "◇" },
+  -- statusline, tabs and notifications, one glyph per level
+  icons = {
+    error = "󰅚",
+    warn = "󰊌",
+    info = "󰋽",
+    hint = "󰌶",
+    debug = "󰒄",
+    trace = "󰏫",
+  },
+  -- the cursor's guicursor shapes per mode, a blink may ride along ("ver25-blinkon500-blinkoff500")
+  cursor = { normal = "block", insert = "ver25", replace = "hor20" },
+  -- the small marks everywhere else: indent guides and the scope, whitespace, folds, the diff filler, the picker prompt, which-key, the scrollbar thumb and the loading spinner
+  glyphs = {
+    indent = "│",
+    scope = "│",
+    list = { tab = "→ ", trail = "·", nbsp = "␣" },
+    fold = { open = "▾", close = "▸" },
+    diff = "╱",
+    prompt = " ",
+    keys = { breadcrumb = "»", separator = "→", group = "+" },
+    scrollbar = { "•" },
+    spinner = { frames = { "◇", "◈", "◆", "◈" }, interval = 140 },
+  },
   -- the snacks picker layout, see lua/plugins/snacks.lua: "grace", "inventory", "vanity" or "default"
   picker = "default",
   -- the command line popup's glyphs

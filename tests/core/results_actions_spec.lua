@@ -57,11 +57,22 @@ describe("fixed", function()
 end)
 
 describe("summary", function()
+  local last = { seconds = 2 * 3600 + 13 * 60, saves = 14, fixes = 9, rank = "A" }
+
   it("reads like the results screen Inde and Claire share", function()
-    local last = { seconds = 2 * 3600 + 13 * 60, saves = 14, fixes = 9, rank = "A" }
+    local words = { last_run = "Last run", rank = "Rank", saves = "saves", fixes = "fixes" }
     assert.equal(
       "Last run  ·  Rank A  ·  2h 13m  ·  14 saves  ·  9 fixes",
-      actions.summary("Last run", last)
+      actions.summary(words, last)
+    )
+  end)
+
+  it("speaks the franchise's words for Malenia's last take", function()
+    local words =
+      { last_run = "Last take", rank = "Review", saves = "rehearsals", fixes = "retakes" }
+    assert.equal(
+      "Last take  ·  Review A  ·  2h 13m  ·  14 rehearsals  ·  9 retakes",
+      actions.summary(words, last)
     )
   end)
 end)

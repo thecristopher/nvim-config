@@ -158,6 +158,8 @@ nvim -l claude/install.lua
 - **Spinner verbs**: every franchise's `claude.verbs`, like "Seeking grace" or "Combining herbs"
 - **Sounds**: grace when Claude finishes, died when it fails, the fog wall or the door when it asks for permission
 
+Inside nvim, `<leader>al` sends the function under the cursor to Claude, `<leader>ae` types an ask to fix the buffer's diagnostics into its prompt so you can add to it before sending, and `<leader>ar` / `<leader>aC` start Claude on a past conversation or the last one.
+
 `ELDENTREE_CLAUDE_SOUND=0` mutes the sounds, and `vim.g.eldentree_claude_ui = false` stops nvim from touching the theme. Organizations that set `allowManagedHooksOnly` keep the sound hooks from running, the rest still works.
 
 ### Your own style guide
@@ -195,7 +197,7 @@ Plugin specs live in `lua/plugins/`, one file per concern, managed by lazy.nvim.
 
 - **LSP** through native `vim.lsp.config` and mason, servers in `lua/plugins/lsp.lua`. Treesitter runs on its `main` branch, nvim-lint runs only the linters that are installed
 - **Pickers** are all Snacks: files, grep, recent, branches, the palette and Sites of Grace
-- **Completion** with blink. Copilot is one more source, and the top item previews inline as ghost text
+- **Completion** with blink for the LSP, paths and snippets, while Copilot writes ahead as ghost text: `<Tab>` takes it, `<M-w>` a word, `<M-a>` a line, `<M-]>` / `<M-[>` cycle and `<C-]>` dismisses. After an edit Copilot also guesses the next one (copilot-lsp), and `<Tab>` in normal mode jumps there and applies it
 - **Tests** with neotest (vitest, jest, pytest, plenary) under `<leader>T`, while `:Trial` owns the whole suite verdict
 - **Debugging** with nvim-dap and dap-view, F5/F9/F10/F11 plus `<leader>D`. js-debug and debugpy come from mason
 - **Editing**: quicker.nvim makes the quickfix list editable (change a line, `:w` writes it back), yanky.nvim keeps a yank history, grug-far finds and replaces across the project, multicursor adds cursors, nvim-ufo folds with a hidden line tally, and spell checks English and Spanish in markdown, commits and text
