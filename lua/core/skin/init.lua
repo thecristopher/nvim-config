@@ -1,5 +1,6 @@
 -- Dresses every component in the franchise's skin: float borders through winborder, the cursor's
--- shapes, the gutter signs, lualine separators and bufferline tabs. Runs at startup and again on :Franchise.
+-- shapes, the gutter signs, the small marks of every plugin (core/skin/glyphs), lualine separators
+-- and bufferline tabs. Runs at startup and again on :Franchise.
 local actions = require("core.skin.actions")
 
 local M = {}
@@ -29,6 +30,12 @@ end
 ---@return string
 function M.icon(level, given)
   return actions.level_icon(M.current().icons, level, given)
+end
+
+--- Returns the skin's small marks: guides, whitespace, folds, prompt, which-key, scrollbar, spinner.
+---@return table
+function M.glyphs()
+  return M.current().glyphs
 end
 
 local function apply_signs()
@@ -62,6 +69,7 @@ function M.apply()
   end
   vim.o.guicursor = require("core.themes.actions").guicursor(M.current().cursor)
   apply_signs()
+  require("core.skin.glyphs").apply(M.glyphs())
   resetup("lualine.nvim", "lualine")
   resetup("bufferline.nvim", "bufferline")
 end

@@ -80,6 +80,12 @@ describe("problems", function()
     assert.is_true(mentions(validate.problems(broken), "skin.music.bar"))
   end)
 
+  it("notices a skin with no spinner for Claire's loading screen", function()
+    local broken = lore()
+    broken.skin.glyphs.spinner = nil
+    assert.is_true(mentions(validate.problems(broken), "skin.glyphs.spinner"))
+  end)
+
   it("notices a skin with no glyph for Jill's warnings", function()
     local broken = lore()
     broken.skin.icons.warn = nil

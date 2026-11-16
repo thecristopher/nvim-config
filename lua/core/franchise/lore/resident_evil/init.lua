@@ -322,5 +322,9 @@ return {
     ink_ribbons = "Ink Ribbons",
     typewriter = "Will you use an Ink Ribbon?",
     last_run = "Last run",
+    -- the results line: the rank, the saves and the errors fixed
+    rank = "Rank",
+    saves = "saves",
+    fixes = "fixes",
   },
 }

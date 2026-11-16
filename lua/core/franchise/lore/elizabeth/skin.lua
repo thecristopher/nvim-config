@@ -28,6 +28,18 @@ return {
     insert = "ver25-blinkwait700-blinkon500-blinkoff250",
     replace = "hor20",
   },
+  -- the small marks everywhere else: dotted guides like a hem, hearts for folds and the prompt, and the mirror's bulbs chasing while servers load
+  glyphs = {
+    indent = "┊",
+    scope = "│",
+    list = { tab = "› ", trail = "∙", nbsp = "␣" },
+    fold = { open = "󰋑", close = "󰋕" },
+    diff = "╱",
+    prompt = "󰋑 ",
+    keys = { breadcrumb = "󰋕", separator = "›", group = "󰋑 " },
+    scrollbar = { "◉" },
+    spinner = { frames = { "◉○○", "○◉○", "○○◉", "○◉○" }, interval = 160 },
+  },
   -- the snacks picker layout, see lua/plugins/snacks.lua: the preview is the vanity mirror
   picker = "vanity",
   -- the command line popup's glyphs: her staff, and the crown for searching

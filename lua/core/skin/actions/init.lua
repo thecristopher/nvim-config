@@ -29,6 +29,38 @@ function M.level_icon(icons, level, given)
   return (icons or {})[level] or ""
 end
 
+--- Builds the listchars option from the skin's glyphs.
+---@param glyphs table skin.glyphs
+---@return table<string, string>
+function M.listchars(glyphs)
+  return { tab = glyphs.list.tab, trail = glyphs.list.trail, nbsp = glyphs.list.nbsp }
+end
+
+--- Builds the fillchars option from the skin's glyphs, the separators and the end of buffer kept blank.
+---@param glyphs table skin.glyphs
+---@return table<string, string>
+function M.fillchars(glyphs)
+  return {
+    foldopen = glyphs.fold.open,
+    foldclose = glyphs.fold.close,
+    foldsep = " ",
+    fold = " ",
+    diff = glyphs.diff,
+    eob = " ",
+  }
+end
+
+--- Builds which-key's icons from the skin's glyphs.
+---@param glyphs table skin.glyphs
+---@return { breadcrumb: string, separator: string, group: string }
+function M.which_key_icons(glyphs)
+  return {
+    breadcrumb = glyphs.keys.breadcrumb,
+    separator = glyphs.keys.separator,
+    group = glyphs.keys.group,
+  }
+end
+
 --- Builds vim.diagnostic sign text from the skin, keyed by severity.
 ---@param signs { error: string, warn: string, hint: string, info: string }
 ---@param severity table vim.diagnostic.severity

@@ -23,6 +23,18 @@ return {
   },
   -- the cursor's guicursor shapes: a thin blade while writing
   cursor = { normal = "block", insert = "ver25", replace = "hor20" },
+  -- the small marks everywhere else: dashed guides like a golden thread, the grace at the prompt and a gem that turns while servers load
+  glyphs = {
+    indent = "╎",
+    scope = "│",
+    list = { tab = "› ", trail = "·", nbsp = "␣" },
+    fold = { open = "󰅀", close = "󰅂" },
+    diff = "╱",
+    prompt = "󰫢 ",
+    keys = { breadcrumb = "›", separator = "→", group = "◇ " },
+    scrollbar = { "◆" },
+    spinner = { frames = { "◇", "◈", "◆", "◈" }, interval = 140 },
+  },
   -- the snacks picker layout, see lua/plugins/snacks.lua: results over the prompt like a grace menu
   picker = "grace",
   -- the command line popup's glyphs

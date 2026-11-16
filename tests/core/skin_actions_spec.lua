@@ -50,3 +50,30 @@ describe("level_icon", function()
     assert.equal("", actions.level_icon(nil, "warn", nil))
   end)
 end)
+
+describe("glyph options", function()
+  local glyphs = {
+    list = { tab = "▸ ", trail = "░", nbsp = "␣" },
+    fold = { open = "󰋑", close = "󰋕" },
+    diff = "╱",
+    keys = { breadcrumb = "▶", separator = "▸", group = "▪ " },
+  }
+
+  it("marks Jill's trailing spaces with static", function()
+    assert.same({ tab = "▸ ", trail = "░", nbsp = "␣" }, actions.listchars(glyphs))
+  end)
+
+  it("folds Inde's love letters under hearts and keeps the filler blank", function()
+    local fill = actions.fillchars(glyphs)
+    assert.equal("󰋑", fill.foldopen)
+    assert.equal("󰋕", fill.foldclose)
+    assert.equal(" ", fill.eob)
+  end)
+
+  it("hands which-key only the three marks it draws", function()
+    assert.same(
+      { breadcrumb = "▶", separator = "▸", group = "▪ " },
+      actions.which_key_icons(glyphs)
+    )
+  end)
+end)
