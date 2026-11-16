@@ -440,10 +440,17 @@ describe("wardrobe", function()
     assert.is_true(line_of(wide, "R O U N D T A B L E") < line_of(wide, "Current Quest"))
   end)
 
-  it("lets her photo take nearly the whole height of the screen", function()
+  it("keeps her photo to a share of the screen, like the other franchises' portraits", function()
     local wide =
       wardrobe.render(model({ width = 160, height = 48, portrait = true, figure = true }))
-    assert.is_true(wide.anchors.portrait.height >= 48 - 12)
+    local room = 48 - 2 - 3 - wardrobe.MIRROR_ROWS - wardrobe.NAME_ROWS
+    assert.is_true(wide.anchors.portrait.height <= math.floor(room * wardrobe.PORTRAIT_SHARE))
+  end)
+
+  it("never lets her photo grow past the tallest portrait the other views draw", function()
+    local huge =
+      wardrobe.render(model({ width = 400, height = 120, portrait = true, figure = true }))
+    assert.is_true(huge.anchors.portrait.height <= wardrobe.PORTRAIT.max)
   end)
 
   it("never gives her less than the share of the tallest photo any shape allows", function()
@@ -452,8 +459,9 @@ describe("wardrobe", function()
         model({ width = size[1], height = size[2], portrait = true, figure = true })
       )
       local room = size[2] - 2 - 3 - wardrobe.MIRROR_ROWS - wardrobe.NAME_ROWS
+      local share = wardrobe.PORTRAIT_SHARE * wardrobe.CENTER_SHARE
       assert.is_true(
-        view.anchors.portrait.height >= math.floor(room * 0.75),
+        view.anchors.portrait.height >= math.floor(room * share),
         size[1] .. "x" .. size[2]
       )
     end

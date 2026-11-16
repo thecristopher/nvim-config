@@ -17,8 +17,11 @@ M.RACK_WIDTH = { compact = 22, center = 34, max = 44 }
 M.STAGE_WIDTH = { compact = 26, center = 45, max = 50 }
 -- she is the star: the mirror takes center stage while its portrait stands at least this share of
 -- the tallest one any shape allows
-M.PORTRAIT = { min = 4, max = 60 }
+M.PORTRAIT = { min = 4, max = 36 }
 M.CENTER_SHARE = 0.85
+-- the photo stands this share of the rows its shape leaves, so it weighs on the screen like the
+-- other franchises' portraits and is never stretched past the pixels it has
+M.PORTRAIT_SHARE = 0.7
 -- the bulbs ring the portrait: a bulb and a space on each side, a row of bulbs above and below
 M.MIRROR_COLS = 4
 M.MIRROR_ROWS = 2
@@ -113,7 +116,8 @@ local function fit_portrait(model, shape, inner, room, quest_rows)
   end
   local width, height = mirror_room(shape, inner, room, quest_rows)
   local ratio = model.figure and hud.FIGURE_RATIO or nil
-  return hud.portrait_fit(width, math.min(height, M.PORTRAIT.max), M.PORTRAIT.min, ratio)
+  local tallest = math.min(math.floor(height * M.PORTRAIT_SHARE), M.PORTRAIT.max)
+  return hud.portrait_fit(width, tallest, M.PORTRAIT.min, ratio)
 end
 
 -- how tall both columns stand: as tall as the mirror beside them up to SIDE_MAX, or what the

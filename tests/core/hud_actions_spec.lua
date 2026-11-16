@@ -131,6 +131,22 @@ describe("fit_hints", function()
   end)
 end)
 
+describe("stale_copies", function()
+  it("throws away the copy of Claire's portrait made before it was recropped", function()
+    local copies = { { file = "claire.png", mtime = 100 } }
+    assert.same({ "claire.png" }, hud.stale_copies(200, copies))
+  end)
+
+  it("keeps the copy of Malenia's figure made after her photo", function()
+    local copies = { { file = "malenia.png", mtime = 300 } }
+    assert.same({}, hud.stale_copies(200, copies))
+  end)
+
+  it("skips the copy of Inde's date photo that was never made", function()
+    assert.same({}, hud.stale_copies(200, { { file = "inde.png" } }))
+  end)
+end)
+
 describe("biggest_portrait", function()
   local roomy = { name = "roomy", portrait = { width = 46, height = 28 } }
   local snug = { name = "snug", portrait = { width = 20, height = 12 } }

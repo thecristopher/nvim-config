@@ -1,6 +1,7 @@
 -- Elizabeth: everything the config says and shows while she plays her roles. Each region is a
--- stage and a costume, the Scarlet Witch, Ada, Shadowheart and Psylocke, and the world speaks
--- like a set: curtains between stages, a heart for a status and the afternoon sun to rest in.
+-- stage and a costume (the Scarlet Witch, Ada, Shadowheart, Psylocke, Samus, Magik, She-Hulk,
+-- Triss, Jill, Malenia, Power Girl, Raven and Mai), and the world speaks like a set: curtains
+-- between stages, a heart for a status and the afternoon sun to rest in.
 return {
   name = "elizabeth",
   title = "Elizabeth",
@@ -59,6 +60,15 @@ return {
       "Rehearsing the scene",
       "Finding the light",
       "Tying the cape",
+      "Charging the paralyzer",
+      "Opening a stepping disc",
+      "Objecting",
+      "Resting at grace",
+      "Checking the Samurai Edge",
+      "Waiting on the bloom",
+      "Smoothing the cape",
+      "Raising the hood",
+      "Folding the fan",
     },
   },
 
@@ -76,6 +86,15 @@ return {
     separate_ways = "Pesanta",
     moonrise_towers = "Ketheric Thorm",
     danger_room = "Mister Sinister",
+    zebes = "Ridley",
+    limbo = "Belasco",
+    courtroom = "Titania",
+    limgrave = "Margit",
+    raccoon_city = "Nemesis",
+    haligtree = "Radahn",
+    earth_two = "Darkseid",
+    azarath = "Trigon",
+    shiranui = "Geese Howard",
   },
 
   -- drift says where particles travel, speed is rows per second,
@@ -111,6 +130,78 @@ return {
       drift = "rise",
       speed = { 2.4, 5.2 },
       from = "lavender",
+      to = "yellow",
+    },
+    -- spores drifting down through the caverns
+    zebes = {
+      glyphs = { "·", "∘", "˙" },
+      drift = "fall",
+      speed = { 0.4, 1.2 },
+      from = "teal",
+      to = "yellow",
+    },
+    -- embers off a stepping disc, rising out of Limbo
+    limbo = {
+      glyphs = { "·", "∙", "•" },
+      drift = "rise",
+      speed = { 1.8, 4.2 },
+      from = "peach",
+      to = "yellow",
+    },
+    -- gamma sparks, quick and bright like an objection
+    courtroom = {
+      glyphs = { "·", "∙", "•" },
+      drift = "rise",
+      speed = { 2.2, 4.8 },
+      from = "green",
+      to = "yellow",
+    },
+    -- grace motes floating over the first site of grace
+    limgrave = {
+      glyphs = { "·", "∙", "˙" },
+      drift = "float",
+      speed = { 0.3, 0.8 },
+      from = "peach",
+      to = "yellow",
+    },
+    -- ash falling over the burning city
+    raccoon_city = {
+      glyphs = { "·", "˙", "∙" },
+      drift = "fall",
+      speed = { 0.8, 2.0 },
+      from = "overlay2",
+      to = "peach",
+    },
+    -- scarlet rot drifting down from the tree
+    haligtree = {
+      glyphs = { "·", "∙", "•" },
+      drift = "fall",
+      speed = { 0.6, 1.6 },
+      from = "red",
+      to = "yellow",
+    },
+    -- dust in the sun of a whole other earth, barely moving
+    earth_two = {
+      glyphs = { "·", "∙", "˙" },
+      drift = "float",
+      speed = { 0.2, 0.6 },
+      from = "peach",
+      to = "yellow",
+    },
+    -- soul self sparks rising from her cloak
+    azarath = {
+      glyphs = { "·", "∘", "˙" },
+      drift = "rise",
+      speed = { 0.8, 2.0 },
+      from = "lavender",
+      to = "yellow",
+    },
+    -- sparks off the fan of fire
+    shiranui = {
+      glyphs = { "·", "∙", "•" },
+      drift = "rise",
+      speed = { 2.0, 4.6 },
+      from = "red",
       to = "yellow",
     },
   },
@@ -151,6 +242,17 @@ return {
       "Torn Seam",
       "Lost Prop",
       "Stage Fright",
+      "Metroid",
+      "Space Pirate",
+      "Demon of Limbo",
+      "Wrecking Crew",
+      "Godrick Soldier",
+      "Licker",
+      "Zombie Dog",
+      "Kindred of Rot",
+      "Parademon",
+      "Shadow Demon",
+      "Fatal Fury",
     },
   },
 
@@ -191,6 +293,15 @@ return {
     "She already knew the bug was there",
     "Save the scene before the next costume change",
     "The moon says merge on Monday",
+    "Samus would have scanned that first",
+    "Limbo is closer than your deadline",
+    "Objection: that test proves nothing",
+    "Rest at grace, then refactor",
+    "Jill has one more way out of this bug",
+    "Let the rot bloom somewhere else",
+    "Power Girl lifts the build, you lift the coffee",
+    "Azarath Metrion Zinthos, compile",
+    "Mai fans the flames of a green build",
   },
 
   -- the blanks she fills when she leaves a note on a line
@@ -250,6 +361,19 @@ return {
     "The Dressing Room",
     "Backstage",
     "Golden Hour Hallway",
+    "Planet Zebes",
+    "Chozo Ruins",
+    "Limbo",
+    "The Courtroom",
+    "Limgrave",
+    "Church of Elleh",
+    "Raccoon City",
+    "Clock Tower",
+    "Elphael",
+    "Earth-Two",
+    "Azarath",
+    "Titans Tower",
+    "Shiranui Dojo",
   },
 
   -- what the thing under the cursor would be in her wardrobe, most specific capture first

@@ -39,9 +39,18 @@ FACES = {
     "claire": (0.50, 0.43, 0.90),
     # the whole width of her photos, so the costume shows and not only her face
     "elizabeth_ada": (0.50, 0.43, 1.0),
+    "elizabeth_jill": (0.50, 0.42, 1.0),
+    "elizabeth_magik": (0.50, 0.42, 1.0),
+    "elizabeth_mai": (0.50, 0.38, 1.0),
+    "elizabeth_malenia": (0.50, 0.35, 1.0),
+    "elizabeth_power_girl": (0.50, 0.41, 1.0),
     "elizabeth_psylocke": (0.50, 0.46, 1.0),
+    "elizabeth_raven": (0.50, 0.38, 1.0),
+    "elizabeth_samus": (0.50, 0.42, 1.0),
     "elizabeth_scarlet_witch": (0.50, 0.42, 1.0),
     "elizabeth_shadowheart": (0.50, 0.39, 1.0),
+    "elizabeth_she_hulk": (0.50, 0.42, 1.0),
+    "elizabeth_triss": (0.50, 0.42, 1.0),
     "jill": (0.61, 0.225, 0.45),
     "leon": (0.41, 0.175, 0.38),
     "malenia": (0.59, 0.263, 0.32),
@@ -55,7 +64,21 @@ FACES = {
 
 
 # names that are real photos rather than game art
-PHOTOS = {"elizabeth_ada", "elizabeth_psylocke", "elizabeth_scarlet_witch", "elizabeth_shadowheart"}
+PHOTOS = {
+    "elizabeth_ada",
+    "elizabeth_jill",
+    "elizabeth_magik",
+    "elizabeth_mai",
+    "elizabeth_malenia",
+    "elizabeth_power_girl",
+    "elizabeth_psylocke",
+    "elizabeth_raven",
+    "elizabeth_samus",
+    "elizabeth_scarlet_witch",
+    "elizabeth_shadowheart",
+    "elizabeth_she_hulk",
+    "elizabeth_triss",
+}
 
 
 def lift_for(name):
@@ -64,7 +87,21 @@ def lift_for(name):
 
 
 # names whose whole photo is also kept as a figure
-FIGURES = ["elizabeth_ada", "elizabeth_psylocke", "elizabeth_scarlet_witch", "elizabeth_shadowheart"]
+FIGURES = [
+    "elizabeth_ada",
+    "elizabeth_jill",
+    "elizabeth_magik",
+    "elizabeth_mai",
+    "elizabeth_malenia",
+    "elizabeth_power_girl",
+    "elizabeth_psylocke",
+    "elizabeth_raven",
+    "elizabeth_samus",
+    "elizabeth_scarlet_witch",
+    "elizabeth_shadowheart",
+    "elizabeth_she_hulk",
+    "elizabeth_triss",
+]
 
 
 def crop_box(size, face, aspect=(WIDTH, HEIGHT)):

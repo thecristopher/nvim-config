@@ -273,6 +273,20 @@ function M.image_for(region, shows_figures)
   return region.portrait, false
 end
 
+--- Picks the converted copies of an image that are older than the image itself.
+---@param source_mtime integer seconds the image was last written
+---@param copies { file: string, mtime: integer|nil }[] mtime nil when the copy does not exist yet
+---@return string[] files to throw away
+function M.stale_copies(source_mtime, copies)
+  local stale = {}
+  for _, copy in ipairs(copies) do
+    if copy.mtime and copy.mtime < source_mtime then
+      table.insert(stale, copy.file)
+    end
+  end
+  return stale
+end
+
 --- Joins key hints into one line, leaving out whole hints from the end until it fits.
 ---@param hints string[] most important first
 ---@param width integer cells available
