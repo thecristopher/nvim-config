@@ -312,5 +312,9 @@ return {
     map = "Map",
     arts = "Commands",
     last_run = "Last take",
+    -- the results line: the critic's review, the rehearsals saved and the retakes that fixed a line
+    rank = "Review",
+    saves = "rehearsals",
+    fixes = "retakes",
   },
 }

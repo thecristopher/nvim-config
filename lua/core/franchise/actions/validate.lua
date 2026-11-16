@@ -47,6 +47,9 @@ M.SKIN = {
   "music",
   "picker",
   "cmdline",
+  "icons",
+  "cursor",
+  "glyphs",
 }
 -- what core/chrome reads: the mode names, the command line, the preview and the notification titles
 M.CHROME = { "modes", "cmdline", "search", "examine", "history", "notify" }
@@ -54,6 +57,10 @@ M.CHROME_MODES = { "normal", "insert", "visual", "replace", "command", "terminal
 M.CHROME_LEVELS = { "info", "warn", "error", "debug", "trace" }
 -- what the now playing panel reads, its looks from the skin and its words from the lore
 M.MUSIC_SKIN = { "bar", "divider", "sung" }
+-- one glyph per diagnostic and notification level, see core/skin
+M.ICONS = { "error", "warn", "info", "hint", "debug", "trace" }
+-- the small marks core/skin/glyphs pushes into options and plugins
+M.GLYPHS = { "indent", "scope", "list", "fold", "diff", "prompt", "keys", "scrollbar", "spinner" }
 M.MUSIC_WORDS = { "title", "loading", "missing", "instrumental" }
 M.LISTS = { "hub_messages", "message_templates", "places", "item_categories" }
 -- back-to-basics reads the names the HUD gives the drills, the coach is the region's character
@@ -91,7 +98,7 @@ M.WORDS = {
 -- words only some mechanics read, so a franchise pays for what it plays
 M.MECHANIC_WORDS = {
   { mechanic = "rest", value = "typewriter", words = { "ink_ribbons", "typewriter" } },
-  { mechanic = "ranking", value = true, words = { "last_run" } },
+  { mechanic = "ranking", value = true, words = { "last_run", "rank", "saves", "fixes" } },
 }
 
 -- every version a mechanic or a skin piece can name, each one a module or a view that exists
@@ -187,6 +194,12 @@ local function check_words(lore, problems)
 end
 
 local function check_music(lore, problems)
+  if lore.skin and lore.skin.icons then
+    missing_keys(lore.skin.icons, M.ICONS, "skin.icons", problems)
+  end
+  if lore.skin and lore.skin.glyphs then
+    missing_keys(lore.skin.glyphs, M.GLYPHS, "skin.glyphs", problems)
+  end
   if lore.skin and lore.skin.music then
     missing_keys(lore.skin.music, M.MUSIC_SKIN, "skin.music", problems)
   end

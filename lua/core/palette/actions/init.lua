@@ -180,6 +180,27 @@ M.ENTRIES = {
     cmd = "ClaudeFullscreen",
   },
   {
+    icon = "󰊕 ",
+    name = "Claude: this function",
+    desc = "Send the function under the cursor to Claude",
+    key = "<leader>al",
+    feed = "<leader>al",
+  },
+  {
+    icon = "󰅚 ",
+    name = "Claude: fix diagnostics",
+    desc = "Type an ask to fix this buffer's diagnostics into Claude",
+    key = "<leader>ae",
+    feed = "<leader>ae",
+  },
+  {
+    icon = "󰑐 ",
+    name = "Claude: resume",
+    desc = "Pick a past conversation when Claude starts",
+    key = "<leader>ar",
+    cmd = "ClaudeCode --resume",
+  },
+  {
     icon = "󰩨 ",
     name = "Resize",
     desc = "Move the current window's borders with hjkl",

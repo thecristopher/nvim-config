@@ -21,12 +21,13 @@ return {
         margin = { top = 0, right = 1, bottom = 0 },
         padding = true,
         sort = { "level", "added" },
+        -- left blank so core/chrome dresses each level in the franchise's glyph, see skin.icons
         icons = {
-          error = "󰅚 ",
-          warn = "󰊌 ",
-          info = "󰋽 ",
-          debug = "󰒄 ",
-          trace = "󰏫 ",
+          error = "",
+          warn = "",
+          info = "",
+          debug = "",
+          trace = "",
         },
         -- the game's messages: the franchise's word for the level and the hour, see core/chrome
         style = function(buf, notif, ctx)
@@ -41,7 +42,8 @@ return {
       indent = {
         enabled = true,
         indent = {
-          char = "│",
+          -- the skin's guide, see skin.glyphs, swapped live by core/skin/glyphs
+          char = require("core.skin").glyphs().indent,
           hl = {
             "EldenIndent1",
             "EldenIndent2",
@@ -51,7 +53,12 @@ return {
             "EldenIndent6",
           },
         },
-        scope = { enabled = true, char = "│", hl = "EldenIndentScope", underline = false },
+        scope = {
+          enabled = true,
+          char = require("core.skin").glyphs().scope,
+          hl = "EldenIndentScope",
+          underline = false,
+        },
         chunk = { enabled = false },
         -- the scope draws itself in from the top, and stills with <leader>um like everything else
         animate = {
@@ -107,6 +114,7 @@ return {
       input = { enabled = true },
       picker = {
         enabled = true,
+        prompt = require("core.skin").glyphs().prompt,
         -- files you open often and files in this repo rise to the top of every picker
         matcher = { frecency = true, cwd_bonus = true },
         -- each franchise lays the picker out its own way and frames its titles, see core/chrome

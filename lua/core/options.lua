@@ -89,7 +89,7 @@ opt.foldlevel = 99
 opt.foldlevelstart = 99
 opt.foldenable = true
 
--- List & fill characters
+-- List & fill characters, the plain ones Cursor and VS Code keep: core/skin dresses them per franchise
 opt.list = true
 opt.listchars = { tab = "→ ", trail = "·", nbsp = "␣" }
 opt.fillchars = {

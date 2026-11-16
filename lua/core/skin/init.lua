@@ -1,5 +1,6 @@
--- Dresses every component in the franchise's skin: float borders through winborder, the gutter
--- signs, lualine separators and bufferline tabs. Runs at startup and again on :Franchise.
+-- Dresses every component in the franchise's skin: float borders through winborder, the cursor's
+-- shapes, the gutter signs, the small marks of every plugin (core/skin/glyphs), lualine separators
+-- and bufferline tabs. Runs at startup and again on :Franchise.
 local actions = require("core.skin.actions")
 
 local M = {}
@@ -21,6 +22,20 @@ end
 ---@return string
 function M.title(title)
   return actions.ornate(title, M.current())
+end
+
+--- Returns the franchise's glyph for a diagnostic or notification level.
+---@param level string "error", "warn", "info", "hint", "debug" or "trace"
+---@param given string|nil a glyph already chosen, which wins when it is not empty
+---@return string
+function M.icon(level, given)
+  return actions.level_icon(M.current().icons, level, given)
+end
+
+--- Returns the skin's small marks: guides, whitespace, folds, prompt, which-key, scrollbar, spinner.
+---@return table
+function M.glyphs()
+  return M.current().glyphs
 end
 
 local function apply_signs()
@@ -52,7 +67,9 @@ function M.apply()
   if vim.fn.exists("+pumborder") == 1 then
     vim.o.pumborder = M.border()
   end
+  vim.o.guicursor = require("core.themes.actions").guicursor(M.current().cursor)
   apply_signs()
+  require("core.skin.glyphs").apply(M.glyphs())
   resetup("lualine.nvim", "lualine")
   resetup("bufferline.nvim", "bufferline")
 end

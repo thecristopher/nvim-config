@@ -263,6 +263,12 @@ describe("history_lines", function()
     assert.same({ row = 0, first = 6, last = 10, group = "SnacksNotifierTitleWarn" }, marks[2])
   end)
 
+  it("gives a notification without a glyph the franchise's one", function()
+    local notif = { level = "warn", icon = "", msg = "Malenia is near", added = added }
+    local lines = actions.history_lines({ notif }, chrome, { warn = "󰀪" })
+    assert.equal("21:05 󰀪 Omen Malenia is near", lines[1])
+  end)
+
   it("indents the later lines of a long message under the first", function()
     local notif =
       { level = "info", title = "Malenia", msg = "first date\nsecond date", added = added }

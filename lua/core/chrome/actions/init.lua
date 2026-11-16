@@ -1,5 +1,7 @@
 -- Pure pieces of the editor's chrome: mode names, notification titles, the gutter's fading
 -- numbers, the picker frames and the command line titles. Nothing here touches the UI.
+local level_icon = require("core.skin.actions").level_icon
+
 local M = {}
 
 local MODES = {
@@ -57,23 +59,31 @@ function M.level_word(level, chrome)
   return (chrome.notify or {})[name] or name
 end
 
-local function level_name(level)
+--- Returns a notification level's name, whether it came as a number or a name.
+---@param level integer|string|nil
+---@return string
+function M.level_name(level)
   return type(level) == "number" and LEVELS[level] or level or "info"
 end
+local level_name = M.level_name
 
 ---The notification history as buffer lines and highlight marks: the hour, the icon, the
 ---franchise's word for the level and the title, then the message, its later lines indented.
 ---@param notifs table[] snacks notifications, newest first
 ---@param chrome table lore.chrome
+---@param icons table<string, string>|nil skin.icons, for notifications that brought no glyph
 ---@return string[] lines, { row: integer, first: integer, last: integer, group: string }[] marks zero based rows, byte columns
-function M.history_lines(notifs, chrome)
+function M.history_lines(notifs, chrome, icons)
   local lines, marks = {}, {}
   for _, notif in ipairs(notifs) do
     local name = level_name(notif.level)
     local level_group = "SnacksNotifierTitle" .. name:sub(1, 1):upper() .. name:sub(2)
     local parts = {
       { os.date("%H:%M", notif.added), "SnacksNotifierHistoryDateTime" },
-      { notif.icon or "", "SnacksNotifierIcon" .. name:sub(1, 1):upper() .. name:sub(2) },
+      {
+        level_icon(icons, name, notif.icon),
+        "SnacksNotifierIcon" .. name:sub(1, 1):upper() .. name:sub(2),
+      },
       { M.level_word(name, chrome), level_group },
       { notif.title or "", "SnacksNotifierHistoryTitle" },
     }
