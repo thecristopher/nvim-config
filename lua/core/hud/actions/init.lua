@@ -241,9 +241,9 @@ function M.middle(rows, height)
   return vim.list_extend(padded, rows)
 end
 
--- portraits are 276x336 and half blocks draw two pixels per cell, so a cell box this ratio fits them
+-- portraits are shaped 276:336 and half blocks draw two pixels per cell, so a cell box this ratio fits them
 M.PORTRAIT_RATIO = 46 / 28
--- figures are whole phone photos, 331x593, so their box is much narrower for its height
+-- figures are whole phone photos, shaped 331:593, so their box is much narrower for its height
 M.FIGURE_RATIO = 331 / 593 * 2
 
 --- Sizes the portrait as tall as the room allows while keeping its shape.

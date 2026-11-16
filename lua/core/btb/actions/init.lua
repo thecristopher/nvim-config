@@ -125,7 +125,7 @@ function M.portrait_file(config_dir, persona, region)
   return config_dir .. "/images/portraits/" .. portrait
 end
 
--- the portraits are 276x336 and a terminal cell is about twice as tall as it is wide
+-- the portraits are shaped 276:336 and a terminal cell is about twice as tall as it is wide
 M.PORTRAIT_COLUMNS_PER_ROW = 1.64
 
 ---Where the portrait sits inside the stage's portrait window: as big as fits without stretching,
