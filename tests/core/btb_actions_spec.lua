@@ -14,6 +14,27 @@ describe("coach_of", function()
     )
   end)
 
+  it("makes Inde the coach in Malenia's role, bound to the learner", function()
+    local inde = { played_by = "Inde Navarrete", bond = "his wife, cosplaying {character}" }
+    assert.are.same({
+      id = "inde-navarrete-malenia",
+      character = "Malenia",
+      franchise = "Inde",
+      bond = "his wife, cosplaying Malenia",
+    }, actions.coach_of({ character = "Malenia" }, "Inde", inde))
+  end)
+
+  it("never mistakes a played role for the partner of the same name", function()
+    local inde = { played_by = "Inde Navarrete", bond = "his wife" }
+    assert.are.equal("inde-navarrete-ada", actions.coach_of({ character = "Ada" }, "Inde", inde).id)
+  end)
+
+  it("summons Leon as an ally when the lore names no player", function()
+    assert.is_nil(
+      actions.coach_of({ character = "Leon" }, "Resident Evil", { training = "x" }).bond
+    )
+  end)
+
   it("leaves the choice to btb when the region has nobody", function()
     assert.is_nil(actions.coach_of({}, "Elden Ring"))
     assert.is_nil(actions.coach_of(nil, "Elden Ring"))

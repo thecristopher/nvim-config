@@ -6,6 +6,13 @@
 return {
   {
     name = "westview",
+    places = {
+      "Westview",
+      "The Hex",
+      "Wundagore Mountain",
+      "Darkhold Library",
+      "Witches' Road",
+    },
     character = "Scarlet Witch",
     portrait = "elizabeth_scarlet_witch.jpg",
     figure = "elizabeth_scarlet_witch_figure.jpg",
@@ -43,6 +50,13 @@ return {
   },
   {
     name = "separate_ways",
+    places = {
+      "Salazar Castle",
+      "The Village",
+      "The Island",
+      "Ada's Hideout",
+      "Merchant's Corner",
+    },
     character = "Ada",
     portrait = "elizabeth_ada.jpg",
     figure = "elizabeth_ada_figure.jpg",
@@ -80,6 +94,15 @@ return {
   },
   {
     name = "moonrise_towers",
+    places = {
+      "Moonrise Towers",
+      "Last Light Inn",
+      "The Underdark",
+      "Grymforge",
+      "Baldur's Gate",
+      "House of Grief",
+      "The Emerald Grove",
+    },
     character = "Shadowheart",
     portrait = "elizabeth_shadowheart.jpg",
     figure = "elizabeth_shadowheart_figure.jpg",
@@ -117,6 +140,13 @@ return {
   },
   {
     name = "danger_room",
+    places = {
+      "The Danger Room",
+      "Xavier's Mansion",
+      "Genosha",
+      "Muir Island",
+      "Cerebro",
+    },
     character = "Psylocke",
     portrait = "elizabeth_psylocke.jpg",
     figure = "elizabeth_psylocke_figure.jpg",
@@ -154,6 +184,13 @@ return {
   },
   {
     name = "zebes",
+    places = {
+      "Planet Zebes",
+      "Chozo Ruins",
+      "Brinstar",
+      "Norfair",
+      "Tourian",
+    },
     character = "Samus",
     portrait = "elizabeth_samus.jpg",
     figure = "elizabeth_samus_figure.jpg",
@@ -191,6 +228,12 @@ return {
   },
   {
     name = "limbo",
+    places = {
+      "Limbo",
+      "Belasco's Throne",
+      "The Otherplace",
+      "Stepping Discs",
+    },
     character = "Magik",
     portrait = "elizabeth_magik.jpg",
     figure = "elizabeth_magik_figure.jpg",
@@ -228,6 +271,12 @@ return {
   },
   {
     name = "courtroom",
+    places = {
+      "The Courtroom",
+      "The Law Office",
+      "Superhuman Law Division",
+      "Judge's Chambers",
+    },
     character = "She-Hulk",
     portrait = "elizabeth_she_hulk.jpg",
     figure = "elizabeth_she_hulk_figure.jpg",
@@ -265,6 +314,13 @@ return {
   },
   {
     name = "limgrave",
+    places = {
+      "Limgrave",
+      "Church of Elleh",
+      "Stormhill",
+      "Gatefront Ruins",
+      "Agheel Lake",
+    },
     character = "Triss",
     portrait = "elizabeth_triss.jpg",
     figure = "elizabeth_triss_figure.jpg",
@@ -302,6 +358,13 @@ return {
   },
   {
     name = "raccoon_city",
+    places = {
+      "Raccoon City",
+      "Clock Tower",
+      "Raccoon City Police Station",
+      "Uptown",
+      "Dead Factory",
+    },
     character = "Jill",
     portrait = "elizabeth_jill.jpg",
     figure = "elizabeth_jill_figure.jpg",
@@ -339,6 +402,12 @@ return {
   },
   {
     name = "haligtree",
+    places = {
+      "Elphael",
+      "Miquella's Haligtree",
+      "Haligtree Town",
+      "Consecrated Snowfield",
+    },
     character = "Malenia",
     portrait = "elizabeth_malenia.jpg",
     figure = "elizabeth_malenia_figure.jpg",
@@ -376,6 +445,12 @@ return {
   },
   {
     name = "earth_two",
+    places = {
+      "Earth-Two",
+      "Metropolis",
+      "Justice Society Hall",
+      "Starrware Labs",
+    },
     character = "Power Girl",
     portrait = "elizabeth_power_girl.jpg",
     figure = "elizabeth_power_girl_figure.jpg",
@@ -413,6 +488,12 @@ return {
   },
   {
     name = "azarath",
+    places = {
+      "Azarath",
+      "Titans Tower",
+      "Jump City",
+      "Temple of Azar",
+    },
     character = "Raven",
     portrait = "elizabeth_raven.jpg",
     figure = "elizabeth_raven_figure.jpg",
@@ -450,6 +531,12 @@ return {
   },
   {
     name = "shiranui",
+    places = {
+      "Shiranui Dojo",
+      "South Town",
+      "Pao Pao Cafe",
+      "Mount Shiranui",
+    },
     character = "Mai",
     portrait = "elizabeth_mai.jpg",
     figure = "elizabeth_mai_figure.jpg",
