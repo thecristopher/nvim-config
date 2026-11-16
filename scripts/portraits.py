@@ -2,7 +2,8 @@
 """Crops images/<name>.* into images/portraits/<name>.jpg with the face in the middle, and
 writes images/portraits/<name>_figure.jpg, the whole photo, for the names in FIGURES.
 
-Each portrait is 276x336. FACES says where the face sits in the original and how much of its
+Each portrait is 828x1008, three times the 276x336 box the layouts were measured on, so
+terminals that draw real pixels on a dense screen never stretch a tiny file. FACES says where the face sits in the original and how much of its
 height the crop takes, so a face near an edge or a small figure still lands centered and big
 enough to read in the stage and the HUD. Only the standard library is needed, plus ffmpeg.
 
@@ -10,7 +11,7 @@ Usage:
     python3 scripts/portraits.py              # every portrait
     python3 scripts/portraits.py claire ada   # just these
 
-Figures are 331x593, the shape of a phone photo, for the views that show someone whole, like
+Figures are 662x1186 (twice 331x593, the size of their originals), the shape of a phone photo, for the views that show someone whole, like
 the dressing room mirror.
 """
 
@@ -21,12 +22,13 @@ import subprocess
 import sys
 
 IMAGES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "images")
-WIDTH = 276
-HEIGHT = 336
-FIGURE_WIDTH = 331
-FIGURE_HEIGHT = 593
-# contrast, color and sharpness lifted so the portraits survive half block rendering
-LIFT = "eq=contrast=1.15:saturation=1.25,unsharp=5:5:0.8"
+WIDTH = 828
+HEIGHT = 1008
+FIGURE_WIDTH = 662
+FIGURE_HEIGHT = 1186
+# contrast and color lifted so the portraits survive half block rendering, the sharpening kept
+# light because real pixels show its halos
+LIFT = "eq=contrast=1.15:saturation=1.25,unsharp=5:5:0.4"
 
 # name: (face x, face y, crop height), all as fractions of the original image
 FACES = {
@@ -102,7 +104,7 @@ def render(source, box, size, target):
     subprocess.run(
         ["ffmpeg", "-loglevel", "error", "-y", "-i", source, "-vf",
          f"crop={width}:{height}:{left}:{top},scale={size[0]}:{size[1]}:flags=lanczos,{LIFT}",
-         "-frames:v", "1", "-q:v", "2", target],
+         "-frames:v", "1", "-q:v", "2", "-pix_fmt", "yuvj444p", target],
         check=True,
     )
 

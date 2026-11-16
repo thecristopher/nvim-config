@@ -225,7 +225,7 @@ Everything works in iTerm. A few extras are worth turning on:
 
 - **Real image portraits.** Ghostty, Kitty and WezTerm speak the kitty graphics protocol, so the HUD shows the portraits as actual pictures instead of chafa's half blocks. The portraits are JPEG, so snacks needs ImageMagick to convert them (`brew install imagemagick`), without it they stay in chafa. Ghostty is the closest to iTerm in feel: `brew install --cask ghostty`.
 
-Portraits in `images/portraits/` are 276x336 crops of the originals in `images/`, with contrast, color and sharpness lifted so they survive half block rendering. `python3 scripts/portraits.py` builds them with the face centered, from where `FACES` says it sits in each original, pass names to rebuild only those. A region whose portrait is missing simply shows the HUD without art.
+Portraits in `images/portraits/` are 828x1008 crops of the originals in `images/`, sharp enough for terminals that draw real pixels on a dense screen, with contrast and color lifted so they also survive half block rendering. `python3 scripts/portraits.py` builds them with the face centered, from where `FACES` says it sits in each original, pass names to rebuild only those. A region whose portrait is missing simply shows the HUD without art.
 
 ### Sounds
 
