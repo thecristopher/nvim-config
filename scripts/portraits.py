@@ -26,6 +26,8 @@ WIDTH = 828
 HEIGHT = 1008
 FIGURE_WIDTH = 662
 FIGURE_HEIGHT = 1186
+# snacks sizes an image by its DPI, 72 is the plain screen density every terminal expects
+DPI = 72
 # contrast and color lifted so the painted portraits survive half block rendering, the sharpening
 # kept light because real pixels show its halos
 LIFT = "eq=contrast=1.15:saturation=1.25,unsharp=5:5:0.4"
@@ -52,14 +54,14 @@ FACES = {
     "elizabeth_she_hulk": (0.50, 0.42, 1.0),
     "elizabeth_triss": (0.50, 0.42, 1.0),
     "jill": (0.61, 0.225, 0.45),
-    "leon": (0.41, 0.175, 0.38),
-    "malenia": (0.59, 0.263, 0.32),
-    "maliketh": (0.45, 0.45, 0.50),
-    "marika": (0.51, 0.415, 0.40),
-    "melina": (0.48, 0.24, 0.45),
-    "mohgwyn": (0.365, 0.45, 0.35),
-    "ranni": (0.425, 0.233, 0.32),
-    "wesker": (0.50, 0.36, 0.60),
+    "leon": (0.50, 0.38, 1.0),
+    "malenia": (0.50, 0.0, 1.0),
+    "maliketh": (0.50, 0.0, 1.0),
+    "marika": (0.50, 0.50, 1.0),
+    "melina": (0.47, 0.50, 1.0),
+    "mohgwyn": (0.50, 0.50, 1.0),
+    "ranni": (0.50, 0.0, 1.0),
+    "wesker": (0.60, 0.50, 1.0),
 }
 
 
@@ -152,10 +154,27 @@ def render(source, box, size, target, lift):
     width, height, left, top = box
     subprocess.run(
         ["ffmpeg", "-loglevel", "error", "-y", "-i", source, "-vf",
-         f"crop={width}:{height}:{left}:{top},scale={size[0]}:{size[1]}:flags=lanczos,{lift}",
+         f"crop={width}:{height}:{left}:{top},scale={size[0]}:{size[1]}:flags=lanczos,setsar=1,{lift}",
          "-frames:v", "1", "-q:v", "2", "-pix_fmt", "yuvj444p", target],
         check=True,
     )
+    stamp_density(target)
+
+
+def stamp_density(path):
+    """Writes 72 DPI into the JPEG's JFIF header.
+
+    ffmpeg stores the pixel aspect ratio there with no unit (a crop and scale left values like
+    1841x1840), and snacks reads them as DPI, so it drew a 828 pixel portrait 43 pixels wide.
+    """
+    with open(path, "r+b") as image:
+        header = bytearray(image.read(18))
+        if header[6:11] != b"JFIF\0":
+            sys.exit(f"{path} has no JFIF header to stamp")
+        header[13] = 1  # units: dots per inch
+        header[14:18] = (DPI).to_bytes(2, "big") * 2
+        image.seek(0)
+        image.write(header)
 
 
 def build(name):

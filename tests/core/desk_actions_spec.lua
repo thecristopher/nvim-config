@@ -2,7 +2,7 @@ local actions = require("core.desk.actions")
 
 local cfg = actions.merge_config({
   artifact_url = "https://claude.ai/artifact/claire-and-inde",
-  sync = { every_minutes = 10, work_hours = { 9, 18 } },
+  sync = { every_minutes = 10, watch_minutes = 20 },
 })
 
 local paths = {
@@ -23,26 +23,28 @@ describe("merge_config", function()
   end)
 
   it("works with no file at all", function()
-    assert.equal(15, actions.merge_config(nil).sync.every_minutes)
+    assert.equal(5, actions.merge_config(nil).sync.every_minutes)
+    assert.equal(30, actions.merge_config(nil).sync.watch_minutes)
   end)
 end)
 
-describe("in_work_hours", function()
-  it("lets Malenia check in on a Tuesday morning", function()
-    assert.is_true(actions.in_work_hours({ hour = 9, wday = 3 }, cfg))
+describe("watch_until", function()
+  it("watches Claire's desk for her watch_minutes after she opens it", function()
+    assert.equal(1000 + 20 * 60000, actions.watch_until(1000, cfg))
+  end)
+end)
+
+describe("watching", function()
+  it("keeps checking while Malenia's watch lasts", function()
+    assert.is_true(actions.watching(5000, 4000))
   end)
 
-  it("stops at the closing hour", function()
-    assert.is_false(actions.in_work_hours({ hour = 18, wday = 3 }, cfg))
+  it("stops once the watch is over", function()
+    assert.is_false(actions.watching(5000, 5000))
   end)
 
-  it("leaves Sunday for Inde's anniversary date", function()
-    assert.is_false(actions.in_work_hours({ hour = 10, wday = 1 }, cfg))
-  end)
-
-  it("works weekends when weekdays_only is off", function()
-    local weekend = actions.merge_config({ sync = { weekdays_only = false } })
-    assert.is_true(actions.in_work_hours({ hour = 10, wday = 7 }, weekend))
+  it("never checks a desk nobody opened", function()
+    assert.is_false(actions.watching(nil, 0))
   end)
 end)
 
@@ -61,6 +63,11 @@ end)
 describe("build_check_argv", function()
   local argv = actions.build_check_argv(cfg, paths, "abc123")
 
+  it("tells the page until when Claire's desk is watched", function()
+    local watched = actions.build_check_argv(cfg, paths, "abc123", "2026-11-16T21:00:00Z")
+    assert.truthy(watched[#watched]:find("watch_until=2026-11-16T21:00:00Z", 1, true))
+  end)
+
   it("starts a cheap background session that never asks", function()
     assert.same({ "claude", "--bg", "--model", "haiku" }, vim.list_slice(argv, 1, 4))
     assert.is_true(has(argv, "dontAsk"))
@@ -78,7 +85,10 @@ describe("build_check_argv", function()
   end)
 
   it("passes the state folder and the hash to the skill", function()
-    assert.equal("/desk-sync check state_dir=/state/desk inputs_hash=abc123", argv[#argv])
+    assert.equal(
+      "/desk-sync check state_dir=/state/desk inputs_hash=abc123 watch_until=none",
+      argv[#argv]
+    )
   end)
 end)
 

@@ -151,3 +151,39 @@ describe("command", function()
     end))
   end)
 end)
+
+describe("player_line", function()
+  it("asks the resident player for Jill's door on the moments' channel", function()
+    assert.are.equal(
+      "play moment 7 0.6 /sounds/resident_evil/door.wav\n",
+      actions.player_line("moment", 7, "/sounds/resident_evil/door.wav")
+    )
+  end)
+end)
+
+describe("finished", function()
+  it("reads every sound the player says is over, even two in one chunk", function()
+    assert.are.same(
+      { { channel = "hud", token = "3" }, { channel = "moment", token = "4" } },
+      actions.finished("done hud 3\ndone moment 4\n")
+    )
+  end)
+
+  it("ignores anything else the player prints", function()
+    assert.are.same({}, actions.finished("warming up\n"))
+  end)
+end)
+
+describe("needs_build", function()
+  it("builds the player the first time Claire opens nvim", function()
+    assert.is_true(actions.needs_build(100, nil))
+  end)
+
+  it("builds it again after its source changed", function()
+    assert.is_true(actions.needs_build(200, 100))
+  end)
+
+  it("keeps the build that is newer than its source", function()
+    assert.is_false(actions.needs_build(100, 200))
+  end)
+end)

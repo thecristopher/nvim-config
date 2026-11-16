@@ -1,17 +1,21 @@
 -- Plays the franchise's sounds from sounds/<franchise>/<event>.wav (or mp3, aiff, m4a, ogg).
+-- On macOS a resident player (core/sound/player.lua) plays them at once, afplay is the fallback.
 -- Sounds travel on two channels: the HUD's, where each sound replaces the last one, and the
 -- moments', where a bigger moment cuts a smaller one and a smaller one stays quiet. Nothing plays
 -- while nvim is out of focus, except a :Sound preview. A missing file stays quiet,
 -- vim.g.eldentree_sound = false silences everything.
 local actions = require("core.sound.actions")
+local player = require("core.sound.player")
 
 local M = {}
 
 local last_played = {}
 local last_file = {}
--- what each channel is playing right now: { event, process }
+-- what each channel is playing right now: { event, channel, process or resident, done }
 local channels = {}
 local focused = true
+-- every sound gets its own number, so the player can say which one is over
+local sounds = 0
 
 local function folder()
   return vim.fn.stdpath("config") .. "/sounds/" .. require("core.franchise").name()
@@ -29,7 +33,12 @@ local function silenced(opts)
 end
 
 local function stop(entry)
-  if entry and entry.process then
+  if not entry or entry.done then
+    return
+  end
+  if entry.resident then
+    player.stop(entry.channel)
+  elseif entry.process then
     pcall(entry.process.kill, entry.process, 15)
   end
 end
@@ -40,24 +49,37 @@ local function sounding(channel)
   return entry and not entry.done and entry.event or nil
 end
 
-local function start(event, command)
+local function start(event, file, command)
   local channel = actions.channel(event)
-  local entry = { event = event }
-  local started, process = pcall(vim.system, command, { detach = true }, function()
+  local entry = { event = event, channel = channel }
+  sounds = sounds + 1
+  local function over()
     entry.done = true
-  end)
-  if not started then
-    return nil
   end
-  entry.process = process
+  if player.play(channel, sounds, file, over) then
+    entry.resident = true
+  else
+    local started, process = pcall(vim.system, command, { detach = true }, over)
+    if not started then
+      return nil
+    end
+    entry.process = process
+  end
   channels[channel] = entry
-  return process
+  -- callers keep this to cut a long sound short, and it only ever cuts its own
+  return {
+    kill = function()
+      if channels[channel] == entry then
+        stop(entry)
+      end
+    end,
+  }
 end
 
 --- Plays the sound for an event, if the franchise has one and its channel lets it.
 ---@param event string one of actions.EVENTS
 ---@param opts? { force?: boolean } force plays even while nvim is out of focus (previews)
----@return vim.SystemObj|nil playing the player process, so a long sound can be cut short
+---@return { kill: fun() }|nil playing cuts this sound short while it still plays
 function M.play(event, opts)
   opts = opts or {}
   if silenced(opts) then
@@ -76,20 +98,21 @@ function M.play(event, opts)
     return
   end
   local file = actions.pick(files, event, math.random, last_file[event])
-  local command = file and actions.command(folder() .. "/" .. file, executable)
-  if not command then
+  local path = file and folder() .. "/" .. file
+  local command = path and actions.command(path, executable)
+  if not path or not (player.ready() or command) then
     return
   end
   if cut then
     stop(channels[actions.channel(event)])
   end
   last_played[event], last_file[event] = now, file
-  return start(event, command)
+  return start(event, path, command)
 end
 
 --- Plays the first of the events the franchise has a file for, so each franchise can bring its own.
 ---@param events string[] in order of preference
----@return vim.SystemObj|nil playing
+---@return { kill: fun() }|nil playing
 function M.play_first(events)
   local ok, files = pcall(vim.fn.readdir, folder())
   if not ok then
@@ -100,6 +123,7 @@ function M.play_first(events)
 end
 
 function M.setup()
+  player.start()
   local group = vim.api.nvim_create_augroup("eldentree_sound", { clear = true })
   vim.api.nvim_create_autocmd("FocusLost", {
     group = group,
