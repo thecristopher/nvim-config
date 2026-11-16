@@ -110,8 +110,29 @@ local function forget_stale_copies(file)
   end)
 end
 
+-- file -> the image's mtime the last time this nvim handed it to snacks
+local handed = {}
+
+-- snacks also keeps every image it loaded for the whole session, so a portrait recropped while nvim
+-- runs is converted and sent to the terminal again instead of showing the pixels loaded before
+local function reload_if_changed(file)
+  local now = mtime(file)
+  local before = handed[file]
+  handed[file] = now
+  if before == nil or before == now then
+    return
+  end
+  pcall(function()
+    local image = Snacks.image.image.new(file)
+    image.sent = false
+    image:convert()
+    image:run()
+  end)
+end
+
 local function draw_with_pixels(view, file, anchor, fresh)
   forget_stale_copies(file)
+  reload_if_changed(file)
   if fresh then
     send_again(file)
   end

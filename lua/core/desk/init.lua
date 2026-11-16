@@ -1,6 +1,7 @@
--- The manager desk: opens the desk artifact and keeps it fed. A cheap background Claude session
--- checks the artifact's queue and the board every few minutes, and only when there is real work
--- (analyses, replies) a second session does it. Implement requests open a tab here.
+-- The manager desk: opens the desk artifact and keeps it fed while you use it. Nothing runs on its
+-- own: opening the desk watches its queue for a while, a cheap background Claude session checks it
+-- every few minutes, and only when there is real work (analyses, replies) a second session does it.
+-- Implement requests open a tab here.
 local actions = require("core.desk.actions")
 
 local M = {}
@@ -12,7 +13,7 @@ local WORK_TIMEOUT_MS = 30 * 60 * 1000
 
 local running = { check = false, work = false }
 local last = { check = nil, work = nil, check_at = nil, work_at = nil }
-local schedule_timer
+local watch = { timer = nil, until_ms = nil }
 
 local function notify(msg, level)
   vim.notify(msg, level or vim.log.levels.INFO, { title = "Desk", id = "eldentree_desk_note" })
@@ -260,6 +261,11 @@ local function finish_check(cfg, id, found)
   if result.work and #result.work > 0 then
     start_work(cfg, result.work)
   end
+  -- you are using the desk right now, so the watch lasts while there is something to pick up
+  local found_any = #(result.work or {}) + #(result.implement or {}) + #(result.review or {}) > 0
+  if found_any and actions.watching(watch.until_ms, vim.uv.now()) then
+    M.watch()
+  end
 end
 
 ---Runs the cheap check now: reads the queue and the board, then hands off any real work.
@@ -276,7 +282,14 @@ function M.check()
   last.check = vim.uv.now()
   vim.fn.mkdir(STATE, "p")
   vim.fn.delete(STATE .. "/check.json")
-  start_bg(actions.build_check_argv(cfg, paths(cfg), inputs_hash(cfg)), function(id, res)
+  local watch_until = watch.until_ms
+      and os.date(
+        "!%Y-%m-%dT%H:%M:%SZ",
+        os.time() + math.floor((watch.until_ms - vim.uv.now()) / 1000)
+      )
+    or nil
+  local argv = actions.build_check_argv(cfg, paths(cfg), inputs_hash(cfg), watch_until)
+  start_bg(argv, function(id, res)
     if not id then
       running.check = false
       notify("Could not start the desk check: " .. vim.trim(res.stderr or ""), vim.log.levels.WARN)
@@ -288,14 +301,35 @@ function M.check()
   end)
 end
 
+local function stop_watch()
+  if watch.timer then
+    watch.timer:stop()
+    watch.timer:close()
+  end
+  watch.timer, watch.until_ms = nil, nil
+end
+
 local function tick()
+  if vim.g.eldentree_desk_paused or not actions.watching(watch.until_ms, vim.uv.now()) then
+    return stop_watch()
+  end
+  M.check()
+end
+
+---Watches the queue for watch_minutes from now, checking it every_minutes. Opening the desk again
+---while it watches only pushes the end back.
+function M.watch()
   local cfg = M.config()
   if not cfg or vim.g.eldentree_desk_paused then
     return
   end
-  if actions.in_work_hours(os.date("*t"), cfg) then
-    M.check()
+  watch.until_ms = actions.watch_until(vim.uv.now(), cfg)
+  if watch.timer then
+    return
   end
+  local every = cfg.sync.every_minutes * 60 * 1000
+  watch.timer = vim.uv.new_timer()
+  watch.timer:start(0, every, vim.schedule_wrap(tick))
 end
 
 ---Opens the desk artifact in the browser.
@@ -310,23 +344,26 @@ function M.open()
     return
   end
   vim.ui.open(cfg.artifact_url)
+  M.watch()
 end
 
----Says when the desk last checked and worked, and when it checks next.
+---Says when the desk last checked and worked, and whether it is watching.
 function M.status()
   local cfg, reason = M.config()
   if not cfg then
     notify(reason, vim.log.levels.WARN)
     return
   end
-  local left = actions.minutes_left(last.check, vim.uv.now(), cfg.sync.every_minutes)
+  local now = vim.uv.now()
+  local left = actions.minutes_left(last.check, now, cfg.sync.every_minutes)
+  local watching = actions.watching(watch.until_ms, now)
   notify(table.concat({
     ("Last check: %s%s"):format(last.check_at or "never", running.check and " (running)" or ""),
     ("Last work: %s%s"):format(last.work_at or "never", running.work and " (running)" or ""),
-    ("Next check in %d min%s"):format(
-      left,
-      actions.in_work_hours(os.date("*t"), cfg) and "" or ", outside work hours"
-    ),
+    watching and ("Watching for %d more min, next check in %d min"):format(
+      math.ceil((watch.until_ms - now) / 60000),
+      left
+    ) or "Not watching. :Desk opens the desk and watches its queue, :Desk sync checks once",
   }, "\n"))
 end
 
@@ -339,16 +376,6 @@ local function command(opts)
     return
   end
   run()
-end
-
-local function start_schedule()
-  local cfg = M.config()
-  if not cfg or schedule_timer then
-    return
-  end
-  schedule_timer = vim.uv.new_timer()
-  local every = cfg.sync.every_minutes * 60 * 1000
-  schedule_timer:start(20 * 1000, every, vim.schedule_wrap(tick))
 end
 
 function M.setup()
@@ -365,7 +392,6 @@ function M.setup()
   vim.api.nvim_create_user_command("DeskReview", function(opts)
     M.review(opts.fargs[1])
   end, { nargs = 1, desc = "Review the open PR of a ticket in a new tab: KEY" })
-  start_schedule()
 end
 
 return M

@@ -150,6 +150,34 @@ function M.first_available(files, events)
   return nil
 end
 
+--- The line that asks the resident player (core/sound/player.swift) to play a file on a channel.
+---@param channel string
+---@param token integer|string tells this sound apart from the next one on the channel
+---@param file string absolute path
+---@return string
+function M.player_line(channel, token, file)
+  return ("play %s %s %s %s\n"):format(channel, token, M.VOLUME, file)
+end
+
+--- Reads the sounds the resident player says are over, from whatever chunk of its output arrived.
+---@param chunk string
+---@return { channel: string, token: string }[]
+function M.finished(chunk)
+  local over = {}
+  for channel, token in chunk:gmatch("done (%S+) (%S+)") do
+    over[#over + 1] = { channel = channel, token = token }
+  end
+  return over
+end
+
+--- Whether the resident player has to be compiled again: never built, or older than its source.
+---@param source_mtime integer|nil
+---@param binary_mtime integer|nil
+---@return boolean
+function M.needs_build(source_mtime, binary_mtime)
+  return binary_mtime == nil or (source_mtime or 0) > binary_mtime
+end
+
 --- Builds the command that plays a file with the first player found.
 ---@param file string absolute path
 ---@param executable fun(name: string): boolean

@@ -1,4 +1,4 @@
--- Pure pieces of the desk: config merge, schedule, the claude command lines and what the
+-- Pure pieces of the desk: config merge, the watch, the claude command lines and what the
 -- background sessions leave behind.
 local M = {}
 
@@ -13,10 +13,10 @@ M.DEFAULT_HASH_FILES = {
 M.DEFAULTS = {
   artifact_url = "",
   repos_dir = "~/Documents/GitHub",
+  -- nothing runs on its own: opening the desk watches its queue every_minutes for watch_minutes
   sync = {
-    every_minutes = 15,
-    work_hours = { 8, 19 },
-    weekdays_only = true,
+    every_minutes = 5,
+    watch_minutes = 30,
     check_model = "haiku",
     work_model = "opus",
   },
@@ -70,17 +70,20 @@ function M.merge_config(raw)
   return vim.tbl_deep_extend("force", vim.deepcopy(M.DEFAULTS), raw or {})
 end
 
----Tells whether a moment falls inside the configured work hours.
----@param now { hour: integer, wday: integer } os.date("*t") shape, wday 1 is Sunday
+---When a watch that starts now ends, in uv milliseconds.
+---@param now_ms number
 ---@param cfg table merged config
+---@return number
+function M.watch_until(now_ms, cfg)
+  return now_ms + cfg.sync.watch_minutes * 60000
+end
+
+---Tells whether the desk is still being watched.
+---@param until_ms number|nil end of the watch, nil when nobody opened the desk
+---@param now_ms number
 ---@return boolean
-function M.in_work_hours(now, cfg)
-  local sync = cfg.sync
-  if sync.weekdays_only and (now.wday == 1 or now.wday == 7) then
-    return false
-  end
-  local hours = sync.work_hours
-  return now.hour >= hours[1] and now.hour < hours[2]
+function M.watching(until_ms, now_ms)
+  return until_ms ~= nil and now_ms < until_ms
 end
 
 ---Reads the session id `claude --bg` prints in its stop hint.
@@ -120,10 +123,15 @@ end
 ---@param cfg table merged config
 ---@param paths { state: string, skills: string }
 ---@param hash string inputs hash the check compares against the artifact
+---@param watch_until string|nil ISO 8601 UTC end of the watch, so the page knows until when
 ---@return string[]
-function M.build_check_argv(cfg, paths, hash)
+function M.build_check_argv(cfg, paths, hash, watch_until)
   local tools = joined(M.CHECK_TOOLS, { M.edit_rule(paths.state) }, M.CHECK_MCP)
-  local prompt = ("/desk-sync check state_dir=%s inputs_hash=%s"):format(paths.state, hash)
+  local prompt = ("/desk-sync check state_dir=%s inputs_hash=%s watch_until=%s"):format(
+    paths.state,
+    hash,
+    watch_until or "none"
+  )
   return bg_argv(cfg.sync.check_model, "desk-check", { paths.state, paths.skills }, tools, prompt)
 end
 
