@@ -31,6 +31,9 @@ M.DONE = { ["<Esc>"] = true, q = true, ["<CR>"] = true }
 -- glyph of the handle drawn on a hovered border
 M.HANDLES = { right = "⇔", bottom = "⇕" }
 
+-- the wincmd direction of the window across each border
+M.ACROSS = { right = "l", bottom = "j" }
+
 ---@class ResizeWinInfo
 ---@field winrow integer first screen row of the window, 1 based, winbar included
 ---@field wincol integer first screen column, 1 based

@@ -22,7 +22,8 @@ return {
 
   currency = { glyph = "◈", stain = "󰈸" },
 
-  -- back-to-basics: the names the HUD gives the drills, the coach is the region's character
+  -- back-to-basics: the names the HUD gives the drills, the coach is the region's character.
+  -- played_by and bond (with {character}) make the coach someone playing the role, bound to you
   coach = {
     training = "Training",
     lessons = "Lessons",

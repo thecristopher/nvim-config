@@ -21,10 +21,8 @@ end
 ---The coach of today's franchise.
 ---@return string|nil
 function M.persona()
-  return actions.coach_of(
-    require("core.themes").current(),
-    require("core.franchise").current().title
-  )
+  local lore = require("core.franchise").current()
+  return actions.coach_of(require("core.themes").current(), lore.title, lore.coach)
 end
 
 local function draw_portrait(win, file)

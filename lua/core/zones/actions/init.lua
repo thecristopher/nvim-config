@@ -37,12 +37,26 @@ local function place_index(key, places)
   return utils.hash(key) % #places + 1
 end
 
+--- The places a zone may be named after: the region's own world first, then the lore's shared ones,
+--- so a franchise whose regions are different worlds never lands in another region's.
+---@param lore { places: string[] }
+---@param region { places?: string[] }|nil
+---@return string[]
+function M.places_of(lore, region)
+  return vim.list_extend(vim.list_extend({}, region and region.places or {}), lore.places or {})
+end
+
+local function current_places(lore)
+  return M.places_of(lore, require("core.themes").current())
+end
+
 --- Names a zone: a landmark when its folder is a well known one, otherwise a stable place for it.
 ---@param key string zone from M.zone_key
 ---@return string
 function M.zone_name(key)
   local lore = require("core.franchise").current()
-  return landmark_of(key, lore.landmarks) or lore.places[place_index(key, lore.places)]
+  local places = current_places(lore)
+  return landmark_of(key, lore.landmarks) or places[place_index(key, places)]
 end
 
 M.NUMERALS = { "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X" }
@@ -76,12 +90,13 @@ end
 ---@return table<string, string> name per key
 function M.zone_names(keys)
   local lore = require("core.franchise").current()
+  local places = current_places(lore)
   local taken, names = {}, {}
   for _, key in ipairs(keys) do
     local landmark = landmark_of(key, lore.landmarks)
-    local name = landmark or free_place(key, lore.places, taken)
+    local name = landmark or free_place(key, places, taken)
     if not name or taken[name] then
-      name = numbered(name or lore.places[place_index(key, lore.places)], taken)
+      name = numbered(name or places[place_index(key, places)], taken)
     end
     taken[name], names[key] = true, name
   end

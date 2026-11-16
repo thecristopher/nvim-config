@@ -114,6 +114,17 @@ local function along_for(edge, pos)
   return edge == "right" and pos.screenrow or pos.screencol
 end
 
+---The window across a border of win, nil at the edge of the editor.
+local function neighbor(win, direction)
+  return vim.api.nvim_win_call(win, function()
+    local nr = vim.fn.winnr(direction)
+    if nr == vim.fn.winnr() then
+      return nil
+    end
+    return vim.fn.win_getid(nr)
+  end)
+end
+
 local function update_hover()
   if dragging or in_mode then
     return
@@ -124,7 +135,8 @@ local function update_hover()
     return light({})
   end
   local edge = actions.edge_at(pos, info_of(win))
-  if not edge then
+  -- the lowest window's bottom edge is the statusline, nothing sits across it to resize against
+  if not edge or not neighbor(win, actions.ACROSS[edge]) then
     return light({})
   end
   light({ { win = win, edge = edge } }, along_for(edge, pos))
@@ -191,17 +203,6 @@ function M.reset()
   end
   vim.cmd("wincmd =")
   draw()
-end
-
----The window across a border of win, nil at the edge of the editor.
-local function neighbor(win, direction)
-  return vim.api.nvim_win_call(win, function()
-    local nr = vim.fn.winnr(direction)
-    if nr == vim.fn.winnr() then
-      return nil
-    end
-    return vim.fn.win_getid(nr)
-  end)
 end
 
 ---The borders hjkl move for win: its own right and bottom ones, or the ones on the other side

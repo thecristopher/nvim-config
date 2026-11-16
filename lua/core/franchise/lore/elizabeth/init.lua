@@ -27,8 +27,10 @@ return {
   -- hearts, and what you drop when you die is a broken one waiting to be mended
   currency = { glyph = "󰋑", stain = "󰋔" },
 
-  -- back-to-basics: the names the HUD gives the drills, the coach is the region's character
+  -- back-to-basics: the names the HUD gives the drills, the coach is Elizabeth in the region's role
   coach = {
+    played_by = "Elizabeth",
+    bond = "Elizabeth, the learner's wife, cosplaying {character} for him. She keeps the role's look and attitude but she is always his wife coaching her husband: she calls him amorcito, mi esposo or mi amor, teases him, flirts a little and is proud of every round he wins.",
     training = "Rehearsal",
     lessons = "Scripts",
     onsite = "Opening Night",
@@ -344,43 +346,11 @@ return {
     api = "The Radio Booth",
   },
 
+  -- her stage, shared by every role; each region in regions.lua brings the world of its own role
   places = {
-    "Westview",
-    "The Hex",
-    "Wundagore Mountain",
-    "Darkhold Library",
-    "Witches' Road",
-    "Salazar Castle",
-    "The Village",
-    "The Island",
-    "Ada's Hideout",
-    "Merchant's Corner",
-    "Moonrise Towers",
-    "Last Light Inn",
-    "The Underdark",
-    "Grymforge",
-    "Baldur's Gate",
-    "House of Grief",
-    "The Emerald Grove",
-    "The Danger Room",
-    "Xavier's Mansion",
-    "Genosha",
     "The Dressing Room",
     "Backstage",
     "Golden Hour Hallway",
-    "Planet Zebes",
-    "Chozo Ruins",
-    "Limbo",
-    "The Courtroom",
-    "Limgrave",
-    "Church of Elleh",
-    "Raccoon City",
-    "Clock Tower",
-    "Elphael",
-    "Earth-Two",
-    "Azarath",
-    "Titans Tower",
-    "Shiranui Dojo",
   },
 
   -- what the thing under the cursor would be in her wardrobe, most specific capture first
