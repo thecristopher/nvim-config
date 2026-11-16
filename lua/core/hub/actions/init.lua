@@ -6,11 +6,21 @@ local function lore()
   return require("core.franchise").current()
 end
 
---- Picks the message the quill writes on the hub, from the franchise's own lines.
+-- how often a line another world lent this one is read instead of its own
+M.GUEST_CHANCE = 0.15
+
+--- Picks the message the quill writes on the hub: the franchise's own lines first, now and then a
+--- line another world lent it (lore.hud.guest_messages).
 ---@param rand fun(): number random number from 0 to 1
+---@param from table|nil the lore to read, the franchise in use by default
 ---@return string
-function M.pick_message(rand)
-  local messages = lore().hub_messages
+function M.pick_message(rand, from)
+  from = from or lore()
+  local guests = (from.hud or {}).guest_messages or {}
+  local messages = from.hub_messages
+  if #guests > 0 and rand() < M.GUEST_CHANCE then
+    messages = guests
+  end
   return messages[math.floor(rand() * #messages) + 1]
 end
 
@@ -137,12 +147,17 @@ function M.quill_done(length, elapsed)
   return elapsed > M.QUILL.delay + length * M.QUILL.per_char + M.QUILL.linger
 end
 
--- which screen columns hold something other than blank space, given { char, width } cells
-function M.occupied(cells)
+--- Which screen columns hold something other than blank space, given { char, width } cells, plus
+--- a margin on both sides of every mark so the weather never lands in the gaps inside a word.
+---@param cells { [1]: string, [2]: integer }[]
+---@param margin integer|nil blank cells kept clear around text, none by default
+---@return table<integer, boolean>
+function M.occupied(cells, margin)
+  margin = margin or 0
   local taken, col = {}, 0
   for _, cell in ipairs(cells) do
     if cell[1] ~= " " then
-      for offset = 0, cell[2] - 1 do
+      for offset = -margin, cell[2] - 1 + margin do
         taken[col + offset] = true
       end
     end

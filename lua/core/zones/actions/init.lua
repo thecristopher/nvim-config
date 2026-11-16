@@ -22,19 +22,70 @@ function M.zone_key(file, root)
   return table.concat(vim.list_slice(segments, 1, M.DEPTH), "/")
 end
 
+local function landmark_of(key, landmarks)
+  local segments = vim.split(key, "/", { plain = true })
+  for index = #segments, 1, -1 do
+    local landmark = landmarks[segments[index]]
+    if landmark then
+      return landmark
+    end
+  end
+  return nil
+end
+
+local function place_index(key, places)
+  return utils.hash(key) % #places + 1
+end
+
 --- Names a zone: a landmark when its folder is a well known one, otherwise a stable place for it.
 ---@param key string zone from M.zone_key
 ---@return string
 function M.zone_name(key)
   local lore = require("core.franchise").current()
-  local segments = vim.split(key, "/", { plain = true })
-  for index = #segments, 1, -1 do
-    local landmark = lore.landmarks[segments[index]]
-    if landmark then
-      return landmark
+  return landmark_of(key, lore.landmarks) or lore.places[place_index(key, lore.places)]
+end
+
+M.NUMERALS = { "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X" }
+
+-- the first place from the key's own that nobody in the project took yet, nil when all are taken
+local function free_place(key, places, taken)
+  local start = place_index(key, places)
+  for step = 0, #places - 1 do
+    local place = places[(start - 1 + step) % #places + 1]
+    if not taken[place] then
+      return place
     end
   end
-  return lore.places[utils.hash(key) % #lore.places + 1]
+  return nil
+end
+
+-- a name already taken gets the next numeral, like a second wing of the same building
+local function numbered(name, taken)
+  for _, numeral in ipairs(M.NUMERALS) do
+    local candidate = name .. " " .. numeral
+    if not taken[candidate] then
+      return candidate
+    end
+  end
+  return name
+end
+
+--- Names every zone of one project so no two share a name: landmarks keep their name with a
+--- numeral for the second wing, any other folder walks on to the next free place.
+---@param keys string[] zones from M.zone_key, in the order they should claim their names
+---@return table<string, string> name per key
+function M.zone_names(keys)
+  local lore = require("core.franchise").current()
+  local taken, names = {}, {}
+  for _, key in ipairs(keys) do
+    local landmark = landmark_of(key, lore.landmarks)
+    local name = landmark or free_place(key, lore.places, taken)
+    if not name or taken[name] then
+      name = numbered(name or lore.places[place_index(key, lore.places)], taken)
+    end
+    taken[name], names[key] = true, name
+  end
+  return names
 end
 
 --- Decides whether entering a zone deserves its banner.

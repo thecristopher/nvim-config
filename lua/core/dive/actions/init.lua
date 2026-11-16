@@ -76,6 +76,16 @@ function M.item_category(captures)
   return "Item"
 end
 
+--- Keeps only the innermost symbols of a breadcrumb, so the winbar says where you are and not
+--- every scope on the way there.
+---@generic T
+---@param symbols T[] outermost first
+---@param count integer how many to keep
+---@return T[]
+function M.innermost(symbols, count)
+  return vim.list_slice(symbols, math.max(1, #symbols - count + 1), #symbols)
+end
+
 -- flattens the table above into one entry per key, which is what keymap.set wants
 function M.expand(bindings)
   local maps = {}

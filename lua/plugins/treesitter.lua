@@ -168,21 +168,29 @@ return {
     opts = {},
   },
 
-  -- Treesitter context: shows current scope at top
+  -- Treesitter context: the scope scrolled off the top, as a quiet header of at most two lines
+  -- on the panel color with a thin underline (TreesitterContextBottom in the colorscheme), so it
+  -- never spends a whole row on a separator. It keeps its own numbers: without them the gutter
+  -- shows the hidden line's number beside the header, which reads as a wrong line
   {
     "nvim-treesitter/nvim-treesitter-context",
     event = { "BufReadPost", "BufNewFile" },
-    opts = {
-      enable = true,
-      max_lines = 3,
-      min_window_height = 20,
-      line_numbers = true,
-      multiline_threshold = 1,
-      trim_scope = "outer",
-      mode = "cursor",
-      zindex = 20,
-      on_attach = nil,
-    },
+    opts = function()
+      return {
+        enable = true,
+        max_lines = 2,
+        min_window_height = 20,
+        line_numbers = true,
+        multiline_threshold = 1,
+        trim_scope = "outer",
+        -- follows what scrolled away, not every cursor move, so the header stays put while you read
+        mode = "topline",
+        zindex = 20,
+      }
+    end,
+    config = function(_, opts)
+      require("treesitter-context").setup(opts)
+    end,
     keys = {
       {
         "[x",

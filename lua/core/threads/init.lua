@@ -8,7 +8,10 @@ local M = {}
 local ns = vim.api.nvim_create_namespace("eldentree_threads")
 -- open threads per repo root, false while a repo is known to have no PR
 local cache = {}
+-- callbacks waiting on the answer of a fetch already out, per repo root
 local fetching = {}
+-- uv.now() of each repo's last answer, so the threads are asked again once they are old
+local fetched_at = {}
 
 local function words()
   return require("core.franchise").current().threads
@@ -66,6 +69,16 @@ local function render_repo(root)
       render(buf)
     end
   end
+  require("core.utils").refresh_statusline()
+  -- the explorer marks the files with open threads, see core/tree
+  vim.api.nvim_exec_autocmds("User", { pattern = "EldentreeThreads", modeline = false })
+end
+
+--- The open threads of a repo's PR as last fetched, nil until asked or when it has no PR.
+---@param root string repo root
+---@return table[]|nil
+function M.open_threads(root)
+  return cache[root] or nil
 end
 
 local function gh(args, root, on_done)
@@ -98,29 +111,38 @@ end
 
 --- Asks GitHub for the open threads of the branch's PR and leaves them on their lines.
 ---@param root string repo root
----@param on_done? fun(threads: table[]|nil, err: string|nil)
+---@param on_done? fun(threads: table[]|nil, err: string|nil, no_pr: boolean|nil) no_pr is true when the branch has no PR
 function M.fetch(root, on_done)
   on_done = on_done or function() end
   if vim.fn.executable("gh") ~= 1 then
     return on_done(nil, "gh is not available")
   end
+  -- a fetch already out answers everyone who asks meanwhile, :Threads right after opening a file
+  -- waits for the one the file started instead of failing
   if fetching[root] then
-    return on_done(nil, "Still asking GitHub, try again in a moment")
+    return table.insert(fetching[root], on_done)
   end
-  fetching[root] = true
+  fetching[root] = { on_done }
+  local function answer(threads, err, no_pr)
+    local waiting = fetching[root] or {}
+    fetching[root] = nil
+    for _, callback in ipairs(waiting) do
+      callback(threads, err, no_pr)
+    end
+  end
   gh({ "pr", "view", "--json", "number", "-q", ".number" }, root, function(pr)
     local number = pr.code == 0 and tonumber(vim.trim(pr.stdout or ""))
     if not number then
-      fetching[root], cache[root] = nil, false
-      return on_done(nil, nil)
+      cache[root], fetched_at[root] = false, vim.uv.now()
+      render_repo(root)
+      return answer(nil, nil, true)
     end
     query_threads(root, number, function(threads, err)
-      fetching[root] = nil
       if threads then
-        cache[root] = threads
+        cache[root], fetched_at[root] = threads, vim.uv.now()
         render_repo(root)
       end
-      on_done(threads, err)
+      answer(threads, err)
     end)
   end)
 end
@@ -137,9 +159,12 @@ function M.pick()
     title = words().title,
     message = "Asking GitHub for the open threads…",
   })
-  M.fetch(root, function(threads, err)
+  M.fetch(root, function(threads, err, no_pr)
     if err then
       return task:fail(err)
+    end
+    if no_pr then
+      return task:done(words().no_pr)
     end
     if not threads or #threads == 0 then
       return task:done(words().none)
@@ -165,6 +190,55 @@ function M.pick()
       end,
     })
   end)
+end
+
+--- Asks GitHub again for a repo's threads, a little later (after a push or a new PR, GitHub
+--- needs a moment) or right away.
+---@param root string|nil repo root, the current project when nil
+---@param delay_ms integer|nil
+function M.refresh(root, delay_ms)
+  root = root or require("core.repos").root()
+  if not root or vim.g.eldentree_threads == false then
+    return
+  end
+  root = vim.fs.normalize(root)
+  vim.defer_fn(function()
+    M.fetch(root)
+  end, delay_ms or 0)
+end
+
+--- How many review threads are still open in a repo, nil while unknown or without a PR.
+---@param root string|nil repo root, the current project when nil
+---@return integer|nil
+function M.count(root)
+  root = root or require("core.repos").root()
+  local threads = root and cache[vim.fs.normalize(root)]
+  return threads and #threads or nil
+end
+
+--- The statusline piece: the thread glyph and how many are open, empty when none are.
+---@return string
+function M.statusline()
+  local root = locate(0) or require("core.repos").root()
+  local open = M.count(root)
+  if not open or open == 0 then
+    return ""
+  end
+  return ("%%#EldenThread#%s %d%%*"):format(require("core.skin").current().tree.thread, open)
+end
+
+--- Moves the cursor to the next or previous open thread in the buffer.
+---@param direction 1|-1
+function M.jump(direction)
+  local root, path = locate(0)
+  local threads = root and cache[root]
+  if not threads then
+    return
+  end
+  local line = actions.neighbor(threads, path, vim.api.nvim_win_get_cursor(0)[1], direction)
+  if line then
+    vim.api.nvim_win_set_cursor(0, { line, 0 })
+  end
 end
 
 local function thread_here()
@@ -248,6 +322,23 @@ function M.setup()
       render(ev.buf)
     end,
   })
+  -- coming back to nvim is when a review that landed meanwhile should show up
+  vim.api.nvim_create_autocmd("FocusGained", {
+    group = group,
+    callback = function()
+      local root = locate(0) or require("core.repos").root()
+      root = root and vim.fs.normalize(root)
+      if root and cache[root] ~= nil and actions.stale(fetched_at[root], vim.uv.now()) then
+        M.refresh(root)
+      end
+    end,
+  })
+  vim.keymap.set("n", "]r", function()
+    M.jump(1)
+  end, { desc = "Next review thread" })
+  vim.keymap.set("n", "[r", function()
+    M.jump(-1)
+  end, { desc = "Previous review thread" })
   vim.api.nvim_create_user_command("Threads", M.pick, { desc = "Open review threads of the PR" })
 end
 

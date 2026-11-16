@@ -7,6 +7,8 @@ return {
   skin = require("core.franchise.lore.elden_ring.skin"),
   voices = require("core.franchise.lore.elden_ring.voices"),
   lines = require("core.franchise.lore.elden_ring.lines"),
+  -- what the HUD calls its keys, tabs and items, see lua/core/hud
+  hud = require("core.franchise.lore.elden_ring.hud"),
 
   -- which version of each mechanic this world plays
   mechanics = {
@@ -53,6 +55,7 @@ return {
   -- the now playing panel's title and what its lyrics say while they are not there
   music = {
     title = "Song of Grace",
+    now_playing = "A new hymn rings",
     loading = "Seeking the verses…",
     missing = "No verses survive for this song",
     instrumental = "A hymn without words",
@@ -123,6 +126,7 @@ return {
     title = "Messages from the Roundtable",
     resolved = "Message heeded",
     none = "No message left unheeded on this PR",
+    no_pr = "No Roundtable has gathered for this branch yet",
   },
 
   -- who guards a merge conflict, and how many conflicted files the repo still holds
@@ -161,6 +165,17 @@ return {
 
   -- the days you fought, as a grid
   chronicle = { title = "Chronicle of the Tarnished" },
+
+  -- the HUD's trophies: foes felled from the bestiary, the best rank, the days fought and the
+  -- longest streak of days in a row, from the chronicle
+  trophies = {
+    title = "Remembrances",
+    felled = "Foes felled",
+    rank = "Finest rank",
+    days = "Days in the Lands Between",
+    streak = "Longest streak",
+    empty = "No remembrance yet, Tarnished",
+  },
 
   banners = {
     felled = "ENEMY FELLED",
@@ -297,6 +312,8 @@ return {
     search = "Seek",
     examine = "Inspect",
     history = "Messages Remembered",
+    -- the explorer's title over the tree
+    tree = "Lands Between",
     notify = {
       info = "Message",
       warn = "Omen",
@@ -323,5 +340,7 @@ return {
     motion_off = "The world stands still",
     map = "Map of the Lands Between",
     arts = "Incantations",
+    -- the grace menu that waits while you rest
+    grace_menu = { "Pass Time", "Level Up", "Memorize Spell", "Flasks", "Sort Chest" },
   },
 }

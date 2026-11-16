@@ -4,9 +4,10 @@ return {
   border = "rounded",
   -- wrapped around float titles
   ornament = { "◈ ", " ◈" },
+  -- slanted edges, cut like the tabs above them
   statusline = {
-    section = { left = "", right = "" },
-    component = { left = "", right = "" },
+    section = { left = "\u{E0BC}", right = "\u{E0BA}" },
+    component = { left = "\u{E0BD}", right = "\u{E0BB}" },
   },
   -- bufferline separator_style
   tabs = "slant",
@@ -34,6 +35,32 @@ return {
     keys = { breadcrumb = "›", separator = "→", group = "◇ " },
     scrollbar = { "◆" },
     spinner = { frames = { "◇", "◈", "◆", "◈" }, interval = 140 },
+    -- past the end of the buffer, and the lines between windows
+    eob = " ",
+    split = { vert = "│", horiz = "─" },
+  },
+  -- the explorer: golden threads, the grace on ground messages and rooms lit once cleared
+  tree = {
+    indent = "│",
+    last = "╰",
+    collapsed = "󰅂",
+    expanded = "󰅀",
+    folder = { closed = "󰉋", open = "󰝰", empty = "󰉖" },
+    thread = "󰍩",
+    message = "󰫢",
+    left = "◇",
+    cleared = "◆",
+  },
+  -- the code's own signature: gold italic keywords like an inscription, functions a step under the
+  -- text, lavender types, comments in a quiet italic
+  syntax = {
+    keyword = { color = "keyword", style = { "italic" } },
+    ["function"] = { color = "func", style = {} },
+    type = { color = "lavender", style = { "italic" } },
+    string = { color = "green", style = {} },
+    constant = { color = "peach", style = {} },
+    comment = { color = "comment", style = { "italic" } },
+    property = { color = "func", style = {} },
   },
   -- the snacks picker layout, see lua/plugins/snacks.lua: results over the prompt like a grace menu
   picker = "grace",

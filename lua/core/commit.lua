@@ -4,15 +4,18 @@
 
 local M = {}
 
-local MAX_DIFF = 6000
+-- characters of diff Claude reads, shared fairly between the files, see core.git.actions.trim_diff
+local MAX_DIFF = 16000
 
 -- what the franchise says while drafting, see the commit.* keys in lua/core/franchise/lines.lua
 local function say(key, vars)
   return require("core.franchise").line("commit." .. key, vars)
 end
 
--- bufnr -> true while an uncommitted draft is open
+-- bufnr -> the repo its draft commits into, while an uncommitted draft is open
 local pending = {}
+-- bufnr -> true while git commit runs, so a second :w never commits twice
+local committing = {}
 
 local function notify_err(msg)
   vim.notify(msg, vim.log.levels.ERROR, { title = say("title") })
@@ -22,28 +25,32 @@ local function notify_info(msg)
   vim.notify(msg, vim.log.levels.INFO, { title = say("title"), id = "commit_claude" })
 end
 
-local function git_ok(args)
-  vim.fn.system(vim.list_extend({ "git" }, args))
+local function git(root, args)
+  return vim.list_extend({ "git", "-C", root }, args)
+end
+
+local function git_ok(root, args)
+  vim.fn.system(git(root, args))
   return vim.v.shell_error == 0
 end
 
-local function has_staged()
-  vim.fn.system({ "git", "diff", "--cached", "--quiet" })
+local function has_staged(root)
+  vim.fn.system(git(root, { "diff", "--cached", "--quiet" }))
   return vim.v.shell_error ~= 0
 end
 
-local function staged_diff()
-  local out = vim.fn.system({ "git", "diff", "--cached" })
+local function staged_diff(root)
+  local out = vim.fn.system(git(root, { "diff", "--cached" }))
   return vim.v.shell_error == 0 and vim.trim(out) or ""
 end
 
-local function recent_log()
-  local out = vim.fn.system({ "git", "log", "--oneline", "-5" })
+local function recent_log(root)
+  local out = vim.fn.system(git(root, { "log", "--oneline", "-5" }))
   return vim.v.shell_error == 0 and vim.trim(out) or ""
 end
 
-local function branch_name()
-  local out = vim.fn.system({ "git", "rev-parse", "--abbrev-ref", "HEAD" })
+local function branch_name(root)
+  local out = vim.fn.system(git(root, { "rev-parse", "--abbrev-ref", "HEAD" }))
   return vim.v.shell_error == 0 and vim.trim(out) or "unknown"
 end
 
@@ -63,16 +70,18 @@ local function draft_via_claude(prompt, cb)
   end)
 end
 
-local function open_editor(msg)
+local function open_editor(msg, root, skipped)
   local buf = vim.api.nvim_create_buf(false, false)
   vim.bo[buf].buftype = "acwrite"
   vim.bo[buf].filetype = "gitcommit"
   vim.bo[buf].bufhidden = "wipe"
   vim.api.nvim_buf_set_name(buf, "COMMIT_EDITMSG (Claude)")
 
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(msg, "\n", { plain = true }))
+  local lines = vim.split(msg, "\n", { plain = true })
+  vim.list_extend(lines, require("core.git.actions").left_out_comments(skipped))
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].modified = false
-  pending[buf] = true
+  pending[buf] = root
 
   local width = math.min(math.floor(vim.o.columns * 0.7), 100)
   local height = math.min(math.floor(vim.o.lines * 0.45), 18)
@@ -100,8 +109,62 @@ local function open_editor(msg)
   notify_info("Edit then :w to commit. :q! discards.")
 end
 
+local function committed(buf, msg)
+  pending[buf] = nil
+  local subject = msg:match("^([^\n]+)") or ""
+  require("core.banner").show("felled", { subtitle = subject })
+  local root = require("core.git").repo()
+  require("core.voice").say("committed", { branch = require("core.repos").branch(root) or "" })
+  vim.schedule(function()
+    for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+      pcall(vim.api.nvim_win_close, win, true)
+    end
+    pcall(vim.api.nvim_buf_delete, buf, { force = true })
+  end)
+  return say("done", { subject = subject })
+end
+
+-- git commit runs in the background, so a slow pre-commit hook moves the bar instead of freezing
+local function commit(buf, root, msg)
+  local tmp = vim.fn.tempname()
+  vim.fn.writefile(vim.split(msg, "\n", { plain = true }), tmp)
+  committing[buf] = true
+  -- :wq quits right after the write, a draft still marked modified would refuse to close
+  vim.bo[buf].modified = false
+  local task = require("core.progress").start({
+    id = "commit_claude",
+    title = say("title"),
+    message = say("committing"),
+  })
+  vim.system(
+    git(root, { "commit", "-F", tmp }),
+    { text = true },
+    vim.schedule_wrap(function(result)
+      vim.fn.delete(tmp)
+      committing[buf] = nil
+      if result.code ~= 0 then
+        pending[buf] = nil
+        if vim.api.nvim_buf_is_valid(buf) then
+          pending[buf] = root
+          vim.bo[buf].modified = true
+        else
+          -- :wq already closed the draft, a failing hook must not throw the message away
+          open_editor(msg, root, {})
+        end
+        task:fail(
+          "git commit failed:\n" .. vim.trim((result.stdout or "") .. "\n" .. (result.stderr or ""))
+        )
+        require("core.banner").show("died", { subtitle = say("fell") })
+        return
+      end
+      task:done(committed(buf, msg))
+    end)
+  )
+end
+
 function M.submit(buf)
-  if not pending[buf] then
+  local root = pending[buf]
+  if not root or committing[buf] then
     return
   end
 
@@ -116,34 +179,17 @@ function M.submit(buf)
     return
   end
 
-  local tmp = vim.fn.tempname()
-  vim.fn.writefile(vim.split(msg, "\n", { plain = true }), tmp)
-  local out = vim.fn.system({ "git", "commit", "-F", tmp })
-  vim.fn.delete(tmp)
-
-  if vim.v.shell_error ~= 0 then
-    notify_err("git commit failed:\n" .. out)
-    require("core.banner").show("died", { subtitle = say("fell") })
-    return
-  end
-
-  vim.bo[buf].modified = false
-  pending[buf] = nil
-  notify_info(say("done", { subject = msg:match("^([^\n]+)") or "" }))
-  require("core.banner").show("felled", { subtitle = msg:match("^([^\n]+)") })
-
-  vim.schedule(function()
-    pcall(vim.api.nvim_win_close, 0, true)
-    pcall(vim.api.nvim_buf_delete, buf, { force = true })
-  end)
+  commit(buf, root, msg)
 end
 
 function M.open()
-  if not git_ok({ "rev-parse", "--is-inside-work-tree" }) then
+  -- the buffer's repo, so a file opened from another repo commits there and not in nvim's cwd
+  local root = require("core.git").repo()
+  if not git_ok(root, { "rev-parse", "--is-inside-work-tree" }) then
     return notify_err("Not inside a git repository.")
   end
 
-  local staged, skipped = require("core.git").stage_related()
+  local staged, skipped = require("core.git").stage_related(root)
   if not staged then
     return notify_err("git add failed.")
   end
@@ -154,22 +200,19 @@ function M.open()
       { title = say("title") }
     )
   end
-  if not has_staged() then
+  if not has_staged(root) then
     return notify_info(say("nothing"))
   end
 
-  local diff = staged_diff()
+  local diff = staged_diff(root)
   if diff == "" then
     return notify_err("No staged diff to commit.")
   end
+  -- every file keeps its share of the budget, so Claude reads real changes and not just a stat
+  diff = require("core.git.actions").trim_diff(diff, MAX_DIFF)
 
-  if #diff > MAX_DIFF then
-    diff = vim.trim(vim.fn.system({ "git", "diff", "--cached", "--stat" }))
-      .. "\n\n[diff truncated, stat only]"
-  end
-
-  local log = recent_log()
-  local branch = branch_name()
+  local log = recent_log(root)
+  local branch = branch_name(root)
 
   vim.ui.input({ prompt = "Vibe? (optional, Enter to skip): " }, function(vibe)
     if vibe == nil then
@@ -203,7 +246,7 @@ function M.open()
         notify_err("Claude failed: " .. vim.trim(res.stderr or "unknown error"))
         return
       end
-      open_editor(vim.trim(res.stdout))
+      open_editor(vim.trim(res.stdout), root, skipped)
     end)
   end)
 end

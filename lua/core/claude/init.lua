@@ -32,10 +32,10 @@ function M.run(prompt, cb)
   local ok, err = pcall(
     vim.system,
     actions.command(bin),
-    { text = true, stdin = prompt },
+    { text = true, stdin = prompt, timeout = actions.TIMEOUT_MS },
     function(res)
       vim.schedule(function()
-        cb(res)
+        cb(actions.explain(res))
       end)
     end
   )

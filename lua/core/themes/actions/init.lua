@@ -117,12 +117,130 @@ function M.tint_to_contrast(fg, bg, target)
   return fg
 end
 
+--- Returns a color's hue in degrees and its saturation, the way HSL measures them.
+---@param hex string "#RRGGBB"
+---@return number hue from 0 to 360, number saturation from 0 to 1
+function M.hue(hex)
+  local r, g, b = to_rgb(hex)
+  r, g, b = r / 255, g / 255, b / 255
+  local max, min = math.max(r, g, b), math.min(r, g, b)
+  local delta = max - min
+  if delta == 0 then
+    return 0, 0
+  end
+  local lightness = (max + min) / 2
+  local saturation = delta / (1 - math.abs(2 * lightness - 1))
+  local hue
+  if max == r then
+    hue = ((g - b) / delta) % 6
+  elseif max == g then
+    hue = (b - r) / delta + 2
+  else
+    hue = (r - g) / delta + 4
+  end
+  return hue * 60, saturation
+end
+
+--- Returns how far apart two colors sit on the color wheel, from 0 to 180 degrees.
+---@param a string "#RRGGBB"
+---@param b string "#RRGGBB"
+---@return number
+function M.hue_distance(a, b)
+  local distance = math.abs(M.hue(a) - M.hue(b)) % 360
+  return math.min(distance, 360 - distance)
+end
+
+-- a token and an error underline must never be mistaken for each other
+M.ERROR_HUE_GAP = 35
+-- grays carry no hue, so they never clash with the error color
+M.HUELESS = 0.15
+-- the colors a color falls back to, in order, when it sits too close to the error color
+local AWAY_FROM_ERROR = { "mauve", "lavender", "peach", "sky", "teal", "pink", "blue" }
+-- two roles closer than this on the color wheel read as one
+M.ROLE_HUE_GAP = 25
+
+--- Tells whether a color reads apart from the region's error color.
+---@param p table region palette
+---@param color string "#RRGGBB"
+---@return boolean
+function M.apart_from_error(p, color)
+  local _, saturation = M.hue(color)
+  return saturation < M.HUELESS or M.hue_distance(color, p.red) >= M.ERROR_HUE_GAP
+end
+
+local function saturated(color)
+  local _, saturation = M.hue(color)
+  return saturation >= M.HUELESS
+end
+
+-- whether a color reads apart from every color another role already wears
+local function apart_from_taken(color, taken)
+  for _, other in ipairs(taken or {}) do
+    if saturated(color) and saturated(other) and M.hue_distance(color, other) < M.ROLE_HUE_GAP then
+      return false
+    end
+  end
+  return true
+end
+
+local function fits(p, color, taken)
+  return M.apart_from_error(p, color) and apart_from_taken(color, taken)
+end
+
+--- Returns the color itself, or the first fallback that reads apart from the error color and from
+--- the colors other roles already wear.
+---@param p table region palette
+---@param color string "#RRGGBB"
+---@param taken? string[] colors other roles already wear
+---@param fallbacks? string[] palette slots or colors to try, AWAY_FROM_ERROR by default
+---@return string
+function M.away_from_error(p, color, taken, fallbacks)
+  if fits(p, color, taken) then
+    return color
+  end
+  for _, slot in ipairs(fallbacks or AWAY_FROM_ERROR) do
+    local candidate = p[slot] or slot
+    if fits(p, candidate, taken) and M.contrast(candidate, p.base) >= 4.5 then
+      return candidate
+    end
+  end
+  return color
+end
+
+--- Dims a color until its contrast on the background stays under a ceiling, so it never outshines
+--- the text.
+---@param fg string "#RRGGBB"
+---@param bg string "#RRGGBB"
+---@param ceiling number contrast ratio it must stay under
+---@return string
+function M.cap_contrast(fg, bg, ceiling)
+  for step = 100, 1, -1 do
+    local mixed = M.blend(fg, bg, step / 100)
+    if M.contrast(mixed, bg) <= ceiling then
+      return mixed
+    end
+  end
+  return fg
+end
+
+-- comments sit between the line numbers and the code, readable without competing with it
+M.COMMENT_CONTRAST = 3.2
+
 -- tinted backgrounds are derived, so a new region only needs its 26 base colors
 function M.derive(p)
   local tint = function(color, alpha)
     return M.blend(color, p.base, alpha)
   end
+  local text_contrast = M.contrast(p.text, p.base)
   return {
+    -- the accent marks focus (the cursor number, the mode, the scope), the tokens get their own
+    -- colors so a keyword never looks like an error in a red region
+    keyword = M.away_from_error(p, p.yellow),
+    -- functions stay a step under the text, which is always the brightest thing on screen
+    func = M.cap_contrast(p.rosewater, p.base, text_contrast * 0.88),
+    comment = M.tint_to_contrast(M.blend(p.yellow, p.subtext0, 0.12), p.base, M.COMMENT_CONTRAST),
+    border = M.blend(p.yellow, p.overlay1, 0.4),
+    search = M.away_from_error(p, p.yellow),
     cursorline = tint(p.yellow, 0.06),
     cursorline_insert = tint(p.yellow, 0.16),
     visual = tint(p.rosewater, 0.15),
@@ -144,6 +262,68 @@ function M.derive(p)
     panel = M.tint_to_contrast(M.blend(p.yellow, p.surface0, 0.12), p.base, 1.07),
     separator = M.tint_to_contrast(p.yellow, p.base, 2.0),
   }
+end
+
+-- every role a skin's syntax signature paints, and the color it takes when the skin names none:
+-- a derived color by name (see M.derive) or a palette slot
+M.SYNTAX_DEFAULTS = {
+  keyword = "keyword",
+  ["function"] = "func",
+  type = "lavender",
+  string = "green",
+  constant = "peach",
+  comment = "comment",
+  property = "func",
+}
+-- roles that carry the code's structure, in the order they pick: each reads apart from the error
+-- color and from the roles before it, falling back through its own list. Functions fall back to a
+-- calm near text gray, keywords and types to the cool slots
+local STRUCTURAL = { "keyword", "function", "type" }
+local function structural_fallbacks(p, role)
+  if role == "function" then
+    local gray = M.cap_contrast(p.subtext1, p.base, M.contrast(p.text, p.base) * 0.88)
+    return { gray, "peach", "sky", "teal" }
+  end
+  if role == "type" then
+    return { "lavender", "sky", "teal", "blue", "mauve", "peach" }
+  end
+  return AWAY_FROM_ERROR
+end
+
+--- Tells whether a syntax role's color names something a region provides.
+---@param name string a derived color or a palette slot
+---@param p table region palette
+---@return boolean
+function M.known_color(name, p)
+  return M.derive(p)[name] ~= nil or p[name] ~= nil
+end
+
+--- Resolves a skin's syntax signature into one color and style per role for a region.
+---@param p table region palette
+---@param syntax table|nil skin.syntax, roles as { color?: string, style?: string[] }
+---@return table<string, { fg: string, style: string[] }>
+function M.syntax(p, syntax)
+  syntax = syntax or {}
+  local tints = M.derive(p)
+  local function pick(role)
+    local spec = syntax[role] or {}
+    local name = spec.color or M.SYNTAX_DEFAULTS[role]
+    return tints[name] or p[name] or tints[M.SYNTAX_DEFAULTS[role]], spec.style or {}
+  end
+  local roles, taken = {}, {}
+  for _, role in ipairs(STRUCTURAL) do
+    local color, style = pick(role)
+    color = M.away_from_error(p, color, taken, structural_fallbacks(p, role))
+    table.insert(taken, color)
+    roles[role] = { fg = color, style = style }
+  end
+  for role in pairs(M.SYNTAX_DEFAULTS) do
+    if not roles[role] then
+      local color, style = pick(role)
+      roles[role] = { fg = color, style = style }
+    end
+  end
+  return roles
 end
 
 -- one indent level per color, accent first so the outermost block reads as the region

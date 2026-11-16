@@ -146,6 +146,66 @@ M.QUICK_KEYS = {
   { key = "u", fn = "undo_commit", desc = "Undo last commit (keep changes)", short = "undo" },
 }
 
+-- splits a unified diff into one chunk per file, each starting at its "diff --git" line
+local function file_chunks(diff)
+  local chunks, current = {}, nil
+  for _, line in ipairs(vim.split(diff, "\n", { plain = true })) do
+    if line:match("^diff %-%-git ") or not current then
+      current = {}
+      table.insert(chunks, current)
+    end
+    table.insert(current, line)
+  end
+  return chunks
+end
+
+-- keeps a file's first lines within its share of the budget, saying how many were left out
+local function trim_chunk(lines, budget)
+  local kept, size = {}, 0
+  for index, line in ipairs(lines) do
+    size = size + #line + 1
+    if size > budget and index > 1 then
+      table.insert(kept, ("[%d more lines of this file left out]"):format(#lines - index + 1))
+      return kept
+    end
+    table.insert(kept, line)
+  end
+  return kept
+end
+
+---Fits a diff into a budget by giving every file an equal share, so a big file never pushes the
+---others out of the prompt. A diff that already fits comes back whole.
+---@param diff string unified diff
+---@param budget integer characters
+---@return string
+function M.trim_diff(diff, budget)
+  if #diff <= budget then
+    return diff
+  end
+  local chunks = file_chunks(diff)
+  local share = math.floor(budget / #chunks)
+  local out = {}
+  for _, chunk in ipairs(chunks) do
+    vim.list_extend(out, trim_chunk(chunk, share))
+  end
+  return table.concat(out, "\n")
+end
+
+---Comment lines for the bottom of a commit draft, naming the files left out of it. git drops
+---lines starting with # from the message, and so does the draft's submit.
+---@param files string[]
+---@return string[]
+function M.left_out_comments(files)
+  if #files == 0 then
+    return {}
+  end
+  local lines = { "", "# Left out of this commit:" }
+  for _, file in ipairs(files) do
+    table.insert(lines, "#   " .. file)
+  end
+  return lines
+end
+
 ---Winbar text listing the quick git keys, for terminals where <leader> only works after <Esc>.
 ---@param keys GitQuickKey[]
 ---@return string winbar statusline formatted, % escaped

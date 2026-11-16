@@ -53,7 +53,15 @@ return {
             },
           },
           lualine_b = {
-            { "branch", icon = "󰘬 " },
+            {
+              "branch",
+              icon = "󰘬 ",
+              cond = wide("branch"),
+              -- a long branch never pushes the path off the bar
+              fmt = function(name)
+                return chrome.short_branch(name)
+              end,
+            },
             {
               cond = wide("diff"),
               "diff",
@@ -69,7 +77,9 @@ return {
             {
               "filename",
               path = 1,
-              symbols = { modified = " ●", readonly = " ", unnamed = "[No Name]" },
+              symbols = { modified = " ●", readonly = " 󰌾", unnamed = "[No Name]" },
+              -- the path fits its tier's room, dropping folders from the front, never a "<" cut
+              shorting_target = 0,
               -- a terminal says which shell it runs, not its term:// address
               fmt = function(name)
                 if vim.bo.buftype == "terminal" then
@@ -81,7 +91,7 @@ return {
                 then
                   return ""
                 end
-                return name
+                return chrome.fit_path(name, chrome.path_budget(vim.o.columns))
               end,
             },
           },
@@ -105,6 +115,16 @@ return {
                 require("core.ci").open()
               end,
             },
+            -- the open review threads of the branch's PR, a click lists them
+            {
+              cond = wide("ci"),
+              function()
+                return require("core.threads").statusline()
+              end,
+              on_click = function()
+                require("core.threads").pick()
+              end,
+            },
             -- the next back-to-basics exercise getting ready, small enough to not cover the statement
             {
               cond = wide("btb"),
@@ -121,9 +141,8 @@ return {
               function()
                 return require("core.music").statusline()
               end,
-              color = function()
-                return { fg = palette().mauve }
-              end,
+              -- defined by core/music, tinted by the album cover when one is known
+              color = "EldenMusicLine",
               on_click = function()
                 require("core.music").open()
               end,
@@ -226,10 +245,12 @@ return {
           indicator = { icon = "▎", style = "icon" },
           buffer_close_icon = "󰅖",
           modified_icon = "●",
-          close_icon = "",
-          left_trunc_marker = "",
-          right_trunc_marker = "",
+          close_icon = "󰅙",
+          left_trunc_marker = "󰁍",
+          right_trunc_marker = "󰁔",
           diagnostics = "nvim_lsp",
+          -- bufferline's default is true and warns on every start that it is deprecated
+          diagnostics_update_in_insert = false,
           diagnostics_indicator = function(_, _, diag)
             local skin = require("core.skin")
             local icons = { error = skin.icon("error") .. " ", warning = skin.icon("warn") .. " " }
@@ -244,8 +265,13 @@ return {
           offsets = {
             {
               filetype = "neo-tree",
-              text = "  Explorer",
-              highlight = "Directory",
+              -- the explorer's one title, the franchise's word for it in the skin's ornaments. The
+              -- tree's root row names the project. bufferline counts highlight codes as width, so
+              -- the title wears a single group
+              text = function()
+                return require("core.skin").title(require("core.franchise").current().chrome.tree)
+              end,
+              highlight = "EldenTreeTitle",
               text_align = "left",
             },
           },
@@ -283,10 +309,10 @@ return {
           filter = { pattern = "^:%s*!", icon = "$", lang = "bash" },
           lua = {
             pattern = { "^:%s*lua%s+", "^:%s*lua%s*=%s*", "^:%s*=%s*" },
-            icon = "",
+            icon = "󰢱",
             lang = "lua",
           },
-          help = { pattern = "^:%s*he?l?p?%s+", icon = "" },
+          help = { pattern = "^:%s*he?l?p?%s+", icon = "󰋗" },
           input = { view = "cmdline_input", icon = "󰥻 " },
         }, require("core.chrome.cmdline").formats()),
       },

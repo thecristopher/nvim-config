@@ -21,6 +21,8 @@ end
 
 local function write_store(store)
   require("core.utils").write_state(store_file, { vim.json.encode(store) })
+  -- the explorer marks the files with messages, see core/tree
+  vim.api.nvim_exec_autocmds("User", { pattern = "EldentreeMessages", modeline = false })
 end
 
 local function define_highlights()
@@ -87,10 +89,16 @@ end
 
 local function save_positions(buf)
   local repo, file = locate(buf)
-  if not repo or not marks[buf] then
+  -- most files carry no message, and their saves should not touch the store at all
+  if not repo or not marks[buf] or next(marks[buf]) == nil then
     return
   end
-  write_store(actions.replace(read_store(), repo, file, current_positions(buf)))
+  local store = read_store()
+  local positions = current_positions(buf)
+  if actions.unmoved(store, repo, file, positions) then
+    return
+  end
+  write_store(actions.replace(store, repo, file, positions))
 end
 
 local function write_message(buf, line, text)

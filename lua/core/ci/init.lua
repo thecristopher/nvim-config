@@ -47,14 +47,6 @@ local function settle(next_run)
   end
 end
 
-local function current_branch(cwd)
-  local result = vim
-    .system({ "git", "branch", "--show-current" }, { cwd = cwd, text = true })
-    :wait(2000)
-  local name = result.code == 0 and vim.trim(result.stdout or "") or ""
-  return name ~= "" and name or nil
-end
-
 local schedule
 
 --- Asks gh for the latest run of the branch, in the background.
@@ -63,15 +55,15 @@ function M.check()
     return
   end
   root = require("core.repos").root()
-  branch = root and current_branch(root)
+  -- read from .git/HEAD, a git process here would block every FocusGained
+  branch = root and require("core.repos").branch(root)
   if not branch then
     run = nil
     return
   end
   asking = true
-  local fields = "status,conclusion,workflowName,url,headSha"
   vim.system(
-    { "gh", "run", "list", "--branch", branch, "--limit", "1", "--json", fields },
+    { "gh", "run", "list", "--branch", branch, "--limit", "1", "--json", actions.FIELDS },
     { cwd = root, text = true },
     vim.schedule_wrap(function(result)
       asking = false
@@ -112,8 +104,67 @@ function M.statusline()
   return ("%%#%s#%s%%*"):format(GROUPS[run.state], actions.label(run, words()))
 end
 
---- Opens the latest run in the browser, asking gh first when there is none yet.
+local function show_log(excerpt, url)
+  local lines = #excerpt.lines > 0 and excerpt.lines or { "gh returned no log for this run" }
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].bufhidden = "wipe"
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+  local width = math.min(vim.o.columns - 8, 120)
+  local height = math.min(#lines, vim.o.lines - 8)
+  local title = words().failed .. (excerpt.title and ("  ·  " .. excerpt.title) or "")
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    row = math.floor((vim.o.lines - height) / 2) - 1,
+    col = math.floor((vim.o.columns - width) / 2),
+    width = width,
+    height = height,
+    style = "minimal",
+    border = require("core.skin").border(),
+    title = " " .. require("core.skin").title(title) .. " ",
+    title_pos = "center",
+    footer = " o open in the browser  ·  q close ",
+    footer_pos = "center",
+  })
+  -- the error is at the end of the step
+  vim.api.nvim_win_set_cursor(win, { #lines, 0 })
+  local function close()
+    pcall(vim.api.nvim_win_close, win, true)
+  end
+  vim.keymap.set("n", "q", close, { buffer = buf, nowait = true })
+  vim.keymap.set("n", "<Esc>", close, { buffer = buf, nowait = true })
+  vim.keymap.set("n", "o", function()
+    close()
+    vim.ui.open(url)
+  end, { buffer = buf, nowait = true })
+end
+
+-- a failed run explains itself: the end of the step that broke, asked to gh in the background
+local function open_failed()
+  local task = require("core.progress").start({
+    id = "eldentree_ci_log",
+    title = "CI",
+    message = "Reading the failed step…",
+  })
+  vim.system(
+    { "gh", "run", "view", tostring(run.id), "--log-failed" },
+    { cwd = root, text = true, timeout = 30000 },
+    vim.schedule_wrap(function(result)
+      if result.code ~= 0 then
+        task:fail("gh could not read the log, opening the run instead")
+        return vim.ui.open(run.url)
+      end
+      task:done(words().failed)
+      show_log(actions.failed_excerpt(result.stdout), run.url)
+    end)
+  )
+end
+
+--- Opens the latest run: the failing step's log when it failed, the browser otherwise.
 function M.open()
+  if run and run.state == "failed" and run.id then
+    return open_failed()
+  end
   if run and run.url ~= "" then
     return vim.ui.open(run.url)
   end

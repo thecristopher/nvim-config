@@ -246,7 +246,7 @@ describe("resident evil", function()
       "other",
       60
     )
-    assert.equal(" ◈ Files left by Leon Kennedy ", phantom.title)
+    assert.equal("Files left by Leon Kennedy", phantom.title)
   end)
 
   it("lets Jill rest in a safe room", function()

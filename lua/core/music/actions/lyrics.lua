@@ -135,4 +135,17 @@ function M.sung(lines, index, elapsed, duration)
   return math.min(math.max((elapsed - line.time) / span, 0), 1)
 end
 
+--- The synced line the statusline ticker shows at a moment of the song.
+---@param found table|false|nil lyrics from parse, false or nil when there are none
+---@param elapsed number|nil seconds into the song
+---@return string|nil nil for plain lyrics, before the first line and in silent gaps
+function M.ticker_line(found, elapsed)
+  if type(found) ~= "table" or found.kind ~= "synced" or not elapsed then
+    return nil
+  end
+  local line = found.lines[M.line_at(found.lines, elapsed + M.LEAD_SECONDS)]
+  local text = line and vim.trim(line.text or "")
+  return text ~= "" and text or nil
+end
+
 return M

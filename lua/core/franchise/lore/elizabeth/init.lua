@@ -12,6 +12,8 @@ return {
   skin = require("core.franchise.lore.elizabeth.skin"),
   voices = require("core.franchise.lore.elizabeth.voices"),
   lines = require("core.franchise.lore.elizabeth.lines"),
+  -- what the HUD calls its keys, tabs and items, see lua/core/hud
+  hud = require("core.franchise.lore.elizabeth.hud"),
 
   -- which version of each mechanic this world plays
   mechanics = {
@@ -34,15 +36,6 @@ return {
     hint = "A cue from the wings for %d XP?",
     buy = "Take it",
     leave = "I know my lines",
-  },
-
-  -- what the dressing room calls the HUD's tabs, the lessons tab takes coach.lessons
-  hud_tabs = {
-    tools = "Vanity",
-    recent = "Recent Takes",
-    keys = "Props",
-    messages = "Notes",
-    regions = "Roles",
   },
 
   -- Claude Code's statusline bars and spinner (claude/install.lua merges the verbs into settings)
@@ -75,6 +68,7 @@ return {
   -- the now playing panel's title and what its lyrics say while they are not there
   music = {
     title = "Her Playlist",
+    now_playing = "Now on stage",
     loading = "Humming the first notes…",
     missing = "No words for this one",
     instrumental = "Just the melody",
@@ -214,6 +208,7 @@ return {
     title = "Director's Notes",
     resolved = "Note taken",
     none = "No notes on this PR",
+    no_pr = "No premiere yet, this branch has no PR",
   },
 
   -- who guards a merge conflict, and how many conflicted files the repo still holds
@@ -266,12 +261,28 @@ return {
   -- the days you worked, as a grid
   chronicle = { title = "Call Sheet" },
 
+  -- the HUD's trophies: foes felled from the bestiary, the best rank, the days fought and the
+  -- longest streak of days in a row, from the chronicle
+  trophies = {
+    title = "Awards",
+    felled = "Villains upstaged",
+    rank = "Best review",
+    days = "Show days",
+    streak = "Longest run",
+    empty = "No awards yet, the season just began",
+  },
+
   banners = {
     felled = "VILLAIN DEFEATED",
     great = "STANDING OVATION",
     died = "CUT!",
     grace = "NEW STAGE FOUND",
     cleansed = "HEX BROKEN",
+  },
+
+  -- CUT! comes with the film slate: its stick is raised over the words and snaps shut on them
+  banner_styles = {
+    died = { look = "clapper", stagger = 0, letter_ms = 300, fade_in = 250, duration = 3400 },
   },
 
   hub_messages = {
@@ -285,20 +296,16 @@ return {
     "Focus the blade, then focus the diff",
     "The Danger Room resets, your tests should too",
     "The cape is velvet, the code is not",
-    "What are you buying? A cleaner commit?",
     "Shadowheart doesn't trust that regex",
     "Westview had fewer side effects",
     "Lights, camera, refactor",
-    "Your inventory is full of TODOs, love",
     "She already knew the bug was there",
     "Save the scene before the next costume change",
     "The moon says merge on Monday",
     "Samus would have scanned that first",
     "Limbo is closer than your deadline",
     "Objection: that test proves nothing",
-    "Rest at grace, then refactor",
     "Jill has one more way out of this bug",
-    "Let the rot bloom somewhere else",
     "Power Girl lifts the build, you lift the coffee",
     "Azarath Metrion Zinthos, compile",
     "Mai fans the flames of a green build",
@@ -409,6 +416,8 @@ return {
     search = "Search",
     examine = "Close up",
     history = "Call Sheet",
+    -- the explorer's title over the tree
+    tree = "Backstage",
     notify = {
       info = "Cue",
       warn = "Careful",
@@ -435,6 +444,9 @@ return {
     motion_off = "Freeze frame",
     map = "Map",
     arts = "Commands",
+    -- the card hung in front of the curtain while she rests
+    intermission = "Intermission",
+    back_soon = "Back in five, the show goes on",
     last_run = "Last take",
     -- the results line: the critic's review, the rehearsals saved and the retakes that fixed a line
     rank = "Review",

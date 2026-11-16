@@ -1,8 +1,9 @@
 -- Elizabeth's dressing room, with her at center stage: her whole figure in a vanity mirror ringed
 -- with bulbs over a dressing table with her name, as tall as the screen allows. On its left the
 -- clothes rail the tabs hang from as tags, over the rack of the tab's pieces and a close up of the
--- selected one; on its right the marquee sign over the stages and the call sheet of the quest you
--- left open. Everything sits centered on screen at any size. Pure: model in, rows out.
+-- selected one under a soft spotlight; on its right the marquee sign over the stages and the call
+-- sheet of the quest you left open (scene, cast, location and call time). Everything sits centered
+-- on screen at any size. Pure: model in, rows out.
 local hud = require("core.hud.actions")
 local parts = require("core.hud.views.parts")
 
@@ -58,16 +59,21 @@ local function rack_rows_for(side, center)
   return side - 2 - (M.CLOSE_UP_ROWS + 2) - (center and M.RAIL_ROWS or 0)
 end
 
--- the stages' frame and the call sheet: its top edge, the project, the branch, the last file,
--- the changes and its bottom edge, and at center stage the sign above them
+-- the call sheet's head: scene, cast, location and call, one row each
+M.SHEET_ROWS = 4
+-- the labels of the call sheet line up their values after this many cells
+M.SHEET_LABEL = 10
+
+-- the stages' frame and the call sheet: its top edge, its head, the last file, the changes and its
+-- bottom edge, and at center stage the sign above them
 local function stage_rows_for(side, quest_rows, center)
-  return side - 2 - (4 + quest_rows + 1) - (center and M.SIGN_ROWS or 0)
+  return side - 2 - (2 + M.SHEET_ROWS + quest_rows + 1) - (center and M.SIGN_ROWS or 0)
 end
 
 -- the shortest columns that still show three pieces and two stages
 local function side_min(quest_rows, center)
   local rack = 3 + 2 + M.CLOSE_UP_ROWS + 2 + (center and M.RAIL_ROWS or 0)
-  local stages = 2 + 2 + 4 + quest_rows + 1 + (center and M.SIGN_ROWS or 0)
+  local stages = 2 + 2 + 2 + M.SHEET_ROWS + quest_rows + 1 + (center and M.SIGN_ROWS or 0)
   return math.max(rack, stages)
 end
 
@@ -211,7 +217,7 @@ end
 
 -- the top edge with its title on the left and a note on the right, like how many pieces it holds
 local function top_edge(title, note, width, focused)
-  local label = " " .. hud.fit(title, width - 8) .. " "
+  local label = " " .. hud.fit_name(title, width - 8) .. " "
   local tail = (note and note ~= "") and (" " .. note .. " ") or ""
   local fill = width - 4 - vim.api.nvim_strwidth(label) - vim.api.nvim_strwidth(tail)
   return {
@@ -246,21 +252,41 @@ end
 
 -- the rack and the stages ------------------------------------------------------------------
 
-local function label_chunks(item, width, selected, bg)
+-- one name column for a whole list, so every branch starts at the same cell: as wide as the
+-- longest name, since a name always shows whole before any branch does
+local function name_column(items, width)
+  local longest = 0
+  for _, item in ipairs(items) do
+    longest = math.max(longest, vim.api.nvim_strwidth(item.slot or item.name))
+  end
+  return math.min(longest + 1, width)
+end
+
+local function label_chunks(item, width, selected, bg, name_width)
   local name_hl = selected and "EldenHudBanner" or "EldenHudName"
   local label = item.slot or item.name
   if not item.branch then
-    return { { hud.pad(label, width), name_hl, bg = bg } }
+    return { { hud.pad(hud.fit_name(label, width), width), name_hl, bg = bg } }
   end
-  local name_width = math.min(vim.api.nvim_strwidth(label) + 1, math.ceil(width * 0.55))
+  name_width = math.min(name_width or (vim.api.nvim_strwidth(label) + 1), width)
+  -- the branch shows where it breaks, or not at all
+  local branch = hud.fit_words(item.branch, width - name_width - 1)
   return {
-    { hud.pad(label, name_width), name_hl, bg = bg },
-    { hud.pad(" " .. item.branch, width - name_width), "EldenHudDesc", bg = bg },
+    { hud.pad(hud.fit_name(label, name_width), name_width), name_hl, bg = bg },
+    { hud.pad(branch and (" " .. branch) or "", width - name_width), "EldenHudDesc", bg = bg },
   }
 end
 
-local function list_row(item, selected, width)
-  local bg = selected and "EldenHudSlotSel" or nil
+-- the spotlight: the selected piece in full light, the ones beside it in its spill
+local function spot_bg(selected, near)
+  if selected then
+    return "EldenHudSlotSel"
+  end
+  return near and "EldenHudSpotNear" or nil
+end
+
+local function list_row(item, selected, width, near, name_width)
+  local bg = spot_bg(selected, near)
   local count = item.count and tostring(item.count) or ""
   local row = {
     { selected and "▸ " or "  ", "EldenHudFrameSel", bg = bg },
@@ -273,8 +299,14 @@ local function list_row(item, selected, width)
     },
     { " ", bg = bg },
   }
+  -- the count steps aside before the name would be cut
+  local label = item.slot or item.name
+  if count ~= "" and vim.api.nvim_strwidth(label) > width - M.ROW_PREFIX - #count - 1 then
+    count = ""
+  end
   local label_width = width - M.ROW_PREFIX - (count == "" and 0 or #count + 1)
-  vim.list_extend(row, label_chunks(item, label_width, selected, bg))
+  local label_column = name_width and math.min(name_width, label_width) or nil
+  vim.list_extend(row, label_chunks(item, label_width, selected, bg, label_column))
   if count ~= "" then
     table.insert(row, { " ", bg = bg })
     table.insert(row, { count, "EldenHudCount", bg = bg })
@@ -285,10 +317,15 @@ end
 local function list_line(list, index, cursor, focused)
   local item = list.items[index]
   if item then
-    return list_row(item, focused and index == cursor, list.width - 4)
+    local near = focused and math.abs(index - cursor) == 1
+    local width = list.width - 4
+    local names = name_column(list.items, width - M.ROW_PREFIX)
+    return list_row(item, focused and index == cursor, width, near, names)
   end
-  if index == 1 then
-    return { { list.empty, "EldenHudDim" } }
+  -- an empty list says so across its first rows, whole or not at all
+  local empty = hud.wrap_whole(list.empty, list.width - 4, list.rows) or {}
+  if #list.items == 0 and empty[index] then
+    return { { empty[index], "EldenHudDim" } }
   end
   return {}
 end
@@ -314,9 +351,13 @@ end
 
 local function close_up(model, width)
   local item = parts.selected(model)
-  local lines = item and hud.wrap(item.desc or "", width - 4) or {}
+  local lines = hud.reveal(
+    item and hud.wrap_rows(item.desc or "", width - 4, M.CLOSE_UP_ROWS - 1) or {},
+    model.typed
+  )
   local rows = { top_edge(model.examine or "Close up", nil, width, false) }
-  table.insert(rows, framed({ { item and item.name or "", "EldenHudName" } }, width, false))
+  local name = item and hud.fit_name(item.name, width - 4) or ""
+  table.insert(rows, framed({ { name, "EldenHudName" } }, width, false))
   for index = 1, M.CLOSE_UP_ROWS - 1 do
     table.insert(rows, framed({ { lines[index] or "", "EldenHudDesc" } }, width, false))
   end
@@ -324,24 +365,60 @@ local function close_up(model, width)
   return rows
 end
 
--- the call sheet's head: the project and how much changed, the branch whole on the next line
+-- what the call sheet calls each of its lines, in the world's words
+local SHEET_LABELS = { scene = "SCENE", cast = "CAST", location = "LOCATION", call = "CALL" }
+
+local function sheet_label(model, key)
+  return ((model.hud or {}).stats or {})[key] or SHEET_LABELS[key]
+end
+
+-- a line of the call sheet: its label and the first of the value's forms that fits whole, a name
+-- cut where it breaks as the last resort
+local function sheet_line(model, key, forms, hl, width)
+  local room = width - M.SHEET_LABEL
+  local value = hud.first_fit(forms, room) or hud.fit_name(forms[1] or "·", room)
+  return {
+    { hud.pad(sheet_label(model, key), M.SHEET_LABEL), "EldenHudDim" },
+    { value, hl },
+  }
+end
+
+-- the call time: when the session started and how much changed since, shortening to the time
+-- alone before it would ever be cut
+local function call_times(model)
+  local status = model.status or {}
+  local count = status.changes and #status.changes or nil
+  local tally = count == nil and "counting…" or count == 0 and "clean" or (count .. " changed")
+  if not model.session_start then
+    return { tally }
+  end
+  return {
+    ("since %s  ·  %s"):format(model.session_start, tally),
+    "since " .. model.session_start,
+    model.session_start,
+  }
+end
+
+-- the call sheet's head: the scene is the branch, the cast the region's character, the location
+-- the project and the call when the session began
 local function sheet_head(model, width)
   local status = model.status or {}
   if not status.project then
-    return { { { hud.fit(parts.word(model, "no_quest"), width), "EldenHudDim" } }, {} }
+    local rows = {}
+    for _, line in ipairs(hud.wrap_whole(parts.word(model, "no_quest"), width, M.SHEET_ROWS) or {}) do
+      table.insert(rows, { { line, "EldenHudDim" } })
+    end
+    while #rows < M.SHEET_ROWS do
+      table.insert(rows, {})
+    end
+    return rows
   end
-  local count = status.changes and #status.changes or nil
-  local tally = count == nil and "counting…" or count == 0 and "clean" or (count .. " changed")
-  local dot = count and count > 0 and "EldenHudKey" or "EldenHudDim"
-  local name_width = width - 5 - vim.api.nvim_strwidth(tally)
+  local cast = model.character or status.character or "·"
   return {
-    {
-      { "󰊢 ", "EldenHudIcon" },
-      { hud.pad(status.project, name_width), "EldenHudBanner" },
-      { " ● ", dot },
-      { tally, "EldenHudCount" },
-    },
-    { { " ", "EldenHudKey" }, { hud.fit(status.branch or "?", width - 2), "EldenHudName" } },
+    sheet_line(model, "scene", { status.branch or "·" }, "EldenHudBanner", width),
+    sheet_line(model, "cast", { cast, cast:match("^%S+") }, "EldenHudName", width),
+    sheet_line(model, "location", { status.project }, "EldenHudName", width),
+    sheet_line(model, "call", call_times(model), "EldenHudCount", width),
   }
 end
 
@@ -356,7 +433,7 @@ local function sheet_last(model, width)
     { selected and "▸ " or "  ", "EldenHudFrameSel" },
     { "󰘍 last  ", "EldenHudDim", bg = bg, spot = selected and "cursor" or nil },
     {
-      hud.fit(status.last_file, width - 10),
+      hud.fit_name(status.last_file, width - 10),
       selected and "EldenHudBanner" or "EldenHudName",
       bg = bg,
     },
@@ -441,7 +518,7 @@ local function mirror(model, plan)
     rows,
     hud.center({ { parts.champion_name(model.character or "", width), "EldenHudTitle" } }, width)
   )
-  table.insert(rows, hud.center({ { hud.fit(model.area or "", width), "EldenHudSection" } }, width))
+  table.insert(rows, parts.whole_line(model.area, "EldenHudSection", width))
   return rows
 end
 

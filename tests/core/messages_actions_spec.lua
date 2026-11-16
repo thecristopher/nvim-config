@@ -107,3 +107,32 @@ describe("list", function()
     )
   end)
 end)
+
+describe("unmoved", function()
+  local store = {
+    ["/repo"] = {
+      ["love.lua"] = {
+        { line = 3, text = "Claire was here" },
+        { line = 9, text = "Malenia's anniversary" },
+      },
+    },
+  }
+
+  it("leaves Inde's notes alone when nothing moved", function()
+    local now =
+      { { line = 9, text = "Malenia's anniversary" }, { line = 3, text = "Claire was here" } }
+    assert.is_true(actions.unmoved(store, "/repo", "love.lua", now))
+  end)
+
+  it("notices when an edit pushed Claire's note down a line", function()
+    local now =
+      { { line = 4, text = "Claire was here" }, { line = 10, text = "Malenia's anniversary" } }
+    assert.is_false(actions.unmoved(store, "/repo", "love.lua", now))
+  end)
+
+  it("notices when a note was deleted with its line", function()
+    assert.is_false(
+      actions.unmoved(store, "/repo", "love.lua", { { line = 3, text = "Claire was here" } })
+    )
+  end)
+end)

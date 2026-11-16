@@ -2,19 +2,30 @@
 -- play/pause, next and previous from a panel with the album cover. Cider is asked first because it
 -- runs on every OS, Apple Music after it on macOS and Windows. `vim.g.eldentree_music = false`
 -- turns it off, `vim.g.eldentree_cider_token` carries Cider's API token when its auth is on.
+-- A new song tints the music groups after its cover, says its name in a quiet notice and fires
+-- `User EldentreeMusicChanged`, and while the panel is closed the statusline sings its lyrics.
 local actions = require("core.music.actions")
 local panel = require("core.music.panel")
+local ticker = require("core.music.ticker")
+local tint = require("core.music.tint")
 
 local M = {}
 
 local POLL_MS = 3000
 local MAX_TEXT = 40
+-- the players answer for the first time a moment after startup, that song is not news
+local STARTUP_MS = 10000
+local NOTICE_ID = "eldentree_music_notice"
 local apple = actions.apple_music(require("core.utils").platform())
 
 local timer
 local polling = false
 local now = { source = nil, track = nil, label = "", polled_at = 0 }
 local warned_token = false
+local focused = true
+-- the song playing now and the last one heard, nil before any song was
+local song = { key = nil, last = nil }
+local started_at = vim.uv.now()
 
 local function enabled()
   return vim.g.eldentree_music ~= false
@@ -39,13 +50,63 @@ local function run(cmd, on_done)
   end
 end
 
+local function announce(track)
+  local lore = require("core.franchise").current()
+  vim.notify(actions.notice(track, lore.skin.music.divider.gem), vim.log.levels.INFO, {
+    -- skipping through songs replaces the notice in place instead of stacking one per song
+    id = NOTICE_ID,
+    title = lore.music.now_playing,
+    timeout = 2500,
+  })
+end
+
+local function hud_visible()
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.bo[vim.api.nvim_win_get_buf(win)].filetype == "eldentree_hud" then
+      return true
+    end
+  end
+  return false
+end
+
+-- the panel and the HUD's player already name the song, and the first answers after startup are
+-- what was playing all along
+local function song_on_screen()
+  return panel.is_open() or hud_visible() or vim.uv.now() - started_at < STARTUP_MS
+end
+
+-- the karaoke timer runs only while a song plays and someone looks at the editor
+local function follow_ticker()
+  if focused and now.track and now.track.playing then
+    return ticker.start()
+  end
+  ticker.stop()
+end
+
+-- a new song (or the silence after one) tints the groups, may be announced and tells the HUD
+local function follow_song(source, track)
+  local key = actions.track_key(track)
+  if key == song.key then
+    return
+  end
+  song.key = key
+  tint.follow(track, source)
+  if actions.announces(song.last, key, focused, song_on_screen()) then
+    announce(track)
+  end
+  song.last = key or song.last
+  vim.api.nvim_exec_autocmds("User", { pattern = "EldentreeMusicChanged", modeline = false })
+end
+
 local function show(source, track, asked_at)
   polling = false
+  follow_song(source, track)
   now.source, now.track = source, track
   -- the player read its position somewhere between the question and the answer, the middle is
   -- the best guess, and the lyrics count the seconds from there until the next answer
   local answered = vim.uv.now()
   now.polled_at = asked_at and (asked_at + answered) / 2 or answered
+  follow_ticker()
   local label = actions.label(track, MAX_TEXT)
   if label == now.label then
     return
@@ -135,6 +196,11 @@ end
 
 --- Opens the now playing panel with the cover and the controls.
 function M.open()
+  if not require("core.music.actions.panel").fits(vim.o.columns) then
+    return vim.notify("The editor is too narrow for the music panel", vim.log.levels.INFO, {
+      title = "Music",
+    })
+  end
   if not now.track then
     return vim.notify(
       "Nothing is playing in Cider or Apple Music",
@@ -158,9 +224,21 @@ function M.elapsed()
   return track.position + (vim.uv.now() - now.polled_at) / 1000
 end
 
---- The statusline piece: icon, artist and title, empty when nothing plays.
+--- What is playing right now, for the HUD and the tint.
+---@return table|nil track nil when nothing plays
+---@return string|nil source "cider" or "music"
+function M.now_playing()
+  return now.track, now.source
+end
+
+--- The statusline piece: the line being sung while lyrics show and the panel is closed, otherwise
+--- icon, artist and title, empty when nothing plays.
 ---@return string
 function M.statusline()
+  local line = ticker.line()
+  if line then
+    return actions.lyric_label(line, MAX_TEXT)
+  end
   return now.label
 end
 
@@ -179,11 +257,26 @@ end
 
 function M.setup()
   panel.setup()
+  tint.setup()
   start()
   -- nobody reads the statusline while nvim is in the background, so the players get a rest too
   local group = vim.api.nvim_create_augroup("eldentree_music", { clear = true })
-  vim.api.nvim_create_autocmd("FocusLost", { group = group, callback = stop })
-  vim.api.nvim_create_autocmd("FocusGained", { group = group, callback = start })
+  vim.api.nvim_create_autocmd("FocusLost", {
+    group = group,
+    callback = function()
+      focused = false
+      stop()
+      follow_ticker()
+    end,
+  })
+  vim.api.nvim_create_autocmd("FocusGained", {
+    group = group,
+    callback = function()
+      focused = true
+      start()
+      follow_ticker()
+    end,
+  })
 
   vim.api.nvim_create_user_command("Music", function(opts)
     M.control(opts.args ~= "" and opts.args or "playpause")

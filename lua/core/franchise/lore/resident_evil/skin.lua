@@ -22,17 +22,44 @@ return {
   },
   -- the cursor's guicursor shapes: the typewriter's caret underlines what you type
   cursor = { normal = "block", insert = "hor15", replace = "block-blinkon200-blinkoff200" },
-  -- the small marks everywhere else: hard guides, static where whitespace trails, the save room's arrows and a tape reel spinning
+  -- the small marks everywhere else: hard guides, a quiet dot where whitespace trails, the save room's arrows and a tape reel spinning
   glyphs = {
     indent = "┆",
     scope = "┃",
-    list = { tab = "▸ ", trail = "░", nbsp = "␣" },
+    list = { tab = "▸ ", trail = "·", nbsp = "␣" },
     fold = { open = "▼", close = "▶" },
     diff = "░",
     prompt = "▶ ",
     keys = { breadcrumb = "▶", separator = "▸", group = "▪ " },
     scrollbar = { "▀", "▄" },
     spinner = { frames = { "▖", "▘", "▝", "▗" }, interval = 100 },
+    -- past the end of the buffer, and the lines between windows
+    eob = " ",
+    split = { vert = "║", horiz = "═" },
+  },
+  -- the explorer: hard guides like the map's corridors, typewriter files and rooms marked on the map
+  tree = {
+    indent = "┆",
+    last = "└",
+    collapsed = "▶",
+    expanded = "▼",
+    folder = { closed = "󰉋", open = "󰝰", empty = "󰉖" },
+    thread = "󰍩",
+    message = "󰼭",
+    left = "□",
+    cleared = "■",
+  },
+  -- the code's own signature: a typewriter writes upright, so no italics anywhere, bold keywords and
+  -- types stamped on the page, strings in herb green
+  syntax = {
+    italic = false,
+    keyword = { color = "keyword", style = { "bold" } },
+    ["function"] = { color = "func", style = {} },
+    type = { color = "sky", style = { "bold" } },
+    string = { color = "green", style = {} },
+    constant = { color = "peach", style = {} },
+    comment = { color = "comment", style = {} },
+    property = { color = "func", style = {} },
   },
   -- the snacks picker layout, see lua/plugins/snacks.lua: the item list beside what you examine
   picker = "inventory",
@@ -47,10 +74,10 @@ return {
     color = "#C8202C",
     style = "drip",
   },
-  -- the now playing panel: the progress bar runs like a tape counter, dividers frame the lyrics
+  -- the now playing panel: the progress bar fills one block at a time, dividers frame the lyrics
   -- and the marks wrap the sung line
   music = {
-    bar = { done = "", head = "▶", left = "" },
+    bar = { done = "█", head = "▶", left = "░" },
     divider = { line = "═", gem = "■" },
     sung = { "▶ ", " ◀" },
   },

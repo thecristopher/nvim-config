@@ -121,6 +121,12 @@ local function draw(s, elapsed)
   end
 end
 
+--- Tells whether the editor is resting right now.
+---@return boolean
+function M.resting()
+  return scene ~= nil
+end
+
 function M.wake()
   if not scene then
     return
@@ -133,6 +139,7 @@ function M.wake()
   pcall(vim.api.nvim_win_close, scene.win, true)
   pcall(vim.api.nvim_buf_delete, scene.buf, { force = true })
   scene = nil
+  require("core.voice").say("woke")
 end
 
 function M.rest()

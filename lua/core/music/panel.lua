@@ -62,14 +62,26 @@ local function define_highlights()
   sung_line, far_line = groups.EldenMusicLyric, groups.EldenMusicLyricFar
 end
 
+--- Tells whether lyrics are shown, the choice made with l winning over vim.g.eldentree_lyrics.
+---@return boolean
+function M.lyrics_shown()
+  return showing_lyrics()
+end
+
 --- Tells whether the panel is on screen.
 ---@return boolean
 function M.is_open()
-  return current ~= nil and vim.api.nvim_win_is_valid(current.win)
+  if current == nil or not vim.api.nvim_win_is_valid(current.win) then
+    return false
+  end
+  -- another screen opened inside the panel's window leaves the window but takes its buffer
+  return vim.api.nvim_buf_is_valid(current.buf)
+    and vim.api.nvim_win_get_buf(current.win) == current.buf
 end
 
 --- Closes the panel, its cover and its animations.
-function M.close()
+---@param keep_window? boolean leave the window open, it shows something else now
+function M.close(keep_window)
   if not current then
     return
   end
@@ -83,7 +95,9 @@ function M.close()
     closing.equalizer:stop()
   end
   require("core.hud.portrait").close("music")
-  pcall(vim.api.nvim_win_close, closing.win, true)
+  if not keep_window then
+    pcall(vim.api.nvim_win_close, closing.win, true)
+  end
 end
 
 local function view()
@@ -276,8 +290,12 @@ local function map_keys(buf)
     scroll(-1)
   end, "Scroll the lyrics up")
   map("l", M.toggle_lyrics, "Show or hide the lyrics")
-  map("q", M.close, "Close")
-  map("<Esc>", M.close, "Close")
+  map("q", function()
+    M.close()
+  end, "Close")
+  map("<Esc>", function()
+    M.close()
+  end, "Close")
 end
 
 -- where the panel sits and how tall it is, it grows upward from the statusline's corner
@@ -328,6 +346,8 @@ end
 --- Shows the lyrics under the song or hides them, resizing the panel around the change.
 function M.toggle_lyrics()
   lyrics_shown = not showing_lyrics()
+  -- the statusline sings the lyrics too, so it hears about the choice
+  require("core.utils").refresh_statusline()
   if not M.is_open() then
     return
   end
@@ -372,7 +392,23 @@ function M.open(track, source)
   }
   current.win = open_window(buf)
   map_keys(buf)
-  vim.api.nvim_create_autocmd("WinLeave", { buffer = buf, once = true, callback = M.close })
+  vim.api.nvim_create_autocmd("WinLeave", {
+    buffer = buf,
+    once = true,
+    callback = function()
+      M.close()
+    end,
+  })
+  -- something else loaded in the panel's window wipes its buffer without leaving the window
+  vim.api.nvim_create_autocmd("BufWipeout", {
+    buffer = buf,
+    once = true,
+    callback = function()
+      vim.schedule(function()
+        M.close(true)
+      end)
+    end,
+  })
   draw(track, source)
   start_animations()
 end

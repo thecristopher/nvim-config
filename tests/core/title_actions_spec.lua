@@ -114,3 +114,53 @@ describe("bulb_lit", function()
     assert.equal(actions.bulb_lit(1, 0), actions.bulb_lit(2, actions.MARQUEE.step_ms))
   end)
 end)
+
+describe("font_for", function()
+  it("writes Malenia's world in thin strokes", function()
+    assert.equal(actions.THIN, actions.font_for("shimmer"))
+  end)
+
+  it("keeps Claire's drip in solid blocks", function()
+    assert.equal(actions.FONT, actions.font_for("drip"))
+  end)
+
+  it("has every letter in both fonts at the same height", function()
+    for letter, glyph in pairs(actions.FONT) do
+      assert.equal(actions.HEIGHT, #actions.THIN[letter])
+      assert.equal(actions.HEIGHT, #glyph)
+    end
+  end)
+end)
+
+describe("ring", function()
+  it("arcs over the name, every row as wide as asked", function()
+    local rows = actions.ring(4, 60)
+    assert.equal(4, #rows)
+    for _, row in ipairs(rows) do
+      assert.equal(60, vim.fn.strdisplaywidth(row))
+    end
+  end)
+
+  it("is narrowest at the top and widest at the bottom, like an arch over Inde", function()
+    local spans = actions.arch(5, 60)
+    assert.is_true(spans[1].right - spans[1].left < spans[5].right - spans[5].left)
+  end)
+
+  it("turns its corners round", function()
+    assert.is_truthy(actions.ring(4, 60)[1]:find("╭", 1, true))
+  end)
+end)
+
+describe("flicker", function()
+  it("keeps the light steady most of the time", function()
+    local steady = 0
+    for elapsed = 0, 30000, 37 do
+      steady = steady + (actions.flicker(elapsed) == 1 and 1 or 0)
+    end
+    assert.is_true(steady / (30000 / 37) > 0.9)
+  end)
+
+  it("stutters at the start of a failing period", function()
+    assert.is_true(actions.flicker(10) < 1)
+  end)
+end)

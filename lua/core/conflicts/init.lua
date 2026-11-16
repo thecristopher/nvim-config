@@ -16,7 +16,33 @@ local function root_of(buf)
   return vim.fs.root(buf, ".git")
 end
 
+-- a conflict only exists while git is in the middle of something, a stat costs nothing next to
+-- spawning git on every BufEnter
+local function merging(root)
+  local dotgit = root .. "/.git"
+  local stat = vim.uv.fs_stat(dotgit)
+  if not stat then
+    return false
+  end
+  local dir = dotgit
+  -- a worktree's .git is a file naming the real git directory
+  if stat.type == "file" then
+    local ok, lines = pcall(vim.fn.readfile, dotgit, "", 1)
+    dir = require("core.repos.actions").gitdir_from_file(ok and lines[1] or nil, root) or dotgit
+  end
+  for _, name in ipairs(actions.IN_PROGRESS) do
+    if vim.uv.fs_stat(dir .. "/" .. name) then
+      return true
+    end
+  end
+  return false
+end
+
 local function count_unmerged(root)
+  if not merging(root) then
+    unmerged[root] = nil
+    return
+  end
   vim.system(
     { "git", "-C", root, "diff", "--name-only", "--diff-filter=U" },
     { text = true },
@@ -40,11 +66,15 @@ function M.refresh(buf)
   end
   local root = root_of(buf)
   local files = root and unmerged[root] or 1
+  local was_staged = staged[buf]
   staged[buf] = count > 0 or nil
   require("core.boss").stage(buf, {
     name = actions.boss_name(words(), files),
     count = count,
   })
+  if was_staged and count == 0 then
+    require("core.voice").say("conflicts_cleared")
+  end
 end
 
 function M.setup()

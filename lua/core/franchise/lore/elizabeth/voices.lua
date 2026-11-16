@@ -1,5 +1,5 @@
 -- What Elizabeth says in each role when something happens, written from the voice sheet in
--- docs/voices/elizabeth.md. {branch} and {boss} are filled in when the moment has them.
+-- docs/voices/elizabeth.md. {branch}, {boss} and {number} are filled in when the moment has them.
 return {
   westview = {
     trial_passed = {
@@ -33,6 +33,36 @@ return {
       "{boss} is gone. Nobody touches what's ours.",
       "{boss} broke first. I told you it would.",
       "That was {boss}. You barely needed me. Barely.",
+    },
+    committed = {
+      "Committed. Some things should be permanent, like this.",
+      "Saved on {branch}. I'll keep it safe in our little world.",
+      "Locked in. No rewriting this one, it's perfect.",
+    },
+    pr_opened = {
+      "PR #{number} is out. Let them see what you built.",
+      "#{number}. The whole town will read it, they always do.",
+      "PR #{number}. I'm proud. I know, I always know.",
+    },
+    region_arrived = {
+      "Welcome to Westview. Tonight I'm Wanda, and you're home.",
+      "The show starts now. You're the lead.",
+      "Westview again. The porch light is on for you.",
+    },
+    morning = {
+      "Good morning. The kitchen smells like coffee, magic optional.",
+      "You're back. I made the day a little brighter, just for you.",
+      "Morning, love. New episode, same us.",
+    },
+    conflicts_cleared = {
+      "Conflicts gone. Two realities, one home again.",
+      "The merge holds. Nothing here is broken anymore.",
+      "No more conflicts. Everything fits, like it should.",
+    },
+    woke = {
+      "You napped. I kept the world still for you.",
+      "Awake? I didn't change a thing while you slept. Promise.",
+      "Hi, sleepyhead. The show waited for you.",
     },
   },
   separate_ways = {
@@ -68,6 +98,36 @@ return {
       "{boss} never saw us coming.",
       "That's {boss} handled. Try to keep up, partner.",
     },
+    committed = {
+      "Committed. Don't ask how I knew you would.",
+      "Saved on {branch}. Clean, like we planned.",
+      "Locked in. You owe me a drink.",
+    },
+    pr_opened = {
+      "PR #{number}. Let's see who flinches first.",
+      "#{number} is out. I'll be watching. I always am.",
+      "PR #{number}. Nice work, handsome.",
+    },
+    region_arrived = {
+      "Separate ways today, same mission. I'm Ada.",
+      "Ada Wong, at your service. Don't get used to it.",
+      "You found me. Took you long enough.",
+    },
+    morning = {
+      "Morning. You look good when you're focused.",
+      "Back already? I knew you would be.",
+      "New day. Same red dress.",
+    },
+    conflicts_cleared = {
+      "Conflicts handled. No loose ends.",
+      "Merge is clean. You're getting better at this.",
+      "No conflicts left. Smooth exit.",
+    },
+    woke = {
+      "Up already? I was enjoying the view.",
+      "Rested? Good. I need you sharp.",
+      "You slept. I kept watch. Don't tell anyone.",
+    },
   },
   moonrise_towers = {
     trial_passed = {
@@ -101,6 +161,36 @@ return {
       "{boss} is down. And we're still standing. Together.",
       "That was {boss}. The dark lost again.",
       "{boss} is finished. Let's find a quiet spot under the moon.",
+    },
+    committed = {
+      "Committed. Under Selûne's light, no less.",
+      "Saved on {branch}. I suppose that deserves a small blessing.",
+      "Locked in. One less curse to lift.",
+    },
+    pr_opened = {
+      "PR #{number}. May the reviewers be kinder than most clerics.",
+      "#{number} is out. I'll pray for it. Quietly.",
+      "PR #{number}. Fine, I'm impressed. Don't tell anyone.",
+    },
+    region_arrived = {
+      "Moonrise Towers. Not my favorite place, but you're here, so.",
+      "Shadowheart, cleric of Selûne. I'll heal whatever you break.",
+      "Under the moon again. Stay close.",
+    },
+    morning = {
+      "Morning. The moon is gone, but I'm still here.",
+      "You're back. I saved you a seat by the fire.",
+      "A new day. Try not to get cursed before lunch.",
+    },
+    conflicts_cleared = {
+      "Conflicts gone. A curse lifted, if you ask me.",
+      "The merge is clean. Selûne approves. So do I.",
+      "No more conflicts. Healing complete.",
+    },
+    woke = {
+      "Awake? You looked peaceful. It was almost annoying.",
+      "Rested. Good, I'm out of healing potions.",
+      "You slept under the moon. It suits you.",
     },
   },
   danger_room = {
@@ -136,6 +226,36 @@ return {
       "{boss} never stood a chance against the two of us.",
       "That was {boss}. Sheathe it, we earned the evening.",
     },
+    committed = {
+      "Committed. Focused, precise, done.",
+      "Saved on {branch}. A clean cut.",
+      "Locked in. I felt that one land.",
+    },
+    pr_opened = {
+      "PR #{number}. Let them read it. I already read your mind.",
+      "#{number} is out. Your aim was true.",
+      "PR #{number}. Graceful, like a well thrown blade.",
+    },
+    region_arrived = {
+      "Psylocke. The Danger Room is set to hard. You'll handle it.",
+      "The Danger Room is ours today. Stay focused.",
+      "Training session. I'll be in your head, in a nice way.",
+    },
+    morning = {
+      "Morning. Clear mind, sharp blade.",
+      "You're back. I sensed you before you walked in.",
+      "New session. Let's make it flawless.",
+    },
+    conflicts_cleared = {
+      "Conflicts cut away. Clean edge.",
+      "Merge resolved. Your mind was clear.",
+      "No conflicts left. Perfect form.",
+    },
+    woke = {
+      "A rested mind focuses better. Good.",
+      "Awake? Your thoughts were very quiet. Cute.",
+      "Back with me. Let's train.",
+    },
   },
   zebes = {
     trial_passed = {
@@ -169,6 +289,36 @@ return {
       "{boss} is down. Again. They never learn.",
       "{boss} is gone. Good shooting, partner.",
       "That was {boss}. The planet's quiet now. Just us.",
+    },
+    committed = {
+      "Committed. Data logged.",
+      "Saved on {branch}. Save station reached.",
+      "Locked in. Moving on.",
+    },
+    pr_opened = {
+      "PR #{number}. Transmission sent.",
+      "#{number} deployed. Awaiting response.",
+      "PR #{number}. Good work, partner.",
+    },
+    region_arrived = {
+      "Samus Aran. Zebes is hostile today. Stay behind me.",
+      "Landing on Zebes. Scanning.",
+      "Mission start. I'm with you.",
+    },
+    morning = {
+      "Morning. The suit is charged.",
+      "You're back. Systems online.",
+      "New mission. Let's go.",
+    },
+    conflicts_cleared = {
+      "Conflicts eliminated. Path clear.",
+      "Merge stable. No threats.",
+      "No conflicts. Area secured.",
+    },
+    woke = {
+      "Rested. Energy restored.",
+      "You're up. Good. The planet didn't wait.",
+      "Back online. Let's move.",
     },
   },
   limbo = {
@@ -204,6 +354,36 @@ return {
       "{boss} never stood a chance against the soulsword.",
       "That was {boss}. Limbo is quiet. Stay.",
     },
+    committed = {
+      "Committed. Teleported straight into history.",
+      "Saved on {branch}. Limbo can't touch it now.",
+      "Locked in. The sword's down, for a minute.",
+    },
+    pr_opened = {
+      "PR #{number}. Let's see if the reviewers survive.",
+      "#{number} is open. Like a portal, but less screaming.",
+      "PR #{number}. Not bad. For a human.",
+    },
+    region_arrived = {
+      "Magik. Welcome to Limbo, try not to get eaten.",
+      "Limbo today. I rule it, so you're safe.",
+      "Stepping disc is open. Come on.",
+    },
+    morning = {
+      "Morning. The demons are asleep, mostly.",
+      "You're back. I didn't even have to teleport you.",
+      "New day in Limbo. Same rules: stay close.",
+    },
+    conflicts_cleared = {
+      "Conflicts banished. Back to Limbo with them.",
+      "Merge done. Clean cut, Soulsword style.",
+      "No conflicts left. Good. I hate cleaning up.",
+    },
+    woke = {
+      "Up? Good. Limbo time is weird, you only slept a minute.",
+      "Rested. Now hold my hand, we're jumping.",
+      "You slept. I kept the demons out.",
+    },
   },
   courtroom = {
     trial_passed = {
@@ -237,6 +417,36 @@ return {
       "{boss} is down. Smashing and legally sound.",
       "{boss} lost the case and the fight.",
       "That was {boss}. Court is adjourned. Hug.",
+    },
+    committed = {
+      "Committed. Entered into evidence.",
+      "Saved on {branch}. The record will show it.",
+      "Locked in. Motion granted.",
+    },
+    pr_opened = {
+      "PR #{number} is filed. Court is in session.",
+      "#{number}. Opening arguments look strong.",
+      "PR #{number}. I'd take this case.",
+    },
+    region_arrived = {
+      "Jennifer Walters, attorney at law. And occasionally green.",
+      "The courtroom is ours today. Counsel, approach.",
+      "Court is in session. I'm on your side, obviously.",
+    },
+    morning = {
+      "Morning, counselor. Coffee, then justice.",
+      "You're back. I already billed for the wait.",
+      "New day, new docket.",
+    },
+    conflicts_cleared = {
+      "Conflicts settled out of court.",
+      "Merge resolved. Both parties satisfied.",
+      "No conflicts left. Case dismissed.",
+    },
+    woke = {
+      "You napped in chambers. I won't tell the judge.",
+      "Rested? Good. Closing arguments next.",
+      "Awake. Court resumes.",
     },
   },
   limgrave = {
@@ -272,6 +482,36 @@ return {
       "{boss} is down. The fog lifts.",
       "That was {boss}. Rest now. You earned it.",
     },
+    committed = {
+      "Committed. A spell well cast.",
+      "Saved on {branch}. I'll keep it safe, like everything of yours.",
+      "Locked in. Neat. Very neat.",
+    },
+    pr_opened = {
+      "PR #{number}. Let the sorceresses judge it.",
+      "#{number} is out. I'm proud of you, truly.",
+      "PR #{number}. You make this look like magic.",
+    },
+    region_arrived = {
+      "Triss Merigold. Limgrave today, but the magic's the same.",
+      "A new land. I'll light the way.",
+      "Hello again. I missed you.",
+    },
+    morning = {
+      "Good morning. I brewed something warm.",
+      "You're back. The herbs are fresh, the code isn't. Yet.",
+      "New day. Let's make it a quiet one.",
+    },
+    conflicts_cleared = {
+      "Conflicts dispelled. Easy, with you.",
+      "The merge is whole again, like a healing spell.",
+      "No conflicts left. Lovely.",
+    },
+    woke = {
+      "You rested. Good, a tired mage makes mistakes.",
+      "Awake? I kept the fire going.",
+      "Morning, sleepyhead. Well, afternoon.",
+    },
   },
   raccoon_city = {
     trial_passed = {
@@ -305,6 +545,36 @@ return {
       "{boss} is down. For now. I'll keep watch.",
       "{boss} finally stopped following us.",
       "That was {boss}. We're out. Together.",
+    },
+    committed = {
+      "Committed. Clean and quick.",
+      "Saved on {branch}. We're doing fine.",
+      "Locked in. Next.",
+    },
+    pr_opened = {
+      "PR #{number}. Let's see if it survives the review.",
+      "#{number} is out. I've got your back.",
+      "PR #{number}. Good work, partner.",
+    },
+    region_arrived = {
+      "Jill Valentine. Raccoon City again, and you're with me.",
+      "Stay close. I know these streets.",
+      "Raccoon City. Let's get out of here together.",
+    },
+    morning = {
+      "Morning. Nemesis is late. Good.",
+      "You're back. Let's move.",
+      "New day. We survive this one too.",
+    },
+    conflicts_cleared = {
+      "Conflicts gone. That was some lockpicking.",
+      "Merge is clean. We made it out.",
+      "No more conflicts. Breathe.",
+    },
+    woke = {
+      "You're up. I kept watch.",
+      "Rested? Good. We move at dawn.",
+      "Awake. Come here, you look cold.",
     },
   },
   haligtree = {
@@ -340,6 +610,36 @@ return {
       "{boss} met my blade, and yours.",
       "That was {boss}. A flower that did not rot. Ours.",
     },
+    committed = {
+      "Committed. A petal falls into place.",
+      "Saved on {branch}. Your blade did not waver.",
+      "Sealed. Stay a moment with me.",
+    },
+    pr_opened = {
+      "PR #{number}. Let them face it, as I face every foe.",
+      "#{number} goes forth. I await the verdict with you.",
+      "PR #{number}. Graceful, like the dance.",
+    },
+    region_arrived = {
+      "Malenia today. The Haligtree, and you beside me.",
+      "I have never known defeat. Today, neither will you.",
+      "The petals are falling. Come, stand with me.",
+    },
+    morning = {
+      "Morning. The flowers opened for you.",
+      "You return. I waited beneath the tree.",
+      "A new day. Let us begin, slowly.",
+    },
+    conflicts_cleared = {
+      "Conflicts cut away. One clean bloom.",
+      "The merge is mended. Patience, always patience.",
+      "No conflicts left. Rest your blade.",
+    },
+    woke = {
+      "You rested. The rot kept its distance.",
+      "Awake. I watched the petals while you slept.",
+      "Rise, love. The dance goes on.",
+    },
   },
   earth_two = {
     trial_passed = {
@@ -373,6 +673,36 @@ return {
       "{boss} is down. Wrong earth to mess with.",
       "{boss} never saw the cape coming.",
       "That was {boss}. Now, about that dinner.",
+    },
+    committed = {
+      "Committed. Barely had to try.",
+      "Saved on {branch}. Strong and done.",
+      "Locked in. Next challenge?",
+    },
+    pr_opened = {
+      "PR #{number}. Bring on the reviewers.",
+      "#{number} is up. Let's see them argue with that.",
+      "PR #{number}. Hero work.",
+    },
+    region_arrived = {
+      "Power Girl, Earth Two. You picked a good day.",
+      "Up, up, and coding.",
+      "Earth Two today. I'll handle the heavy lifting.",
+    },
+    morning = {
+      "Morning, hero. Breakfast first.",
+      "You're back. I flew around the planet while I waited.",
+      "New day. Let's be amazing.",
+    },
+    conflicts_cleared = {
+      "Conflicts crushed.",
+      "Merge is clean. Didn't even need to punch it.",
+      "No conflicts left. Strongest merge on this earth.",
+    },
+    woke = {
+      "Up? Good. Hero naps are allowed.",
+      "Rested? Then let's go save something.",
+      "Awake. You snore cute.",
     },
   },
   azarath = {
@@ -408,6 +738,36 @@ return {
       "{boss} is gone. The dark didn't win.",
       "That was {boss}. I'm glad you were here.",
     },
+    committed = {
+      "Committed. Fine. That was good.",
+      "Saved on {branch}. Quietly.",
+      "Locked in. Don't make a big deal out of it.",
+    },
+    pr_opened = {
+      "PR #{number}. I'll pretend I'm not nervous for you.",
+      "#{number}. The reviewers' emotions are... loud.",
+      "PR #{number}. Good. Really.",
+    },
+    region_arrived = {
+      "Raven. Azarath is calm today. Let's keep it that way.",
+      "Azarath Metrion Zinthos. Okay, let's work.",
+      "I'm here. Don't make it weird.",
+    },
+    morning = {
+      "Morning. The tea is ready. Don't talk too much.",
+      "You're back. I... noticed.",
+      "New day. Quiet, please.",
+    },
+    conflicts_cleared = {
+      "Conflicts gone. Balance restored.",
+      "Merge done. Inner peace, sort of.",
+      "No conflicts. That's... nice.",
+    },
+    woke = {
+      "You slept. It was quiet. I liked it.",
+      "Awake? Your dreams were loud.",
+      "Rested. Good. Let's meditate on this bug.",
+    },
   },
   shiranui = {
     trial_passed = {
@@ -441,6 +801,36 @@ return {
       "{boss} is down. Did you see my fan?",
       "{boss} lost the round. And the match.",
       "That was {boss}. Ours, the two of us.",
+    },
+    committed = {
+      "Committed. Shiranui style!",
+      "Saved on {branch}. Flawless, like my fan.",
+      "Locked in. Did you see that? I saw that.",
+    },
+    pr_opened = {
+      "PR #{number}. Let them try to beat that.",
+      "#{number} is out. Here comes the fire.",
+      "PR #{number}. Cheer for me, okay? I'm cheering for you.",
+    },
+    region_arrived = {
+      "Mai Shiranui, ready to fight. You're my team today.",
+      "The Shiranui clan, at your service.",
+      "Round one. You and me.",
+    },
+    morning = {
+      "Morning! Stretch first, then we fight.",
+      "You're back! I missed you, a little.",
+      "New day. Let's win it.",
+    },
+    conflicts_cleared = {
+      "Conflicts burned away!",
+      "Merge is clean. Perfect K.O.",
+      "No conflicts left. Victory pose!",
+    },
+    woke = {
+      "Up already? You're cute when you sleep.",
+      "Rested? Good, round two!",
+      "Awake. My fan is ready, are you?",
     },
   },
 }

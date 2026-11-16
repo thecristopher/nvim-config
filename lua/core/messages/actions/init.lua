@@ -46,6 +46,27 @@ function M.for_file(store, repo, file)
   return list
 end
 
+--- Tells whether a file's messages still sit where the store has them, so a save that moved
+--- nothing writes nothing.
+---@param store table
+---@param repo string
+---@param file string relative file path
+---@param messages table[] where they sit now, as { line, text }
+---@return boolean
+function M.unmoved(store, repo, file, messages)
+  local kept = M.for_file(store, repo, file)
+  local now = M.for_file({ [repo] = { [file] = messages } }, repo, file)
+  if #kept ~= #now then
+    return false
+  end
+  for index, message in ipairs(kept) do
+    if message.line ~= now[index].line or message.text ~= now[index].text then
+      return false
+    end
+  end
+  return true
+end
+
 -- an empty file entry or repo entry would pile up in the json forever
 local function prune(store, repo, file)
   if store[repo] and store[repo][file] and #store[repo][file] == 0 then

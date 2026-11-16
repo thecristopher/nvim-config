@@ -20,6 +20,18 @@ function M.minutes(arg)
   return math.floor(minutes)
 end
 
+--- Says how long the block runs in the lore's words, one minute said in the singular.
+---@param template string the lore's `expedition.started`, with %d for the minutes
+---@param minutes integer
+---@return string
+function M.started(template, minutes)
+  local text = template:format(minutes)
+  if minutes == 1 then
+    text = text:gsub("1 minutes", "1 minute")
+  end
+  return text
+end
+
 --- Seconds left in the block, never below zero.
 ---@param ends_at integer epoch seconds
 ---@param now integer epoch seconds

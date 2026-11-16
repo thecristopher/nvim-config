@@ -92,11 +92,11 @@ end
 ---@param info table parsed blame
 ---@param kind string from M.kind
 ---@param now integer seconds since the epoch
----@return { title: string, lines: string[] }
+---@return { title: string, lines: string[] } title in plain words, the skin wraps it
 function M.describe(info, kind, now)
   if kind == "unwritten" then
     return {
-      title = " ◈ Unwritten ",
+      title = "Unwritten",
       lines = { "Not yet etched into history.", "Commit it before the fog takes it." },
     }
   end
@@ -106,7 +106,7 @@ function M.describe(info, kind, now)
     M.relative_time(math.max(0, now - info.time)),
     info.sha:sub(1, 7)
   )
-  return { title = " ◈ " .. who .. " ", lines = { when, info.summary } }
+  return { title = who, lines = { when, info.summary } }
 end
 
 return M

@@ -227,7 +227,94 @@ M.ENTRIES = {
   { icon = "󰕾 ", name = "Sound", desc = "Preview a sound", cmd = "Sound " },
   { icon = "󰀦 ", name = "Banner", desc = "Show a banner", cmd = "Banner " },
   { icon = "󰑓 ", name = "Rescan repos", desc = "Look for new repos now", cmd = "ReposRescan" },
+  {
+    icon = "󰝰 ",
+    name = "Open folder",
+    desc = "Open a folder, repos travel there",
+    cmd = "OpenFolder",
+  },
+  { icon = "󰎈 ", name = "Music", desc = "Play/pause, next or previous", cmd = "Music " },
+  {
+    icon = "󰯾 ",
+    name = "Training path",
+    desc = "Every track as a chain of levels",
+    cmd = "BtbPath",
+  },
+  {
+    icon = "󰅩 ",
+    name = "Desk: implement",
+    desc = "Implement an analyzed ticket by its KEY",
+    cmd = "DeskImplement ",
+  },
+  {
+    icon = "󰍉 ",
+    name = "Desk: review",
+    desc = "Review the open PR of a ticket by its KEY",
+    cmd = "DeskReview ",
+  },
+  {
+    icon = "󰌌 ",
+    name = "Insert trace",
+    desc = "Log every exit from insert mode",
+    cmd = "InsertTrace",
+  },
+  {
+    icon = "󰚩 ",
+    name = "Copilot: sign in",
+    desc = "Sign in to GitHub Copilot",
+    cmd = "Copilot auth",
+  },
+  {
+    icon = "󰚩 ",
+    name = "Copilot: status",
+    desc = "Is Copilot signed in and on",
+    cmd = "Copilot status",
+  },
+  { icon = "󰏗 ", name = "Lazy", desc = "Plugins: update, sync, profile", cmd = "Lazy" },
+  { icon = "󰣪 ", name = "Mason", desc = "Language servers and tools", cmd = "Mason" },
+  {
+    icon = "󰀦 ",
+    name = "Trouble",
+    desc = "Every diagnostic of the project",
+    cmd = "Trouble diagnostics toggle",
+  },
 }
+
+-- commands defined in lua/core that stay out of the palette on purpose, each with its reason
+M.UNLISTED = {}
+
+---Reads the command names a Lua source defines with nvim_create_user_command.
+---@param source string file contents
+---@return string[]
+function M.command_names(source)
+  local names = {}
+  for name in source:gmatch('nvim_create_user_command%(%s*"([%w]+)"') do
+    table.insert(names, name)
+  end
+  return names
+end
+
+---The commands that neither have a palette row nor are unlisted on purpose.
+---@param names string[] from M.command_names
+---@param entries PaletteEntry[]
+---@param unlisted table<string, string> name -> reason
+---@return string[]
+function M.missing_commands(names, entries, unlisted)
+  local listed = {}
+  for _, entry in ipairs(entries) do
+    local first = entry.cmd and entry.cmd:match("^(%S+)")
+    if first then
+      listed[first] = true
+    end
+  end
+  local missing = {}
+  for _, name in ipairs(names) do
+    if not listed[name] and not unlisted[name] then
+      table.insert(missing, name)
+    end
+  end
+  return missing
+end
 
 ---Whether an entry still needs arguments, so it goes to the command line instead of running.
 ---@param entry PaletteEntry

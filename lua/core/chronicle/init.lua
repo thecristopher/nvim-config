@@ -52,7 +52,7 @@ local function render(rows)
     local line = " " .. actions.DAYS[index] .. " "
     marks[index] = {}
     for _, cell in ipairs(row) do
-      local glyph = cell.future and " " or "■"
+      local glyph = actions.glyph(cell)
       table.insert(marks[index], { #line, #line + #glyph, "EldenChronicle" .. cell.level })
       line = line .. glyph .. " "
     end
@@ -62,7 +62,7 @@ local function render(rows)
 end
 
 local function footer(totals)
-  local parts = { ("%d days fought"):format(totals.days) }
+  local parts = { actions.legend(), ("%d days fought"):format(totals.days) }
   for _, rank in ipairs({ "S", "A", "B", "C", "D" }) do
     if totals.ranks[rank] then
       table.insert(parts, ("%s×%d"):format(rank, totals.ranks[rank]))

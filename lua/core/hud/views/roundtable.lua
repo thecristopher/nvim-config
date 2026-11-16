@@ -1,6 +1,8 @@
--- The Elden Ring hub: the champion's portrait standing tall beside the inventory. Category tabs, the
--- Inventory grid with every item named, the Sites of Grace with their branch and changes, the selected
--- item described, and the quest you left open. Everything sits centered on screen at any size.
+-- The Elden Ring hub: the champion's portrait standing tall beside the inventory, the runes held in
+-- the corner. Category tabs, the Inventory grid with every item named and a glint running along the
+-- selected frame, the Sites of Grace with their branch and changes, the selected item laid out like
+-- the game's item screen (its name, its category, its effect and a line of lore in italics), the
+-- champion's attributes and the quest you left open. Everything sits centered on screen at any size.
 -- Pure: model in, rows out.
 local hud = require("core.hud.actions")
 local parts = require("core.hud.views.parts")
@@ -22,7 +24,15 @@ M.PORTRAIT = { min = 4, max = 36 }
 M.STACKED_ROWS = 2
 -- under the portrait: a gap, the plaque (three rows), the area, a gap, the greeting and the date
 M.PLAQUE_ROWS = 8
+-- the attributes under the plaque: a gap and three rows of two columns, only when the portrait
+-- already stands as tall as it can
+M.ATTRIBUTE_ROWS = 4
+-- narrower than this, the plaque writes the date short
+M.SHORT_DATE_WIDTH = 30
 M.QUEST_CHANGE_ROWS = 3
+-- the detail band under the panes: a rule, the name and category, two rows of effect, the lore
+-- and the hints
+M.DETAIL_ROWS = 6
 
 local FRAMES = {
   normal = {
@@ -53,7 +63,7 @@ end
 
 -- rows the body takes besides the grid: title and tabs, the panes' titles, the description, the quest
 local function fixed_rows(quest_rows)
-  return 5 + 1 + 1 + 5 + 1 + 3 + quest_rows
+  return 5 + 1 + 1 + M.DETAIL_ROWS + 1 + 3 + quest_rows
 end
 
 -- every way the hub can stand: the portrait beside a body of two columns or more, beside a single
@@ -128,9 +138,17 @@ local function shape_plan(model, shape)
   end
   local stage_width = ((portrait and not stacked) and portrait.width + M.GAP or 0)
     + body_width(columns, chest_width)
+  -- the attributes stand under the plaque only in the rows the portrait leaves over
+  -- and only when every label and value fits whole beside its pair
+  local attributes = model.attributes ~= nil
+    and portrait ~= nil
+    and not stacked
+    and room - M.PLAQUE_ROWS - portrait.height >= M.ATTRIBUTE_ROWS
+    and hud.stat_rows_fit(model.attributes, portrait.width)
   return {
     portrait = portrait,
     stacked = stacked,
+    attributes = attributes,
     columns = columns,
     chest_width = chest_width,
     grid_rows = grid_rows,
@@ -167,31 +185,50 @@ local function slot_line(frame, inner, text, hl, bg, spot)
   }
 end
 
-local function slot(item, selected)
+-- the cell the glint lights along a frame of this width, nil when no glint runs
+local function glint_cell(glint, width)
+  if not glint then
+    return nil
+  end
+  return math.floor(glint * (width + 2)) - 1
+end
+
+local function slot(item, selected, glint)
   local frame = selected and FRAMES.selected or FRAMES.normal
   local inner = M.SLOT_WIDTH - 2
   local bg = selected and "EldenHudSlotSel" or nil
   local key = item.key or ""
   local count = item.count and tostring(item.count) or ""
   local icon = hud.fit(vim.trim(item.icon or "·"), 2)
-  local name = hud.fit(item.slot or item.name, inner - 2)
+  local name = hud.fit_name(item.slot or item.name, inner - 2)
+  -- the glint runs left to right along the top edge and back along the bottom one
+  local at = selected and glint_cell(glint, M.SLOT_WIDTH) or nil
+  local top = { { frame.tl, frame.hl }, { key, "EldenHudKey" } }
+  vim.list_extend(
+    top,
+    hud.glint_run(
+      frame.h:rep(inner - #key) .. frame.tr,
+      frame.hl,
+      at and at - 1 - #key,
+      "EldenHudGlint"
+    )
+  )
+  local bottom = hud.glint_run(
+    frame.bl .. frame.h:rep(inner - 1 - #count),
+    frame.hl,
+    at and (M.SLOT_WIDTH - 1 - at),
+    "EldenHudGlint"
+  )
+  vim.list_extend(bottom, { { count, "EldenHudCount" }, { frame.h .. frame.br, frame.hl } })
   return {
-    {
-      { frame.tl, frame.hl },
-      { key, "EldenHudKey" },
-      { frame.h:rep(inner - #key) .. frame.tr, frame.hl },
-    },
+    top,
     slot_line(frame, inner, icon, item.icon_hl or "EldenHudIcon", bg, selected and "cursor" or nil),
     slot_line(frame, inner, name, selected and "EldenHudName" or "EldenHudDesc", bg),
-    {
-      { frame.bl .. frame.h:rep(inner - 1 - #count), frame.hl },
-      { count, "EldenHudCount" },
-      { frame.h .. frame.br, frame.hl },
-    },
+    bottom,
   }
 end
 
-local function grid(items, cursor, focused, columns, offset, visible)
+local function grid(items, cursor, focused, columns, offset, visible, glint)
   local rows = {}
   local last_row = math.ceil(#items / columns) - 1
   for grid_row = offset, math.min(offset + visible - 1, last_row) do
@@ -199,7 +236,7 @@ local function grid(items, cursor, focused, columns, offset, visible)
     for col = 1, columns do
       local index = grid_row * columns + col
       if items[index] then
-        for line, chunks in ipairs(slot(items[index], focused and index == cursor)) do
+        for line, chunks in ipairs(slot(items[index], focused and index == cursor, glint)) do
           vim.list_extend(band[line], chunks)
         end
       end
@@ -217,7 +254,7 @@ local function inventory(model, plan)
   local rows = { { { parts.word(model, "inventory"), "EldenHudSection", spot = "fallback" } } }
   vim.list_extend(
     rows,
-    grid(items, model.cursor.items, focused, plan.columns, offset, plan.grid_rows)
+    grid(items, model.cursor.items, focused, plan.columns, offset, plan.grid_rows, model.glint)
   )
   if #items == 0 then
     table.insert(rows, { { parts.word(model, "empty"), "EldenHudDim" } })
@@ -250,9 +287,17 @@ local function chest_row(item, selected, width, name_width)
       spot = selected and "cursor" or nil,
     },
     { " ", bg = bg },
-    { hud.pad(item.name, name_width), selected and "EldenHudBanner" or "EldenHudName", bg = bg },
     {
-      hud.pad(item.branch and (" " .. item.branch) or "", rest - name_width),
+      hud.pad(hud.fit_name(item.name, name_width), name_width),
+      selected and "EldenHudBanner" or "EldenHudName",
+      bg = bg,
+    },
+    -- the branch shows where it breaks, or not at all
+    {
+      hud.pad(
+        item.branch and (" " .. (hud.fit_words(item.branch, rest - name_width - 2) or "")) or "",
+        rest - name_width
+      ),
       "EldenHudDesc",
       bg = bg,
     },
@@ -304,13 +349,27 @@ local function tab_bar(model)
   return bar, rule
 end
 
+-- the item screen of the game: the name with its category on the right, the effect, then a line of
+-- lore in italics
 local function description(model, item, width)
   local rows = { { { ("─"):rep(width), "EldenHudRule" } } }
-  local lines = item and hud.wrap(item.desc or "", width - 2) or {}
-  table.insert(rows, { { " " .. (item and hud.fit(item.name, width - 2) or ""), "EldenHudName" } })
+  local lines = hud.reveal(item and hud.wrap_rows(item.desc or "", width - 2, 2) or {}, model.typed)
+  local category = item and item.category and { { item.category, "EldenHudCategory" } } or {}
+  table.insert(
+    rows,
+    hud.corner(
+      { { " " .. (item and hud.fit_name(item.name, width - 2) or ""), "EldenHudName" } },
+      vim.list_extend(category, { { " " } }),
+      width
+    )
+  )
   for index = 1, 2 do
     table.insert(rows, { { " " .. (lines[index] or ""), "EldenHudDesc" } })
   end
+  -- the lore reads whole or stays unsaid
+  local flavor = item and item.flavor
+  local fits = flavor and vim.api.nvim_strwidth(flavor) <= width - 4
+  table.insert(rows, fits and { { "  " .. flavor, "EldenHudFlavor" } } or {})
   -- most important first, a narrow screen drops them from the end
   local hints =
     hud.hint_chunks(parts.hints(model, parts.USE_HINTS), width - 2, "EldenHudKey", "EldenHudHint")
@@ -343,12 +402,22 @@ local function panes(model, plan)
   return rows, { items = inventory_grid, chest = chest_grid }
 end
 
+-- the hub's name in the middle and the runes held in the corner, like the game's own screen
+local function title_row(model, width)
+  local hub = require("core.banner.actions").spaced(model.hub or "")
+  local purse = (model.status or {}).purse
+  return hud.corner(
+    hud.center({ { "◈   " .. hub .. "   ◈", "EldenHudTitle" } }, width),
+    purse and { { purse, "EldenHudCount" } } or {},
+    width
+  )
+end
+
 local function body(model, plan)
   local width = plan.body_width
-  local hub = require("core.banner.actions").spaced(model.hub or "")
   local bar, tab_rule = tab_bar(model)
   local rows = {
-    hud.center({ { "◈   " .. hub .. "   ◈", "EldenHudTitle" } }, width),
+    title_row(model, width),
     {},
     bar,
     tab_rule,
@@ -365,7 +434,33 @@ end
 
 -- the champion ------------------------------------------------------------------------------
 
-local function champion(model, portrait)
+-- the greeting and the date at the foot of the plaque, always three rows. A long greeting takes
+-- the gap above it and one that cannot fit whole in two rows stays unsaid; the date shortens to
+-- the day and the hour, the day alone or the hour alone before it would ever be cut
+local function salutation(model, width)
+  local date = hud.first_fit({
+    width >= M.SHORT_DATE_WIDTH and model.date or nil,
+    model.date_short,
+    model.date_day,
+    model.clock,
+  }, width)
+  local greeting = hud.wrap_whole(model.greeting or "", width, 2) or {}
+  local rows = {}
+  if #greeting < 2 then
+    table.insert(rows, {})
+  end
+  for _, line in ipairs(greeting) do
+    table.insert(rows, hud.center({ { line, "EldenHudName" } }, width))
+  end
+  while #rows < 2 do
+    table.insert(rows, {})
+  end
+  table.insert(rows, date and hud.center({ { date, "EldenHudDim" } }, width) or {})
+  return rows
+end
+
+local function champion(model, plan)
+  local portrait = plan.portrait
   local width = portrait.width
   local rows = { { { "", spot = "portrait" } } }
   for _ = 2, portrait.height do
@@ -377,12 +472,34 @@ local function champion(model, portrait)
     { { ornament, "EldenHudTitle" } },
     hud.center({ { parts.champion_name(model.character or "", width), "EldenHudTitle" } }, width),
     { { ornament, "EldenHudTitle" } },
-    hud.center({ { hud.fit(model.area or "", width), "EldenHudSection" } }, width),
-    {},
-    hud.center({ { hud.fit(model.greeting or "", width), "EldenHudName" } }, width),
-    hud.center({ { hud.fit(model.date or "", width), "EldenHudDim" } }, width),
+    parts.whole_line(model.area, "EldenHudSection", width),
   })
+  vim.list_extend(rows, salutation(model, width))
+  if plan.attributes then
+    table.insert(rows, {})
+    vim.list_extend(rows, hud.stat_rows(model.attributes, width))
+  end
   return rows
+end
+
+-- the attributes in one line, for the footer when the plaque has no room left under them: whole
+-- pairs only, the last ones left out when the row runs short
+local function attribute_line(model, width)
+  if not model.attributes then
+    return nil
+  end
+  local chunks = {}
+  for index, pair in ipairs(model.attributes) do
+    local pair_chunks = {
+      { (index > 1 and "   " or "") .. pair[1] .. " ", "EldenHudDim" },
+      { pair[2], "EldenHudName" },
+    }
+    if hud.width(chunks) + hud.width(pair_chunks) > width then
+      break
+    end
+    vim.list_extend(chunks, pair_chunks)
+  end
+  return #chunks > 0 and hud.center(chunks, width) or nil
 end
 
 -- the portrait centered above the body with the champion's name under it
@@ -415,12 +532,13 @@ function M.render(model)
   if plan.portrait and plan.stacked then
     rows = vim.list_extend(champion_above(model, plan.portrait, plan.body_width), rows)
   elseif plan.portrait then
-    local column = champion(model, plan.portrait)
+    local column = champion(model, plan)
     local height = math.max(#column, #rows)
     rows =
       hud.beside(hud.middle(column, height), plan.portrait.width, hud.middle(rows, height), M.GAP)
   end
-  vim.list_extend(rows, parts.footer(model, plan.stage_width))
+  local line = not plan.attributes and attribute_line(model, plan.stage_width) or nil
+  vim.list_extend(rows, parts.footer(model, plan.stage_width, line))
   local lines, marks, spots = hud.compose(hud.indent(rows, plan.indent))
   local cursor = spots.cursor or spots.fallback
   local anchors = {}

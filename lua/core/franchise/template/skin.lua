@@ -4,9 +4,10 @@ return {
   border = "rounded",
   -- wrapped around float titles
   ornament = { "◈ ", " ◈" },
+  -- lualine separators, Powerline glyphs written as escapes so no edit strips them
   statusline = {
-    section = { left = "", right = "" },
-    component = { left = "", right = "" },
+    section = { left = "\u{E0B0}", right = "\u{E0B2}" },
+    component = { left = "\u{E0B1}", right = "\u{E0B3}" },
   },
   -- bufferline separator_style: "slant", "slope", "thick", "thin" or "padded_slant"
   tabs = "slant",
@@ -33,11 +34,38 @@ return {
     keys = { breadcrumb = "»", separator = "→", group = "+" },
     scrollbar = { "•" },
     spinner = { frames = { "◇", "◈", "◆", "◈" }, interval = 140 },
+    -- past the end of the buffer, and the lines between windows
+    eob = " ",
+    split = { vert = "│", horiz = "─" },
+  },
+  -- the explorer: guides, expanders, folders, the marks for review threads and ground messages,
+  -- and the rooms of :Map, left (errors or TODOs inside) or cleared
+  tree = {
+    indent = "│",
+    last = "└",
+    collapsed = "▸",
+    expanded = "▾",
+    folder = { closed = "󰉋", open = "󰝰", empty = "󰉖" },
+    thread = "󰍩",
+    message = "󰍩",
+    left = "□",
+    cleared = "■",
+  },
+  -- the code's own signature: each role takes a derived color (keyword, func, comment) or a palette
+  -- slot, plus its style. italic = false strips every italic in the editor
+  syntax = {
+    keyword = { color = "keyword", style = { "bold" } },
+    ["function"] = { color = "func", style = {} },
+    type = { color = "lavender", style = {} },
+    string = { color = "green", style = {} },
+    constant = { color = "peach", style = {} },
+    comment = { color = "comment", style = { "italic" } },
+    property = { color = "func", style = {} },
   },
   -- the snacks picker layout, see lua/plugins/snacks.lua: "grace", "inventory", "vanity" or "default"
   picker = "default",
   -- the command line popup's glyphs
-  cmdline = { icon = "", search = "󰍉" },
+  cmdline = { icon = "󰆍", search = "󰍉" },
   -- the HUD style, see core/hud/views: "roundtable", "inventory" or "wardrobe"
   dashboard = "roundtable",
   -- style: "shimmer", "drip" or "marquee"

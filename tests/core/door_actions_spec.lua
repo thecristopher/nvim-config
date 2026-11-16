@@ -58,3 +58,34 @@ describe("rows", function()
     assert.equal("│" .. (" "):rep(actions.WIDTH - 2) .. "│", actions.rows(1)[2])
   end)
 end)
+
+describe("size", function()
+  it("stands most of the screen's height for Leon", function()
+    local width, height = actions.size(190, 50)
+    assert.is_true(height >= 30)
+    assert.is_true(width <= 184)
+  end)
+
+  it("still fits a small screen with an even inside", function()
+    local width, height = actions.size(90, 26)
+    assert.is_true(width <= 84 and height <= 22)
+    assert.equal(0, (width - 2) % 2)
+  end)
+end)
+
+describe("rows at any size", function()
+  it("keeps every row as wide as Claire's door", function()
+    for _, open in ipairs({ 0, 0.3, 0.7, 1 }) do
+      for _, row in ipairs(actions.rows(open, 60, 20)) do
+        assert.equal(60, vim.fn.strchars(row))
+      end
+    end
+  end)
+
+  it("slides the planks with the panel instead of squeezing them", function()
+    local shut = actions.rows(0, 42, 12)[2]
+    local half = actions.rows(0.5, 42, 12)[2]
+    -- the panel's free edge keeps the planks it had right by the gap
+    assert.equal(vim.fn.strcharpart(shut, 20, 1), vim.fn.strcharpart(half, 10, 1))
+  end)
+end)

@@ -1,5 +1,5 @@
--- What the character of each region says when something happens, written from the voice sheets
--- in docs/voices/elden_ring.md. {branch} and {boss} are filled in when the moment has them.
+-- What the character of each region says when something happens, written from the voice sheets in
+-- docs/voices/elden_ring.md. {branch}, {boss} and {number} are filled in when the moment has them.
 return {
   haligtree = {
     trial_passed = {
@@ -34,6 +34,36 @@ return {
       "{boss} is no more. Stay. Let the petals settle.",
       "{boss} kneels before you. I was glad to watch.",
     },
+    committed = {
+      "Committed. One more petal set in its place.",
+      "Your work is sealed on {branch}. Steady hand, steady blade.",
+      "A clean cut, committed. I have never known you to waver.",
+    },
+    pr_opened = {
+      "PR #{number} stands before the judges. Let them come.",
+      "#{number} is offered up. I will await the verdict with you.",
+      "PR #{number}. Bold. Miquella would have approved.",
+    },
+    region_arrived = {
+      "I am Malenia, Blade of Miquella. Today I stand beside you.",
+      "The Haligtree welcomes you. Stay close, and the rot stays far.",
+      "You have come to me. Good. I have never known defeat, and neither shall you.",
+    },
+    morning = {
+      "Morning. The petals are still, and so is the code. Begin.",
+      "You return. I waited, as I always will.",
+      "A new day. Draw your blade, I have already drawn mine.",
+    },
+    conflicts_cleared = {
+      "The grafts are cut away. Every branch is whole again.",
+      "No conflict left. Two blades, one stance.",
+      "The merge is mended. Patience won, as it always does.",
+    },
+    woke = {
+      "You rested. Good. The rot did not move while you slept.",
+      "Awake? I kept watch. Nothing touched your code.",
+      "Rise. We were never in a hurry, you and I.",
+    },
   },
   leyndell = {
     trial_passed = {
@@ -65,6 +95,36 @@ return {
       "{boss} is felled. Take what thou hast earned.",
       "{boss} kneels. The Order is restored.",
       "{boss} is no more. Claim thy grace.",
+    },
+    committed = {
+      "Thy work is sealed upon {branch}. So it is decreed.",
+      "Committed. Let the Order record it.",
+      "It is written. Thou shalt not unwrite it lightly.",
+    },
+    pr_opened = {
+      "PR #{number} is brought before the Order. Let it be judged.",
+      "Hear me: #{number} awaits its verdict.",
+      "#{number} is offered. Grace shall decide.",
+    },
+    region_arrived = {
+      "Hear me. I am Marika, and Leyndell is thine this day.",
+      "The Erdtree governs all. Today, thou walkest beneath it.",
+      "Thou art come to the capital. Bear thyself with grace.",
+    },
+    morning = {
+      "A new day beneath the Erdtree. Rise, and be worthy.",
+      "Thou returnest. The Order awaited thee.",
+      "Morning. Grace is granted anew. Squander it not.",
+    },
+    conflicts_cleared = {
+      "The rift is mended. One Order, one history.",
+      "No conflict remains. As I have willed it.",
+      "The shattering is undone. Let none speak of it.",
+    },
+    woke = {
+      "Thou hast rested. Now rise, the Order waits on no one.",
+      "Awake. Grace did not leave thee while thou slept.",
+      "Rise, Tarnished. Rest is granted, not owed.",
     },
   },
   raya_lucaria = {
@@ -98,6 +158,36 @@ return {
       "{boss} is no more. Remarkable, no?",
       "{boss} is beaten. One less obstacle before the stars.",
     },
+    committed = {
+      "Committed. A small step along the path of the stars.",
+      "Sealed on {branch}. Thou hast done well, my consort.",
+      "It is recorded. The cold night keeps it safe.",
+    },
+    pr_opened = {
+      "PR #{number} is cast. Let us see who dares to read it.",
+      "#{number} goes to the academy. They shall not understand it, and that is fine.",
+      "PR #{number}. Thy plan unfolds, as mine once did.",
+    },
+    region_arrived = {
+      "I am Ranni. The moon is mine, and tonight, so art thou.",
+      "Raya Lucaria. Mind the scholars, they talk far too much.",
+      "Thou hast found me. Few do. Stay, and work beneath my moon.",
+    },
+    morning = {
+      "Thou art back. The stars kept their places while thou slept.",
+      "A new night, or day. I lose count. Begin, consort.",
+      "Morning? How dreadfully bright. Very well, let us work.",
+    },
+    conflicts_cleared = {
+      "The tangle is undone. Order, without the Golden kind.",
+      "No conflict left. Cold and clean, as I prefer.",
+      "The merge is settled. I knew thou wouldst find the way.",
+    },
+    woke = {
+      "Awake, at last. The moon did not wait, but I did.",
+      "Thou hast rested. Good. A dull mind serves no one.",
+      "Rise. The age of stars will not write itself.",
+    },
   },
   mohgwyn = {
     trial_passed = {
@@ -129,6 +219,36 @@ return {
       "{boss} is slain. A fine offering.",
       "{boss} bleeds no more. Its blood is ours.",
       "{boss} falls. The dynasty remembers.",
+    },
+    committed = {
+      "Committed. Thy offering is accepted.",
+      "{branch} grows richer. The dynasty swells.",
+      "Sealed in blood. Nothing is lost here.",
+    },
+    pr_opened = {
+      "PR #{number} is laid upon the altar.",
+      "#{number}. Let them drink of it and be judged.",
+      "Behold PR #{number}. A worthy offering.",
+    },
+    region_arrived = {
+      "Welcome, honored guest, to the birthplace of our dynasty.",
+      "I am Mohg, Lord of Blood. Thy work shall feed the dynasty.",
+      "Mohgwyn opens to thee. Mind the blood, it remembers.",
+    },
+    morning = {
+      "Thou returnest to the palace. The blood still flows.",
+      "A new day of the dynasty. Rise, and offer.",
+      "Morning. The altar thirsts. Begin.",
+    },
+    conflicts_cleared = {
+      "The conflict is drained. Only one bloodline remains.",
+      "No rift left. All is one blood now.",
+      "The merge is sealed. Our dynasty grows whole.",
+    },
+    woke = {
+      "Thou wakest. The blood never slept.",
+      "Rise, guest. The dynasty awaits thy hand.",
+      "Rested? Good. Rested blood flows best.",
     },
   },
   limgrave = {
@@ -162,6 +282,36 @@ return {
       "{boss} is gone. Rest by the grace a while.",
       "{boss} has fallen. The path opens.",
     },
+    committed = {
+      "Committed. One more step on the road to the Erdtree.",
+      "Your work on {branch} is kept. I will remember it with you.",
+      "Sealed. Rest here a moment before the next.",
+    },
+    pr_opened = {
+      "PR #{number} is on its way. I will walk beside you while they read it.",
+      "#{number} is offered. Whatever they say, the road goes on.",
+      "PR #{number}. Your purpose grows clearer, Tarnished.",
+    },
+    region_arrived = {
+      "I am Melina. Let me accompany you through Limgrave.",
+      "The grace led you here. So did I.",
+      "Limgrave again. Shall we begin, Tarnished?",
+    },
+    morning = {
+      "You're back. The grace stayed warm for you.",
+      "A new day. Let me be your maiden, as before.",
+      "Morning, Tarnished. Where does the guidance point today?",
+    },
+    conflicts_cleared = {
+      "The paths are joined again. No more crossroads.",
+      "No conflict left. The road ahead is one.",
+      "The merge is mended. I knew you would find the way through.",
+    },
+    woke = {
+      "You rested well. The fog is thinner now.",
+      "Awake? The grace watched over you. So did I.",
+      "Rise, Tarnished. The Erdtree is still waiting.",
+    },
   },
   farum_azula = {
     trial_passed = {
@@ -193,6 +343,36 @@ return {
       "{boss} is struck down. Death claims its due.",
       "{boss} falls to the Black Blade.",
       "{boss} is ended. The shadow keeps its watch.",
+    },
+    committed = {
+      "Committed. Sealed, as the Black Blade seals Destined Death.",
+      "{branch} is bound. Let nothing loosen it.",
+      "It is done. Guard it well.",
+    },
+    pr_opened = {
+      "PR #{number} faces judgment. Stand with it.",
+      "#{number} goes forth. I shall keep guard while they read.",
+      "PR #{number}. Let none steal what thou hast forged.",
+    },
+    region_arrived = {
+      "I am Maliketh, the Black Blade. Farum Azula is under my watch, and so art thou.",
+      "The crumbling city greets thee. Mind the edges.",
+      "Here the storm never ends. Work as if it never shall.",
+    },
+    morning = {
+      "Thou returnest. The storm did not abate. Neither shall we.",
+      "A new day atop the crumbling city. Steel thyself.",
+      "Morning. My blade is drawn. Draw thine.",
+    },
+    conflicts_cleared = {
+      "The rot between branches is cut out. Clean.",
+      "No conflict remains. I have sealed it away.",
+      "The merge holds, as my oath held.",
+    },
+    woke = {
+      "Thou wakest. I kept the vigil.",
+      "Rise. Rest is a shield, not a home.",
+      "Awake. Good. Death waits, but not for thee today.",
     },
   },
 }

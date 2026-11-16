@@ -372,3 +372,181 @@ describe("last_in", function()
     assert.equal("/Users/claire/.claude/desk.html", hud.last_in(oldfiles, nil))
   end)
 end)
+
+describe("typing", function()
+  it("types a short note to Inde at its own pace", function()
+    assert.equal(10 * hud.TYPING.per_char, hud.typing_ms(10))
+  end)
+
+  it("never makes Claire wait on a long description", function()
+    assert.equal(hud.TYPING.max, hud.typing_ms(500))
+    assert.equal(0, hud.typing_ms(0))
+  end)
+end)
+
+describe("reveal", function()
+  local lines = { "Roses for Malenia", "at the Haligtree" }
+
+  it("shows the whole description once it has typed in", function()
+    assert.same(lines, hud.reveal(lines, nil))
+    assert.same(lines, hud.reveal(lines, 999))
+  end)
+
+  it("blanks what is still to come, keeping every line as wide", function()
+    assert.same({ "Roses            ", "                " }, hud.reveal(lines, 5))
+  end)
+
+  it("carries on into the second line", function()
+    assert.same({ "Roses for Malenia", "at              " }, hud.reveal(lines, 19))
+  end)
+
+  it("counts characters, not bytes", function()
+    assert.same({ "Inde ♥  " }, hud.reveal({ "Inde ♥ ♥" }, 6))
+  end)
+end)
+
+describe("bar_fill", function()
+  it("fills half of Claire's playlist bar halfway through the song", function()
+    assert.equal(5, hud.bar_fill(120, 240, 10))
+  end)
+
+  it("stays full past the end and says nothing without a length", function()
+    assert.equal(10, hud.bar_fill(300, 240, 10))
+    assert.is_nil(hud.bar_fill(30, nil, 10))
+    assert.is_nil(hud.bar_fill(nil, 240, 10))
+  end)
+end)
+
+describe("the attaché case", function()
+  -- Claire's case: a wide love letter, three small keepsakes and a big box of photos
+  local items = {
+    { name = "Love letter", size = { w = 2, h = 1 } },
+    { name = "Rose" },
+    { name = "Ring" },
+    { name = "Photo box", size = { w = 2, h = 2 } },
+    { name = "Mixtape" },
+  }
+  local case = hud.pack(items, 3)
+
+  it("packs the wide letter across two cells and the next keepsake beside it", function()
+    assert.same({ row = 1, col = 1, w = 2, h = 1 }, case.places[1])
+    assert.same({ row = 1, col = 3, w = 1, h = 1 }, case.places[2])
+  end)
+
+  it("gives the photo box four cells and fills the hole it leaves", function()
+    assert.same({ row = 2, col = 2, w = 2, h = 2 }, case.places[4])
+    assert.same({ row = 3, col = 1, w = 1, h = 1 }, case.places[5])
+    assert.equal(3, case.rows)
+  end)
+
+  it("never lets a piece grow wider than the case", function()
+    local narrow = hud.pack({ { size = { w = 3, h = 1 } } }, 2)
+    assert.equal(2, narrow.places[1].w)
+  end)
+
+  it("walks right from the letter to the rose and down into the photo box", function()
+    assert.equal(2, hud.case_move(case, 1, "l"))
+    assert.equal(4, hud.case_move(case, 2, "j"))
+  end)
+
+  it("steps over empty cells to reach the next keepsake", function()
+    local sparse = hud.pack({ { name = "Rose" }, { name = "Ring" } }, 3)
+    sparse.cells[1][2] = nil
+    sparse.places[2] = { row = 1, col = 3, w = 1, h = 1 }
+    sparse.cells[1][3] = 2
+    assert.equal(2, hud.case_move(sparse, 1, "l"))
+  end)
+
+  it("leaves the case through its edge", function()
+    assert.is_nil(hud.case_move(case, 1, "k"))
+    assert.is_nil(hud.case_move(case, 2, "l"))
+  end)
+
+  it("scrolls just enough to show the whole photo box", function()
+    assert.equal(2, hud.case_scroll(case.places[4], 1, 0))
+    assert.equal(1, hud.case_scroll(case.places[4], 2, 0))
+    assert.equal(0, hud.case_scroll(case.places[1], 2, 1))
+  end)
+
+  it("joins the walls with the double line joint their arms ask for", function()
+    assert.equal("╬", hud.joint(true, true, true, true))
+    assert.equal("╔", hud.joint(false, true, false, true))
+    assert.equal("╩", hud.joint(true, false, true, true))
+    assert.equal(" ", hud.joint(false, false, false, false))
+  end)
+end)
+
+describe("item screen helpers", function()
+  it("says how long ago Inde last wrote her note", function()
+    assert.equal("just now", hud.ago(20))
+    assert.equal("1 minute ago", hud.ago(65))
+    assert.equal("3 hours ago", hud.ago(3 * 3600 + 5))
+    assert.equal("2 days ago", hud.ago(2 * 86400))
+  end)
+
+  it("tells two init.lua apart by their folder and leaves a lone name bare", function()
+    assert.same(
+      { "hud/init.lua", "hub/init.lua", "letter.md" },
+      hud.file_labels({ "/claire/hud/init.lua", "/claire/hub/init.lua", "/inde/letter.md" })
+    )
+  end)
+
+  it("lays Malenia's attributes in two columns, filling the left one first", function()
+    local rows = hud.stat_rows({ { "Level", "S" }, { "Vigor", "14" }, { "Mind", "2" } }, 30)
+    local first = table.concat(vim.tbl_map(function(chunk)
+      return chunk[1]
+    end, rows[1]))
+    assert.equal(2, #rows)
+    assert.is_truthy(first:find("Level", 1, true))
+    assert.is_truthy(first:find("Mind", 1, true))
+  end)
+
+  it("lights the cells around the glint and leaves the rest of the frame alone", function()
+    local chunks = hud.glint_run("━━━━━━", "EldenHudFrameSel", 2, "EldenHudGlint")
+    assert.same(
+      { "━", "━━━", "━━" },
+      vim.tbl_map(function(chunk)
+        return chunk[1]
+      end, chunks)
+    )
+    assert.equal("EldenHudGlint", chunks[2][2])
+    assert.same(
+      { { "━━", "EldenHudFrame" } },
+      hud.glint_run("━━", "EldenHudFrame", nil, "x")
+    )
+  end)
+
+  it("pins the runes held to the right edge when the row has room", function()
+    local row = hud.corner({ { "Roundtable" } }, { { "◈ 600" } }, 30)
+    assert.equal(30, hud.width(row))
+    assert.same({ { "Roundtable" } }, hud.corner({ { "Roundtable" } }, { { "◈ 600" } }, 14))
+  end)
+
+  it("sets the typewriter's carriage right after the last letter struck", function()
+    assert.same({ "Dear▌    " }, hud.typed_with_caret({ "Dear Inde" }, 4, "▌"))
+    assert.same({ "Dear Inde" }, hud.typed_with_caret({ "Dear Inde" }, nil, "▌"))
+  end)
+
+  it("opens Claire's Check float beside her slot, or left of it at the screen's edge", function()
+    local screen = { columns = 120, lines = 40, gap = 18 }
+    assert.same(
+      { row = 9, col = 38 },
+      hud.float_beside({ row = 10, col = 20 }, { width = 30, height = 8 }, screen)
+    )
+    assert.same(
+      { row = 9, col = 57 },
+      hud.float_beside({ row = 10, col = 90 }, { width = 30, height = 8 }, screen)
+    )
+  end)
+
+  it("pages a long letter to Inde into pages as tall as the reader", function()
+    local letter = {}
+    for index = 1, 25 do
+      letter[index] = "line " .. index
+    end
+    local pages = hud.pages(letter, 40, 10)
+    assert.equal(3, #pages)
+    assert.equal(" line 11", pages[2][1])
+    assert.same({ { " " } }, { hud.pages({ "" }, 40, 10)[1] })
+  end)
+end)

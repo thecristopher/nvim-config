@@ -41,6 +41,7 @@ return {
   ["commit.nothing"] = "Nothing new in this scene.",
   ["commit.left_out"] = "Saved for another scene: {files}",
   ["commit.fell"] = "the take was ruined",
+  ["commit.committing"] = "Rolling the final take…",
 
   ["pr.title"] = "Premiere",
   ["pr.commits"] = "Rewatching every take…",

@@ -146,3 +146,34 @@ describe("bulb_lit", function()
     assert.equal(actions.bulb_lit(2, 1, 0), actions.bulb_lit(1, 2, 0))
   end)
 end)
+
+describe("guest messages", function()
+  local stage = {
+    hub_messages = { "Lights, camera, refactor" },
+    hud = { guest_messages = { "What are you buying? A cleaner commit?" } },
+  }
+
+  it("reads Elizabeth's own line on most nights", function()
+    local rolls = { 0.5, 0 }
+    local roll = function()
+      return table.remove(rolls, 1)
+    end
+    assert.equal("Lights, camera, refactor", actions.pick_message(roll, stage))
+  end)
+
+  it("now and then reads a line another world lent her", function()
+    local rolls = { 0.05, 0 }
+    local roll = function()
+      return table.remove(rolls, 1)
+    end
+    assert.equal("What are you buying? A cleaner commit?", actions.pick_message(roll, stage))
+  end)
+end)
+
+describe("occupied with a margin", function()
+  it("keeps the weather out of the gaps between Malenia's spaced letters", function()
+    local taken = actions.occupied({ { "M", 1 }, { " ", 1 }, { " ", 1 }, { "A", 1 } }, 2)
+    assert.is_true(taken[1] and taken[2] and taken[5] or false)
+    assert.is_nil(taken[6])
+  end)
+end)

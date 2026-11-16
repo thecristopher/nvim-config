@@ -40,20 +40,31 @@ M.USE_HINTS = {
   { "q", "quit" },
 }
 
---- Letterspaces the champion's name as wide as the room allows: carved, then banner style, then plain.
+--- Letterspaces the champion's name as wide as the room allows: carved, then banner style, then
+--- plain, then the first name alone, never a name cut in the middle.
 ---@param character string
 ---@param width integer
 ---@return string
 function M.champion_name(character, width)
-  local carved = require("core.hub.actions").spaced(character)
-  if vim.api.nvim_strwidth(carved) <= width then
-    return carved
+  local upper = vim.fn.toupper(character)
+  return hud.first_fit({
+    require("core.hub.actions").spaced(character),
+    require("core.banner.actions").spaced(character),
+    upper,
+    upper:match("^%S+"),
+  }, width) or hud.fit(upper, width)
+end
+
+--- A sentence whole on one row, centered, or an empty row when it does not fit whole.
+---@param text string|nil
+---@param hl string
+---@param width integer
+---@return table[] chunks
+function M.whole_line(text, hl, width)
+  if not text or text == "" or vim.api.nvim_strwidth(text) > width then
+    return {}
   end
-  local spaced = require("core.banner.actions").spaced(character)
-  if vim.api.nvim_strwidth(spaced) <= width then
-    return spaced
-  end
-  return hud.fit(character:upper(), width)
+  return hud.center({ { text, hl } }, width)
 end
 
 local STATUS_HL = {
@@ -76,7 +87,7 @@ local function change_chunks(line, width, selected)
       spot = selected and "cursor" or nil,
     },
     {
-      hud.pad(hud.fit(path, width - 4), width - 3),
+      hud.pad(hud.fit_name(path, width - 4), width - 3),
       selected and "EldenHudBanner" or "EldenHudDesc",
       bg = bg,
     },
@@ -168,29 +179,41 @@ function M.quest_count(status, change_rows)
   return (status.last_ready and 1 or 0) + changes
 end
 
---- The line naming the quest: project, branch and how much changed.
+-- the review threads still open on the branch's PR, said after the changes
+M.THREAD_GLYPH = "󰍩"
+
+--- The line naming the quest: project, branch, how much changed and the review threads still open.
 ---@param status table
 ---@param width integer
 ---@param fallback string what to say outside a repo
 ---@return table[] chunks
 function M.quest_line(status, width, fallback)
   if not status.project then
-    return { { hud.fit(fallback, width), "EldenHudDim" } }
+    return { { hud.fit_words(fallback, width) or "", "EldenHudDim" } }
   end
   local count = status.changes and #status.changes or nil
   local tally = count == nil and "counting…" or count == 0 and "clean" or (count .. " changed")
+  local threads = (status.threads or 0) > 0 and ("    " .. M.THREAD_GLYPH .. " " .. status.threads)
+    or ""
   -- the icons, the gaps and the dot take 14 cells, the branch gets what the name and tally leave
-  local branch_width =
-    math.max(4, width - 14 - vim.api.nvim_strwidth(status.project) - vim.api.nvim_strwidth(tally))
+  local branch_width = math.max(
+    4,
+    width
+      - 14
+      - vim.api.nvim_strwidth(status.project)
+      - vim.api.nvim_strwidth(tally)
+      - vim.api.nvim_strwidth(threads)
+  )
   return hud.clip({
     { "󰊢 ", "EldenHudIcon" },
     { status.project, "EldenHudBanner" },
     { "    ", nil },
     { " ", "EldenHudKey" },
-    { hud.fit(status.branch or "?", branch_width), "EldenHudName" },
+    { hud.fit_words(status.branch or "?", branch_width) or "", "EldenHudName" },
     { "    " },
     { "● ", count and count > 0 and "EldenHudKey" or "EldenHudDim" },
     { tally, "EldenHudCount" },
+    { threads, "EldenThread" },
   }, width)
 end
 
@@ -221,7 +244,7 @@ function M.quest(model, width, change_rows, rule)
       { last_selected and "▶ " or "  ", "EldenHudFrameSel" },
       { "󰘍 last  ", "EldenHudDim", bg = bg, spot = last_selected and "cursor" or nil },
       {
-        hud.fit(status.last_file, width - 12),
+        hud.fit_name(status.last_file, width - 12),
         last_selected and "EldenHudBanner" or "EldenHudName",
         bg = bg,
       },
@@ -239,17 +262,60 @@ function M.quest(model, width, change_rows, rule)
   return rows
 end
 
---- The footer under the whole stage: the player message and the stats, both centered.
+-- the widest the song's bar grows, the song and artist take the rest
+M.PLAYER_BAR = 16
+
+--- The song playing right now on one row: playing or paused, the song and artist, and how far
+--- along it is in the skin's bar. Nil when nothing plays.
+---@param music table|nil { title, artist?, elapsed?, duration?, playing, bar = skin.music.bar }
+---@param width integer
+---@return table[]|nil chunks, centered in width
+function M.player(music, width)
+  if not music or not music.title or width < 12 then
+    return nil
+  end
+  local bar_width = math.min(M.PLAYER_BAR, math.floor(width / 4))
+  local fill = music.bar
+    and bar_width >= 4
+    and hud.bar_fill(music.elapsed, music.duration, bar_width - 1)
+  -- the song and artist whole, the song alone, or the song cut where its words break
+  local room = width - 2 - (fill and bar_width + 2 or 0)
+  local song = hud.first_fit({
+    music.artist and (music.title .. "  ·  " .. music.artist) or nil,
+    music.title,
+  }, room) or hud.fit_name(music.title, room)
+  local chunks = { { music.playing and "\u{F0388} " or "\u{F03E4} ", "EldenMusicBarHead" } }
+  table.insert(chunks, { song, "EldenHudDesc" })
+  if fill then
+    vim.list_extend(chunks, {
+      { "  " },
+      { music.bar.done:rep(fill), "EldenMusicBarDone" },
+      { music.bar.head, "EldenMusicBarHead" },
+      { music.bar.left:rep(bar_width - 1 - fill), "EldenMusicBarLeft" },
+    })
+  end
+  return hud.center(chunks, width)
+end
+
+--- The footer under the whole stage: the player message and the stats, both centered. A view may
+--- hand a line of its own (the Roundtable's attributes) to stand where the stats would.
 ---@param model table
 ---@param width integer
+---@param line table[]|nil chunks in place of the stats
 ---@return table[] rows
-function M.footer(model, width)
+function M.footer(model, width, line)
   local rows = { {} }
   local message = model.message or ""
-  -- the hub's quill finds the message by its exact text, so it is only cut when it truly cannot fit
-  table.insert(rows, hud.center({ { hud.fit(message, width), "SnacksDashboardDesc" } }, width))
-  if model.stats then
-    table.insert(rows, hud.center({ { hud.fit(model.stats, width), "EldenHudDim" } }, width))
+  -- the hub's quill finds the message by its exact text, so it shows whole or not at all
+  table.insert(rows, M.whole_line(message, "SnacksDashboardDesc", width))
+  -- the song playing takes the stats' row, they matter least
+  local player = M.player(model.music, width)
+  if player then
+    table.insert(rows, player)
+  elseif line then
+    table.insert(rows, line)
+  elseif model.stats then
+    table.insert(rows, M.whole_line(model.stats, "EldenHudDim", width))
   end
   return rows
 end

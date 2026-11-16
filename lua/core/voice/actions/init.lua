@@ -1,7 +1,21 @@
 local M = {}
 
 -- every moment a character speaks up for, :checkhealth asks each region for all of them
-M.MOMENTS = { "trial_passed", "trial_failed", "ci_passed", "ci_failed", "pushed", "boss_felled" }
+-- holes: {branch} for ci, pushed and committed, {boss} for boss_felled, {number} for pr_opened
+M.MOMENTS = {
+  "trial_passed",
+  "trial_failed",
+  "ci_passed",
+  "ci_failed",
+  "pushed",
+  "boss_felled",
+  "committed",
+  "pr_opened",
+  "region_arrived",
+  "morning",
+  "conflicts_cleared",
+  "woke",
+}
 
 ---Picks one of the lines, never the one said last when there is another to say.
 ---@param lines string[]|nil
@@ -19,6 +33,14 @@ function M.pick(lines, roll, last)
     return nil
   end
   return fresh[math.min(#fresh, math.floor(roll * #fresh) + 1)]
+end
+
+---Tells whether today's first greeting is still due, from the day the last one was said.
+---@param said_on string|nil the day of the last greeting, as YYYY-MM-DD
+---@param today string as YYYY-MM-DD
+---@return boolean
+function M.morning_due(said_on, today)
+  return vim.trim(said_on or "") ~= today
 end
 
 ---Fills the {name} holes of a line, leaving the ones it has no value for.

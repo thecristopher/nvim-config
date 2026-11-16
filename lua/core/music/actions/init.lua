@@ -255,4 +255,47 @@ function M.label(track, max_width)
   return icon .. " " .. require("core.music.actions.panel").fit(text, max_width)
 end
 
+--- Builds the statusline text for the line being sung, cut to fit.
+---@param text string the lyric
+---@param max_width integer
+---@return string
+function M.lyric_label(text, max_width)
+  return "󰎈 " .. require("core.music.actions.panel").fit(text, max_width)
+end
+
+--- Names a song, so a change of song can be told from a pause or a new position.
+---@param track { artist: string, title: string }|nil
+---@return string|nil nil when nothing plays
+function M.track_key(track)
+  if not track then
+    return nil
+  end
+  -- Cider and Apple Music may write the same song with other capitals
+  return (track.artist .. "|" .. track.title):lower()
+end
+
+--- Tells whether a new song deserves its notice: not the first one heard, not a pause or a
+--- return to the same song, only while someone looks at the editor and only when nothing on
+--- screen (the panel, the HUD's player) already names it.
+---@param last string|nil key of the last song heard
+---@param key string|nil key of the song playing now
+---@param focused boolean
+---@param shown boolean|nil the song is already on screen
+---@return boolean
+function M.announces(last, key, focused, shown)
+  return focused and not shown and last ~= nil and key ~= nil and key ~= last
+end
+
+--- What the new song notice says: the song under the skin's gem and who sings it.
+---@param track { artist: string, title: string }
+---@param gem string skin.music.divider.gem
+---@return string
+function M.notice(track, gem)
+  if track.artist == "" then
+    return ("%s %s"):format(gem, track.title)
+  end
+  -- one line, so the notification history keeps the song and the artist apart
+  return ("%s %s · %s"):format(gem, track.title, track.artist)
+end
+
 return M

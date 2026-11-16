@@ -19,7 +19,7 @@ return {
           return vim.api.nvim_win_get_width(winid) < 100
         end,
         preview_win_opts = { cursorline = true, number = true, wrap = false },
-        folds = { fold_closed = "", fold_open = "", folded = false },
+        folds = { fold_closed = "󰅂", fold_open = "󰅀", folded = false },
         indent_lines = { enable = true, icon = "│" },
         winbar = { enable = true },
         use_trouble_qf = true,
@@ -37,7 +37,8 @@ return {
     end,
   },
 
-  -- Clickable breadcrumbs: file › class › method, each one opens a symbol menu
+  -- Clickable breadcrumbs: the file and the two scopes around the cursor, each one opens a symbol
+  -- menu. The statusline already shows the folders, so they stay out of the winbar
   {
     "Bekaboo/dropbar.nvim",
     event = { "BufReadPost", "BufNewFile" },
@@ -66,8 +67,27 @@ return {
     },
     config = function()
       local default_enable = require("dropbar.configs").opts.bar.enable
+      local sources = require("dropbar.sources")
+      local innermost = require("core.dive.actions").innermost
+      -- the scopes around the cursor, from the LSP or treesitter, cut to the two innermost
+      local fallback = require("dropbar.utils").source.fallback({ sources.lsp, sources.treesitter })
+      local scopes = {
+        get_symbols = function(buf, win, cursor)
+          return innermost(fallback.get_symbols(buf, win, cursor), 2)
+        end,
+      }
       require("dropbar").setup({
+        sources = { path = { max_depth = 1 } },
         bar = {
+          sources = function(buf)
+            if vim.bo[buf].filetype == "markdown" then
+              return { sources.path, sources.markdown }
+            end
+            if vim.bo[buf].buftype == "terminal" then
+              return { sources.terminal }
+            end
+            return { sources.path, scopes }
+          end,
           enable = function(buf, win, info)
             -- a back-to-basics solution wears its own winbar with the clock and the tests
             if vim.bo[buf].filetype == "bigfile" or vim.b[buf].btb_exercise then

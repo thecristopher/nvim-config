@@ -55,3 +55,27 @@ describe("totals", function()
     assert.same({ days = 2, ranks = { S = 1 } }, actions.totals(history, rows))
   end)
 end)
+
+describe("glyph", function()
+  it("draws Malenia's best day solid and an empty one as a dot", function()
+    assert.equal("█", actions.glyph({ level = actions.LEVELS, future = false }))
+    assert.equal("·", actions.glyph({ level = 0, future = false }))
+  end)
+
+  it("leaves the days still to come blank", function()
+    assert.equal(" ", actions.glyph({ level = 0, future = true }))
+  end)
+
+  it("gives every level its own shade, so Claire needs no color to read it", function()
+    local seen = {}
+    for level = 0, actions.LEVELS do
+      local glyph = actions.glyph({ level = level, future = false })
+      assert.is_nil(seen[glyph])
+      seen[glyph] = true
+    end
+  end)
+
+  it("keys the shades from empty to best", function()
+    assert.equal("·░▒▓█", actions.legend())
+  end)
+end)

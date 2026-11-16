@@ -46,6 +46,29 @@ local function commit_level(count)
   return 0
 end
 
+-- one shade per level, so the grid reads without color: an empty day is a dot, the best day solid
+M.GLYPHS = { [0] = "·", "░", "▒", "▓", "█" }
+
+--- The glyph a day is drawn with, blank for days still to come.
+---@param cell { level: integer, future: boolean }
+---@return string
+function M.glyph(cell)
+  if cell.future then
+    return " "
+  end
+  return M.GLYPHS[math.max(0, math.min(M.LEVELS, cell.level))]
+end
+
+--- The shades from an empty day to the best one, the key under the grid.
+---@return string
+function M.legend()
+  local shades = {}
+  for level = 0, M.LEVELS do
+    shades[level + 1] = M.GLYPHS[level]
+  end
+  return table.concat(shades)
+end
+
 --- How lit a day is, from 0 (not fought) to LEVELS, the brighter of its rank and its commits.
 ---@param day { rank?: string }|nil
 ---@param commits integer|nil

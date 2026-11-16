@@ -12,8 +12,12 @@ map("n", "<C-u>", "<C-u>zz", { desc = "Scroll up (centered)" })
 map("n", "n", "nzzzv", { desc = "Next match (centered)" })
 map("n", "N", "Nzzzv", { desc = "Prev match (centered)" })
 
--- Join without moving cursor
-map("n", "J", "mzJ`z", { desc = "Join lines" })
+-- Join without moving the cursor, and without spending a mark on it
+map("n", "J", function()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  vim.cmd("normal! " .. vim.v.count1 .. "J")
+  vim.api.nvim_win_set_cursor(0, cursor)
+end, { desc = "Join lines" })
 
 -- Yank to end of line (consistent with D, C)
 map("n", "Y", "y$", { desc = "Yank to EOL" })
@@ -47,9 +51,6 @@ map({ "n", "x" }, "X", '"_X', { desc = "Delete back (keep clipboard)" })
 map({ "n", "x" }, "c", '"_c', { desc = "Change (keep clipboard)" })
 map({ "n", "x" }, "C", '"_C', { desc = "Change to the end (keep clipboard)" })
 map({ "n", "v" }, "<leader>d", '"_d', { desc = "Delete (no yank)" })
-
--- Clear search highlight
-map("n", "<Esc>", "<cmd>nohlsearch<cr>", { silent = true })
 
 -- Disable Ex mode
 map("n", "Q", "<nop>")

@@ -192,8 +192,8 @@ describe("shows", function()
   end)
 
   it("lets the music go first when Claire splits the screen in half", function()
-    assert.is_false(actions.shows("music", 100))
-    assert.is_true(actions.shows("language", 100))
+    assert.is_false(actions.shows("music", 125))
+    assert.is_true(actions.shows("language", 125))
   end)
 
   it("always shows a piece without a minimum", function()
@@ -202,7 +202,55 @@ describe("shows", function()
 
   it("drops pieces from the least needed to the most", function()
     local min = actions.STATUSLINE_MIN
-    assert.is_true(min.music > min.ci and min.ci > min.runes and min.runes > min.status)
+    assert.is_true(min.music >= min.runes and min.runes > min.status and min.status > min.diff)
+    assert.is_true(min.diff > min.ci and min.ci > min.language)
+  end)
+
+  it("keeps only mode, path, diagnostics and position below 120 columns", function()
+    for piece in pairs(actions.STATUSLINE_MIN) do
+      assert.is_false(actions.shows(piece, 119))
+    end
+    assert.is_true(actions.shows("diagnostics", 80))
+  end)
+end)
+
+describe("path_budget", function()
+  it("gives Claire's path more room the wider the editor, across every tier", function()
+    local last = 0
+    for columns = 60, 240 do
+      assert.is_true(actions.path_budget(columns) >= last)
+      last = actions.path_budget(columns)
+    end
+  end)
+
+  it("never squeezes the path under its minimum", function()
+    assert.equal(actions.PATH_MIN, actions.path_budget(30))
+  end)
+end)
+
+describe("fit_path", function()
+  it("leaves a short path to Inde's letter untouched", function()
+    assert.equal("notes/inde.md", actions.fit_path("notes/inde.md", 40))
+  end)
+
+  it("drops folders from the front so Malenia's file name always shows", function()
+    assert.equal("…/haligtree/rot.lua", actions.fit_path("lua/core/haligtree/rot.lua", 20))
+  end)
+
+  it("cuts a file name that is too long on its own", function()
+    assert.equal("anniversary_…", actions.fit_path("letters/anniversary_with_claire.md", 13))
+  end)
+end)
+
+describe("short_branch", function()
+  it("keeps Claire's short branch whole", function()
+    assert.equal("feature/date-night", actions.short_branch("feature/date-night"))
+  end)
+
+  it("shortens a long branch with an ellipsis", function()
+    local short = actions.short_branch("bugfix/malenia-anniversary-playlist-order")
+    assert.equal(actions.BRANCH_MAX, vim.fn.strchars(short))
+    assert.equal("…", vim.fn.strcharpart(short, actions.BRANCH_MAX - 1))
   end)
 end)
 

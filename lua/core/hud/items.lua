@@ -10,6 +10,25 @@ local function words()
   return require("core.franchise").current().words
 end
 
+-- what the world calls its HUD: hub keys, tabs, kinds of items, trophies, see the lore's hud.lua
+local function hud_lore()
+  return require("core.franchise").current().hud or {}
+end
+
+--- Gives items their kind: the category the world files them under and a line of its lore.
+---@param items table[]
+---@param kind string one of the lore's hud.kinds
+---@return table[] the same items
+local function as_kind(items, kind)
+  local said = (hud_lore().kinds or {})[kind] or {}
+  for _, item in ipairs(items) do
+    item.kind = kind
+    item.category = item.category or said.name
+    item.flavor = item.flavor or said.flavor
+  end
+  return items
+end
+
 local function git(root, args)
   local result =
     vim.system(vim.list_extend({ "git", "-C", root }, args), { text = true }):wait(3000)
@@ -51,71 +70,120 @@ local ACTION_DESCRIPTIONS = {
   a = "See every room of the project, red wherever work remains.",
 }
 
---- The hub actions, the same keys every layout offers.
+-- what the Check float adds to the band under the grid: the key, the plain name and the lore
+local function action_check(name, plain, desc, flavor, key)
+  local lines = { name, "", "Key     " .. key, "Plain   " .. plain, "", desc }
+  if flavor then
+    vim.list_extend(lines, { "", flavor })
+  end
+  return lines
+end
+
+--- The hub actions, the same keys every layout offers, named in the world's words.
 ---@return table[]
 function M.actions()
-  return vim.tbl_map(function(key)
-    local line, pending = nil, false
-    if key.status then
-      line, pending = key.status()
-    end
-    return {
-      icon = key.icon,
-      icon_hl = pending and "DiagnosticWarn" or nil,
-      name = key.desc,
-      slot = key.slot,
-      key = key.key,
-      desc = line or ACTION_DESCRIPTIONS[key.key] or key.desc,
-      use = function()
-        run(key.action)
-      end,
-      check = function()
-        return { key.desc, "", ACTION_DESCRIPTIONS[key.key] or "", "", "Key: " .. key.key }
-      end,
-    }
-  end, require("core.hud.keys").keys())
+  local world = hud_lore().keys or {}
+  return as_kind(
+    vim.tbl_map(function(key)
+      local line, pending = nil, false
+      if key.status then
+        line, pending = key.status()
+      end
+      local said = world[key.key] or {}
+      local name = said.name or key.desc
+      local desc = said.desc or ACTION_DESCRIPTIONS[key.key] or key.desc
+      return {
+        icon = said.icon or key.icon,
+        icon_hl = pending and "DiagnosticWarn" or nil,
+        name = name,
+        slot = said.slot or key.slot,
+        key = key.key,
+        desc = line or desc,
+        flavor = said.flavor,
+        use = function()
+          run(key.action)
+        end,
+        check = function()
+          return action_check(name, key.desc, desc, said.flavor, key.key)
+        end,
+      }
+    end, require("core.hud.keys").keys()),
+    "action"
+  )
+end
+
+-- the last commit that touched a file, read only when Check asks for it
+local function last_commit(path)
+  local root = vim.fs.root(path, ".git")
+  if not root then
+    return nil
+  end
+  local lines = git(root, { "log", "-1", "--format=%ar · %an · %s", "--", path })
+  return lines[1]
 end
 
 local function file_details(path)
   local stat = vim.uv.fs_stat(path)
-  return {
+  local lines = {
     vim.fs.basename(path),
     "",
     "Path      " .. vim.fn.fnamemodify(path, ":~"),
     "Size      " .. (stat and (math.ceil(stat.size / 1024) .. " KB") or "?"),
     "Modified  " .. (stat and os.date("%Y-%m-%d %H:%M", stat.mtime.sec) or "?"),
   }
+  local commit = last_commit(path)
+  if commit then
+    table.insert(lines, "Commit    " .. commit)
+  end
+  return lines
 end
 
---- Files you had open lately, newest first.
+-- the path from where you stand and how long ago it was last written
+local function touched(path)
+  local stat = vim.uv.fs_stat(path)
+  local where = vim.fn.fnamemodify(path, ":~:.")
+  if not stat then
+    return where
+  end
+  return ("%s  ·  %s"):format(where, hud_actions.ago(os.time() - stat.mtime.sec))
+end
+
+--- Files you had open lately, newest first. Two files with the same name carry their folder, so
+--- six init.lua never look alike.
 ---@param limit integer|nil
 ---@return table[]
 function M.recent(limit)
-  local items = {}
+  local paths = {}
   for _, path in ipairs(vim.v.oldfiles) do
-    if #items >= (limit or 24) then
+    if #paths >= (limit or 24) then
       break
     end
     if vim.fn.filereadable(path) == 1 then
-      local icon, hl = file_icon(path)
-      table.insert(items, {
-        icon = icon,
-        icon_hl = hl,
-        name = vim.fs.basename(path),
-        desc = vim.fn.fnamemodify(path, ":~:."),
-        use = function()
-          vim.cmd.edit(vim.fn.fnameescape(path))
-        end,
-        check = function()
-          return file_details(path)
-        end,
-        combine = function()
-          vim.cmd.vsplit(vim.fn.fnameescape(path))
-        end,
-      })
+      table.insert(paths, path)
     end
   end
-  return items
+  local labels = hud_actions.file_labels(paths)
+  local items = {}
+  for index, path in ipairs(paths) do
+    local icon, hl = file_icon(path)
+    table.insert(items, {
+      icon = icon,
+      icon_hl = hl,
+      name = labels[index],
+      path = path,
+      desc = touched(path),
+      use = function()
+        vim.cmd.edit(vim.fn.fnameescape(path))
+      end,
+      check = function()
+        return file_details(path)
+      end,
+      combine = function()
+        vim.cmd.vsplit(vim.fn.fnameescape(path))
+      end,
+    })
+  end
+  return as_kind(items, "recent")
 end
 
 local function switch_branch(root, branch)
@@ -169,6 +237,7 @@ local function branch_item(root, current, parsed)
   local branch = parsed.branch
   return {
     icon = branch == current and "󰘬" or "󰌆",
+    current = branch == current or nil,
     name = branch,
     count = parsed.ahead and parsed.ahead > 0 and parsed.ahead or nil,
     desc = (branch == current and "You stand on this branch. " or "")
@@ -235,7 +304,10 @@ function M.git()
   if not cached then
     return {}
   end
-  return vim.list_extend(branch_items(root, cached.branches), stash_items(root, cached.stashes))
+  return vim.list_extend(
+    as_kind(branch_items(root, cached.branches), "branch"),
+    as_kind(stash_items(root, cached.stashes), "stash")
+  )
 end
 
 --- Messages left on the ground of this repo.
@@ -245,23 +317,26 @@ function M.messages()
   if not root then
     return {}
   end
-  return vim.tbl_map(function(entry)
-    local path = root .. "/" .. entry.file
-    return {
-      icon = "󰏫",
-      icon_hl = "EldenMessage",
-      name = entry.text,
-      count = entry.line,
-      desc = ("%s, line %d"):format(entry.file, entry.line),
-      use = function()
-        vim.cmd.edit(vim.fn.fnameescape(path))
-        pcall(vim.api.nvim_win_set_cursor, 0, { entry.line, 0 })
-      end,
-      check = function()
-        return { entry.text, "", entry.file .. ":" .. entry.line }
-      end,
-    }
-  end, require("core.messages").entries(root))
+  return as_kind(
+    vim.tbl_map(function(entry)
+      local path = root .. "/" .. entry.file
+      return {
+        icon = "󰏫",
+        icon_hl = "EldenMessage",
+        name = entry.text,
+        count = entry.line,
+        desc = ("%s, line %d"):format(entry.file, entry.line),
+        use = function()
+          vim.cmd.edit(vim.fn.fnameescape(path))
+          pcall(vim.api.nvim_win_set_cursor, 0, { entry.line, 0 })
+        end,
+        check = function()
+          return { entry.text, "", entry.file .. ":" .. entry.line }
+        end,
+      }
+    end, require("core.messages").entries(root)),
+    "message"
+  )
 end
 
 --- The regions of today's franchise, then every franchise to switch to.
@@ -281,10 +356,14 @@ function M.regions()
       end,
     }
   end, require("core.themes.actions").regions())
+  as_kind(items, "region")
   local franchise = require("core.franchise.actions")
   for _, name in ipairs(franchise.names()) do
     table.insert(items, {
       icon = "󰈻",
+      kind = "franchise",
+      category = ((hud_lore().kinds or {}).franchise or {}).name,
+      flavor = ((hud_lore().kinds or {}).franchise or {}).flavor,
       name = franchise.lore(name).title,
       desc = require("core.franchise").line(
         "hud.switch_desc",
@@ -333,11 +412,13 @@ end
 ---@return table[]
 function M.projects()
   local items = {}
+  local here = require("core.repos").root()
   for index, repo in ipairs(require("core.repos").list(12)) do
     local branch = require("core.repos").branch(repo) or "?"
     local count = changed[repo] and #changed[repo]
     table.insert(items, {
       repo = repo,
+      current = repo == here or nil,
       branch = branch,
       icon = "󰊢",
       name = vim.fs.basename(repo),
@@ -357,7 +438,7 @@ function M.projects()
     })
   end
   count_changes(items)
-  return items
+  return as_kind(items, "project")
 end
 
 --- The work waiting where you stand: the repo, its branch, what changed and the last file touched.
@@ -400,9 +481,14 @@ local function change_item(root, line)
   local path = line:sub(4):match("%-> (.+)$") or line:sub(4)
   local full = root .. "/" .. path
   local label = CHANGE_WORDS[code:sub(1, 1)] or "Changed"
+  local said = (hud_lore().kinds or {}).change or {}
   return {
     icon = "󰈔",
+    kind = "change",
+    category = said.name,
+    flavor = said.flavor,
     name = path,
+    path = full,
     desc = ("%s, %s."):format(label, path),
     use = function()
       if vim.fn.filereadable(full) == 1 then
@@ -430,8 +516,13 @@ end
 function M.quest_items(quest)
   local list = {}
   if quest.last_ready then
+    local said = (hud_lore().kinds or {}).recent or {}
     table.insert(list, {
       icon = "󰘍",
+      kind = "recent",
+      category = said.name,
+      flavor = said.flavor,
+      path = quest.last_path,
       name = vim.fs.basename(quest.last_path),
       desc = require("core.franchise").line("hud.resume", { file = quest.last_file }),
       use = function()
@@ -465,34 +556,38 @@ function M.rooms()
     return {}
   end
   local map = require("core.map.actions")
-  return vim.tbl_map(function(room)
-    local left = room.errors + room.todos
-    return {
-      icon = room.cleared and "■" or "□",
-      icon_hl = room.cleared and "EldenMapCleared" or "EldenMapLeft",
-      name = room.name,
-      slot = vim.fs.basename(room.key),
-      count = left > 0 and left or nil,
-      desc = room.key
-        .. (room.cleared and ", cleared." or (", " .. map.leftovers(room) .. " left.")),
-      use = function()
-        Snacks.picker.files({ cwd = root .. "/" .. room.key })
-      end,
-      check = function()
-        return { room.name, "", room.key, map.leftovers(room) }
-      end,
-      combine = function()
-        Snacks.picker.grep({ cwd = root .. "/" .. room.key, search = "TODO|FIXME", regex = true })
-      end,
-    }
-  end, require("core.map").rooms_from(root, survey))
+  local marks = require("core.skin").current().tree or {}
+  return as_kind(
+    vim.tbl_map(function(room)
+      local left = room.errors + room.todos
+      return {
+        icon = room.cleared and (marks.cleared or "■") or (marks.left or "□"),
+        icon_hl = room.cleared and "EldenMapCleared" or "EldenMapLeft",
+        name = room.name,
+        slot = vim.fs.basename(room.key),
+        count = left > 0 and left or nil,
+        desc = room.key
+          .. (room.cleared and ", cleared." or (", " .. map.leftovers(room) .. " left.")),
+        use = function()
+          Snacks.picker.files({ cwd = root .. "/" .. room.key })
+        end,
+        check = function()
+          return { room.name, "", room.key, map.leftovers(room) }
+        end,
+        combine = function()
+          Snacks.picker.grep({ cwd = root .. "/" .. room.key, search = "TODO|FIXME", regex = true })
+        end,
+      }
+    end, require("core.map").rooms_from(root, survey)),
+    "room"
+  )
 end
 
 --- The way out: back to work, the last session, or leave for good.
 ---@return table[]
 function M.exit()
   local say = require("core.franchise").line
-  return {
+  return as_kind({
     {
       icon = "󰆔",
       name = say("hud.restore"),
@@ -520,45 +615,117 @@ function M.exit()
         vim.cmd.qall()
       end,
     },
-  }
+  }, "exit")
 end
 
 --- The back-to-basics lessons fought so far, empty when the plugin is not around.
 ---@return table[]
 function M.lessons()
   local ok, btb = pcall(require, "core.btb")
-  return ok and btb.hud_items() or {}
+  return as_kind(ok and btb.hud_items() or {}, "lesson")
+end
+
+local function read_state_json(name)
+  local ok, lines = pcall(vim.fn.readfile, vim.fn.stdpath("state") .. "/" .. name)
+  if not ok then
+    return {}
+  end
+  local decoded_ok, decoded = pcall(vim.json.decode, table.concat(lines, "\n"))
+  return (decoded_ok and type(decoded) == "table") and decoded or {}
+end
+
+M.TROPHY_ICON = "󰔸"
+
+-- a trophy names itself on its tile and shows its number in the corner, the description says where
+-- the number comes from, so it never seems to disagree with the Bestiary or the Chronicle
+local function trophy(icon, name, value, scope, open)
+  return {
+    icon = icon,
+    name = name,
+    slot = name,
+    count = value,
+    desc = ("%s: %s, %s."):format(name, tostring(value), scope),
+    use = function()
+      vim.cmd(open)
+    end,
+    check = function()
+      return { name, "", tostring(value), "", scope }
+    end,
+  }
+end
+
+local function trophy_icon(key)
+  return (hud_lore().trophy_icons or {})[key] or M.TROPHY_ICON
+end
+
+--- The trophies of every run so far: foes felled, the finest rank, the days fought and the longest
+--- streak, in the franchise's words.
+---@return table[]
+function M.trophies()
+  local said = require("core.franchise").current().trophies
+  local count = require("core.hud.actions.trophies")
+  local summary = count.summary(
+    read_state_json("eldentree_bestiary.json"),
+    read_state_json("eldentree_chronicle.json")
+  )
+  if count.empty(summary) then
+    return as_kind({
+      { icon = trophy_icon("title"), name = said.title, slot = said.title, desc = said.empty },
+    }, "trophy")
+  end
+  local ranked = summary.rank and ("earned on " .. summary.rank_date) or "no run ranked yet"
+  return as_kind({
+    trophy(trophy_icon("felled"), said.felled, summary.felled, "across every repo", "Bestiary"),
+    trophy(trophy_icon("rank"), said.rank, summary.rank or "-", ranked, "Chronicle"),
+    trophy(trophy_icon("days"), said.days, summary.days, "days with a finished run", "Chronicle"),
+    trophy(trophy_icon("streak"), said.streak, summary.streak, "days in a row", "Chronicle"),
+  }, "trophy")
+end
+
+-- the attaché case gives the important items more room: the main tools and where you stand
+local CASE_SIZES = { f = { w = 2, h = 1 }, p = { w = 2, h = 1 } }
+
+local function sized(items)
+  for _, item in ipairs(items) do
+    if item.current and item.kind == "project" then
+      item.size = { w = 2, h = 2 }
+    elseif item.current and item.kind == "branch" then
+      item.size = { w = 2, h = 1 }
+    else
+      item.size = item.size or CASE_SIZES[item.key or ""]
+    end
+  end
+  return items
 end
 
 --- Builds the tabs a HUD style shows.
 ---@param style string "roundtable" or "inventory"
 ---@return table[] tabs, table|nil chest
 function M.tabs(style)
+  local names, icons = hud_lore().tabs or {}, hud_lore().tab_icons or {}
   if style == "inventory" then
+    -- the records sit among the files, like the documents of the old inventories
     local files = vim.list_extend(vim.list_extend(M.recent(18), M.messages()), M.lessons())
+    vim.list_extend(files, M.trophies())
     return {
-      { title = "ITEM", items = M.actions() },
-      { title = "KEYS", items = M.git() },
-      { title = "BOX", items = M.projects() },
-      { title = "FILE", items = files },
-      { title = "MAP", items = M.rooms() },
-      { title = "EXIT", items = M.exit() },
+      { title = names.item or "ITEM", items = sized(M.actions()) },
+      { title = names.keys or "KEYS", items = sized(M.git()) },
+      { title = names.box or "BOX", items = sized(M.projects()) },
+      { title = names.file or "FILE", items = files },
+      { title = names.map or "MAP", items = M.rooms() },
+      { title = names.exit or "EXIT", items = M.exit() },
     },
       nil
   end
-  -- a franchise may name the tabs its own way, like Elizabeth's Vanity and Props
-  local names = require("core.franchise").current().hud_tabs or {}
+  local lore = require("core.franchise").current()
   return {
-    { title = names.tools or "Tools", icon = "󱌣", items = M.actions() },
-    { title = names.recent or "Recent", icon = "󰋚", items = M.recent() },
-    { title = names.keys or "Key Items", icon = "󰌆", items = M.git() },
-    { title = names.messages or "Messages", icon = "󰏫", items = M.messages() },
-    { title = names.regions or "Regions", icon = "◈", items = M.regions() },
-    {
-      title = require("core.franchise").current().coach.lessons,
-      icon = "󰂺",
-      items = M.lessons(),
-    },
+    { title = names.tools or "Tools", icon = icons.tools or "󱌣", items = M.actions() },
+    { title = names.recent or "Recent", icon = icons.recent or "󰋚", items = M.recent() },
+    { title = names.keys or "Key Items", icon = icons.keys or "󰌆", items = M.git() },
+    { title = names.messages or "Messages", icon = icons.messages or "󰏫", items = M.messages() },
+    { title = names.regions or "Regions", icon = icons.regions or "◈", items = M.regions() },
+    { title = lore.coach.lessons, icon = icons.lessons or "󰂺", items = M.lessons() },
+    { title = lore.trophies.title, icon = icons.trophies or M.TROPHY_ICON, items = M.trophies() },
   }, { title = words().sites, items = M.projects() }
 end
 

@@ -28,6 +28,10 @@ function M.dismiss()
   if current.fade then
     current.fade:stop()
   end
+  -- a toggle that dismisses before the cursor moves leaves the autocmd behind otherwise
+  if current.leave then
+    pcall(vim.api.nvim_del_autocmd, current.leave)
+  end
   pcall(vim.api.nvim_win_close, current.win, true)
   current = nil
 end
@@ -38,7 +42,7 @@ local function identity(dir)
     return me
   end
   local function config(key)
-    local result = vim.system({ "git", "-C", dir, "config", key }, { text = true }):wait()
+    local result = vim.system({ "git", "-C", dir, "config", key }, { text = true }):wait(2000)
     return result.code == 0 and vim.trim(result.stdout) or nil
   end
   me = { name = config("user.name"), mail = config("user.email") }
@@ -46,11 +50,12 @@ local function identity(dir)
 end
 
 local function open_float(phantom, kind)
+  local title = " " .. require("core.skin").title(phantom.title) .. " "
   local width = 0
   for _, line in ipairs(phantom.lines) do
     width = math.max(width, vim.api.nvim_strwidth(line))
   end
-  width = math.max(width, vim.api.nvim_strwidth(phantom.title)) + 2
+  width = math.max(width, vim.api.nvim_strwidth(title)) + 2
 
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
@@ -78,7 +83,7 @@ local function open_float(phantom, kind)
     style = "minimal",
     border = require("core.skin").border(),
     focusable = false,
-    title = { { phantom.title, KIND_GROUPS[kind] } },
+    title = { { title, KIND_GROUPS[kind] } },
     title_pos = "left",
     noautocmd = true,
   })
@@ -110,11 +115,17 @@ local function summon(info, buf, dir)
   current = { win = open_float(phantom, kind) }
   fade_in(current)
   require("core.sound").play("phantom")
-  vim.api.nvim_create_autocmd(
+  current.leave = vim.api.nvim_create_autocmd(
     { "CursorMoved", "CursorMovedI", "BufLeave", "InsertEnter", "WinScrolled" },
     {
       once = true,
-      callback = M.dismiss,
+      callback = function()
+        -- the autocmd is spent once it fires, dismiss must not delete it again
+        if current then
+          current.leave = nil
+        end
+        M.dismiss()
+      end,
     }
   )
 end

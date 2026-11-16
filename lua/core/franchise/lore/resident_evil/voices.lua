@@ -1,5 +1,6 @@
--- What the character of each location says when something happens, written from the voice sheets
--- in docs/voices/resident_evil.md. {branch} and {boss} are filled in when the moment has them.
+-- What the character of each location says when something happens, written from the voice sheets in
+-- docs/voices/resident_evil.md. {branch}, {boss} and {number} are filled in when the moment has
+-- them.
 return {
   raccoon_city = {
     trial_passed = {
@@ -34,6 +35,36 @@ return {
       "We got {boss}. Remind me to never let you out of my sight.",
       "{boss} won't bother us again. Nobody gets left behind, not you.",
     },
+    committed = {
+      "Committed. One less thing to worry about.",
+      "Saved on {branch}. Okay, what's next?",
+      "Locked in. Good call.",
+    },
+    pr_opened = {
+      "PR #{number} is up. Let's see if anyone actually reads it.",
+      "#{number} is out there. I'll watch your back while they review.",
+      "PR #{number}. Nice. Now we wait, and I hate waiting.",
+    },
+    region_arrived = {
+      "Claire here. Raccoon City's a mess, but we've got this.",
+      "Okay, I'm with you today. Let's get through this together.",
+      "Raccoon City. Stay close, keep moving.",
+    },
+    morning = {
+      "Hey, you're back. Coffee first, zombies later.",
+      "Morning. Same city, new day. Let's go.",
+      "You made it through the night. Good. Now let's work.",
+    },
+    conflicts_cleared = {
+      "Conflicts gone. Told you we'd get out of there.",
+      "Merge is clean. That was close.",
+      "No more conflicts. Let's not do that again.",
+    },
+    woke = {
+      "You're up. Good, I was getting worried.",
+      "Back? Okay, let's keep moving.",
+      "Rested? Good. We've still got a city to get out of.",
+    },
   },
   rpd = {
     trial_passed = {
@@ -65,6 +96,36 @@ return {
       "{boss} is down. Next time, knock.",
       "So much for {boss}. Should've stayed in bed.",
       "{boss}'s done. That one's going in the report.",
+    },
+    committed = {
+      "Committed. Rookie mistake to wait any longer.",
+      "Saved on {branch}. Not bad for a first day.",
+      "Locked in. That one goes in the report.",
+    },
+    pr_opened = {
+      "PR #{number}. Hope the reviewers aren't infected.",
+      "#{number} is up. Somebody call for backup.",
+      "PR #{number}. Let's see who opens fire first.",
+    },
+    region_arrived = {
+      "Leon Kennedy, RPD. Guess this is my precinct today.",
+      "Welcome to the RPD. Don't touch the statues.",
+      "First day on the job, again. Let's make it count.",
+    },
+    morning = {
+      "Morning. No zombies yet. Give it time.",
+      "You're back. The coffee's terrible and the code's worse. Let's fix one.",
+      "New day, same precinct. Where do we start?",
+    },
+    conflicts_cleared = {
+      "Conflicts cleared. That's one way to clean up a precinct.",
+      "Merge is clean. Nobody got bit.",
+      "No more conflicts. I'll write it up in the report.",
+    },
+    woke = {
+      "Back on your feet? Good, the night shift is brutal.",
+      "You're up. I'll pretend I didn't see you sleeping on duty.",
+      "Rested. Good. Let's finish this before sunrise.",
     },
   },
   spencer_mansion = {
@@ -98,6 +159,36 @@ return {
       "{boss} is down. Don't count on it staying that way.",
       "Target {boss} eliminated. Moving out.",
     },
+    committed = {
+      "Committed. Everything's in its place.",
+      "Saved on {branch}. Clean and by the book.",
+      "Locked in. One more door unlocked.",
+    },
+    pr_opened = {
+      "PR #{number} is up. Let's see if the team holds.",
+      "#{number} filed. I'll check every corner while they read.",
+      "PR #{number}. Methodical. I like it.",
+    },
+    region_arrived = {
+      "Jill Valentine, S.T.A.R.S. The mansion is ours to clear today.",
+      "Spencer Mansion. Stay sharp, every room has a trick.",
+      "I'm with you today. Let's do this right.",
+    },
+    morning = {
+      "Morning. Map's out, ammo's checked. Let's go.",
+      "You're back. The mansion didn't get any friendlier.",
+      "New day. One room at a time.",
+    },
+    conflicts_cleared = {
+      "Conflicts cleared. The lock almost picked itself.",
+      "Merge is clean. That's how S.T.A.R.S. does it.",
+      "No conflicts left. Every door opens now.",
+    },
+    woke = {
+      "You're up. Good timing, I just finished the sweep.",
+      "Rested? Then let's keep moving.",
+      "Back with me. The mansion's quiet. For now.",
+    },
   },
   umbrella_lab = {
     trial_passed = {
@@ -130,6 +221,36 @@ return {
       "{boss} is eliminated. Do not mistake that for strength.",
       "{boss} served its purpose. Discard it.",
     },
+    committed = {
+      "Committed. A minor step in a grand design.",
+      "{branch} recorded. Even you can be useful.",
+      "Saved. Do not make me regret it.",
+    },
+    pr_opened = {
+      "PR #{number}. Let the lesser minds review it.",
+      "#{number} submitted. Their opinion is irrelevant.",
+      "PR #{number}. All according to plan.",
+    },
+    region_arrived = {
+      "Albert Wesker. Consider yourself fortunate to work under me today.",
+      "The lab is mine. You may use it.",
+      "Welcome to Umbrella. Try to keep up.",
+    },
+    morning = {
+      "You return. I have been awake for hours.",
+      "Morning. Sleep is a weakness I outgrew.",
+      "A new day. Another chance to prove yourself adequate.",
+    },
+    conflicts_cleared = {
+      "The conflicts are resolved. Only the superior version survives.",
+      "Merge complete. Inferior lines eliminated.",
+      "No conflicts. As expected.",
+    },
+    woke = {
+      "Finally awake. Time is a resource, and you squander it.",
+      "You rested. How very human.",
+      "Rise. My patience is not infinite.",
+    },
   },
   the_island = {
     trial_passed = {
@@ -161,6 +282,36 @@ return {
       "{boss} is done. I keep the sample, you keep the credit.",
       "So {boss} falls. Saved me the trouble.",
       "{boss} is down. Until next time.",
+    },
+    committed = {
+      "Committed. Quiet and clean, just how I like it.",
+      "Saved on {branch}. No witnesses.",
+      "Locked in. Don't get sentimental about it.",
+    },
+    pr_opened = {
+      "PR #{number}. Let's see who bites.",
+      "#{number} delivered. I'll be watching from the rafters.",
+      "PR #{number}. Not bad. Not bad at all.",
+    },
+    region_arrived = {
+      "Ada Wong. Don't ask what I'm doing here.",
+      "The island. Keep your head down, I'll handle the rest.",
+      "Miss me? You can admit it.",
+    },
+    morning = {
+      "Back already? You must like me.",
+      "Morning. I've been up since the island woke.",
+      "New day. Same job. Different angle.",
+    },
+    conflicts_cleared = {
+      "Conflicts gone. Clean exit.",
+      "Merge settled. I'd have done it faster.",
+      "No conflicts left. You're learning.",
+    },
+    woke = {
+      "Rested? Don't make it a habit.",
+      "You're up. I almost left without you.",
+      "Awake. Good. I need a getaway driver.",
     },
   },
 }

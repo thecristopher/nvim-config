@@ -43,6 +43,7 @@ return {
   ["commit.nothing"] = "Nothing to commit.",
   ["commit.left_out"] = "Left out of the commit: {files}",
   ["commit.fell"] = "git commit failed",
+  ["commit.committing"] = "Committing, the hooks are running…",
 
   -- drafting and opening a pull request with Claude
   ["pr.title"] = "PR Helper",

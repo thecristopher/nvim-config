@@ -10,6 +10,10 @@ M.RULE_ROW = 3
 M.SUB_ROW = 4
 M.BAND_LEVELS = 10
 
+-- how a banner sits on the screen: a band of shadow (the default), the whole screen going dark
+-- (blackout) or a film slate whose stick snaps shut over the words (clapper)
+M.LOOKS = { "band", "blackout", "clapper" }
+
 M.KINDS = {
   felled = {
     color = "yellow",
@@ -137,6 +141,90 @@ function M.drip_alpha(depth, elapsed, kind)
   local running = ease.ease("out_cubic", ease.progress(elapsed - delay, M.DRIP_MS))
   local falling = 1 - ease.progress(elapsed - (kind.duration - kind.fade_out), kind.fade_out)
   return running * ease.ease("in_out_sine", falling)
+end
+
+--- Where each part of a banner sits: the float's height and the rows of its text, rule, subtitle
+--- and slate. Drips get their rows between the text and the subtitle, so they never cover it.
+---@param kind table from M.kind
+---@param screen_height integer editor rows, the blackout covers them all
+---@return { height: integer, text: integer, rule: integer, sub: integer, slate?: integer }
+function M.geometry(kind, screen_height)
+  local drip_rows = kind.drip and M.DRIP_DEPTH or 0
+  if kind.look == "blackout" then
+    local height = math.max(M.HEIGHT, screen_height)
+    local text = math.floor(height * 0.42)
+    return { height = height, text = text, rule = text + 1, sub = text + drip_rows + 2 }
+  end
+  if kind.look == "clapper" then
+    -- the open stick, the hinge, the shut stick and the slate's stripes sit over the words
+    local text = M.CLAPPER.rows + 1
+    return { height = text + 5, text = text, rule = text + 1, sub = text + 2, slate = 0 }
+  end
+  local sub = M.SUB_ROW + drip_rows
+  return { height = math.max(M.HEIGHT, sub + 3), text = M.TEXT_ROW, rule = M.RULE_ROW, sub = sub }
+end
+
+--- How dark a cell of the banner's ground is before the fade: the band melts at its edges, a
+--- blackout is the same everywhere.
+---@param kind table
+---@param row integer zero based
+---@param col integer zero based
+---@param width integer
+---@param height integer
+---@return number from 0 to 1
+function M.ground_alpha(kind, row, col, width, height)
+  if kind.look == "blackout" then
+    return 1
+  end
+  return M.band_alpha(row, col, width, height)
+end
+
+-- the film slate --------------------------------------------------------------------------------
+
+-- the stick is raised for `open_ms` after the words arrive, then snaps shut in one frame
+M.CLAPPER = { rows = 4, stripe = "▚", open_ms = 650, extra = 8 }
+
+--- How visible the raised stick and the shut stick are at a moment: the raised one shows while
+--- the words arrive, the shut one takes over the moment it claps.
+---@param elapsed number milliseconds since the banner appeared
+---@param kind table
+---@return number open, number shut both from 0 to 1, already faded with the banner
+function M.clapper_alpha(elapsed, kind)
+  local snap = kind.fade_in + M.CLAPPER.open_ms
+  local fade = M.envelope(elapsed, kind)
+  if elapsed < snap then
+    return fade, 0
+  end
+  return 0, fade
+end
+
+--- The rows of the slate drawn over a banner's words, as { row, col, text, part } pieces with
+--- part "open", "hinge", "shut" or "slate".
+---@param text_width integer display width of the banner's words
+---@param width integer float width
+---@return { row: integer, col: integer, text: string, part: string }[]
+function M.slate(text_width, width)
+  local span = math.min(width - 2, text_width + M.CLAPPER.extra)
+  local col = M.center_col(width, span)
+  local stripes = M.CLAPPER.stripe:rep(span)
+  return {
+    -- raised: tilted up and to the right of its hinge
+    { row = 0, col = col + 2, text = M.CLAPPER.stripe:rep(math.max(1, span - 2)), part = "open" },
+    { row = 1, col = col, text = "╱", part = "hinge" },
+    { row = 2, col = col, text = stripes, part = "shut" },
+    { row = 3, col = col, text = ("▀"):rep(span), part = "slate" },
+  }
+end
+
+--- The subtitle a :Banner preview shows under a kind: death and a cut take no applause.
+---@param name string kind name
+---@param salute string the franchise's salute
+---@return string|nil
+function M.preview_subtitle(name, salute)
+  if name == "died" then
+    return nil
+  end
+  return salute
 end
 
 -- "ENEMY FELLED" becomes "E N E M Y   F E L L E D", the way the game letterspaces it

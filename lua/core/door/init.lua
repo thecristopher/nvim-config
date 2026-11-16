@@ -1,5 +1,5 @@
--- The screen goes dark, a door creaks open in the middle of it, and the dark lifts off the
--- project you arrive at. A blended float over the editor, like the fog wall it replaces.
+-- The screen goes dark, a door as tall as the screen slides open in the middle of it, and the dark
+-- lifts off the project you arrive at. A blended float over the editor, like the fog wall it replaces.
 local actions = require("core.door.actions")
 local banner = require("core.banner.actions")
 local motion = require("core.motion")
@@ -18,6 +18,8 @@ local function paint_groups(raw)
   local fg = color.mix(color.to_int(dark), color.to_int(wood), actions.door_alpha(raw))
   vim.api.nvim_set_hl(0, "EldenDoorDark", { bg = dark, blend = blend })
   vim.api.nvim_set_hl(0, "EldenDoorPanel", { fg = fg, bg = dark, blend = blend })
+  local note = color.mix(color.to_int(dark), color.to_int(p.overlay1), actions.door_alpha(raw))
+  vim.api.nvim_set_hl(0, "EldenDoorLoading", { fg = note, bg = dark, blend = blend, italic = true })
 end
 
 local function close(state)
@@ -59,21 +61,28 @@ local function open_float()
   return { buf = buf, win = win, width = width, height = height }
 end
 
+local function put(state, row, col, text, group)
+  if row >= 0 and row < state.height then
+    vim.api.nvim_buf_set_extmark(state.buf, ns, row, 0, {
+      virt_text = { { text, group } },
+      virt_text_win_col = col,
+      priority = 100,
+    })
+  end
+end
+
 local function draw_door(state, raw)
   vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
-  local rows = actions.rows(actions.swing(raw))
-  local top = math.max(0, math.floor((state.height - #rows) / 2))
-  local col = banner.center_col(state.width, actions.WIDTH)
+  local width, height = actions.size(state.width, state.height)
+  local rows = actions.rows(actions.swing(raw), width, height)
+  local top = math.max(0, math.floor((state.height - #rows) / 2) - 1)
+  local col = banner.center_col(state.width, width)
   for index, text in ipairs(rows) do
-    local row = top + index - 1
-    if row < state.height then
-      vim.api.nvim_buf_set_extmark(state.buf, ns, row, 0, {
-        virt_text = { { text, "EldenDoorPanel" } },
-        virt_text_win_col = col,
-        priority = 100,
-      })
-    end
+    put(state, top + index - 1, col, text, "EldenDoorPanel")
   end
+  -- small at the bottom, the way the mansion's doors said it
+  local loading = banner.spaced(require("core.franchise").current().words.loading or "")
+  put(state, state.height - 2, math.max(0, state.width - #loading - 4), loading, "EldenDoorLoading")
 end
 
 --- Darkens the editor, swings a door open and lets the light back in, unless animations are stilled.

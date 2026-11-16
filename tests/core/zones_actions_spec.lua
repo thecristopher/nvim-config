@@ -71,3 +71,27 @@ describe("should_announce", function()
     )
   end)
 end)
+
+describe("zone_names", function()
+  it("never gives two of Claire's folders the same place", function()
+    local keys = {}
+    for index = 1, 40 do
+      table.insert(keys, "src/room" .. index)
+    end
+    local names, seen = actions.zone_names(keys), {}
+    for _, key in ipairs(keys) do
+      assert.is_nil(seen[names[key]])
+      seen[names[key]] = true
+    end
+  end)
+
+  it("keeps Malenia's tests in the graveyard and numbers the second wing", function()
+    local names = actions.zone_names({ "tests/core", "tests/unit" })
+    assert.equal("Stranded Graveyard", names["tests/core"])
+    assert.equal("Stranded Graveyard II", names["tests/unit"])
+  end)
+
+  it("names a lone folder exactly as zone_name does", function()
+    assert.equal(actions.zone_name("lua/core"), actions.zone_names({ "lua/core" })["lua/core"])
+  end)
+end)

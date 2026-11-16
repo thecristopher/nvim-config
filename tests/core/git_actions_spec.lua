@@ -140,3 +140,40 @@ describe("checkout_args", function()
     )
   end)
 end)
+
+describe("trim_diff", function()
+  local function file_diff(name, lines)
+    local out = { "diff --git a/" .. name .. " b/" .. name, "@@ -1 +1 @@" }
+    for index = 1, lines do
+      table.insert(out, "+line " .. index .. " of the love letter")
+    end
+    return table.concat(out, "\n")
+  end
+
+  it("keeps Claire's small diff whole", function()
+    local diff = file_diff("claire.lua", 3)
+    assert.equal(diff, actions.trim_diff(diff, 6000))
+  end)
+
+  it("gives Inde's small file its place next to Malenia's huge one", function()
+    local diff = file_diff("malenia.lua", 400) .. "\n" .. file_diff("inde.lua", 2)
+    local trimmed = actions.trim_diff(diff, 2000)
+    assert.truthy(trimmed:find("diff --git a/inde.lua", 1, true))
+    assert.truthy(trimmed:find("+line 2 of the love letter", 1, true))
+    assert.truthy(trimmed:find("more lines of this file left out", 1, true))
+    assert.is_true(#trimmed <= 2200)
+  end)
+end)
+
+describe("left_out_comments", function()
+  it("lists the files Claire left out as comments git ignores", function()
+    assert.same(
+      { "", "# Left out of this commit:", "#   .env", "#   debug.log" },
+      actions.left_out_comments({ ".env", "debug.log" })
+    )
+  end)
+
+  it("adds nothing when every change of Inde's made it in", function()
+    assert.same({}, actions.left_out_comments({}))
+  end)
+end)

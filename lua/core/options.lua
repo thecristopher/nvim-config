@@ -33,6 +33,10 @@ opt.sidescrolloff = 8
 opt.conceallevel = 2
 opt.splitright = true
 opt.splitbelow = true
+-- opening or closing a split keeps the text where it was instead of scrolling it under the cursor
+opt.splitkeep = "screen"
+-- a visual block can reach past the end of short lines, so ragged columns still select as a block
+opt.virtualedit = "block"
 opt.equalalways = false
 
 -- Files & persistence
@@ -63,7 +67,8 @@ opt.grepformat = "%f:%l:%c:%m"
 opt.grepprg = "rg --vimgrep"
 
 -- Performance
-opt.updatetime = 100
+-- CursorHold drives LSP word highlights and blame, 100 ms fired them while still moving around
+opt.updatetime = 200
 opt.timeoutlen = 300
 opt.lazyredraw = false
 opt.redrawtime = 1500

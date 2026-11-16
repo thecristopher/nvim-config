@@ -51,6 +51,21 @@ describe("fit", function()
   it("cuts a long one and marks the cut", function()
     assert.equal("Malenia…", panel.fit("Malenia, Blade of Miquella", 8))
   end)
+
+  it("cuts Inde's lyric at a word instead of halfway through one", function()
+    assert.equal("I wrote you a love…", panel.fit("I wrote you a love letter tonight", 22))
+  end)
+
+  it("cuts mid word when the last space would leave most of the room empty", function()
+    assert.equal("Claire…", panel.fit("Claire Redfieldsfavoritesong", 7))
+  end)
+end)
+
+describe("fits", function()
+  it("opens Claire's playlist only where the panel has room", function()
+    assert.is_true(panel.fits(120))
+    assert.is_false(panel.fits(50))
+  end)
 end)
 
 describe("wrap", function()
@@ -130,9 +145,9 @@ describe("progress_row", function()
     assert.truthy(line:find("━◈─", 1, true))
   end)
 
-  it("runs like a tape in Raccoon City", function()
+  it("fills Claire's tape one block at a time in Raccoon City", function()
     local line = panel.progress_row(0, 250, evil.skin.music.bar).lines[1]
-    assert.truthy(line:find("0:00 ▶", 1, true))
+    assert.truthy(line:find("0:00 ▶░", 1, true))
   end)
 
   it("keeps the bar the same width at any moment", function()

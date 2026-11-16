@@ -8,6 +8,17 @@ local function find(maps, lhs)
   end
 end
 
+describe("innermost", function()
+  it("keeps the last two scopes of Claire's love letter", function()
+    assert.same({ "letter", "closing" }, actions.innermost({ "inde", "letter", "closing" }, 2))
+  end)
+
+  it("keeps every scope when Malenia's file is shallow", function()
+    assert.same({ "haligtree" }, actions.innermost({ "haligtree" }, 2))
+    assert.same({}, actions.innermost({}, 2))
+  end)
+end)
+
 describe("dive bindings", function()
   local maps = actions.expand(actions.bindings)
 

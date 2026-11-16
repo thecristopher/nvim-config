@@ -1,6 +1,6 @@
 -- What the character of each region says when something happens, one table per region name.
--- Write a voice sheet in docs/voices/ first, then the lines from it. {branch} and {boss} are
--- filled in when the moment has them.
+-- Write a voice sheet in docs/voices/ first, then the lines from it. {branch}, {boss} and {number}
+-- are filled in when the moment has them.
 return {
   first_region = {
     trial_passed = { "Every test passed." },
@@ -9,5 +9,23 @@ return {
     ci_failed = { "{branch} failed CI." },
     pushed = { "{branch} is pushed." },
     boss_felled = { "{boss} is down." },
+    committed = {
+      "Committed on {branch}.",
+    },
+    pr_opened = {
+      "PR #{number} is open.",
+    },
+    region_arrived = {
+      "A new region, a new day.",
+    },
+    morning = {
+      "Good morning.",
+    },
+    conflicts_cleared = {
+      "Every conflict is resolved.",
+    },
+    woke = {
+      "Welcome back.",
+    },
   },
 }

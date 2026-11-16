@@ -9,6 +9,8 @@ local M = {}
 
 local ns = vim.api.nvim_create_namespace("eldentree_hub")
 local FRAME_MS = 40
+-- blank cells the weather keeps clear around text, so nothing lands between spaced letters
+local TEXT_MARGIN = 2
 
 -- the rows worth gilding, matched by the ornaments and the character name the dashboard draws
 local function gilded_marks()
@@ -31,10 +33,14 @@ local function current_weather()
   return actions.weather(require("core.themes").current().name)
 end
 
+--- The player message of this session, picked again whenever another world takes over, since it
+--- belongs to the world that wrote it.
+---@return string
 function M.message()
-  if not M.current_message then
+  local world = require("core.franchise").current().name
+  if not M.current_message or M.message_world ~= world then
     math.randomseed(vim.uv.hrtime() % 2 ^ 31)
-    M.current_message = actions.pick_message(math.random)
+    M.current_message, M.message_world = actions.pick_message(math.random), world
   end
   return M.current_message
 end
@@ -93,7 +99,7 @@ local function index_buffer(buf)
     rows[row] = {
       line = line,
       chars = chars,
-      taken = actions.occupied(cells),
+      taken = actions.occupied(cells, TEXT_MARGIN),
       gilded = gilded,
       framed = framed,
       bulbs = line:find(BULB, 1, true) ~= nil,

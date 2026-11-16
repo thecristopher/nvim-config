@@ -50,9 +50,11 @@ M.SKIN = {
   "icons",
   "cursor",
   "glyphs",
+  "tree",
+  "syntax",
 }
 -- what core/chrome reads: the mode names, the command line, the preview and the notification titles
-M.CHROME = { "modes", "cmdline", "search", "examine", "history", "notify" }
+M.CHROME = { "modes", "cmdline", "search", "examine", "history", "notify", "tree" }
 M.CHROME_MODES = { "normal", "insert", "visual", "replace", "command", "terminal" }
 M.CHROME_LEVELS = { "info", "warn", "error", "debug", "trace" }
 -- what the now playing panel reads, its looks from the skin and its words from the lore
@@ -60,8 +62,32 @@ M.MUSIC_SKIN = { "bar", "divider", "sung" }
 -- one glyph per diagnostic and notification level, see core/skin
 M.ICONS = { "error", "warn", "info", "hint", "debug", "trace" }
 -- the small marks core/skin/glyphs pushes into options and plugins
-M.GLYPHS = { "indent", "scope", "list", "fold", "diff", "prompt", "keys", "scrollbar", "spinner" }
-M.MUSIC_WORDS = { "title", "loading", "missing", "instrumental" }
+M.GLYPHS = {
+  "indent",
+  "scope",
+  "list",
+  "fold",
+  "diff",
+  "prompt",
+  "keys",
+  "scrollbar",
+  "spinner",
+  "eob",
+  "split",
+}
+-- what the explorer reads: guides, expanders, folders, the marks on files and the rooms
+M.TREE = {
+  "indent",
+  "last",
+  "collapsed",
+  "expanded",
+  "folder",
+  "thread",
+  "message",
+  "left",
+  "cleared",
+}
+M.MUSIC_WORDS = { "title", "loading", "missing", "instrumental", "now_playing" }
 M.LISTS = { "hub_messages", "message_templates", "places", "item_categories" }
 -- back-to-basics reads the names the HUD gives the drills, the coach is the region's character
 M.COACH = { "training", "lessons", "onsite", "concepts", "hint", "buy", "leave" }
@@ -69,11 +95,52 @@ M.COACH = { "training", "lessons", "onsite", "concepts", "hint", "buy", "leave" 
 -- the bestiary, focus blocks and the chronicle
 M.QUESTS = {
   ci = { "running", "passed", "failed" },
-  threads = { "title", "resolved", "none" },
+  threads = { "title", "resolved", "none", "no_pr" },
   conflict = { "boss", "left" },
   bestiary = { "title", "empty", "enemies" },
   expedition = { "name", "started", "ended" },
   chronicle = { "title" },
+  trophies = { "title", "felled", "rank", "days", "streak", "empty" },
+}
+
+-- what the HUD reads from lore.hud: a world name for every hub key (see core/hud/keys), a category
+-- for every kind of item, the trophies' icons, and what each view names its tabs and stats
+M.HUD_KEYS = { "f", "g", "r", "p", "e", "o", "n", "s", "t", "c", "b", "d", "L", "m", "q", "a" }
+M.HUD_KEY_FIELDS = { "name", "slot", "desc" }
+M.HUD_KINDS = {
+  "action",
+  "recent",
+  "branch",
+  "stash",
+  "message",
+  "region",
+  "franchise",
+  "project",
+  "room",
+  "change",
+  "exit",
+  "trophy",
+  "lesson",
+}
+M.HUD_TROPHY_ICONS = { "title", "felled", "rank", "days", "streak" }
+local RAIL_TABS = { "tools", "recent", "keys", "messages", "regions" }
+local RAIL_ICONS = { "tools", "recent", "keys", "messages", "regions", "lessons", "trophies" }
+M.HUD_VIEWS = {
+  roundtable = {
+    tabs = RAIL_TABS,
+    tab_icons = RAIL_ICONS,
+    stats = { "level", "runes", "vigor", "mind", "endurance", "arcane" },
+    words = { "used" },
+  },
+  inventory = {
+    tabs = { "item", "keys", "box", "file", "map", "exit" },
+    stats = { "fine", "caution", "danger", "ribbons" },
+  },
+  wardrobe = {
+    tabs = RAIL_TABS,
+    tab_icons = RAIL_ICONS,
+    stats = { "scene", "cast", "location", "call" },
+  },
 }
 
 M.WORDS = {
@@ -98,6 +165,9 @@ M.WORDS = {
 -- words only some mechanics read, so a franchise pays for what it plays
 M.MECHANIC_WORDS = {
   { mechanic = "rest", value = "typewriter", words = { "ink_ribbons", "typewriter" } },
+  { mechanic = "rest", value = "embers", words = { "grace_menu" } },
+  { mechanic = "travel", value = "door", words = { "loading" } },
+  { mechanic = "rest", value = "golden_hour", words = { "intermission", "back_soon" } },
   { mechanic = "ranking", value = true, words = { "last_run", "rank", "saves", "fixes" } },
 }
 
@@ -141,6 +211,8 @@ M.CHOICES = {
   },
 }
 M.TITLE_STYLES = { "shimmer", "drip", "marquee" }
+-- how a banner sits on the screen, see core/banner/actions
+M.BANNER_LOOKS = require("core.banner.actions").LOOKS
 -- the borders every plugin that frames a float accepts: nvim takes "bold" too, but nvim-ufo
 -- refuses it and fails to load
 M.BORDERS = { "rounded", "double", "single", "solid", "shadow", "none" }
@@ -162,6 +234,9 @@ local function check_choices(lore, problems)
   local title = (lore.skin or {}).title or {}
   unknown_choice(title.style, M.TITLE_STYLES, "skin.title.style", problems)
   unknown_choice((lore.skin or {}).border, M.BORDERS, "skin.border", problems)
+  for name, style in pairs(lore.banner_styles or {}) do
+    unknown_choice(style.look, M.BANNER_LOOKS, "banner_styles." .. name .. ".look", problems)
+  end
 end
 
 -- every line of lua/core/franchise/lines.lua, said in the franchise's own words
@@ -200,6 +275,9 @@ local function check_music(lore, problems)
   if lore.skin and lore.skin.glyphs then
     missing_keys(lore.skin.glyphs, M.GLYPHS, "skin.glyphs", problems)
   end
+  if lore.skin and lore.skin.tree then
+    missing_keys(lore.skin.tree, M.TREE, "skin.tree", problems)
+  end
   if lore.skin and lore.skin.music then
     missing_keys(lore.skin.music, M.MUSIC_SKIN, "skin.music", problems)
   end
@@ -216,12 +294,72 @@ local function check_chrome(lore, problems)
   end
 end
 
+-- the syntax signature: every role names a color the region has, the roles that carry the code's
+-- structure read apart from the error color, and comments stay readable without shouting
+local function check_syntax(lore, region, problems)
+  local syntax = (lore.skin or {}).syntax
+  if type(syntax) ~= "table" then
+    return
+  end
+  local p = region.palette
+  for role, spec in pairs(syntax) do
+    if type(spec) == "table" and spec.color and not themes.known_color(spec.color, p) then
+      table.insert(
+        problems,
+        ("skin.syntax.%s names %s, no color of %s"):format(role, spec.color, region.name)
+      )
+    end
+  end
+  local painted = themes.syntax(p, syntax)
+  for _, role in ipairs({ "keyword", "function", "type" }) do
+    if not themes.apart_from_error(p, painted[role].fg) then
+      table.insert(problems, ("%s %s looks like its error color"):format(region.name, role))
+    end
+  end
+  local comment = themes.contrast(themes.derive(p).comment, p.base)
+  if comment < 3.0 or comment > 3.5 then
+    table.insert(
+      problems,
+      ("%s comments contrast %.2f, keep them between 3.0 and 3.5"):format(region.name, comment)
+    )
+  end
+end
+
+---@return boolean whether every slot is a color, so the color math can run on it
+local function check_hud_view(hud, dashboard, problems)
+  local view = M.HUD_VIEWS[dashboard]
+  if not view then
+    return
+  end
+  for _, key in ipairs({ "tabs", "tab_icons", "stats" }) do
+    if view[key] then
+      missing_keys(hud[key], view[key], "hud." .. key, problems)
+    end
+  end
+  missing_keys(hud, view.words or {}, "hud", problems)
+end
+
+local function check_hud(lore, problems)
+  local hud = lore.hud
+  if type(hud) ~= "table" then
+    return
+  end
+  for _, key in ipairs(M.HUD_KEYS) do
+    missing_keys((hud.keys or {})[key], M.HUD_KEY_FIELDS, "hud.keys." .. key, problems)
+  end
+  for _, kind in ipairs(M.HUD_KINDS) do
+    missing_keys((hud.kinds or {})[kind], { "name" }, "hud.kinds." .. kind, problems)
+  end
+  missing_keys(hud.trophy_icons, M.HUD_TROPHY_ICONS, "hud.trophy_icons", problems)
+  check_hud_view(hud, (lore.skin or {}).dashboard or "roundtable", problems)
+end
+
 local function check_palette(region, problems)
   local p = region.palette or {}
   for _, slot in ipairs(M.SLOTS) do
     if not (p[slot] or ""):match("^#%x%x%x%x%x%x$") then
       table.insert(problems, ("%s.palette.%s is not a #RRGGBB color"):format(region.name, slot))
-      return
+      return false
     end
   end
   if p.yellow == p.red then
@@ -237,6 +375,7 @@ local function check_palette(region, problems)
       ("%s panels contrast %.2f, keep it between 1.07 and 1.15"):format(region.name, panel)
     )
   end
+  return true
 end
 
 local function check_region(lore, region, portrait_exists, problems)
@@ -272,7 +411,9 @@ local function check_region(lore, region, portrait_exists, problems)
       ("%s figure %s is not in images/portraits"):format(region.name, region.figure)
     )
   end
-  check_palette(region, problems)
+  if check_palette(region, problems) then
+    check_syntax(lore, region, problems)
+  end
 end
 
 local function check_quests(lore, problems)
@@ -309,7 +450,7 @@ end
 ---@return string[] problems
 function M.problems(lore, portrait_exists)
   local problems = {}
-  missing_keys(lore, { "name", "title", "currency", "claude", "music" }, "lore", problems)
+  missing_keys(lore, { "name", "title", "currency", "claude", "music", "hud" }, "lore", problems)
   missing_keys(lore.banners, M.BANNERS, "banners", problems)
   missing_keys(lore.mechanics, M.MECHANICS, "mechanics", problems)
   missing_keys(lore.skin, M.SKIN, "skin", problems)
@@ -320,6 +461,7 @@ function M.problems(lore, portrait_exists)
   check_words(lore, problems)
   check_music(lore, problems)
   check_chrome(lore, problems)
+  check_hud(lore, problems)
   check_quests(lore, problems)
   check_regions(lore, portrait_exists, problems)
   return problems
