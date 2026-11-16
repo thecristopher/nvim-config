@@ -286,7 +286,10 @@ function M.regions()
     table.insert(items, {
       icon = "󰈻",
       name = franchise.lore(name).title,
-      desc = "Wake up in " .. franchise.lore(name).title .. " for the rest of the day.",
+      desc = require("core.franchise").line(
+        "hud.switch_desc",
+        { target = franchise.lore(name).title }
+      ),
       use = function()
         require("core.franchise").switch(name)
       end,
@@ -430,7 +433,7 @@ function M.quest_items(quest)
     table.insert(list, {
       icon = "󰘍",
       name = vim.fs.basename(quest.last_path),
-      desc = "Pick up where you left off: " .. quest.last_file .. ".",
+      desc = require("core.franchise").line("hud.resume", { file = quest.last_file }),
       use = function()
         vim.cmd.edit(vim.fn.fnameescape(quest.last_path))
       end,
@@ -488,30 +491,31 @@ end
 --- The way out: back to work, the last session, or leave for good.
 ---@return table[]
 function M.exit()
+  local say = require("core.franchise").line
   return {
     {
       icon = "󰆔",
-      name = "Restore Session",
+      name = say("hud.restore"),
       slot = "Session",
-      desc = "Bring back the last visit here.",
+      desc = say("hud.restore_desc"),
       use = function()
         require("persistence").load()
       end,
     },
     {
       icon = "󰝒",
-      name = "Back to work",
+      name = say("hud.back"),
       slot = "Work",
-      desc = "Close the inventory and start an empty buffer.",
+      desc = say("hud.back_desc"),
       use = function()
         vim.cmd.enew()
       end,
     },
     {
       icon = "󰐥",
-      name = "Leave " .. require("core.franchise").current().title,
+      name = say("hud.leave"),
       slot = "Leave",
-      desc = "Close nvim.",
+      desc = say("hud.leave_desc"),
       use = function()
         vim.cmd.qall()
       end,
@@ -542,12 +546,14 @@ function M.tabs(style)
     },
       nil
   end
+  -- a franchise may name the tabs its own way, like Elizabeth's Vanity and Props
+  local names = require("core.franchise").current().hud_tabs or {}
   return {
-    { title = "Tools", icon = "󱌣", items = M.actions() },
-    { title = "Recent", icon = "󰋚", items = M.recent() },
-    { title = "Key Items", icon = "󰌆", items = M.git() },
-    { title = "Messages", icon = "󰏫", items = M.messages() },
-    { title = "Regions", icon = "◈", items = M.regions() },
+    { title = names.tools or "Tools", icon = "󱌣", items = M.actions() },
+    { title = names.recent or "Recent", icon = "󰋚", items = M.recent() },
+    { title = names.keys or "Key Items", icon = "󰌆", items = M.git() },
+    { title = names.messages or "Messages", icon = "󰏫", items = M.messages() },
+    { title = names.regions or "Regions", icon = "◈", items = M.regions() },
     {
       title = require("core.franchise").current().coach.lessons,
       icon = "󰂺",

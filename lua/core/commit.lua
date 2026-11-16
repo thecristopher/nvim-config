@@ -6,15 +6,20 @@ local M = {}
 
 local MAX_DIFF = 6000
 
+-- what the franchise says while drafting, see the commit.* keys in lua/core/franchise/lines.lua
+local function say(key, vars)
+  return require("core.franchise").line("commit." .. key, vars)
+end
+
 -- bufnr -> true while an uncommitted draft is open
 local pending = {}
 
 local function notify_err(msg)
-  vim.notify(msg, vim.log.levels.ERROR, { title = "Commit" })
+  vim.notify(msg, vim.log.levels.ERROR, { title = say("title") })
 end
 
 local function notify_info(msg)
-  vim.notify(msg, vim.log.levels.INFO, { title = "Commit", id = "commit_claude" })
+  vim.notify(msg, vim.log.levels.INFO, { title = say("title"), id = "commit_claude" })
 end
 
 local function git_ok(args)
@@ -45,14 +50,14 @@ end
 local function draft_via_claude(prompt, cb)
   local task = require("core.progress").start({
     id = "commit_claude",
-    title = "Commit",
-    message = "Drafting commit message with Claude…",
+    title = say("title"),
+    message = say("drafting"),
   })
   require("core.claude").run(prompt, function(res)
     if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
-      task:fail("Claude could not draft the commit")
+      task:fail(say("failed"))
     else
-      task:done("Draft ready")
+      task:done(say("ready"))
     end
     cb(res)
   end)
@@ -78,7 +83,7 @@ local function open_editor(msg)
     width = width,
     height = height,
     border = require("core.skin").border(),
-    title = " Commit Message ",
+    title = " " .. require("core.skin").title(say("window")) .. " ",
     title_pos = "center",
   })
   vim.wo[win].wrap = true
@@ -118,13 +123,13 @@ function M.submit(buf)
 
   if vim.v.shell_error ~= 0 then
     notify_err("git commit failed:\n" .. out)
-    require("core.banner").show("died", { subtitle = "git commit failed" })
+    require("core.banner").show("died", { subtitle = say("fell") })
     return
   end
 
   vim.bo[buf].modified = false
   pending[buf] = nil
-  notify_info("Committed: " .. (msg:match("^([^\n]+)") or ""))
+  notify_info(say("done", { subject = msg:match("^([^\n]+)") or "" }))
   require("core.banner").show("felled", { subtitle = msg:match("^([^\n]+)") })
 
   vim.schedule(function()
@@ -144,13 +149,13 @@ function M.open()
   end
   if #skipped > 0 then
     vim.notify(
-      "Left out of the commit: " .. table.concat(skipped, ", "),
+      say("left_out", { files = table.concat(skipped, ", ") }),
       vim.log.levels.WARN,
-      { title = "Commit" }
+      { title = say("title") }
     )
   end
   if not has_staged() then
-    return notify_info("Nothing to commit.")
+    return notify_info(say("nothing"))
   end
 
   local diff = staged_diff()

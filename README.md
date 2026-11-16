@@ -72,17 +72,17 @@ git clone https://github.com/thecristopher/nvim-config $env:LOCALAPPDATA\nvim
 
 Launch `nvim` and lazy.nvim bootstraps itself and installs every plugin on the first run. Mason installs the language servers.
 
-Every option is a global with the `eldentree_` prefix (`vim.g.eldentree_sound = false`, `vim.g.eldentree_franchise = "resident_evil"`), set them in `lua/core/options.lua`.
+Every option is a global with the `eldentree_` prefix (`vim.g.eldentree_sound = false`, `vim.g.eldentree_franchise = "resident_evil"`), set them in `lua/core/options.lua`, or in `lua/core/options_local.lua` (git ignores it) for the ones only your machine wants.
 
 ## The worlds
 
 | Module           | What it does |
 | ---------------- | ------------ |
-| `core/franchise` | Picks the world for the day, rotating between Elden Ring and Resident Evil. `:Franchise` or `<leader>jf` switches until midnight, `vim.g.eldentree_franchise` pins one. Each lore also picks its `mechanics`, so Resident Evil travels through doors, gets stalked instead of dueling, shows a health ECG, rests at a typewriter and ranks every run |
-| `core/themes`    | Catppuccin Mocha recolored per region (six in Elden Ring, five in Resident Evil). One region per day, the same in every repo and every launch. Picking another with `<leader>jr` or `:Region` holds until midnight, and traveling between repos never changes it. `vim.g.eldentree_region` pins one |
-| `core/skin`      | Dresses components per franchise: float borders, gutter signs, statusline separators and tabs. Elden Ring is rounded and ornate, Resident Evil wears the inventory's double frames |
+| `core/franchise` | Picks the world for the day, rotating between Elden Ring, Resident Evil and Elizabeth. `:Franchise` or `<leader>jf` switches until midnight, `vim.g.eldentree_franchise` pins one. Each lore also picks its `mechanics`, so Resident Evil travels through doors, gets stalked instead of dueling, shows a health ECG, rests at a typewriter and ranks every run, and Elizabeth closes a stage curtain between projects, fights villains who steal the scene by mending one broken heart per fix, keeps a heartbeat in the statusline, rests in the afternoon sun and opens a dressing room HUD. Every lore also says things its own way in `lines.lua`: the HUD's labels, hints and greetings, and what the commit and PR helpers, `:Review` and `:Trial` say while Claude works, often with the region's character in the line (Elden Ring inscribes your commit, Resident Evil types it on the typewriter, Elizabeth learns your lines). A lore with `opt_in = true` (Elizabeth's) only plays where `vim.g.eldentree_opt_in` names it, set in `lua/core/options_local.lua`, which git ignores |
+| `core/themes`    | Catppuccin Mocha recolored per region (six in Elden Ring, five in Resident Evil, four in Elizabeth). One region per day, the same in every repo and every launch. Picking another with `<leader>jr` or `:Region` holds until midnight, and traveling between repos never changes it. `vim.g.eldentree_region` pins one |
+| `core/skin`      | Dresses components per franchise: float borders, gutter signs, statusline separators and tabs. Elden Ring is rounded and ornate, Resident Evil wears the inventory's double frames, Elizabeth square stage frames with rounded pills and a vanity picker |
 | `core/chrome`    | The editor speaks the franchise: the mode badge says ROAM or SURVIVE and fades into the next mode, line numbers fade away from the cursor, notifications arrive titled Radio, Danger or Omen with the hour, pickers take an inventory or grace layout, and the command line becomes a Typewriter or an Incantation |
-| `core/title`     | A title screen in big block letters once a day per franchise and on every switch, `:Title` shows it again, `vim.g.eldentree_title = false` skips it |
+| `core/title`     | A title screen in big block letters (a shimmer, a drip, or Elizabeth's marquee of chasing bulbs) once a day per franchise and on every switch, `:Title` shows it again, `vim.g.eldentree_title = false` skips it |
 | `core/terminal`  | Paints the terminal around nvim with the region's background, and switches iTerm profiles, Kitty opacity or the Ghostty font and opacity per franchise. `:Opacity [90\|skin]` or `<leader>uo` picks your own opacity, kept until set back to `skin` |
 | `core/sound`     | Plays the franchise's sounds for titles, doors, deaths, the merchant and the HUD (see [Sounds](#sounds)) |
 | `core/motion`    | The shared animation engine, one clock for every animation so they move on the same frame. `<leader>um` or `:Motion` stills everything, ambient loops stop while nvim is unfocused |
@@ -104,7 +104,7 @@ Each franchise is a folder in `lua/core/franchise/lore/<name>/`, found on its ow
 
 | Module            | What it does |
 | ----------------- | ------------ |
-| `core/boss`       | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it. In Resident Evil the boss is a stalker that walks closer while errors stay and backs off with every fix. `:Boss` or `<leader>ub` |
+| `core/boss`       | When 3 or more errors linger, the region's boss arrives with a health bar. Each fix lands a hit, the last one fells it. In Resident Evil the boss is a stalker that walks closer while errors stay and backs off with every fix. In Elizabeth the villain steals the scene: every error is a broken heart and each fix mends one. `:Boss` or `<leader>ub` |
 | `core/conflicts`  | Merge conflicts fight back: a buffer with conflict markers brings Godrick the Grafted (Uroboros in Resident Evil) to the boss bar, each conflict resolved lands a hit and the header counts the conflicted files left in the repo |
 | `core/banner`     | Elden Ring style banners fired by commits, PRs, test runs, new projects, region changes and long fights with errors. `:Banner felled\|great\|died\|grace\|cleansed` |
 | `core/voice`      | The character of the day's region speaks up when tests pass or fail, CI finishes, a push lands or a boss falls, in a notification under their name. Lines live in each lore's `voices.lua`, written from the sheets in `docs/voices/`. Every character has one, Claire and Malenia with a soft spot for you, and `:checkhealth eldentree` asks each region for every moment. `vim.g.eldentree_voice = false` silences them |
@@ -115,9 +115,10 @@ Each franchise is a folder in `lua/core/franchise/lore/<name>/`, found on its ow
 | `core/expedition` | `:Expedition [minutes]` / `<leader>je`: a focus block. Sounds, animations and quiet notifications step aside, the statusline counts down and the end ranks the block on its own |
 | `core/trial`      | `:Trial` / `<leader>TT` runs the project's tests in the background and announces the verdict |
 | `core/ecg`        | Resident Evil's statusline ECG: Fine, Caution or Danger from the buffer's diagnostics |
+| `core/heartbeat`  | Elizabeth's statusline heart: calm on a clean buffer, racing as errors pile up, broken at Danger |
 | `core/map`        | `:Map` / `<leader>jm` shows every folder as a room, red while errors or TODOs are left in it, blue once cleared |
 | `core/zones`      | The first time you walk into a folder each session, it is announced like a new area |
-| `core/rest`       | After 5 idle minutes in normal mode the editor rests at a Site of Grace, or at a Safe Room typewriter in Resident Evil. Any key wakes it, `:Rest` rests now |
+| `core/rest`       | After 5 idle minutes in normal mode the editor rests at a Site of Grace, at a Safe Room typewriter in Resident Evil, or under the afternoon sun through the blinds in Elizabeth. Any key wakes it, `:Rest` rests now |
 
 ## Git, CI and pull requests
 
@@ -136,7 +137,7 @@ Each franchise is a folder in `lua/core/franchise/lore/<name>/`, found on its ow
 | Module       | What it does |
 | ------------ | ------------ |
 | `core/repos` | A background repo scanner, the Sites of Grace project picker (`<leader>fp`) and automatic project root. Traveling keeps the session of the repo you leave and restores the one you arrive at, files with unsaved changes are never closed (`vim.g.eldentree_project_sessions = false` turns it off). Switching branch with `<leader>gb` keeps a session per branch too |
-| `core/fog`   | The fog wall that rolls over the editor when you travel, `:Fog` or `<leader>uf`. In Resident Evil `core/door` takes over: the screen goes dark and a door creaks open |
+| `core/fog`   | The fog wall that rolls over the editor when you travel, `:Fog` or `<leader>uf`. In Resident Evil `core/door` takes over: the screen goes dark and a door creaks open. In Elizabeth `core/curtain` closes velvet drapes, announces the project and parts them |
 | `core/find`  | The pickers that need more than one Snacks call: recent files per repo (`<C-a>` flips to everywhere) and branches with their sessions |
 | `core/dive`  | F12 family: go to definition, Glance peek, references and F2 rename. `K` hover docs arrive dressed as item descriptions |
 | `core/links` | Ctrl+click opens the link under the mouse in a terminal, `<leader>to` opens the last one any terminal printed, like the dev server's localhost |
@@ -228,7 +229,7 @@ Portraits in `images/portraits/` are 276x336 crops of the originals in `images/`
 
 Some sounds are clips from the games, the rest are made from scratch by `python3 scripts/sounds.py` out of synthesized tones and noise, with ffmpeg for the echo. Run it again after tweaking a recipe, or pass a franchise to rebuild only that one. `:Sound died` previews any of them.
 
-To use your own instead, drop audio files into `sounds/elden_ring/` or `sounds/resident_evil/`, named after the moment they belong to: `title`, `door`, `fog`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`, `zone`, `phantom`, `continue`, `summon` (the spirit calling bell that opens back-to-basics' coach stage), `comfort` (failing the same exercise again), `bought` (a hint bought from the merchant), `welcome` (the merchant opening the hint shop for the first time that day, after that `merchant` asks what you are buying), `weapon` (the merchant praising a back-to-basics pass, the banner stays quiet when it plays), `expedition` (the last sound before an expedition goes quiet), and the inventory HUD's `hud_open`, `hud_close`, `hud_move`, `hud_select`, `hud_back`. Variants like `died_2.wav` take turns. Every sound plays at 60% volume (`VOLUME` in `core/sound/actions`). Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
+To use your own instead, drop audio files into `sounds/elden_ring/`, `sounds/resident_evil/` or `sounds/elizabeth/`, named after the moment they belong to: `title`, `door`, `fog`, `curtain`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`, `zone`, `phantom`, `continue`, `summon` (the spirit calling bell that opens back-to-basics' coach stage), `comfort` (failing the same exercise again), `bought` (a hint bought from the merchant), `welcome` (the merchant opening the hint shop for the first time that day, after that `merchant` asks what you are buying), `weapon` (the merchant praising a back-to-basics pass, the banner stays quiet when it plays), `expedition` (the last sound before an expedition goes quiet), and the inventory HUD's `hud_open`, `hud_close`, `hud_move`, `hud_select`, `hud_back`. Variants like `died_2.wav` take turns. `python3 scripts/sounds.py --import ~/Downloads/clip.mp3 elden_ring bought` brings one in trimmed and leveled like the rest, and `--clips` finishes every clip again. Every sound plays at 60% volume (`VOLUME` in `core/sound/actions`). Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
 
 ### Portrait credits
 

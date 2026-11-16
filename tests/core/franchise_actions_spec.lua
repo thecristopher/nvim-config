@@ -106,7 +106,7 @@ describe("choice_for", function()
   end)
 end)
 
-for _, name in ipairs(actions.names()) do
+for _, name in ipairs(actions.all_names()) do
   local lore = actions.lore(name)
 
   describe(lore.title, function()
@@ -255,6 +255,52 @@ describe("resident evil", function()
   end)
 end)
 
+describe("plays", function()
+  local claire = { name = "claire", opt_in = true }
+
+  it("plays a franchise that never asked for an opt in", function()
+    assert.is_true(actions.plays({ name = "elden_ring" }, nil))
+  end)
+
+  it("keeps Claire's franchise out until someone opts in", function()
+    assert.is_false(actions.plays(claire, { "elden_ring" }))
+  end)
+
+  it("plays Claire's franchise once Inde opts in", function()
+    assert.is_true(actions.plays(claire, { "claire" }))
+  end)
+end)
+
+describe("opt in", function()
+  after_each(function()
+    vim.g.eldentree_opt_in = nil
+    actions.rediscover()
+  end)
+
+  it("leaves Elizabeth out of the rotation when nobody opted in", function()
+    vim.g.eldentree_opt_in = nil
+    actions.rediscover()
+    assert.is_false(vim.tbl_contains(actions.names(), "elizabeth"))
+    assert.is_true(vim.tbl_contains(actions.all_names(), "elizabeth"))
+  end)
+
+  it("brings Elizabeth into the rotation for the one who opted in", function()
+    vim.g.eldentree_opt_in = { "elizabeth" }
+    actions.rediscover()
+    assert.is_true(vim.tbl_contains(actions.names(), "elizabeth"))
+  end)
+
+  it("never resolves to Elizabeth for someone who did not opt in", function()
+    vim.g.eldentree_opt_in = nil
+    actions.rediscover()
+    assert.equal(actions.DEFAULT, actions.resolve("elizabeth"))
+  end)
+
+  it("still loads her lore by name for checkhealth", function()
+    assert.equal("elizabeth", actions.lore("elizabeth").name)
+  end)
+end)
+
 describe("names", function()
   it("finds every franchise folder, Elden Ring and Resident Evil included", function()
     local names = actions.names()
@@ -312,4 +358,57 @@ describe("fill_template", function()
       filled
     )
   end)
+end)
+
+describe("fill", function()
+  it("writes Claire's name into her line", function()
+    assert.equal(
+      "Claire types your commit",
+      actions.fill("{character} types your commit", { character = "Claire" })
+    )
+  end)
+
+  it("leaves a hole it has no value for", function()
+    assert.equal("Pushing {branch}", actions.fill("Pushing {branch}", {}))
+  end)
+end)
+
+describe("line", function()
+  local defaults = { ["commit.ready"] = "Draft ready", ["commit.drafting"] = "Drafting…" }
+
+  it("says the franchise's own words when it has them", function()
+    local lines = { ["commit.ready"] = "Lines ready for Inde" }
+    assert.equal("Lines ready for Inde", actions.line(lines, defaults, "commit.ready"))
+  end)
+
+  it("falls back to the plain line when the franchise has none", function()
+    assert.equal("Draft ready", actions.line({}, defaults, "commit.ready"))
+  end)
+
+  it("picks one of several lines by the roll", function()
+    local lines = { ["commit.drafting"] = { "Malenia writes…", "Claire types…" } }
+    assert.equal("Malenia writes…", actions.line(lines, defaults, "commit.drafting", nil, 0))
+    assert.equal("Claire types…", actions.line(lines, defaults, "commit.drafting", nil, 0.99))
+  end)
+
+  it("fills the holes of the line it picks", function()
+    local lines = { ["pr.pushing"] = "Sending '{branch}' to the studio…" }
+    local said = actions.line(lines, defaults, "pr.pushing", { branch = "anniversary" })
+    assert.equal("Sending 'anniversary' to the studio…", said)
+  end)
+end)
+
+describe("every franchise's lines", function()
+  for _, name in ipairs(actions.all_names()) do
+    it(("gives %s every line in its own words, with no em dash"):format(name), function()
+      local lines = actions.lore(name).lines
+      for key in pairs(require("core.franchise.lines")) do
+        local line = lines[key]
+        assert.is_truthy(line, key)
+        for _, text in ipairs(type(line) == "table" and line or { line }) do
+          assert.is_falsy(text:find("—", 1, true), key)
+        end
+      end
+    end)
+  end
 end)

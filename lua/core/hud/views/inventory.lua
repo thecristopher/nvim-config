@@ -347,7 +347,7 @@ local function items_column(model, plan, stretch)
   local offset = hud.scroll(cursor_row, plan.grid_rows, model.offset.items or 0)
   local slots = grid(items, cursor, plan.columns, offset, plan.grid_rows)
   if #items == 0 then
-    slots = { {}, { { "  Nothing here yet", "EldenHudDim" } } }
+    slots = { {}, { { "  " .. parts.word(model, "empty"), "EldenHudDim" } } }
   end
   local rows = { tab_plates(model), {} }
   local grid_area = hud.beside(slots, plan.columns * M.SLOT_WIDTH, command_menu(model.menu), 1)
@@ -394,8 +394,16 @@ local function banner(item, width)
   return rows
 end
 
--- most important first, a narrow screen drops them from the end
-local HINTS = { "⏎ Command", "K Check", "⇥ Tabs", "hjkl Move", "j DATA", "s Session", "q Quit" }
+-- most important first, a narrow screen drops them from the end, Enter opens the COMMAND menu
+local HINTS = {
+  { "⏎", "command" },
+  { "K", "check" },
+  { "⇥", "tabs" },
+  { "hjkl", "move" },
+  { "j", "quest" },
+  { "s", "session" },
+  { "q", "quit" },
+}
 
 --- Lays out the whole Resident Evil hub for a model.
 ---@param model table HUD state: tabs, tab, cursor, offset, menu, status, message, width, height
@@ -421,7 +429,7 @@ function M.render(model)
   table.insert(
     rows,
     hud.center(
-      hud.hint_chunks(HINTS, plan.stage_width, "EldenHudKey", "EldenHudHint"),
+      hud.hint_chunks(parts.hints(model, HINTS), plan.stage_width, "EldenHudKey", "EldenHudHint"),
       plan.stage_width
     )
   )

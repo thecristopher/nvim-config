@@ -151,4 +151,19 @@ function M.occupied(cells)
   return taken
 end
 
+-- the marquee bulbs: how long each step of the chase lasts and how many bulbs share one light
+M.BULB_STEP_MS = 180
+M.BULB_EVERY = 3
+
+--- Tells whether a marquee bulb is lit at a moment, the light stepping along every row of bulbs
+--- and starting one bulb later on each row, so the ring reads as one chase.
+---@param index integer the bulb's place along its row, from 1
+---@param row integer the buffer row, from 1
+---@param elapsed number milliseconds since the hub came to life
+---@return boolean
+function M.bulb_lit(index, row, elapsed)
+  local step = math.floor(elapsed / M.BULB_STEP_MS)
+  return (index + row - step) % M.BULB_EVERY == 0
+end
+
 return M

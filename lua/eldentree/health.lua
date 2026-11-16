@@ -9,7 +9,7 @@ local function check_franchises()
   local actions = require("core.franchise.actions")
   local validate = require("core.franchise.actions.validate")
   actions.rediscover()
-  for _, name in ipairs(actions.names()) do
+  for _, name in ipairs(actions.all_names()) do
     vim.health.start("Franchise: " .. name)
     local ok, lore = pcall(actions.lore, name)
     if not ok then

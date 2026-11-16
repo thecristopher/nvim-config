@@ -61,6 +61,8 @@ end
 -- per row lists of { byte_start, byte_end, col, char } so drawing never re-parses lines
 -- any of these on a row means it crosses a panel or a slot
 local FRAME_EDGES = { "│", "║", "┃", "┌", "└", "┏", "┗", "╔", "╚" }
+-- the marquee bulbs the dressing room draws, see core/hud/views/wardrobe
+local BULB = require("core.hud.views.wardrobe").BULB
 
 local function index_buffer(buf)
   local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
@@ -94,6 +96,7 @@ local function index_buffer(buf)
       taken = actions.occupied(cells),
       gilded = gilded,
       framed = framed,
+      bulbs = line:find(BULB, 1, true) ~= nil,
     }
   end
   return rows
@@ -118,6 +121,27 @@ local function draw_shimmer(s, elapsed)
             vim.api.nvim_buf_set_extmark(s.buf, ns, row - 1, char[1], {
               end_col = char[2],
               hl_group = "EldenShimmer" .. level,
+              priority = 300,
+            })
+          end
+        end
+      end
+    end
+  end
+end
+
+-- the dressing room's bulbs chase light around the mirror and the sign
+local function draw_bulbs(s, elapsed)
+  for row, info in ipairs(s.rows) do
+    if info.bulbs then
+      local index = 0
+      for _, char in ipairs(info.chars) do
+        if char[4] == BULB then
+          index = index + 1
+          if actions.bulb_lit(index, row, elapsed) then
+            vim.api.nvim_buf_set_extmark(s.buf, ns, row - 1, char[1], {
+              end_col = char[2],
+              hl_group = "EldenHudBulbLit",
               priority = 300,
             })
           end
@@ -216,6 +240,7 @@ local function tick(s, elapsed)
   vim.api.nvim_buf_clear_namespace(s.buf, ns, 0, -1)
   draw_quill(s, elapsed)
   draw_shimmer(s, elapsed)
+  draw_bulbs(s, elapsed)
   draw_embers(s, dt)
 end
 

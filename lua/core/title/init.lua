@@ -35,6 +35,13 @@ local function paint_groups(elapsed)
     "EldenTitleDrip",
     { fg = color.mix(veil, color.mix(title, 0x000000, 0.3), alpha), bg = ground }
   )
+  local bulb = color.mix(color.to_int(p.peach), 0xFFFFFF, 0.35)
+  vim.api.nvim_set_hl(0, "EldenTitleBulbOn", { fg = color.mix(veil, bulb, alpha), bg = ground })
+  vim.api.nvim_set_hl(
+    0,
+    "EldenTitleBulbOff",
+    { fg = color.mix(veil, color.to_int(p.surface2), alpha), bg = ground }
+  )
   vim.api.nvim_set_hl(
     0,
     "EldenTitleSub",
@@ -94,6 +101,13 @@ local function draw_drips(elapsed)
   end
 end
 
+local function draw_bulbs(elapsed)
+  for index, bulb in ipairs(scene.bulbs) do
+    local group = actions.bulb_lit(index, elapsed) and "EldenTitleBulbOn" or "EldenTitleBulbOff"
+    put(scene.top + bulb.row, scene.col + bulb.col, { { "●", group } })
+  end
+end
+
 local function draw(elapsed)
   if not vim.api.nvim_win_is_valid(scene.win) then
     return false
@@ -108,6 +122,9 @@ local function draw(elapsed)
   end
   if scene.title.style == "drip" then
     draw_drips(elapsed)
+  end
+  if scene.title.style == "marquee" then
+    draw_bulbs(elapsed)
   end
   local sub = banner.spaced(scene.title.subtitle or "")
   put(
@@ -133,6 +150,7 @@ local function open_scene()
   scene = { width = width, height = height, title = lore().skin.title }
   scene.rows = title_rows(scene.title.text, width)
   scene.drips = #scene.rows > 1 and actions.drips(scene.rows[#scene.rows]) or {}
+  scene.bulbs = actions.bulbs(vim.fn.strdisplaywidth(scene.rows[1]), #scene.rows)
   scene.top = math.floor(height * 0.32)
   scene.col = banner.center_col(width, vim.fn.strdisplaywidth(scene.rows[1]))
 

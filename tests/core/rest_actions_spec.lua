@@ -109,3 +109,35 @@ describe("layout in a safe room", function()
     ))
   end)
 end)
+
+describe("golden hour", function()
+  it("rests under the heart in the afternoon sun", function()
+    local layout = actions.layout(120, 40, "Westview", { style = "golden_hour" })
+    assert.equal("󰋑", layout[1].text)
+  end)
+end)
+
+describe("sun_spans", function()
+  it("never lets the sun spill past the screen", function()
+    for _, span in ipairs(actions.sun_spans(80, 24, 6000)) do
+      assert.is_true(span.from >= 0 and span.to <= 80 and span.from < span.to)
+    end
+  end)
+
+  it("keeps every blind in the shade while Claire naps", function()
+    for _, span in ipairs(actions.sun_spans(120, 40, 0)) do
+      assert.are_not.equal(actions.SUN.slat - 1, span.row % actions.SUN.slat)
+    end
+  end)
+
+  it("leans the light like a low sun", function()
+    local spans = actions.sun_spans(200, 40, 0)
+    assert.is_true(spans[#spans].from > spans[1].from)
+  end)
+
+  it("sways as the afternoon goes by", function()
+    local before = actions.sun_spans(200, 40, 0)[1].from
+    local later = actions.sun_spans(200, 40, actions.SUN.sway_ms / 4)[1].from
+    assert.are_not.equal(before, later)
+  end)
+end)

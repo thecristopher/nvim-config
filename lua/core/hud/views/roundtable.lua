@@ -214,13 +214,13 @@ local function inventory(model, plan)
   local focused = model.focus == "items"
   local cursor_row = math.floor(((model.cursor.items or 1) - 1) / plan.columns)
   local offset = hud.scroll(cursor_row, plan.grid_rows, model.offset.items or 0)
-  local rows = { { { "Inventory", "EldenHudSection", spot = "fallback" } } }
+  local rows = { { { parts.word(model, "inventory"), "EldenHudSection", spot = "fallback" } } }
   vim.list_extend(
     rows,
     grid(items, model.cursor.items, focused, plan.columns, offset, plan.grid_rows)
   )
   if #items == 0 then
-    table.insert(rows, { { "Nothing here yet", "EldenHudDim" } })
+    table.insert(rows, { { parts.word(model, "empty"), "EldenHudDim" } })
   end
   return rows, { columns = plan.columns, count = #items, offset = offset, cursor_row = cursor_row }
 end
@@ -279,7 +279,7 @@ local function chest(model, plan)
     )
   end
   if #items == 0 then
-    table.insert(rows, { { "No site found yet", "EldenHudDim" } })
+    table.insert(rows, { { parts.word(model, "no_sites"), "EldenHudDim" } })
   end
   return rows, { columns = 1, count = #items, offset = offset, cursor_row = cursor - 1 }
 end
@@ -304,18 +304,16 @@ local function tab_bar(model)
   return bar, rule
 end
 
--- most important first, a narrow screen drops them from the end
-local HINTS =
-  { "⏎ Use", "K Check", "C Combine", "⇥ Tabs", "hjkl Move", "j Quest", "s Session", "q Quit" }
-
-local function description(item, width)
+local function description(model, item, width)
   local rows = { { { ("─"):rep(width), "EldenHudRule" } } }
   local lines = item and hud.wrap(item.desc or "", width - 2) or {}
   table.insert(rows, { { " " .. (item and hud.fit(item.name, width - 2) or ""), "EldenHudName" } })
   for index = 1, 2 do
     table.insert(rows, { { " " .. (lines[index] or ""), "EldenHudDesc" } })
   end
-  local hints = hud.hint_chunks(HINTS, width - 2, "EldenHudKey", "EldenHudHint")
+  -- most important first, a narrow screen drops them from the end
+  local hints =
+    hud.hint_chunks(parts.hints(model, parts.USE_HINTS), width - 2, "EldenHudKey", "EldenHudHint")
   table.insert(rows, vim.list_extend({ { " ", "EldenHudHint" } }, hints))
   return rows
 end
@@ -331,46 +329,7 @@ local function rule(label, width)
 end
 
 local function quest(model, plan)
-  local status = model.status or {}
-  local width = plan.body_width
-  local last_selected, change = parts.quest_selection(model)
-  local title = rule(model.focus == "quest" and "Current Quest ▼" or "Current Quest  j", width)
-  if model.focus == "quest" then
-    title[1][2] = "EldenHudTitle"
-  end
-  local rows = {
-    title,
-    hud.indent({
-      parts.quest_line(
-        status,
-        width - 2,
-        "No quest here, p travels to one of your " .. (model.sites or "projects")
-      ),
-    }, 1)[1],
-  }
-  if status.last_file then
-    local bg = last_selected and "EldenHudSlotSel" or nil
-    table.insert(rows, {
-      { last_selected and "▶ " or "  ", "EldenHudFrameSel" },
-      { "󰘍 last  ", "EldenHudDim", bg = bg, spot = last_selected and "cursor" or nil },
-      {
-        hud.fit(status.last_file, width - 12),
-        last_selected and "EldenHudBanner" or "EldenHudName",
-        bg = bg,
-      },
-    })
-  else
-    table.insert(rows, {})
-  end
-  vim.list_extend(
-    rows,
-    hud.indent(parts.changes(status.changes or {}, width - 4, plan.quest_rows, change), 2)
-  )
-  -- a fixed height, so the stage never shifts when the changes arrive from git
-  while #rows < 3 + plan.quest_rows do
-    table.insert(rows, {})
-  end
-  return rows
+  return parts.quest(model, plan.body_width, plan.quest_rows, rule)
 end
 
 local function panes(model, plan)
@@ -398,7 +357,7 @@ local function body(model, plan)
   local pane_rows, grids = panes(model, plan)
   vim.list_extend(rows, pane_rows)
   table.insert(rows, {})
-  vim.list_extend(rows, description(parts.selected(model), width))
+  vim.list_extend(rows, description(model, parts.selected(model), width))
   table.insert(rows, {})
   vim.list_extend(rows, quest(model, plan))
   return rows, grids

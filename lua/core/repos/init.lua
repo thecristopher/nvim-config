@@ -282,7 +282,7 @@ end
 function M.open(repo, picker)
   local first_visit = not actions.returning(read_json_list(visits_file), repo)
   local sessions = vim.g.eldentree_project_sessions ~= false and M.root() ~= repo
-  require("core.fog").roll()
+  require("core.fog").roll(vim.fs.basename(repo))
   if sessions then
     leave_project()
   end

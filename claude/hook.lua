@@ -3,4 +3,6 @@
 -- absolute even when run as a relative path, the installer writes it into settings.json
 local root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h:h")
 package.path = ("%s/lua/?.lua;%s/lua/?/init.lua;"):format(root, root) .. package.path
+-- the opt in franchises this machine plays, set where core/options reads them
+pcall(dofile, root .. "/lua/core/options_local.lua")
 require("core.claude_ui.hook").run(root, _G.arg)

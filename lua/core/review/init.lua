@@ -4,11 +4,16 @@ local actions = require("core.review.actions")
 
 local M = {}
 
+-- what the franchise says while reviewing, see the review.* keys in lua/core/franchise/lines.lua
+local function say(key, vars)
+  return require("core.franchise").line("review." .. key, vars)
+end
+
 local PR_FIELDS =
   "number,title,body,author,baseRefName,headRefName,additions,deletions,changedFiles,url"
 
 local function notify(msg, level)
-  vim.notify(msg, level or vim.log.levels.INFO, { title = "Review", id = "eldentree_review" })
+  vim.notify(msg, level or vim.log.levels.INFO, { title = say("title"), id = "eldentree_review" })
 end
 
 local function gh(args, cb)
@@ -58,7 +63,7 @@ local function open_report(pr, analysis)
 end
 
 local function analyze(pr, diff, task)
-  task:update(("Claude is reading PR #%d…"):format(pr.number))
+  task:update(say("reading", { number = pr.number }))
   local prompt = actions.build_prompt(pr, diff, vim.g.eldentree_review_lang)
   require("core.claude").run(prompt, function(res)
     if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
@@ -66,7 +71,7 @@ local function analyze(pr, diff, task)
         "Claude could not analyze the PR: " .. vim.trim(res.stderr or "unknown error")
       )
     end
-    task:done(("PR #%d analyzed"):format(pr.number))
+    task:done(say("done", { number = pr.number }))
     open_report(pr, res.stdout)
   end)
 end
@@ -74,8 +79,8 @@ end
 function M.review(number)
   local task = require("core.progress").start({
     id = "eldentree_review",
-    title = "Review",
-    message = ("Fetching PR #%d…"):format(number),
+    title = say("title"),
+    message = say("fetching", { number = number }),
   })
   gh({ "pr", "view", tostring(number), "--json", PR_FIELDS }, function(view)
     if view.code ~= 0 then
@@ -86,7 +91,7 @@ function M.review(number)
       return task:fail("Could not read the PR details from gh")
     end
 
-    task:update(("Fetching the diff of PR #%d…"):format(number))
+    task:update(say("diff", { number = number }))
     gh({ "pr", "diff", tostring(number), "--color=never" }, function(diff)
       if diff.code ~= 0 or vim.trim(diff.stdout or "") == "" then
         return task:fail(
@@ -101,8 +106,8 @@ end
 local function pick_pr()
   local task = require("core.progress").start({
     id = "eldentree_review",
-    title = "Review",
-    message = "Looking for open PRs…",
+    title = say("title"),
+    message = say("looking"),
   })
   gh({
     "pr",

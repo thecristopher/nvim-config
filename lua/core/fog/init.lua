@@ -86,10 +86,12 @@ local function draw_clouds(state, raw)
 end
 
 --- Rolls a fog wall over the editor and lets it fade, unless animations are stilled.
---- Worlds that travel through doors open one instead.
-function M.roll()
-  if require("core.franchise").mechanic("travel") == "door" then
-    return require("core.door").open()
+--- Worlds that travel another way hand off to the module named after it, like core.door.
+---@param name string|nil where you are going, announced by the travels that have room for it
+function M.roll(name)
+  local travel = require("core.franchise").mechanic("travel")
+  if travel ~= "fog" then
+    return require("core." .. travel).open(name)
   end
   if not motion.enabled() or vim.g.eldentree_fog == false then
     return
@@ -120,7 +122,9 @@ function M.roll()
 end
 
 function M.setup()
-  vim.api.nvim_create_user_command("Fog", M.roll, { desc = "Walk through a fog wall" })
+  vim.api.nvim_create_user_command("Fog", function()
+    M.roll()
+  end, { desc = "Walk through a fog wall" })
 end
 
 return M

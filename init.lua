@@ -36,6 +36,7 @@ else
   require("core.trial").setup()
   require("core.runes").setup()
   require("core.ecg").setup()
+  require("core.heartbeat").setup()
   require("core.map").setup()
   require("core.results").setup()
   require("core.chronicle").setup()

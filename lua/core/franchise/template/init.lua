@@ -7,13 +7,14 @@ return {
   regions = require("core.franchise.lore.__name__.regions"),
   skin = require("core.franchise.lore.__name__.skin"),
   voices = require("core.franchise.lore.__name__.voices"),
+  lines = require("core.franchise.lore.__name__.lines"),
 
   -- which version of each mechanic this world plays
   mechanics = {
-    travel = "fog", -- "fog" or "door"
-    boss = "duel", -- "duel" (health bar) or "stalker" (walks toward you)
-    status = "grace", -- "grace" (breathing glyph) or "ecg" (Fine, Caution, Danger)
-    rest = "embers", -- "embers" or "typewriter"
+    travel = "fog", -- "fog", "door" or "curtain"
+    boss = "duel", -- "duel" (health bar), "stalker" (walks toward you) or "scene" (hearts to mend)
+    status = "grace", -- "grace" (breathing glyph), "ecg" (Fine, Caution, Danger) or "heartbeat"
+    rest = "embers", -- "embers", "typewriter" or "golden_hour"
     ranking = false, -- true shows the last run's rank on the hub
   },
 

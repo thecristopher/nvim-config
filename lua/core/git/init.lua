@@ -250,7 +250,7 @@ function M.checkout(branch)
   end
   local repos = require("core.repos")
   repos.save_branch_session()
-  require("core.fog").roll()
+  require("core.fog").roll(branch)
   run(actions.checkout_args(branch), function()
     vim.cmd("silent! checktime")
     if not repos.restore_branch_session() then

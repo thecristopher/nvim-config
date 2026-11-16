@@ -1,5 +1,6 @@
 -- Watches for a long idle in normal mode, then lays a dim veil over the editor with embers
--- drifting up through it. The key that wakes you is swallowed so it never edits anything.
+-- drifting up through it, a typewriter waiting, or the afternoon sun through the blinds. The key
+-- that wakes you is swallowed so it never edits anything.
 local actions = require("core.rest.actions")
 local embers = require("core.hub.actions")
 local banner = require("core.banner.actions")
@@ -30,6 +31,10 @@ local function paint_groups(elapsed)
     )
   end
   vim.api.nvim_set_hl(0, "EldenRestVeil", { bg = veil, blend = blend })
+  -- the sun lets more of the editor through than the veil does, warmed by the light
+  local sun = require("core.themes.actions").blend(p.peach, veil, 0.22)
+  local sun_blend = banner.blend_for(actions.veil_alpha(elapsed) * 0.55)
+  vim.api.nvim_set_hl(0, "EldenRestSun", { bg = sun, blend = sun_blend })
   text_group("EldenRestTitle", p.yellow, { bold = true })
   text_group("EldenRestSub", p.subtext0, { italic = true })
   text_group("EldenRestHint", p.overlay1, { italic = true })
@@ -54,6 +59,19 @@ local function line_text(line, elapsed)
   return written .. cursor
 end
 
+-- the light goes under the words, so they stay readable wherever the sun falls
+local function draw_sun(s, elapsed)
+  for _, span in ipairs(actions.sun_spans(s.width, s.height, elapsed)) do
+    if not s.text_rows[span.row] then
+      vim.api.nvim_buf_set_extmark(s.buf, ns, span.row, 0, {
+        virt_text = { { (" "):rep(span.to - span.from), "EldenRestSun" } },
+        virt_text_win_col = span.from,
+        priority = 100,
+      })
+    end
+  end
+end
+
 local function draw(s, elapsed)
   if not vim.api.nvim_win_is_valid(s.win) then
     return false
@@ -70,7 +88,11 @@ local function draw(s, elapsed)
       priority = 200,
     })
   end
-  if s.style == "typewriter" then
+  if s.style == "golden_hour" then
+    draw_sun(s, elapsed)
+    return
+  end
+  if s.style ~= "embers" then
     return
   end
 

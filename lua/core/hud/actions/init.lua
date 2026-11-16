@@ -243,18 +243,34 @@ end
 
 -- portraits are 276x336 and half blocks draw two pixels per cell, so a cell box this ratio fits them
 M.PORTRAIT_RATIO = 46 / 28
+-- figures are whole phone photos, 331x593, so their box is much narrower for its height
+M.FIGURE_RATIO = 331 / 593 * 2
 
 --- Sizes the portrait as tall as the room allows while keeping its shape.
 ---@param max_width integer cells available across
 ---@param max_height integer rows available
 ---@param min_height integer below this the portrait is left out
+---@param ratio number|nil cells across per row, PORTRAIT_RATIO by default
 ---@return { width: integer, height: integer }|nil
-function M.portrait_fit(max_width, max_height, min_height)
-  local height = math.min(max_height, math.floor(max_width / M.PORTRAIT_RATIO))
+function M.portrait_fit(max_width, max_height, min_height, ratio)
+  ratio = ratio or M.PORTRAIT_RATIO
+  local height = math.min(max_height, math.floor(max_width / ratio))
   if height < min_height then
     return nil
   end
-  return { width = math.floor(height * M.PORTRAIT_RATIO + 0.5), height = height }
+  return { width = math.floor(height * ratio + 0.5), height = height }
+end
+
+--- Picks the image a view draws for a region: its whole figure when the view shows one and the
+--- region has it, its portrait otherwise.
+---@param region { portrait?: string, figure?: string }
+---@param shows_figures boolean
+---@return string|nil file, boolean figure
+function M.image_for(region, shows_figures)
+  if shows_figures and region.figure then
+    return region.figure, true
+  end
+  return region.portrait, false
 end
 
 --- Joins key hints into one line, leaving out whole hints from the end until it fits.
@@ -432,6 +448,11 @@ function M.hud_groups(p, blend, plates)
     EldenHudDesc = { fg = p.subtext0 },
     EldenHudHint = { fg = p.overlay1 },
     EldenHudBanner = { fg = p.yellow, bold = true },
+    -- the dressing room: bulbs resting warm and dim, lit as the hub chases light around them,
+    -- and the dressing table under the mirror
+    EldenHudBulb = { fg = blend(p.peach, p.base, 0.45) },
+    EldenHudBulbLit = { fg = blend(p.peach, "#FFFFFF", 0.65), bold = true },
+    EldenHudDesk = { fg = p.surface1 },
   }
 end
 

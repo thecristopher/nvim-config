@@ -94,6 +94,81 @@ M.MECHANIC_WORDS = {
   { mechanic = "ranking", value = true, words = { "last_run" } },
 }
 
+-- every version a mechanic or a skin piece can name, each one a module or a view that exists
+M.CHOICES = {
+  {
+    table = "mechanics",
+    key = "travel",
+    label = "mechanics",
+    values = { "fog", "door", "curtain" },
+  },
+  {
+    table = "mechanics",
+    key = "boss",
+    label = "mechanics",
+    values = { "duel", "stalker", "scene" },
+  },
+  {
+    table = "mechanics",
+    key = "status",
+    label = "mechanics",
+    values = { "grace", "ecg", "heartbeat" },
+  },
+  {
+    table = "mechanics",
+    key = "rest",
+    label = "mechanics",
+    values = { "embers", "typewriter", "golden_hour" },
+  },
+  {
+    table = "skin",
+    key = "dashboard",
+    label = "skin",
+    values = { "roundtable", "inventory", "wardrobe" },
+  },
+  {
+    table = "skin",
+    key = "picker",
+    label = "skin",
+    values = { "grace", "inventory", "vanity", "default" },
+  },
+}
+M.TITLE_STYLES = { "shimmer", "drip", "marquee" }
+-- the borders every plugin that frames a float accepts: nvim takes "bold" too, but nvim-ufo
+-- refuses it and fails to load
+M.BORDERS = { "rounded", "double", "single", "solid", "shadow", "none" }
+
+local function unknown_choice(value, values, name, problems)
+  if value ~= nil and not vim.tbl_contains(values, value) then
+    table.insert(
+      problems,
+      ("%s is %s, it must be one of %s"):format(name, tostring(value), table.concat(values, ", "))
+    )
+  end
+end
+
+local function check_choices(lore, problems)
+  for _, choice in ipairs(M.CHOICES) do
+    local value = (lore[choice.table] or {})[choice.key]
+    unknown_choice(value, choice.values, choice.label .. "." .. choice.key, problems)
+  end
+  local title = (lore.skin or {}).title or {}
+  unknown_choice(title.style, M.TITLE_STYLES, "skin.title.style", problems)
+  unknown_choice((lore.skin or {}).border, M.BORDERS, "skin.border", problems)
+end
+
+-- every line of lua/core/franchise/lines.lua, said in the franchise's own words
+local function check_lines(lore, problems)
+  local keys = vim.tbl_keys(require("core.franchise.lines"))
+  table.sort(keys)
+  for _, key in ipairs(keys) do
+    local line = (lore.lines or {})[key]
+    if line == nil or line == "" or (type(line) == "table" and #line == 0) then
+      table.insert(problems, ("lines[%q] is missing"):format(key))
+    end
+  end
+end
+
 local function missing_keys(tbl, keys, label, problems)
   for _, key in ipairs(keys) do
     if tbl == nil or tbl[key] == nil then
@@ -178,6 +253,12 @@ local function check_region(lore, region, portrait_exists, problems)
       ("%s portrait %s is not in images/portraits"):format(region.name, region.portrait)
     )
   end
+  if region.figure and portrait_exists and not portrait_exists(region.figure) then
+    table.insert(
+      problems,
+      ("%s figure %s is not in images/portraits"):format(region.name, region.figure)
+    )
+  end
   check_palette(region, problems)
 end
 
@@ -221,6 +302,8 @@ function M.problems(lore, portrait_exists)
   missing_keys(lore.skin, M.SKIN, "skin", problems)
   missing_keys(lore, M.LISTS, "lore", problems)
   missing_keys(lore.coach, M.COACH, "coach", problems)
+  check_choices(lore, problems)
+  check_lines(lore, problems)
   check_words(lore, problems)
   check_music(lore, problems)
   check_chrome(lore, problems)

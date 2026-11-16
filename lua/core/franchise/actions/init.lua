@@ -5,11 +5,12 @@ local M = {}
 -- the fallback for anything unknown
 M.DEFAULT = "elden_ring"
 
-local discovered
+local discovered, playable
 
---- Lists every franchise found in the lore folder, sorted so the daily rotation is stable.
+--- Lists every franchise found in the lore folder, the ones waiting for an opt in included,
+--- sorted so the daily rotation is stable.
 ---@return string[]
-function M.names()
+function M.all_names()
   if discovered then
     return discovered
   end
@@ -26,9 +27,31 @@ function M.names()
   return names
 end
 
+--- Tells whether a franchise is played here: always, unless its lore asks for an opt in that
+--- the opted list does not give.
+---@param lore { name: string, opt_in?: boolean }
+---@param opted string[]|nil names opted in, like vim.g.eldentree_opt_in
+---@return boolean
+function M.plays(lore, opted)
+  return not lore.opt_in or vim.tbl_contains(opted or {}, lore.name)
+end
+
+--- Lists the franchises this config plays: every folder, minus the opt in ones nobody opted
+--- into with vim.g.eldentree_opt_in.
+---@return string[]
+function M.names()
+  if playable then
+    return playable
+  end
+  playable = vim.tbl_filter(function(name)
+    return M.plays(require("core.franchise.lore." .. name), vim.g.eldentree_opt_in)
+  end, M.all_names())
+  return playable
+end
+
 --- Forgets the franchises found so far, so a freshly created one shows up.
 function M.rediscover()
-  discovered = nil
+  discovered, playable = nil, nil
 end
 
 --- Returns the franchise name when it exists, the default otherwise.
@@ -42,7 +65,9 @@ end
 ---@param name string|nil franchise name
 ---@return table lore
 function M.lore(name)
-  return (require("core.franchise.lore." .. M.resolve(name)))
+  -- an opt in franchise still loads by name, for checkhealth and the specs
+  local known = vim.tbl_contains(M.all_names(), name) and name or M.DEFAULT
+  return (require("core.franchise.lore." .. known))
 end
 
 --- Counts days since the epoch for a calendar date, the same in every timezone.
@@ -109,6 +134,35 @@ end
 ---@return string
 function M.fill_template(text, name)
   return (text:gsub("__name__", name):gsub("__title__", M.title(name)))
+end
+
+--- Fills a line's holes, like {character} or {branch}, leaving the ones it has no value for.
+---@param text string
+---@param vars table<string, any>|nil
+---@return string
+function M.fill(text, vars)
+  return (
+    text:gsub("{(%w+)}", function(name)
+      local value = (vars or {})[name]
+      return value ~= nil and tostring(value) or nil
+    end)
+  )
+end
+
+--- Returns what a franchise says for a key: its own line, or the plain one when it has none.
+--- A line that is a list picks one of its entries.
+---@param lines table<string, string|string[]>|nil the lore's lines
+---@param defaults table<string, string|string[]> the plain lines
+---@param key string like "commit.drafting"
+---@param vars table<string, any>|nil values for the holes
+---@param roll number|nil between 0 and 1, which entry of a list to say, the first by default
+---@return string
+function M.line(lines, defaults, key, vars, roll)
+  local text = (lines or {})[key] or defaults[key] or key
+  if type(text) == "table" then
+    text = text[math.min(#text, math.floor((roll or 0) * #text) + 1)] or key
+  end
+  return M.fill(text, vars)
 end
 
 return M

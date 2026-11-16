@@ -1,5 +1,5 @@
--- The title screen: the franchise's name in big block letters, a shimmer or a drip running through
--- it, and the rule that it shows once a day per franchise. Pure logic only, times are milliseconds.
+-- The title screen: the franchise's name in big block letters, a shimmer, a drip or a marquee of
+-- chasing bulbs running through it, and the rule that it shows once a day per franchise. Pure logic only, times are milliseconds.
 local ease = require("core.motion.actions")
 
 local M = {}
@@ -10,6 +10,9 @@ M.LEVELS = 8
 M.DRIP_DEPTH = 4
 M.DRIP_MS = 520
 M.SHIMMER = { period = 3200, band = 10 }
+-- the marquee's bulbs: columns between them, how long each step of the chase lasts, and how many
+-- bulbs make one lit and dark pattern
+M.MARQUEE = { spacing = 2, step_ms = 140, every = 3 }
 -- nobody should be stuck behind a title, it lifts on its own after this long
 M.AUTO_CLOSE_MS = 9000
 
@@ -113,6 +116,41 @@ end
 function M.drip_length(depth, elapsed)
   local running = math.floor((elapsed - M.FADE_IN) / M.DRIP_MS)
   return math.max(0, math.min(depth, running))
+end
+
+--- Returns the bulbs framing a marquee around a box, in order around it so a chase can run
+--- through them: along the top left to right, down the right side, back along the bottom and up
+--- the left.
+---@param width integer columns inside the frame
+---@param height integer rows inside the frame
+---@return { row: integer, col: integer }[] zero based, row -1 and col -2 sit on the frame itself
+function M.bulbs(width, height)
+  local spacing = M.MARQUEE.spacing
+  local left, right = -spacing, width + spacing - 1
+  local top, bottom = -1, height
+  local bulbs = {}
+  for col = left, right, spacing do
+    table.insert(bulbs, { row = top, col = col })
+  end
+  for row = top + 1, bottom - 1 do
+    table.insert(bulbs, { row = row, col = right })
+  end
+  for col = right, left, -spacing do
+    table.insert(bulbs, { row = bottom, col = col })
+  end
+  for row = bottom - 1, top + 1, -1 do
+    table.insert(bulbs, { row = row, col = left })
+  end
+  return bulbs
+end
+
+--- Tells whether a bulb is lit at a moment, the lit ones stepping around the frame.
+---@param index integer the bulb's place in the order from M.bulbs
+---@param elapsed number
+---@return boolean
+function M.bulb_lit(index, elapsed)
+  local step = math.floor(elapsed / M.MARQUEE.step_ms)
+  return (index - step) % M.MARQUEE.every == 0
 end
 
 return M

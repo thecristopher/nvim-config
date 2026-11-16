@@ -101,6 +101,59 @@ describe("problems", function()
     )
   end)
 
+  it("notices Claire traveling by a mechanic nobody built", function()
+    local broken = lore()
+    broken.mechanics.travel = "helicopter"
+    assert.is_true(mentions(validate.problems(broken), "mechanics.travel is helicopter"))
+  end)
+
+  it("accepts every travel, status and rest Elizabeth plays", function()
+    local dressed = lore()
+    dressed.mechanics.travel = "curtain"
+    dressed.mechanics.status = "heartbeat"
+    dressed.mechanics.rest = "golden_hour"
+    assert.same({}, validate.problems(dressed))
+  end)
+
+  it("notices a HUD view that does not exist", function()
+    local broken = lore()
+    broken.skin.dashboard = "love_letters"
+    assert.is_true(mentions(validate.problems(broken), "skin.dashboard is love_letters"))
+  end)
+
+  it("notices a title style the title screen cannot draw", function()
+    local broken = lore()
+    broken.skin.title.style = "confetti"
+    assert.is_true(mentions(validate.problems(broken), "skin.title.style is confetti"))
+  end)
+
+  it("notices a figure that is not on disk", function()
+    local broken = lore()
+    broken.regions[1].figure = "claire_whole.jpg"
+    local function only_portraits(file)
+      return file ~= "claire_whole.jpg"
+    end
+    assert.is_true(mentions(validate.problems(broken, only_portraits), "figure claire_whole.jpg"))
+  end)
+
+  it("accepts a villain who steals the scene", function()
+    local dressed = lore()
+    dressed.mechanics.boss = "scene"
+    assert.same({}, validate.problems(dressed))
+  end)
+
+  it("notices a border nvim-ufo would refuse while Claire travels", function()
+    local broken = lore()
+    broken.skin.border = "bold"
+    assert.is_true(mentions(validate.problems(broken), "skin.border is bold"))
+  end)
+
+  it("notices a line Claire never says in her own words", function()
+    local broken = lore()
+    broken.lines["commit.drafting"] = nil
+    assert.is_true(mentions(validate.problems(broken), 'lines["commit.drafting"] is missing'))
+  end)
+
   it("notices a missing skin piece", function()
     local broken = lore()
     broken.skin = vim.deepcopy(broken.skin)

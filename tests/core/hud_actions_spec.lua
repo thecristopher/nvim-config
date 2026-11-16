@@ -278,6 +278,7 @@ describe("hud looks", function()
     overlay0 = "#606060",
     overlay1 = "#707070",
     rosewater = "#F0D0D0",
+    peach = "#F0B070",
   }
   local blend = require("core.themes.actions").blend
 

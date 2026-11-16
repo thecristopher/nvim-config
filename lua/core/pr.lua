@@ -13,12 +13,17 @@ local MAX_DIFF = 8000
 -- bufnr -> { base = "main", branch = "feature/x", pr = { number, url } or nil }
 local drafts = {}
 
+-- what the franchise says while drafting, see the pr.* keys in lua/core/franchise/lines.lua
+local function say(key, vars)
+  return require("core.franchise").line("pr." .. key, vars)
+end
+
 local function notify_err(msg)
-  vim.notify(msg, vim.log.levels.ERROR, { title = "PR Helper" })
+  vim.notify(msg, vim.log.levels.ERROR, { title = say("title") })
 end
 
 local function notify_info(msg)
-  vim.notify(msg, vim.log.levels.INFO, { title = "PR Helper", id = "pr_helper" })
+  vim.notify(msg, vim.log.levels.INFO, { title = say("title"), id = "pr_helper" })
 end
 
 -- ── git/gh plumbing (synchronous: quick, local, one shot user action) ──
@@ -213,14 +218,14 @@ end
 local function draft_via_claude(prompt, cb)
   local task = require("core.progress").start({
     id = "pr_helper",
-    title = "PR Helper",
-    message = "Drafting PR description with Claude…",
+    title = say("title"),
+    message = say("drafting"),
   })
   require("core.claude").run(prompt, function(res)
     if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
-      task:fail("Claude could not draft the PR")
+      task:fail(say("failed"))
     else
-      task:done("Draft ready")
+      task:done(say("ready"))
     end
     cb(res)
   end)
@@ -258,7 +263,9 @@ local function open_editor(base, branch, pr, title, body)
     width = width,
     height = height,
     border = require("core.skin").border(),
-    title = pr and (" Update PR #%d "):format(pr.number) or " Create PR ",
+    title = " " .. require("core.skin").title(
+      pr and say("window_update", { number = pr.number }) or say("window_create")
+    ) .. " ",
     title_pos = "center",
   })
   vim.wo[win].wrap = true
@@ -344,14 +351,12 @@ local function published(buf, ctx, title, url)
     pcall(vim.api.nvim_win_close, 0, true)
     pcall(vim.api.nvim_buf_delete, buf, { force = true })
   end)
-  return ctx.pr and ("Updated PR #%d: %s"):format(ctx.pr.number, url)
-    or ("Created PR: %s"):format(url)
+  return ctx.pr and say("updated", { number = ctx.pr.number, url = url })
+    or say("created", { url = url })
 end
 
 local function publish(buf, ctx, title, body, task)
-  task:update(
-    ctx.pr and ("Updating PR #%d on GitHub…"):format(ctx.pr.number) or "Creating PR on GitHub…"
-  )
+  task:update(ctx.pr and say("updating", { number = ctx.pr.number }) or say("creating"))
   local tmp = vim.fn.tempname()
   vim.fn.writefile(vim.split(body, "\n", { plain = true }), tmp)
   step(gh_command(ctx, title, tmp), function(out)
@@ -360,7 +365,7 @@ local function publish(buf, ctx, title, body, task)
   end, function(err)
     vim.fn.delete(tmp)
     task:fail(("gh pr %s failed:\n%s"):format(ctx.pr and "edit" or "create", err))
-    require("core.banner").show("died", { subtitle = "the pull request did not survive" })
+    require("core.banner").show("died", { subtitle = say("lost") })
   end)
 end
 
@@ -384,8 +389,8 @@ function M.submit(buf)
   end
   local task = require("core.progress").start({
     id = "pr_helper",
-    title = "PR Helper",
-    message = push and ("Pushing '%s' to origin…"):format(ctx.branch) or "Talking to GitHub…",
+    title = say("title"),
+    message = push and say("pushing", { branch = ctx.branch }) or say("talking"),
   })
   if not push then
     return publish(buf, ctx, title, body, task)
@@ -461,20 +466,20 @@ local function proceed(branch, base)
   local base_r = base_ref(base)
   local task = require("core.progress").start({
     id = "pr_helper",
-    title = "PR Helper",
-    message = "Reading the commits…",
+    title = say("title"),
+    message = say("commits"),
     fraction = 0,
   })
   commit_log(base_r, branch, function(log)
     if log == "" then
       return task:fail(("No commits ahead of '%s'."):format(base))
     end
-    task:update("Reading the diff…", 1 / 3)
+    task:update(say("diff"), 1 / 3)
     diff_context(base_r, branch, function(diff)
-      task:update("Asking GitHub for an open PR…", 2 / 3)
+      task:update(say("github"), 2 / 3)
       existing_pr(branch, base, function(pr)
         task:update(nil, 1)
-        task:done("Diff context ready")
+        task:done(say("context"))
         ask_vibe_and_draft(branch, base, base_r, log, diff, pr)
       end)
     end)

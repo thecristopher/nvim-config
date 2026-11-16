@@ -75,3 +75,42 @@ describe("drip_length", function()
     assert.equal(3, actions.drip_length(3, 60000))
   end)
 end)
+
+describe("bulbs", function()
+  it("rings the title on every side", function()
+    local rows, cols = {}, {}
+    for _, bulb in ipairs(actions.bulbs(20, 5)) do
+      rows[bulb.row], cols[bulb.col] = true, true
+    end
+    assert.is_true(rows[-1] and rows[5])
+    assert.is_true(cols[-actions.MARQUEE.spacing] and cols[20 + actions.MARQUEE.spacing - 1])
+  end)
+
+  it("walks around the frame in order, so the chase runs like Claire's marquee", function()
+    local bulbs = actions.bulbs(20, 5)
+    assert.same({ row = -1, col = -actions.MARQUEE.spacing }, bulbs[1])
+    -- the last one sits right under the first, closing the ring
+    assert.same({ row = 0, col = -actions.MARQUEE.spacing }, bulbs[#bulbs])
+  end)
+
+  it("never puts a bulb inside the letters", function()
+    for _, bulb in ipairs(actions.bulbs(20, 5)) do
+      local inside = bulb.row >= 0 and bulb.row < 5 and bulb.col >= 0 and bulb.col < 20
+      assert.is_false(inside)
+    end
+  end)
+end)
+
+describe("bulb_lit", function()
+  it("lights one bulb in every few", function()
+    local lit = 0
+    for index = 1, 12 do
+      lit = lit + (actions.bulb_lit(index, 0) and 1 or 0)
+    end
+    assert.equal(12 / actions.MARQUEE.every, lit)
+  end)
+
+  it("moves the light one bulb along on the next step", function()
+    assert.equal(actions.bulb_lit(1, 0), actions.bulb_lit(2, actions.MARQUEE.step_ms))
+  end)
+end)

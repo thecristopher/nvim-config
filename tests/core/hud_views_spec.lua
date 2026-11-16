@@ -1,5 +1,6 @@
 local roundtable = require("core.hud.views.roundtable")
 local inventory = require("core.hud.views.inventory")
+local wardrobe = require("core.hud.views.wardrobe")
 
 local function item(name, extra)
   return vim.tbl_extend(
@@ -370,4 +371,197 @@ describe("inventory", function()
   end)
 
   behaves_on_any_screen(inventory.render)
+end)
+
+describe("wardrobe", function()
+  local view = wardrobe.render(model({ hub = "Dressing Room", character = "Scarlet Witch" }))
+
+  it("hangs every tab from the rail and titles the open one", function()
+    assert.is_truthy(line_of(view, "┳"))
+    assert.is_truthy(line_of(view, "Tools"))
+  end)
+
+  it("lists every piece on the rack by name", function()
+    assert.is_truthy(line_of(view, "Love letter"))
+    assert.is_truthy(line_of(view, "Roses"))
+  end)
+
+  it("lists each stage with its branch", function()
+    assert.equal(line_of(view, "haligtree"), line_of(view, "anniversary-dinner"))
+  end)
+
+  it("marks the selected piece and puts the cursor on its icon", function()
+    local row = line_of(view, "▸")
+    assert.equal(line_of(view, "Playlist"), row)
+    assert.equal(row + 1, view.cursor.row)
+  end)
+
+  it("walks the rack one piece per row", function()
+    assert.equal(1, view.grids.items.columns)
+    assert.equal(3, view.grids.items.count)
+  end)
+
+  it("says so when the rack is empty", function()
+    assert.is_truthy(line_of(wardrobe.render(model({ tab = 2 })), "Nothing here yet"))
+  end)
+
+  it("rings the mirror with bulbs between the rack and the stages", function()
+    local roomy = wardrobe.render(model({ width = 200, height = 50, portrait = true }))
+    assert.is_false(roomy.plan.stacked)
+    assert.is_true(has_mark(roomy, "EldenHudBulb"))
+    local mirror = roomy.anchors.portrait
+    assert.is_true(mirror.col > roomy.plan.indent + roomy.plan.rack_width)
+  end)
+
+  it("stands the mirror above both lists when they cannot fit beside it", function()
+    local narrow = wardrobe.render(model({ width = 60, height = 50, portrait = true }))
+    assert.is_true(narrow.plan.stacked)
+    assert.is_true(narrow.anchors.portrait.row < line_of(narrow, "Love letter"))
+  end)
+
+  it("carves Malenia's name under the mirror", function()
+    local roomy = wardrobe.render(model({ width = 200, height = 50, portrait = true }))
+    local name = require("core.hub.actions").spaced("Malenia")
+    assert.is_truthy(line_of(roomy, name))
+  end)
+
+  it("stands the mirror aside everything beside a Claude split", function()
+    local split = wardrobe.render(model({ width = 99, height = 39, portrait = true }))
+    assert.equal("aside", split.plan.shape)
+    assert.equal(split.plan.indent, split.anchors.portrait.col - 2)
+  end)
+
+  it("puts her at center stage on a wide screen, the rail and the sign beside her", function()
+    local wide =
+      wardrobe.render(model({ width = 160, height = 48, portrait = true, figure = true }))
+    assert.equal("center", wide.plan.shape)
+    local mirror = wide.anchors.portrait
+    assert.is_true(mirror.col > wide.plan.indent + wide.plan.rack_width)
+    assert.is_true(line_of(wide, "R O U N D T A B L E") < line_of(wide, "Current Quest"))
+  end)
+
+  it("lets her photo take nearly the whole height of the screen", function()
+    local wide =
+      wardrobe.render(model({ width = 160, height = 48, portrait = true, figure = true }))
+    assert.is_true(wide.anchors.portrait.height >= 48 - 12)
+  end)
+
+  it("never gives her less than the share of the tallest photo any shape allows", function()
+    for _, size in ipairs({ { 120, 40 }, { 160, 48 }, { 200, 50 }, { 99, 39 } }) do
+      local view = wardrobe.render(
+        model({ width = size[1], height = size[2], portrait = true, figure = true })
+      )
+      local room = size[2] - 2 - 3 - wardrobe.MIRROR_ROWS - wardrobe.NAME_ROWS
+      assert.is_true(
+        view.anchors.portrait.height >= math.floor(room * 0.75),
+        size[1] .. "x" .. size[2]
+      )
+    end
+  end)
+
+  it("shows her whole figure, taller than wide, when the region has one", function()
+    local mirror = wardrobe.render(
+      model({ width = 200, height = 50, portrait = true, figure = true })
+    ).anchors.portrait
+    assert.is_true(mirror.height * 2 > mirror.width * 1.5)
+  end)
+
+  it("frames a figure narrower than a portrait of the same height", function()
+    local portrait = wardrobe.render(model({ width = 200, height = 50, portrait = true }))
+    local figure =
+      wardrobe.render(model({ width = 200, height = 50, portrait = true, figure = true }))
+    assert.is_true(figure.plan.mirror_width < portrait.plan.mirror_width)
+  end)
+
+  it("leaves the mirror out when the terminal cannot draw it", function()
+    assert.is_nil(view.anchors.portrait)
+    assert.is_false(has_mark(view, "EldenHudDesk"))
+  end)
+
+  it("lights the marquee sign over the rail", function()
+    assert.is_true(line_of(view, "D R E S S I N G") < line_of(view, "┳"))
+    assert.is_truthy(view.lines[line_of(view, "D R E S S I N G") + 1]:find(wardrobe.BULB, 1, true))
+  end)
+
+  it("tells which tab hangs out of how many", function()
+    assert.is_truthy(line_of(view, "1 / 2"))
+  end)
+
+  it("frames the rack in gold while it has the focus", function()
+    local rack_top = line_of(view, "╭─ Tools")
+    local gold = false
+    for _, mark in ipairs(view.marks) do
+      gold = gold or (mark[1] == rack_top and mark[4] == "EldenHudFrameSel")
+    end
+    assert.is_true(gold)
+  end)
+
+  it("counts what is left under the rack when it does not all fit", function()
+    local many = {}
+    for index = 1, 30 do
+      many[index] = item("Love note " .. index)
+    end
+    local tabs = { { title = "Tools", icon = "󱌣", items = many } }
+    local crowded = wardrobe.render(model({ width = 120, height = 32, tabs = tabs }))
+    assert.is_truthy(line_of(crowded, "▼ "))
+  end)
+
+  it("describes the selected piece in its close up", function()
+    local close_up = line_of(view, "Close up")
+    assert.is_truthy(view.lines[close_up + 2]:find("Playlist", 1, true))
+  end)
+
+  behaves_on_any_screen(wardrobe.render)
+end)
+
+describe("image_for", function()
+  local actions = require("core.hud.actions")
+  local westview =
+    { portrait = "elizabeth_scarlet_witch.jpg", figure = "elizabeth_scarlet_witch_figure.jpg" }
+
+  it("hands the dressing room her whole figure", function()
+    assert.same(
+      { "elizabeth_scarlet_witch_figure.jpg", true },
+      { actions.image_for(westview, true) }
+    )
+  end)
+
+  it("keeps the portrait for views that frame a face", function()
+    assert.same({ "elizabeth_scarlet_witch.jpg", false }, { actions.image_for(westview, false) })
+  end)
+
+  it("falls back to Malenia's portrait when she has no figure", function()
+    assert.same({ "malenia.jpg", false }, { actions.image_for({ portrait = "malenia.jpg" }, true) })
+  end)
+end)
+
+describe("words", function()
+  local parts = require("core.hud.views.parts")
+
+  it("speaks the plain line when the model brings no words", function()
+    assert.equal("Current Quest", parts.word({}, "quest"))
+  end)
+
+  it("speaks the franchise's word when the model brings one", function()
+    assert.equal("Tonight's Scene", parts.word({ words = { quest = "Tonight's Scene" } }, "quest"))
+  end)
+
+  it("fills the sites into the plain line", function()
+    assert.is_truthy(parts.word({ sites = "Stages" }, "no_quest"):find("Stages", 1, true))
+  end)
+
+  it("writes the hints in the franchise's words", function()
+    local hints = parts.hints(
+      { words = { hint_use = "Wear" } },
+      { { "⏎", "use" }, { "q", "quit" } }
+    )
+    assert.same({ "⏎ Wear", "q Quit" }, hints)
+  end)
+
+  it("titles the dressing room's call sheet with Elizabeth's words", function()
+    local view =
+      wardrobe.render(model({ words = { quest = "Tonight's Scene", hint_use = "Wear" } }))
+    assert.is_truthy(line_of(view, "Tonight's Scene"))
+    assert.is_truthy(line_of(view, "⏎ Wear"))
+  end)
 end)
