@@ -11,6 +11,17 @@ return {
   -- bufferline separator_style
   tabs = "thick",
   signs = { error = "󰂧", warn = "▲", hint = "◆", info = "◇" },
+  -- statusline, tabs and notifications: the ECG pulse, an alarm, the typewriter's files and a green herb
+  icons = {
+    error = "󰗶",
+    warn = "󰀦",
+    info = "󰼭",
+    hint = "󰌪",
+    debug = "󰒄",
+    trace = "󰏫",
+  },
+  -- the cursor's guicursor shapes: the typewriter's caret underlines what you type
+  cursor = { normal = "block", insert = "hor15", replace = "block-blinkon200-blinkoff200" },
   -- the snacks picker layout, see lua/plugins/snacks.lua: the item list beside what you examine
   picker = "inventory",
   -- the command line popup's glyphs

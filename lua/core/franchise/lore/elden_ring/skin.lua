@@ -12,6 +12,17 @@ return {
   tabs = "slant",
   -- the gutter stays empty, tiny-inline-diagnostic speaks for the errors
   signs = { error = " ", warn = " ", hint = " ", info = " " },
+  -- statusline, tabs and notifications: death, a warning, the grace's guidance and the rot's bloom
+  icons = {
+    error = "󰚌",
+    warn = "󰀪",
+    info = "󰫢",
+    hint = "󰧰",
+    debug = "󰒄",
+    trace = "󰏫",
+  },
+  -- the cursor's guicursor shapes: a thin blade while writing
+  cursor = { normal = "block", insert = "ver25", replace = "hor20" },
   -- the snacks picker layout, see lua/plugins/snacks.lua: results over the prompt like a grace menu
   picker = "grace",
   -- the command line popup's glyphs

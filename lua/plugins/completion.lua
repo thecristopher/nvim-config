@@ -1,13 +1,55 @@
--- blink.cmp: fast completion with built-in snippet engine, Copilot riding along as one more source
+-- blink.cmp: fast completion with built-in snippet engine for the LSP, paths and snippets.
+-- Copilot writes ahead as ghost text (Tab takes it) and guesses the next edit in normal mode.
+
+---Accepts Copilot's ghost text when it shows one, so Tab can fall through to blink otherwise.
+---@return boolean|nil true when Copilot took the key
+local function accept_copilot()
+  local ok, suggestion = pcall(require, "copilot.suggestion")
+  if ok and suggestion.is_visible() then
+    suggestion.accept()
+    return true
+  end
+end
 
 return {
   {
     "zbirenbaum/copilot.lua",
     cmd = "Copilot",
     event = "InsertEnter",
+    dependencies = {
+      {
+        "copilotlsp-nvim/copilot-lsp",
+        init = function()
+          -- a guess that lands while you are still typing gets in the way more than it helps
+          vim.g.copilot_nes_debounce = 500
+        end,
+      },
+    },
     opts = {
-      -- blink shows the suggestions, so copilot.lua only fetches them
-      suggestion = { enabled = false },
+      -- whole lines and blocks read better inline than squeezed into a menu row
+      suggestion = {
+        enabled = true,
+        auto_trigger = true,
+        hide_during_completion = true,
+        keymap = {
+          -- Tab is handled by blink so it can share the key with the menu and snippets
+          accept = false,
+          accept_word = "<M-w>",
+          accept_line = "<M-a>",
+          next = "<M-]>",
+          prev = "<M-[>",
+          dismiss = "<C-]>",
+        },
+      },
+      -- next edit suggestions: after a change, Copilot points at the next spot that needs it
+      nes = {
+        enabled = true,
+        keymap = {
+          accept_and_goto = "<Tab>",
+          accept = false,
+          dismiss = "<Esc>",
+        },
+      },
       panel = { enabled = false },
       filetypes = { markdown = true, help = true },
     },
@@ -17,7 +59,7 @@ return {
     -- v0 called client.request, deprecated since nvim 0.11, and nvim warned on every completion
     version = "1.*",
     event = { "InsertEnter", "CmdlineEnter" },
-    dependencies = { "rafamadriz/friendly-snippets", "fang2hou/blink-copilot" },
+    dependencies = { "rafamadriz/friendly-snippets" },
     opts = {
       -- ── Keymap ──────────────────────────────────────────────────────
       keymap = {
@@ -25,7 +67,7 @@ return {
         ["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
         ["<C-e>"] = { "hide", "fallback" },
         ["<CR>"] = { "accept", "fallback" },
-        ["<Tab>"] = { "snippet_forward", "select_next", "fallback" },
+        ["<Tab>"] = { accept_copilot, "snippet_forward", "select_next", "fallback" },
         ["<S-Tab>"] = { "snippet_backward", "select_prev", "fallback" },
         ["<C-p>"] = { "select_prev", "fallback" },
         ["<C-n>"] = { "select_next", "fallback" },
@@ -66,14 +108,8 @@ return {
       },
       -- ── Sources ─────────────────────────────────────────────────────
       sources = {
-        default = { "lazydev", "copilot", "lsp", "path", "snippets", "buffer" },
+        default = { "lazydev", "lsp", "path", "snippets", "buffer" },
         providers = {
-          copilot = {
-            name = "copilot",
-            module = "blink-copilot",
-            score_offset = 100,
-            async = true,
-          },
           lazydev = {
             name = "LazyDev",
             module = "lazydev.integrations.blink",
@@ -102,8 +138,8 @@ return {
             winhighlight = "Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder",
           },
         },
-        -- the top item, usually Copilot's, previews inline before you accept it
-        ghost_text = { enabled = true },
+        -- Copilot owns the ghost text, two previews on the same line would fight
+        ghost_text = { enabled = false },
       },
       -- ── Signature help ───────────────────────────────────────────────
       signature = {

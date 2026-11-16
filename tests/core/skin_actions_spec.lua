@@ -29,3 +29,24 @@ describe("sign_text", function()
     assert.equal("◇", text[severity.INFO])
   end)
 end)
+
+describe("level_icon", function()
+  local icons = { error = "󰋔", info = "󰆥" }
+
+  it("dresses Inde's error in the franchise's glyph", function()
+    assert.equal("󰋔", actions.level_icon(icons, "error", nil))
+  end)
+
+  it("keeps the glyph Claire's notification already brought", function()
+    assert.equal("󰗶", actions.level_icon(icons, "error", "󰗶"))
+  end)
+
+  it("treats a blank glyph as none, the way snacks leaves it", function()
+    assert.equal("󰆥", actions.level_icon(icons, "info", ""))
+  end)
+
+  it("stays empty for a level the skin has no glyph for", function()
+    assert.equal("", actions.level_icon(icons, "trace", nil))
+    assert.equal("", actions.level_icon(nil, "warn", nil))
+  end)
+end)

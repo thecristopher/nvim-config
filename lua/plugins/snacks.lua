@@ -21,12 +21,13 @@ return {
         margin = { top = 0, right = 1, bottom = 0 },
         padding = true,
         sort = { "level", "added" },
+        -- left blank so core/chrome dresses each level in the franchise's glyph, see skin.icons
         icons = {
-          error = "󰅚 ",
-          warn = "󰊌 ",
-          info = "󰋽 ",
-          debug = "󰒄 ",
-          trace = "󰏫 ",
+          error = "",
+          warn = "",
+          info = "",
+          debug = "",
+          trace = "",
         },
         -- the game's messages: the franchise's word for the level and the hour, see core/chrome
         style = function(buf, notif, ctx)

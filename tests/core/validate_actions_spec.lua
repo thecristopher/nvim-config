@@ -80,6 +80,12 @@ describe("problems", function()
     assert.is_true(mentions(validate.problems(broken), "skin.music.bar"))
   end)
 
+  it("notices a skin with no glyph for Jill's warnings", function()
+    local broken = lore()
+    broken.skin.icons.warn = nil
+    assert.is_true(mentions(validate.problems(broken), "skin.icons.warn"))
+  end)
+
   it("notices a palette slot that is not a color", function()
     local broken = lore()
     broken.regions[1].palette.text = "white"

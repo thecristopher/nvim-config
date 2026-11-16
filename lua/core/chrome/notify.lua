@@ -4,6 +4,10 @@ local actions = require("core.chrome.actions")
 
 local M = {}
 
+local function skin_icons()
+  return require("core.skin").current().icons
+end
+
 ---A snacks.notifier style.
 ---@param buf integer
 ---@param notif table snacks.notifier.Notif
@@ -11,7 +15,8 @@ local M = {}
 function M.style(buf, notif, ctx)
   local chrome = require("core.franchise").current().chrome
   local title = actions.notify_title(notif.title, notif.level, chrome)
-  local label = vim.trim((notif.icon or "") .. " " .. title)
+  local icon = require("core.skin").icon(actions.level_name(notif.level), notif.icon)
+  local label = vim.trim(icon .. " " .. title)
   ctx.opts.title = { { " " .. require("core.skin").title(label) .. " ", ctx.hl.title } }
   ctx.opts.title_pos = "center"
   ctx.opts.footer = { { " " .. os.date("%H:%M", notif.added) .. " ", ctx.hl.footer } }
@@ -28,7 +33,7 @@ function M.show_history()
   end
   local chrome = require("core.franchise").current().chrome
   local lines, marks =
-    actions.history_lines(Snacks.notifier.get_history({ reverse = true }), chrome)
+    actions.history_lines(Snacks.notifier.get_history({ reverse = true }), chrome, skin_icons())
   local win = Snacks.win({
     style = "notification_history",
     title = " " .. require("core.skin").title(chrome.history or "Notification History") .. " ",

@@ -17,6 +17,18 @@ function M.ornate(title, skin)
   return ornament[1] .. title .. ornament[2]
 end
 
+--- Returns the glyph for a level, a glyph the caller already chose winning over the skin's.
+---@param icons table<string, string>|nil skin.icons
+---@param level string "error", "warn", "info", "hint", "debug" or "trace"
+---@param given string|nil glyph the notification brought, "" or nil when it brought none
+---@return string
+function M.level_icon(icons, level, given)
+  if given and given ~= "" then
+    return given
+  end
+  return (icons or {})[level] or ""
+end
+
 --- Builds vim.diagnostic sign text from the skin, keyed by severity.
 ---@param signs { error: string, warn: string, hint: string, info: string }
 ---@param severity table vim.diagnostic.severity

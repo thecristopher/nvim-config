@@ -47,6 +47,8 @@ M.SKIN = {
   "music",
   "picker",
   "cmdline",
+  "icons",
+  "cursor",
 }
 -- what core/chrome reads: the mode names, the command line, the preview and the notification titles
 M.CHROME = { "modes", "cmdline", "search", "examine", "history", "notify" }
@@ -54,6 +56,8 @@ M.CHROME_MODES = { "normal", "insert", "visual", "replace", "command", "terminal
 M.CHROME_LEVELS = { "info", "warn", "error", "debug", "trace" }
 -- what the now playing panel reads, its looks from the skin and its words from the lore
 M.MUSIC_SKIN = { "bar", "divider", "sung" }
+-- one glyph per diagnostic and notification level, see core/skin
+M.ICONS = { "error", "warn", "info", "hint", "debug", "trace" }
 M.MUSIC_WORDS = { "title", "loading", "missing", "instrumental" }
 M.LISTS = { "hub_messages", "message_templates", "places", "item_categories" }
 -- back-to-basics reads the names the HUD gives the drills, the coach is the region's character
@@ -187,6 +191,9 @@ local function check_words(lore, problems)
 end
 
 local function check_music(lore, problems)
+  if lore.skin and lore.skin.icons then
+    missing_keys(lore.skin.icons, M.ICONS, "skin.icons", problems)
+  end
   if lore.skin and lore.skin.music then
     missing_keys(lore.skin.music, M.MUSIC_SKIN, "skin.music", problems)
   end

@@ -13,6 +13,21 @@ return {
   -- bufferline separator_style
   tabs = "slope",
   signs = { error = "󰋔", warn = "▲", hint = "◆", info = "◇" },
+  -- statusline, tabs and notifications: a broken heart, the drama masks, her crown and a lipstick
+  icons = {
+    error = "󰋔",
+    warn = "󰴂",
+    info = "󰆥",
+    hint = "󱎵",
+    debug = "󰒄",
+    trace = "󰏫",
+  },
+  -- the cursor's guicursor shapes: it blinks like the bulbs around her mirror
+  cursor = {
+    normal = "block-blinkwait900-blinkon600-blinkoff300",
+    insert = "ver25-blinkwait700-blinkon500-blinkoff250",
+    replace = "hor20",
+  },
   -- the snacks picker layout, see lua/plugins/snacks.lua: the preview is the vanity mirror
   picker = "vanity",
   -- the command line popup's glyphs: her staff, and the crown for searching

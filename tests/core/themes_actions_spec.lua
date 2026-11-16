@@ -288,6 +288,17 @@ describe("guicursor", function()
   it("keeps the insert cursor a thin bar so Malenia's love letters stay readable", function()
     assert.is_truthy(actions.guicursor():find("i-ci-ve:ver25-EldenCursorInsert", 1, true))
   end)
+
+  it("underlines Jill's typing when the skin asks for a typewriter caret", function()
+    local value = actions.guicursor({ insert = "hor15" })
+    assert.is_truthy(value:find("i-ci-ve:hor15-EldenCursorInsert", 1, true))
+    assert.is_truthy(value:find("n-sm:block-Cursor", 1, true))
+  end)
+
+  it("lets Inde's cursor blink like a vanity bulb", function()
+    local value = actions.guicursor({ normal = "block-blinkon600-blinkoff300" })
+    assert.is_truthy(value:find("n-sm:block-blinkon600-blinkoff300-Cursor", 1, true))
+  end)
 end)
 
 describe("of_the_day", function()

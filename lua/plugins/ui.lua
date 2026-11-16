@@ -13,6 +13,8 @@ return {
     opts = function()
       -- the filetype icon with the language servers, so the filetype never shows twice
       local chrome = require("core.chrome.actions")
+      -- read on every setup, so a franchise switch redraws the bar in its own glyphs
+      local skin = require("core.skin")
       -- a piece that leaves the bar first when the editor gets narrow
       local function wide(piece)
         return function()
@@ -143,7 +145,12 @@ return {
             {
               "diagnostics",
               sources = { "nvim_diagnostic" },
-              symbols = { error = "󰅚 ", warn = "󰊌 ", hint = "󰌶 ", info = "󰋽 " },
+              symbols = {
+                error = skin.icon("error") .. " ",
+                warn = skin.icon("warn") .. " ",
+                hint = skin.icon("hint") .. " ",
+                info = skin.icon("info") .. " ",
+              },
             },
             {
               cond = wide("language"),
@@ -224,7 +231,8 @@ return {
           right_trunc_marker = "",
           diagnostics = "nvim_lsp",
           diagnostics_indicator = function(_, _, diag)
-            local icons = { error = "󰅚 ", warning = "󰊌 " }
+            local skin = require("core.skin")
+            local icons = { error = skin.icon("error") .. " ", warning = skin.icon("warn") .. " " }
             local s = {}
             for k, n in pairs(diag) do
               if icons[k] then
