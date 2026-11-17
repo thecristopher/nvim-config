@@ -190,6 +190,46 @@ function M.work_summary(work)
   return table.concat(parts, "\n"), #failed == 0
 end
 
+local function assistant_text(entry)
+  if type(entry) ~= "table" or entry.type ~= "assistant" then
+    return nil
+  end
+  local content = vim.tbl_get(entry, "message", "content")
+  if type(content) ~= "table" then
+    return nil
+  end
+  for _, part in ipairs(content) do
+    local text = part.type == "text" and vim.trim(part.text or "") or ""
+    if text ~= "" then
+      return text
+    end
+  end
+  return nil
+end
+
+---Finds the last thing a session said in its transcript, so one that died can say why.
+---@param lines string[] lines of the session's .jsonl transcript
+---@return string|nil text last assistant text, cut to 300 characters, nil when there is none
+function M.last_said(lines)
+  for i = #lines, 1, -1 do
+    local ok, entry = pcall(vim.json.decode, lines[i], { luanil = { object = true, array = true } })
+    local text = ok and assistant_text(entry) or nil
+    if text then
+      return text:sub(1, 300)
+    end
+  end
+  return nil
+end
+
+---Builds the record nvim leaves for the next check when a session fails.
+---@param stage "check"|"work"
+---@param message string why it failed
+---@param at string ISO 8601 UTC time of the failure
+---@return { at: string, stage: string, message: string }
+function M.failure_record(stage, message, at)
+  return { at = at, stage = stage, message = message }
+end
+
 ---Joins the files the inputs hash covers, skipping missing ones.
 ---@param contents (string|nil)[] file contents in order, nil for a missing file
 ---@param count integer how many files were read, since nil holes hide the length

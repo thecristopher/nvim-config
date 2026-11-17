@@ -68,6 +68,33 @@ local function inputs_hash(cfg)
   return vim.fn.sha256(actions.hash_input(contents, #files))
 end
 
+local LAST_ERROR = STATE .. "/last_error.json"
+
+local function transcript_lines(id)
+  if not id then
+    return {}
+  end
+  local found =
+    vim.fn.glob(vim.fn.expand("~") .. "/.claude/projects/*/" .. id .. "*.jsonl", false, true)
+  if #found == 0 then
+    return {}
+  end
+  local ok, lines = pcall(vim.fn.readfile, found[1])
+  return ok and lines or {}
+end
+
+-- a session that dies on a rate limit leaves no result file, only its last words in the transcript
+local function why_it_died(id, fallback)
+  return actions.last_said(transcript_lines(id)) or fallback
+end
+
+-- the next check copies this into the heartbeat and fails the queue items it left taken
+local function record_failure(stage, message)
+  local record = actions.failure_record(stage, message, os.date("!%Y-%m-%dT%H:%M:%SZ"))
+  vim.fn.mkdir(STATE, "p")
+  require("core.utils").write_state(LAST_ERROR, { vim.json.encode(record) })
+end
+
 local function quietly(argv, cb)
   vim.system(argv, { text = true }, cb and vim.schedule_wrap(cb) or nil)
 end
@@ -207,12 +234,15 @@ end
 
 local function finish_work(id, task, found)
   running.work = false
-  end_session(id)
   last.work_at = os.date("%H:%M")
   if not found then
-    task:fail("The work session did not finish in time")
+    local why = why_it_died(id, "The work session did not finish in time")
+    end_session(id)
+    record_failure("work", why)
+    task:fail(why)
     return
   end
+  end_session(id)
   local message, ok = actions.work_summary(read_json(STATE .. "/work.json"))
   if ok then
     task:done(message)
@@ -235,7 +265,9 @@ local function start_work(cfg, work)
   start_bg(actions.build_work_argv(cfg, paths(cfg)), function(id, res)
     if not id then
       running.work = false
-      task:fail("Could not start the work session: " .. vim.trim(res.stderr or ""))
+      local why = "Could not start the work session: " .. vim.trim(res.stderr or "")
+      record_failure("work", why)
+      task:fail(why)
       return
     end
     wait_for(STATE .. "/work.json", WORK_TIMEOUT_MS, function(found)
@@ -246,15 +278,22 @@ end
 
 local function finish_check(cfg, id, found)
   running.check = false
-  end_session(id)
   last.check_at = os.date("%H:%M")
   local result = found and read_json(STATE .. "/check.json") or nil
   if not result then
-    notify("The desk check left no result", vim.log.levels.WARN)
+    local why = why_it_died(id, "The desk check left no result")
+    end_session(id)
+    record_failure("check", why)
+    notify("Desk check: " .. why, vim.log.levels.WARN)
     return
   end
+  end_session(id)
   if result.error then
+    record_failure("check", result.error)
     notify("Desk check: " .. result.error, vim.log.levels.WARN)
+  else
+    -- this check already put the failure on the heartbeat and failed the stuck items
+    vim.fn.delete(LAST_ERROR)
   end
   offer_implement(result.implement)
   offer_review(result.review)
@@ -292,7 +331,9 @@ function M.check()
   start_bg(argv, function(id, res)
     if not id then
       running.check = false
-      notify("Could not start the desk check: " .. vim.trim(res.stderr or ""), vim.log.levels.WARN)
+      local why = "Could not start the desk check: " .. vim.trim(res.stderr or "")
+      record_failure("check", why)
+      notify(why, vim.log.levels.WARN)
       return
     end
     wait_for(STATE .. "/check.json", CHECK_TIMEOUT_MS, function(found)
