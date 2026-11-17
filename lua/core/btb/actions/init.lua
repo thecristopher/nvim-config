@@ -1,5 +1,5 @@
 -- Pure pieces of the back-to-basics bridge: the coach of the franchise, its sounds, the fanfare
--- of a solve and how a lesson reads as a HUD item.
+-- of a solve, how a lesson reads as a HUD item and what completion may offer inside an exercise.
 local M = {}
 
 -- the coach reuses sounds the franchise already has, first match wins, a moment with no match
@@ -428,6 +428,37 @@ function M.concept_map(concepts)
     tracks[#lines] = track
   end
   return lines, marks, tracks
+end
+
+-- LSP's CompletionItemKind for a method and for a function
+local NAME_KINDS = { [2] = true, [3] = true }
+
+local function bare_name(item)
+  return (item.filterText or item.label or ""):match("^[%w_$]+")
+end
+
+-- the name alone goes in: no arguments, no snippet and no import written for the learner
+local function bare_item(item, name)
+  local bare = vim.deepcopy(item)
+  bare.insertText, bare.insertTextFormat, bare.additionalTextEdits = name, 1, nil
+  if bare.textEdit then
+    bare.textEdit.newText = name
+  end
+  return bare
+end
+
+---What the completion menu may offer inside an exercise: function and method names, inserted bare.
+---@param items { kind?: integer, label: string, filterText?: string, textEdit?: table }[]
+---@return table[]
+function M.function_names(items)
+  local kept = {}
+  for _, item in ipairs(items or {}) do
+    local name = NAME_KINDS[item.kind] and bare_name(item)
+    if name then
+      table.insert(kept, bare_item(item, name))
+    end
+  end
+  return kept
 end
 
 return M

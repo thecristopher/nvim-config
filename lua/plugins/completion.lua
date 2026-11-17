@@ -1,5 +1,25 @@
 -- blink.cmp: fast completion with built-in snippet engine for the LSP, paths and snippets.
 -- Copilot writes ahead as ghost text (Tab takes it) and guesses the next edit in normal mode.
+-- Inside a back-to-basics exercise only function names from the LSP are offered, with no signature
+-- help, and Copilot stays quiet.
+
+local SOURCES = { "lazydev", "lsp", "path", "snippets", "buffer" }
+
+local function in_exercise()
+  return vim.b.btb_exercise ~= nil
+end
+
+-- blink reads signature.enabled once at setup, so an exercise closes the window every time it would open
+local function quiet_signature_in_exercises()
+  local trigger = require("blink.cmp.signature.trigger")
+  local show = trigger.show
+  trigger.show = function(opts)
+    if in_exercise() then
+      return trigger.hide()
+    end
+    return show(opts)
+  end
+end
 
 ---Accepts Copilot's ghost text when it shows one, so Tab can fall through to blink otherwise.
 ---@return boolean|nil true when Copilot took the key
@@ -113,8 +133,19 @@ return {
       },
       -- ── Sources ─────────────────────────────────────────────────────
       sources = {
-        default = { "lazydev", "lsp", "path", "snippets", "buffer" },
+        -- an exercise is written by hand: the LSP alone, and only for function names
+        default = function()
+          return in_exercise() and { "lsp" } or SOURCES
+        end,
         providers = {
+          lsp = {
+            transform_items = function(_, items)
+              if not in_exercise() then
+                return items
+              end
+              return require("core.btb.actions").function_names(items)
+            end,
+          },
           lazydev = {
             name = "LazyDev",
             module = "lazydev.integrations.blink",
@@ -165,5 +196,9 @@ return {
         prebuilt_binaries = { download = true },
       },
     },
+    config = function(_, opts)
+      require("blink.cmp").setup(opts)
+      quiet_signature_in_exercises()
+    end,
   },
 }

@@ -1,8 +1,8 @@
 -- Copilot's sign in, said once. Without a GitHub sign in the server quietly answers nothing, so once
 -- Copilot loads in a session it asks the server once and, when nobody is signed in, leaves one hint
 -- naming :Copilot auth. No retries, no repeats.
--- In back-to-basics exercises Copilot is leashed to the line it starts on: the drill is writing the
--- function by hand, so it may finish a line but never hand over a whole block.
+-- In back-to-basics exercises Copilot stays quiet: the drill is writing every line by hand, so it
+-- offers no ghost text and no next edit there. Function names come from blink's LSP menu instead.
 local actions = require("core.copilot.actions")
 
 local M = {}
@@ -40,38 +40,38 @@ local function in_exercise(buf)
   return buf and vim.api.nvim_buf_is_valid(buf) and vim.b[buf].btb_exercise ~= nil
 end
 
--- wraps a completion request so its answer reaches copilot.lua one line long inside an exercise
-local function leashed_request(request)
+-- wraps a completion request so its answer reaches copilot.lua empty inside an exercise
+local function muted_request(request)
   return function(client, params, callback)
     local buf = vim.uri_to_bufnr(params.textDocument.uri)
     return request(client, params, function(err, data, ...)
       if data and in_exercise(buf) then
-        data.completions = actions.one_line(data.completions)
+        data.completions = {}
       end
       return callback(err, data, ...)
     end)
   end
 end
 
---- Keeps Copilot's ghost text and next edit suggestions to one line inside btb exercises.
+--- Silences Copilot's ghost text and next edit suggestions inside btb exercises.
 --- Both plugins read these functions from their module on every answer, so wrapping them is enough.
-function M.leash()
+function M.mute()
   local api = require("copilot.api")
-  api.get_completions = leashed_request(api.get_completions)
-  api.get_completions_cycling = leashed_request(api.get_completions_cycling)
+  api.get_completions = muted_request(api.get_completions)
+  api.get_completions_cycling = muted_request(api.get_completions_cycling)
   local ok, nes_ui = pcall(require, "copilot-lsp.nes.ui")
   if not ok then
     return
   end
   local display = nes_ui._display_next_suggestion
   nes_ui._display_next_suggestion = function(buf, ns, edits)
-    return display(buf, ns, in_exercise(buf) and actions.one_line_edits(edits) or edits)
+    return display(buf, ns, in_exercise(buf) and {} or edits)
   end
 end
 
 --- Runs once Copilot loads (on the first InsertEnter or :Copilot), giving its server time to start.
 function M.setup()
-  M.leash()
+  M.mute()
   vim.defer_fn(M.check, ASK_AFTER_MS)
 end
 

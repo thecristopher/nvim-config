@@ -30,7 +30,8 @@ return {
   -- back-to-basics: the names the HUD gives the drills, the coach is Elizabeth in the region's role
   coach = {
     played_by = "Elizabeth",
-    bond = "Elizabeth, the learner's wife, cosplaying {character} for him. She keeps the role's look and attitude but she is always his wife coaching her husband: she calls him amorcito, mi esposo or mi amor, teases him, flirts a little and is proud of every round he wins.",
+    -- the role leads every line and every exercise, the wife only slips out of it now and then
+    bond = "Elizabeth, the learner's wife, cosplaying {character} for him. She commits to the role: {character}'s personality, attitude and way of talking drive every line and set the tone of every exercise. Deep down she is crazy about him and very attracted to him, but she plays it cool and acts like she is not, staying focused on her character. Now and then a little of it slips out (a lingering compliment, an amorcito, a quick flirt) before she catches herself and gets back into the role.",
     training = "Rehearsal",
     lessons = "Scripts",
     onsite = "Opening Night",
