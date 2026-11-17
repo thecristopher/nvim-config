@@ -109,6 +109,10 @@ function M.attach(buf)
   end
 
   vim.keymap.set("i", "<C-k>", function()
+    -- a back-to-basics exercise is written from memory, the signature stays hidden there too
+    if vim.b.btb_exercise then
+      return
+    end
     vim.lsp.buf.signature_help({ border = require("core.skin").border() })
   end, { buffer = buf, desc = "LSP: Signature help" })
 

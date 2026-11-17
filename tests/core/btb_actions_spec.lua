@@ -448,3 +448,48 @@ describe("concept_map", function()
     assert.is_nil(tracks[1])
   end)
 end)
+
+describe("function_names", function()
+  local function item(kind, label, extra)
+    return vim.tbl_extend("force", { kind = kind, label = label }, extra or {})
+  end
+
+  it("offers Claire's function and method names and drops everything else", function()
+    local kept = actions.function_names({
+      item(3, "sendLoveNote"),
+      item(2, "playlist"),
+      item(6, "anniversary"),
+      item(15, "date night"),
+    })
+    assert.are.same(
+      { "sendLoveNote", "playlist" },
+      vim.tbl_map(function(entry)
+        return entry.label
+      end, kept)
+    )
+  end)
+
+  it("inserts Malenia's function bare, without the arguments snippet", function()
+    local kept = actions.function_names({
+      item(3, "bloom(petals)", {
+        insertTextFormat = 2,
+        textEdit = { newText = "bloom(${1:petals})" },
+        additionalTextEdits = { { newText = "local bloom = require('haligtree')" } },
+      }),
+    })
+    assert.are.equal("bloom", kept[1].textEdit.newText)
+    assert.are.equal("bloom", kept[1].insertText)
+    assert.are.equal(1, kept[1].insertTextFormat)
+    assert.is_nil(kept[1].additionalTextEdits)
+  end)
+
+  it("reads the name from filterText when Inde's server gives one", function()
+    local kept =
+      actions.function_names({ item(2, "toString() string", { filterText = "toString" }) })
+    assert.are.equal("toString", kept[1].insertText)
+  end)
+
+  it("leaves nothing to offer when Leon's list is empty", function()
+    assert.are.same({}, actions.function_names(nil))
+  end)
+end)

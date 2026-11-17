@@ -20,6 +20,8 @@ return {
         sound = bridge.sound,
         before_hint = bridge.before_hint,
         progress = require("core.progress").start,
+        -- Eldentree decides what completes in an exercise: blink with function names only, Copilot muted
+        completion = true,
         -- the coach takes the stage once the solve's banner is done, never on top of it
         advance_ms = require("core.banner.actions").KINDS.felled.duration,
       }

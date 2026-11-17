@@ -197,7 +197,7 @@ Plugin specs live in `lua/plugins/`, one file per concern, managed by lazy.nvim.
 
 - **LSP** through native `vim.lsp.config` and mason, servers in `lua/plugins/lsp.lua`. Treesitter runs on its `main` branch, nvim-lint runs only the linters that are installed
 - **Pickers** are all Snacks: files, grep, recent, branches, the palette and Sites of Grace
-- **Completion** with blink for the LSP, paths and snippets, while Copilot writes ahead as ghost text: `<Tab>` takes it, `<M-w>` a word, `<M-a>` a line, `<M-]>` / `<M-[>` cycle and `<C-]>` dismisses. After an edit Copilot also guesses the next one (copilot-lsp), and `<Tab>` in normal mode jumps there and applies it
+- **Completion** with blink for the LSP, paths and snippets, while Copilot writes ahead as ghost text: `<Tab>` takes it, `<M-w>` a word, `<M-a>` a line, `<M-]>` / `<M-[>` cycle and `<C-]>` dismisses. After an edit Copilot also guesses the next one (copilot-lsp), and `<Tab>` in normal mode jumps there and applies it. Inside a back-to-basics exercise Copilot stays quiet, blink only completes function and method names from the LSP and signature help stays hidden
 - **Tests** with neotest (vitest, jest, pytest, plenary) under `<leader>T`, while `:Trial` owns the whole suite verdict
 - **Debugging** with nvim-dap and dap-view, F5/F9/F10/F11 plus `<leader>D`. js-debug and debugpy come from mason
 - **Editing**: quicker.nvim makes the quickfix list editable (change a line, `:w` writes it back), yanky.nvim keeps a yank history, grug-far finds and replaces across the project, multicursor adds cursors, nvim-ufo folds with a hidden line tally, and spell checks English and Spanish in markdown, commits and text
