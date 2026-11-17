@@ -202,3 +202,51 @@ describe("review_targets", function()
     assert.equal("haligtree", targets[2].repo)
   end)
 end)
+
+describe("last_said", function()
+  local function line(entry)
+    return vim.json.encode(entry)
+  end
+  local said = function(text)
+    return line({ type = "assistant", message = { content = { { type = "text", text = text } } } })
+  end
+
+  it("finds why Claire's session stopped from its last words", function()
+    local lines = {
+      said("Reading Inde's anniversary playlist"),
+      line({ type = "user", message = { content = "keep going" } }),
+      said("You've hit your individual spend limit"),
+      line({ type = "cost-state" }),
+    }
+    assert.equal("You've hit your individual spend limit", actions.last_said(lines))
+  end)
+
+  it("skips tool calls and blank text to reach a real sentence", function()
+    local lines = {
+      said("Malenia's letter is safe"),
+      line({ type = "assistant", message = { content = { { type = "tool_use", name = "Read" } } } }),
+      said("   "),
+    }
+    assert.equal("Malenia's letter is safe", actions.last_said(lines))
+  end)
+
+  it("says nothing when the transcript is empty or broken", function()
+    assert.is_nil(actions.last_said({}))
+    assert.is_nil(
+      actions.last_said({ "{not json", line({ type = "assistant", message = vim.NIL }) })
+    )
+  end)
+
+  it("cuts a long farewell to 300 characters", function()
+    assert.equal(300, #actions.last_said({ said(string.rep("love ", 100)) }))
+  end)
+end)
+
+describe("failure_record", function()
+  it("keeps when, where and why Leon's check failed", function()
+    assert.same(
+      { at = "2026-02-14T20:00:00Z", stage = "check", message = "spend limit" },
+      actions.failure_record("check", "spend limit", "2026-02-14T20:00:00Z")
+    )
+  end)
+end)
