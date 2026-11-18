@@ -1,110 +1,94 @@
 local actions = require("core.desk.actions")
 
-local cfg = actions.merge_config({
-  artifact_url = "https://claude.ai/artifact/claire-and-inde",
-  sync = { every_minutes = 10, watch_minutes = 20 },
-})
-
-local paths = {
-  state = "/state/desk",
-  skills = "/home/claire/.claude/skills",
-  repos = "/home/claire/repos",
-}
-
-local function has(list, value)
-  return vim.tbl_contains(list, value)
-end
-
 describe("merge_config", function()
+  local cfg = actions.merge_config({
+    artifact_url = "https://claude.ai/artifact/claire-and-inde",
+    sync = { work_model = "sonnet" },
+  })
+
   it("keeps Claire's values and fills the rest from the defaults", function()
-    assert.equal(10, cfg.sync.every_minutes)
-    assert.equal("haiku", cfg.sync.check_model)
+    assert.equal("sonnet", cfg.sync.work_model)
+    assert.equal("haiku", cfg.sync.listen_model)
     assert.equal("~/Documents/GitHub", cfg.repos_dir)
   end)
 
   it("works with no file at all", function()
-    assert.equal(5, actions.merge_config(nil).sync.every_minutes)
-    assert.equal(30, actions.merge_config(nil).sync.watch_minutes)
+    local empty = actions.merge_config(nil)
+    assert.equal("", empty.state_dir)
+    assert.equal("opus", empty.sync.work_model)
   end)
 end)
 
-describe("watch_until", function()
-  it("watches Claire's desk for her watch_minutes after she opens it", function()
-    assert.equal(1000 + 20 * 60000, actions.watch_until(1000, cfg))
-  end)
-end)
-
-describe("watching", function()
-  it("keeps checking while Malenia's watch lasts", function()
-    assert.is_true(actions.watching(5000, 4000))
-  end)
-
-  it("stops once the watch is over", function()
-    assert.is_false(actions.watching(5000, 5000))
-  end)
-
-  it("never checks a desk nobody opened", function()
-    assert.is_false(actions.watching(nil, 0))
-  end)
-end)
-
-describe("parse_session_id", function()
-  it("reads the id from the stop hint", function()
-    local out = "  claude attach 597b0f91    open in this terminal\n"
-      .. "  claude stop 597b0f91      stop this session\n"
-    assert.equal("597b0f91", actions.parse_session_id(out))
-  end)
-
-  it("returns nil when Wesker's output has no id", function()
-    assert.is_nil(actions.parse_session_id("Workspace not trusted."))
-  end)
-end)
-
-describe("build_check_argv", function()
-  local argv = actions.build_check_argv(cfg, paths, "abc123")
-
-  it("tells the page until when Claire's desk is watched", function()
-    local watched = actions.build_check_argv(cfg, paths, "abc123", "2026-11-16T21:00:00Z")
-    assert.truthy(watched[#watched]:find("watch_until=2026-11-16T21:00:00Z", 1, true))
-  end)
-
-  it("starts a cheap background session that never asks", function()
-    assert.same({ "claude", "--bg", "--model", "haiku" }, vim.list_slice(argv, 1, 4))
-    assert.is_true(has(argv, "dontAsk"))
-  end)
-
-  it("only lets it write into the state folder and read the clock", function()
-    local tools = argv[#argv - 2]
-    assert.truthy(tools:find("Edit(//state/desk/**)", 1, true))
-    assert.truthy(tools:find("Bash(date *)", 1, true))
-    assert.falsy(tools:find("Bash(git", 1, true))
-  end)
-
-  it("keeps the prompt apart from the variadic flags", function()
-    assert.equal("--", argv[#argv - 1])
-  end)
-
-  it("passes the state folder and the hash to the skill", function()
-    assert.equal(
-      "/desk-sync check state_dir=/state/desk inputs_hash=abc123 watch_until=none",
-      argv[#argv]
+describe("inbox_item", function()
+  it("reads Claire's implement request with its repo", function()
+    assert.same(
+      { kind = "implement", key = "LOVE-1", repo = "love-notes", queue_id = "q1" },
+      actions.inbox_item({
+        kind = "implement",
+        key = "LOVE-1",
+        repo = "love-notes",
+        queue_id = "q1",
+      })
     )
   end)
-end)
 
-describe("build_work_argv", function()
-  local argv = actions.build_work_argv(cfg, paths)
-
-  it("runs the bigger model with the repos in reach", function()
-    assert.equal("opus", argv[4])
-    assert.is_true(has(argv, "/home/claire/repos"))
+  it("drops an empty repo so Malenia's review runs from the repos folder", function()
+    local item = actions.inbox_item({ kind = "review", key = "HALIG-7", repo = "" })
+    assert.is_nil(item.repo)
+    assert.equal("review", item.kind)
   end)
 
-  it("reads git but cannot write to Jira", function()
-    local tools = argv[#argv - 2]
-    assert.truthy(tools:find("Bash(git *)", 1, true))
-    assert.falsy(tools:find("editJiraIssue", 1, true))
-    assert.falsy(tools:find("addOrEditJiraIssueComment", 1, true))
+  it("ignores kinds nvim does not open, like Inde's analysis", function()
+    assert.is_nil(actions.inbox_item({ kind = "analyze", key = "LOVE-2" }))
+  end)
+
+  it("ignores a request with no key or a broken file", function()
+    assert.is_nil(actions.inbox_item({ kind = "implement", key = "" }))
+    assert.is_nil(actions.inbox_item(nil))
+    assert.is_nil(actions.inbox_item("love letter"))
+  end)
+end)
+
+describe("status_lines", function()
+  local base = { installed = true, paused = false, inbox = 0 }
+  local function with(extra)
+    return actions.status_lines(vim.tbl_extend("force", base, extra))
+  end
+
+  it("asks Leon to install the agents when they are missing", function()
+    local lines = actions.status_lines({ installed = false, inbox = 0 })
+    assert.equal(1, #lines)
+    assert.truthy(lines[1]:find("install.sh", 1, true))
+  end)
+
+  it("says the listener is up and the work session idle", function()
+    local lines = with({
+      listener_age_min = 12,
+      listener_quiet_min = 0,
+      work_finished_at = "2026-02-14T20:00:00Z",
+    })
+    assert.equal("Listener: up for 12 min, checking the queue every minute", lines[1])
+    assert.equal("Work: idle, last finished 2026-02-14T20:00:00Z", lines[2])
+  end)
+
+  it("notices a listener that went silent", function()
+    assert.truthy(
+      with({ listener_age_min = 40, listener_quiet_min = 9 })[1]:find("silent for 9 min", 1, true)
+    )
+  end)
+
+  it("says when Malenia paused it, even with a session file left", function()
+    assert.truthy(with({ paused = true, listener_age_min = 3 })[1]:find("paused", 1, true))
+  end)
+
+  it("says when nothing listens yet", function()
+    assert.truthy(with({})[1]:find("not running", 1, true))
+  end)
+
+  it("shows a running work session and what waits in the inbox", function()
+    local lines = with({ listener_age_min = 5, work_age_min = 7, inbox = 2 })
+    assert.equal("Work: running for 7 min", lines[2])
+    assert.equal("Inbox: 2 waiting to open", lines[3])
   end)
 end)
 
@@ -131,39 +115,9 @@ describe("implement_target", function()
   end)
 end)
 
-describe("work_summary", function()
-  it("lists the tickets that are ready", function()
-    local msg, ok = actions.work_summary({ done = { "LOVE-1", "LOVE-2" }, failed = {} })
-    assert.equal("Ready: LOVE-1, LOVE-2", msg)
-    assert.is_true(ok)
-  end)
-
-  it("reports what failed", function()
-    local msg, ok =
-      actions.work_summary({ done = {}, failed = { { key = "HALIG-7", reason = "no clone" } } })
-    assert.equal("HALIG-7 failed: no clone", msg)
-    assert.is_false(ok)
-  end)
-
-  it("fails when the session left nothing", function()
-    local _, ok = actions.work_summary(nil)
-    assert.is_false(ok)
-  end)
-end)
-
-describe("hash_input", function()
-  it("skips missing files without losing the ones after them", function()
-    assert.equal("love note\n\0\nplaylist", actions.hash_input({ "love note", nil, "playlist" }, 3))
-  end)
-end)
-
-describe("minutes_left", function()
-  it("is due right away before the first check", function()
-    assert.equal(0, actions.minutes_left(nil, 1000, 15))
-  end)
-
-  it("counts down from the last check", function()
-    assert.equal(10, actions.minutes_left(0, 5 * 60000, 15))
+describe("implement_cmd", function()
+  it("runs ticket-implement for Inde's ticket", function()
+    assert.same({ "claude", "/ticket-implement LOVE-3" }, actions.implement_cmd("LOVE-3"))
   end)
 end)
 
@@ -200,53 +154,5 @@ describe("review_targets", function()
   it("leaves dir empty when the repo is not cloned", function()
     assert.is_nil(targets[2].dir)
     assert.equal("haligtree", targets[2].repo)
-  end)
-end)
-
-describe("last_said", function()
-  local function line(entry)
-    return vim.json.encode(entry)
-  end
-  local said = function(text)
-    return line({ type = "assistant", message = { content = { { type = "text", text = text } } } })
-  end
-
-  it("finds why Claire's session stopped from its last words", function()
-    local lines = {
-      said("Reading Inde's anniversary playlist"),
-      line({ type = "user", message = { content = "keep going" } }),
-      said("You've hit your individual spend limit"),
-      line({ type = "cost-state" }),
-    }
-    assert.equal("You've hit your individual spend limit", actions.last_said(lines))
-  end)
-
-  it("skips tool calls and blank text to reach a real sentence", function()
-    local lines = {
-      said("Malenia's letter is safe"),
-      line({ type = "assistant", message = { content = { { type = "tool_use", name = "Read" } } } }),
-      said("   "),
-    }
-    assert.equal("Malenia's letter is safe", actions.last_said(lines))
-  end)
-
-  it("says nothing when the transcript is empty or broken", function()
-    assert.is_nil(actions.last_said({}))
-    assert.is_nil(
-      actions.last_said({ "{not json", line({ type = "assistant", message = vim.NIL }) })
-    )
-  end)
-
-  it("cuts a long farewell to 300 characters", function()
-    assert.equal(300, #actions.last_said({ said(string.rep("love ", 100)) }))
-  end)
-end)
-
-describe("failure_record", function()
-  it("keeps when, where and why Leon's check failed", function()
-    assert.same(
-      { at = "2026-02-14T20:00:00Z", stage = "check", message = "spend limit" },
-      actions.failure_record("check", "spend limit", "2026-02-14T20:00:00Z")
-    )
   end)
 end)

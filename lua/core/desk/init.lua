@@ -1,19 +1,11 @@
--- The manager desk: opens the desk artifact and keeps it fed while you use it. Nothing runs on its
--- own: opening the desk watches its queue for a while, a cheap background Claude session checks it
--- every few minutes, and only when there is real work (analyses, replies) a second session does it.
--- Implement requests open a tab here.
+-- The manager desk: opens the desk artifact and opens the tabs it asks for. A listener kept alive
+-- by launchd reads the desk's queue every minute and runs analyses and replies on its own; nvim
+-- only watches the inbox it fills, so implement and review requests open a tab here.
 local actions = require("core.desk.actions")
 
 local M = {}
 
-local STATE = vim.fn.stdpath("state") .. "/eldentree_desk"
-local POLL_MS = 5000
-local CHECK_TIMEOUT_MS = 10 * 60 * 1000
-local WORK_TIMEOUT_MS = 30 * 60 * 1000
-
-local running = { check = false, work = false }
-local last = { check = nil, work = nil, check_at = nil, work_at = nil }
-local watch = { timer = nil, until_ms = nil }
+local inbox_watch = nil
 
 local function notify(msg, level)
   vim.notify(msg, level or vim.log.levels.INFO, { title = "Desk", id = "eldentree_desk_note" })
@@ -26,11 +18,6 @@ local function read_json(path)
   end
   local decoded, data = pcall(vim.json.decode, table.concat(lines, "\n"))
   return decoded and data or nil
-end
-
-local function read_file(path)
-  local ok, lines = pcall(vim.fn.readfile, vim.fn.expand(path))
-  return ok and table.concat(lines, "\n") or nil
 end
 
 ---Loads the private config, or nil with the reason the desk stays quiet.
@@ -51,89 +38,15 @@ function M.config()
   return actions.merge_config(raw)
 end
 
-local function paths(cfg)
-  return {
-    state = STATE,
-    skills = vim.fn.expand("~/.claude/skills"),
-    repos = vim.fn.expand(cfg.repos_dir),
-  }
-end
-
-local function inputs_hash(cfg)
-  local files = cfg.hash_files or actions.DEFAULT_HASH_FILES
-  local contents = {}
-  for i, file in ipairs(files) do
-    contents[i] = read_file(file)
+local function state_dir(cfg)
+  if cfg.state_dir ~= "" then
+    return vim.fn.expand(cfg.state_dir)
   end
-  return vim.fn.sha256(actions.hash_input(contents, #files))
+  return vim.fn.stdpath("state") .. "/eldentree_desk"
 end
 
-local LAST_ERROR = STATE .. "/last_error.json"
-
-local function transcript_lines(id)
-  if not id then
-    return {}
-  end
-  local found =
-    vim.fn.glob(vim.fn.expand("~") .. "/.claude/projects/*/" .. id .. "*.jsonl", false, true)
-  if #found == 0 then
-    return {}
-  end
-  local ok, lines = pcall(vim.fn.readfile, found[1])
-  return ok and lines or {}
-end
-
--- a session that dies on a rate limit leaves no result file, only its last words in the transcript
-local function why_it_died(id, fallback)
-  return actions.last_said(transcript_lines(id)) or fallback
-end
-
--- the next check copies this into the heartbeat and fails the queue items it left taken
-local function record_failure(stage, message)
-  local record = actions.failure_record(stage, message, os.date("!%Y-%m-%dT%H:%M:%SZ"))
-  vim.fn.mkdir(STATE, "p")
-  require("core.utils").write_state(LAST_ERROR, { vim.json.encode(record) })
-end
-
-local function quietly(argv, cb)
-  vim.system(argv, { text = true }, cb and vim.schedule_wrap(cb) or nil)
-end
-
-local function end_session(id)
-  if not id then
-    return
-  end
-  quietly({ "claude", "stop", id }, function()
-    quietly({ "claude", "rm", id })
-  end)
-end
-
--- polls with a cheap stat, never a claude call, so waiting costs nothing
-local function wait_for(file, timeout_ms, cb)
-  local timer = vim.uv.new_timer()
-  local waited = 0
-  timer:start(POLL_MS, POLL_MS, function()
-    waited = waited + POLL_MS
-    local found = vim.uv.fs_stat(file) ~= nil
-    if not found and waited < timeout_ms then
-      return
-    end
-    timer:stop()
-    timer:close()
-    vim.schedule(function()
-      cb(found)
-    end)
-  end)
-end
-
-local function start_bg(argv, cb)
-  local root = vim.fn.resolve(vim.fn.stdpath("config"))
-  vim.system(argv, { cwd = root, text = true }, function(res)
-    local id = actions.parse_session_id(res.stdout or "")
-    vim.schedule(function()
-      cb(id, res)
-    end)
-  end)
+local function script(name)
+  return vim.fn.expand(actions.SCRIPTS_DIR) .. "/" .. name
 end
 
 ---Opens a tab in the ticket's repo with Claude implementing it.
@@ -216,161 +129,65 @@ function M.review(key)
   )
 end
 
-local function offer_review(items)
-  for _, item in ipairs(items or {}) do
+local function open_item(item)
+  -- a tab popping up mid sentence would steal the typing, so say it instead
+  if vim.api.nvim_get_mode().mode:sub(1, 1) == "i" then
+    local cmd = item.kind == "implement" and "DeskImplement" or "DeskReview"
+    notify(("%s is ready, run :%s %s"):format(item.key, cmd, item.key))
+    return
+  end
+  if item.kind == "implement" then
+    M.implement(item.key, item.repo)
+  else
     M.review(item.key)
   end
 end
 
-local function offer_implement(items)
-  for _, item in ipairs(items or {}) do
-    if vim.api.nvim_get_mode().mode:sub(1, 1) == "i" then
-      notify(("%s is ready to implement, run :DeskImplement %s"):format(item.key, item.key))
-    else
-      M.implement(item.key, item.repo)
+---Opens every request the listener left in the inbox and removes its file.
+---@param dir string the inbox folder
+local function drain_inbox(dir)
+  for _, file in ipairs(vim.fn.glob(dir .. "/*.json", false, true)) do
+    -- every open nvim watches the inbox, the rename lets only one of them take each request
+    local claimed = file .. "." .. vim.uv.os_getpid()
+    if vim.uv.fs_rename(file, claimed) then
+      local item = actions.inbox_item(read_json(claimed))
+      vim.fn.delete(claimed)
+      if item then
+        open_item(item)
+      end
     end
   end
 end
 
-local function finish_work(id, task, found)
-  running.work = false
-  last.work_at = os.date("%H:%M")
-  if not found then
-    local why = why_it_died(id, "The work session did not finish in time")
-    end_session(id)
-    record_failure("work", why)
-    task:fail(why)
+local function watch_inbox(cfg)
+  if inbox_watch then
     return
   end
-  end_session(id)
-  local message, ok = actions.work_summary(read_json(STATE .. "/work.json"))
-  if ok then
-    task:done(message)
-  else
-    task:fail(message)
-  end
-end
-
-local function start_work(cfg, work)
-  if running.work then
-    return
-  end
-  running.work = true
-  vim.fn.delete(STATE .. "/work.json")
-  local task = require("core.progress").start({
-    id = "eldentree_desk",
-    title = "Desk",
-    message = ("Analyzing %d %s"):format(#work, #work == 1 and "ticket" or "tickets"),
-  })
-  start_bg(actions.build_work_argv(cfg, paths(cfg)), function(id, res)
-    if not id then
-      running.work = false
-      local why = "Could not start the work session: " .. vim.trim(res.stderr or "")
-      record_failure("work", why)
-      task:fail(why)
-      return
-    end
-    wait_for(STATE .. "/work.json", WORK_TIMEOUT_MS, function(found)
-      finish_work(id, task, found)
-    end)
+  local dir = state_dir(cfg) .. "/inbox"
+  vim.fn.mkdir(dir, "p")
+  drain_inbox(dir)
+  inbox_watch = vim.uv.new_fs_event()
+  -- the listener writes the file in one go, a short pause lets the write land before reading
+  local timer = vim.uv.new_timer()
+  inbox_watch:start(dir, {}, function()
+    timer:stop()
+    timer:start(
+      200,
+      0,
+      vim.schedule_wrap(function()
+        drain_inbox(dir)
+      end)
+    )
   end)
 end
 
-local function finish_check(cfg, id, found)
-  running.check = false
-  last.check_at = os.date("%H:%M")
-  local result = found and read_json(STATE .. "/check.json") or nil
-  if not result then
-    local why = why_it_died(id, "The desk check left no result")
-    end_session(id)
-    record_failure("check", why)
-    notify("Desk check: " .. why, vim.log.levels.WARN)
-    return
-  end
-  end_session(id)
-  if result.error then
-    record_failure("check", result.error)
-    notify("Desk check: " .. result.error, vim.log.levels.WARN)
-  else
-    -- this check already put the failure on the heartbeat and failed the stuck items
-    vim.fn.delete(LAST_ERROR)
-  end
-  offer_implement(result.implement)
-  offer_review(result.review)
-  if result.work and #result.work > 0 then
-    start_work(cfg, result.work)
-  end
-  -- you are using the desk right now, so the watch lasts while there is something to pick up
-  local found_any = #(result.work or {}) + #(result.implement or {}) + #(result.review or {}) > 0
-  if found_any and actions.watching(watch.until_ms, vim.uv.now()) then
-    M.watch()
-  end
-end
-
----Runs the cheap check now: reads the queue and the board, then hands off any real work.
-function M.check()
-  local cfg, reason = M.config()
-  if not cfg then
-    notify(reason, vim.log.levels.WARN)
-    return
-  end
-  if running.check then
-    return
-  end
-  running.check = true
-  last.check = vim.uv.now()
-  vim.fn.mkdir(STATE, "p")
-  vim.fn.delete(STATE .. "/check.json")
-  local watch_until = watch.until_ms
-      and os.date(
-        "!%Y-%m-%dT%H:%M:%SZ",
-        os.time() + math.floor((watch.until_ms - vim.uv.now()) / 1000)
-      )
-    or nil
-  local argv = actions.build_check_argv(cfg, paths(cfg), inputs_hash(cfg), watch_until)
-  start_bg(argv, function(id, res)
-    if not id then
-      running.check = false
-      local why = "Could not start the desk check: " .. vim.trim(res.stderr or "")
-      record_failure("check", why)
-      notify(why, vim.log.levels.WARN)
-      return
+local function installed()
+  for _, plist in ipairs(actions.LAUNCH_AGENTS) do
+    if vim.fn.filereadable(vim.fn.expand(plist)) == 0 then
+      return false
     end
-    wait_for(STATE .. "/check.json", CHECK_TIMEOUT_MS, function(found)
-      finish_check(cfg, id, found)
-    end)
-  end)
-end
-
-local function stop_watch()
-  if watch.timer then
-    watch.timer:stop()
-    watch.timer:close()
   end
-  watch.timer, watch.until_ms = nil, nil
-end
-
-local function tick()
-  if vim.g.eldentree_desk_paused or not actions.watching(watch.until_ms, vim.uv.now()) then
-    return stop_watch()
-  end
-  M.check()
-end
-
----Watches the queue for watch_minutes from now, checking it every_minutes. Opening the desk again
----while it watches only pushes the end back.
-function M.watch()
-  local cfg = M.config()
-  if not cfg or vim.g.eldentree_desk_paused then
-    return
-  end
-  watch.until_ms = actions.watch_until(vim.uv.now(), cfg)
-  if watch.timer then
-    return
-  end
-  local every = cfg.sync.every_minutes * 60 * 1000
-  watch.timer = vim.uv.new_timer()
-  watch.timer:start(0, every, vim.schedule_wrap(tick))
+  return true
 end
 
 ---Opens the desk artifact in the browser.
@@ -385,35 +202,117 @@ function M.open()
     return
   end
   vim.ui.open(cfg.artifact_url)
-  M.watch()
 end
 
----Says when the desk last checked and worked, and whether it is watching.
+---Asks for a sync now: launchd sees the wake file change and starts a work session.
+function M.sync()
+  local cfg, reason = M.config()
+  if not cfg then
+    notify(reason, vim.log.levels.WARN)
+    return
+  end
+  if not installed() then
+    notify(actions.status_lines({ installed = false, inbox = 0 })[1], vim.log.levels.WARN)
+    return
+  end
+  require("core.utils").write_state(state_dir(cfg) .. "/wake", { os.date("!%Y-%m-%dT%H:%M:%SZ") })
+  notify("Sync requested, the work session starts in a few seconds")
+end
+
+local function minutes_old(path)
+  local stat = vim.uv.fs_stat(path)
+  if not stat then
+    return nil
+  end
+  return math.floor((os.time() - stat.mtime.sec) / 60)
+end
+
+local function session_age(id_file)
+  local ok, lines = pcall(vim.fn.readfile, id_file)
+  if not ok or not lines[1] then
+    return nil, nil
+  end
+  local id, started = lines[1]:match("^(%x+) (%d+)")
+  if not id then
+    return nil, nil
+  end
+  local transcripts =
+    vim.fn.glob(vim.fn.expand("~/.claude/projects/*/") .. id .. "*.jsonl", false, true)
+  return math.floor((os.time() - tonumber(started)) / 60),
+    transcripts[1] and minutes_old(transcripts[1])
+end
+
+---Says whether the listener runs, what the work session is doing and what waits in the inbox.
 function M.status()
   local cfg, reason = M.config()
   if not cfg then
     notify(reason, vim.log.levels.WARN)
     return
   end
-  local now = vim.uv.now()
-  local left = actions.minutes_left(last.check, now, cfg.sync.every_minutes)
-  local watching = actions.watching(watch.until_ms, now)
-  notify(table.concat({
-    ("Last check: %s%s"):format(last.check_at or "never", running.check and " (running)" or ""),
-    ("Last work: %s%s"):format(last.work_at or "never", running.work and " (running)" or ""),
-    watching and ("Watching for %d more min, next check in %d min"):format(
-      math.ceil((watch.until_ms - now) / 60000),
-      left
-    ) or "Not watching. :Desk opens the desk and watches its queue, :Desk sync checks once",
-  }, "\n"))
+  local dir = state_dir(cfg)
+  local listener_age, listener_quiet = session_age(dir .. "/listener.id")
+  local work_age = session_age(dir .. "/work.lock")
+  local work = read_json(dir .. "/work.json")
+  local lock = vim.uv.fs_stat(dir .. "/work.lock")
+  local result = vim.uv.fs_stat(dir .. "/work.json")
+  -- work.sh leaves the lock until its next run, a newer result means that session ended
+  if lock and result and result.mtime.sec >= lock.mtime.sec then
+    work_age = nil
+  end
+  notify(table.concat(
+    actions.status_lines({
+      installed = installed(),
+      paused = vim.uv.fs_stat(dir .. "/paused") ~= nil,
+      listener_age_min = listener_age,
+      listener_quiet_min = listener_quiet,
+      work_age_min = work_age,
+      work_finished_at = work and work.finished_at or nil,
+      inbox = #vim.fn.glob(dir .. "/inbox/*.json", false, true),
+    }),
+    "\n"
+  ))
 end
 
-local SUBCOMMANDS = { open = M.open, sync = M.check, status = M.status }
+---Stops the listener until :Desk resume.
+function M.pause()
+  local cfg, reason = M.config()
+  if not cfg then
+    notify(reason, vim.log.levels.WARN)
+    return
+  end
+  require("core.utils").write_state(state_dir(cfg) .. "/paused", { os.date("!%Y-%m-%dT%H:%M:%SZ") })
+  vim.system({ "bash", script("listener.sh") })
+  notify("Listener paused, nothing on the page gets picked up until :Desk resume")
+end
+
+---Starts the listener again right away instead of waiting for launchd.
+function M.resume()
+  local cfg, reason = M.config()
+  if not cfg then
+    notify(reason, vim.log.levels.WARN)
+    return
+  end
+  vim.fn.delete(state_dir(cfg) .. "/paused")
+  vim.system(
+    { "bash", script("listener.sh") },
+    { text = true },
+    vim.schedule_wrap(function(res)
+      if res.code ~= 0 then
+        notify("The listener did not start: " .. vim.trim(res.stdout or ""), vim.log.levels.WARN)
+        return
+      end
+      notify("Listener running, the page gets picked up within a minute")
+    end)
+  )
+end
+
+local SUBCOMMANDS =
+  { open = M.open, sync = M.sync, status = M.status, pause = M.pause, resume = M.resume }
 
 local function command(opts)
   local run = SUBCOMMANDS[opts.args ~= "" and opts.args or "open"]
   if not run then
-    notify("Usage: :Desk [open|sync|status]", vim.log.levels.WARN)
+    notify("Usage: :Desk [open|sync|status|pause|resume]", vim.log.levels.WARN)
     return
   end
   run()
@@ -425,7 +324,7 @@ function M.setup()
     complete = function()
       return vim.tbl_keys(SUBCOMMANDS)
     end,
-    desc = "Open the desk, sync it now or see its status",
+    desc = "Open the desk, sync it now, see its status, pause or resume the listener",
   })
   vim.api.nvim_create_user_command("DeskImplement", function(opts)
     M.implement(opts.fargs[1], opts.fargs[2])
@@ -433,6 +332,10 @@ function M.setup()
   vim.api.nvim_create_user_command("DeskReview", function(opts)
     M.review(opts.fargs[1])
   end, { nargs = 1, desc = "Review the open PR of a ticket in a new tab: KEY" })
+  local cfg = M.config()
+  if cfg then
+    watch_inbox(cfg)
+  end
 end
 
 return M
