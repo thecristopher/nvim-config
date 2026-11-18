@@ -1,67 +1,30 @@
--- Pure pieces of the desk: config merge, the watch, the claude command lines and what the
--- background sessions leave behind.
+-- Pure pieces of the desk: config merge, the inbox the listener fills, the status line and the
+-- implement and review targets.
 local M = {}
 
 M.DEFAULT_CONFIG_PATH = "~/.claude/skills/desk/config.json"
 
-M.DEFAULT_HASH_FILES = {
-  "~/.claude/skills/ticket-analyze/team.tsv",
-  "~/.claude/skills/ticket-analyze/contacts.tsv",
-  "~/.config/nvim/.claude/commands/my-style.md",
+-- the scripts behind the listener and the work sessions live with the skill
+M.SCRIPTS_DIR = "~/.claude/skills/desk-sync/scripts"
+
+M.LAUNCH_AGENTS = {
+  "~/Library/LaunchAgents/com.cristopher.desk-listener.plist",
+  "~/Library/LaunchAgents/com.cristopher.desk-work.plist",
 }
 
 M.DEFAULTS = {
   artifact_url = "",
   repos_dir = "~/Documents/GitHub",
-  -- nothing runs on its own: opening the desk watches its queue every_minutes for watch_minutes
+  -- empty means nvim's own state folder, the scripts fall back to the same one
+  state_dir = "",
   sync = {
-    every_minutes = 5,
-    watch_minutes = 30,
-    check_model = "haiku",
+    listen_model = "haiku",
     work_model = "opus",
   },
 }
 
-M.CHECK_TOOLS = {
-  "Skill",
-  "ToolSearch",
-  "ArtifactData",
-  "Read",
-  "Bash(date *)",
-}
-
-M.CHECK_MCP = { "mcp__claude_ai_Atlassian_MCP__searchJiraIssuesUsingJql" }
-
-M.WORK_TOOLS = {
-  "Skill",
-  "ToolSearch",
-  "ArtifactData",
-  "Read",
-  "Grep",
-  "Glob",
-}
-
-M.WORK_BASH = {
-  "Bash(date *)",
-  "Bash(git *)",
-  "Bash(gh *)",
-  "Bash(jq *)",
-  "Bash(python3 -I *)",
-  "Bash(~/.claude/skills/ticket-analyze/scripts/*)",
-  "Bash(aws sts get-caller-identity*)",
-  "Bash(aws logs filter-log-events*)",
-  "Bash(aws lambda get-*)",
-  "Bash(aws cloudfront get-*)",
-  "Bash(aws cloudwatch get-metric-statistics*)",
-}
-
-M.WORK_MCP = {
-  "mcp__claude_ai_Atlassian_MCP__searchJiraIssuesUsingJql",
-  "mcp__claude_ai_Atlassian_MCP__getJiraIssue",
-  "mcp__claude_ai_Atlassian_MCP__listJiraIssueComments",
-  "mcp__claude_ai_Atlassian_MCP__executeRead",
-  "mcp__claude_ai_Atlassian_MCP__discover",
-}
+-- the listener ticks every minute, so this long without one means it is gone
+local LISTENER_QUIET_MIN = 5
 
 ---Merges a decoded config over the defaults, so a partial file still works.
 ---@param raw table|nil decoded config file
@@ -70,80 +33,61 @@ function M.merge_config(raw)
   return vim.tbl_deep_extend("force", vim.deepcopy(M.DEFAULTS), raw or {})
 end
 
----When a watch that starts now ends, in uv milliseconds.
----@param now_ms number
----@param cfg table merged config
----@return number
-function M.watch_until(now_ms, cfg)
-  return now_ms + cfg.sync.watch_minutes * 60000
-end
-
----Tells whether the desk is still being watched.
----@param until_ms number|nil end of the watch, nil when nobody opened the desk
----@param now_ms number
----@return boolean
-function M.watching(until_ms, now_ms)
-  return until_ms ~= nil and now_ms < until_ms
-end
-
----Reads the session id `claude --bg` prints in its stop hint.
----@param stdout string
----@return string|nil id hex id, nil when the output has none
-function M.parse_session_id(stdout)
-  return (stdout or ""):match("claude stop (%x+)")
-end
-
-local function joined(...)
-  local out = {}
-  for _, list in ipairs({ ... }) do
-    vim.list_extend(out, list)
+---Turns a decoded inbox file into an item nvim can act on.
+---@param raw any decoded `<state>/inbox/<id>.json`
+---@return { kind: "implement"|"review", key: string, repo: string|nil, queue_id: string|nil }|nil item nil when the file is not usable
+function M.inbox_item(raw)
+  if type(raw) ~= "table" then
+    return nil
   end
-  return table.concat(out, " ")
+  if raw.kind ~= "implement" and raw.kind ~= "review" then
+    return nil
+  end
+  if type(raw.key) ~= "string" or raw.key == "" then
+    return nil
+  end
+  local repo = type(raw.repo) == "string" and raw.repo ~= "" and raw.repo or nil
+  return { kind = raw.kind, key = raw.key, repo = repo, queue_id = raw.queue_id }
 end
 
----Permission rule letting a session write inside a folder. Edit rules cover Write too, and
----absolute paths take a leading "//" in permission rules.
----@param dir string absolute folder
+---Describes the listener from its id file and transcript.
+---@param s { paused: boolean, listener_age_min: integer|nil, listener_quiet_min: integer|nil }
 ---@return string
-function M.edit_rule(dir)
-  return ("Edit(/%s/**)"):format(dir)
-end
-
-local function bg_argv(model, name, dirs, tools, prompt)
-  local argv = { "claude", "--bg", "--model", model, "--permission-mode", "dontAsk", "-n", name }
-  for _, dir in ipairs(dirs) do
-    vim.list_extend(argv, { "--add-dir", dir })
+local function listener_line(s)
+  if s.paused then
+    return "Listener: paused. :Desk resume starts it again"
   end
-  -- --add-dir and --allowedTools are variadic, so "--" keeps them from swallowing the prompt
-  vim.list_extend(argv, { "--allowedTools", tools, "--", prompt })
-  return argv
+  if not s.listener_age_min then
+    return "Listener: not running. launchd starts it within 5 minutes, or run :Desk resume"
+  end
+  if (s.listener_quiet_min or 0) >= LISTENER_QUIET_MIN then
+    return ("Listener: silent for %d min, launchd restarts it shortly"):format(s.listener_quiet_min)
+  end
+  return ("Listener: up for %d min, checking the queue every minute"):format(s.listener_age_min)
 end
 
----Builds the command line of the cheap check session.
----@param cfg table merged config
----@param paths { state: string, skills: string }
----@param hash string inputs hash the check compares against the artifact
----@param watch_until string|nil ISO 8601 UTC end of the watch, so the page knows until when
----@return string[]
-function M.build_check_argv(cfg, paths, hash, watch_until)
-  local tools = joined(M.CHECK_TOOLS, { M.edit_rule(paths.state) }, M.CHECK_MCP)
-  local prompt = ("/desk-sync check state_dir=%s inputs_hash=%s watch_until=%s"):format(
-    paths.state,
-    hash,
-    watch_until or "none"
-  )
-  return bg_argv(cfg.sync.check_model, "desk-check", { paths.state, paths.skills }, tools, prompt)
+---Describes the work session from its lock and result files.
+---@param s { work_age_min: integer|nil, work_finished_at: string|nil }
+---@return string
+local function work_line(s)
+  if s.work_age_min then
+    return ("Work: running for %d min"):format(s.work_age_min)
+  end
+  return ("Work: idle, last finished %s"):format(s.work_finished_at or "never")
 end
 
----Builds the command line of the session that does the heavy work.
----@param cfg table merged config
----@param paths { state: string, skills: string, repos: string }
+---Builds the lines :Desk status shows.
+---@param s { installed: boolean, paused: boolean, listener_age_min: integer|nil, listener_quiet_min: integer|nil, work_age_min: integer|nil, work_finished_at: string|nil, inbox: integer }
 ---@return string[]
-function M.build_work_argv(cfg, paths)
-  local tools = joined(M.WORK_TOOLS, { M.edit_rule(paths.state) }, M.WORK_BASH, M.WORK_MCP)
-  local prompt = ("/desk-sync work state_dir=%s"):format(paths.state)
-  local dirs = { paths.state, paths.skills, paths.repos }
-  return bg_argv(cfg.sync.work_model, "desk-work", dirs, tools, prompt)
+function M.status_lines(s)
+  if not s.installed then
+    return { "The desk agents are not installed. Run " .. M.SCRIPTS_DIR .. "/install.sh" }
+  end
+  local lines = { listener_line(s), work_line(s) }
+  if s.inbox > 0 then
+    table.insert(lines, ("Inbox: %d waiting to open"):format(s.inbox))
+  end
+  return lines
 end
 
 ---Picks the folder a ticket gets implemented from.
@@ -166,95 +110,6 @@ end
 ---@return string[]
 function M.implement_cmd(key)
   return { "claude", ("/ticket-implement %s"):format(key) }
-end
-
----Says in one line what the work session did.
----@param work table|nil decoded work.json
----@return string message
----@return boolean ok false when something failed or the file is missing
-function M.work_summary(work)
-  if not work then
-    return "The work session left no result", false
-  end
-  local done, failed = work.done or {}, work.failed or {}
-  local parts = {}
-  if #done > 0 then
-    table.insert(parts, "Ready: " .. table.concat(done, ", "))
-  end
-  for _, f in ipairs(failed) do
-    table.insert(parts, ("%s failed: %s"):format(f.key, f.reason or "unknown"))
-  end
-  if #parts == 0 then
-    return "Nothing to do", true
-  end
-  return table.concat(parts, "\n"), #failed == 0
-end
-
-local function assistant_text(entry)
-  if type(entry) ~= "table" or entry.type ~= "assistant" then
-    return nil
-  end
-  local content = vim.tbl_get(entry, "message", "content")
-  if type(content) ~= "table" then
-    return nil
-  end
-  for _, part in ipairs(content) do
-    local text = part.type == "text" and vim.trim(part.text or "") or ""
-    if text ~= "" then
-      return text
-    end
-  end
-  return nil
-end
-
----Finds the last thing a session said in its transcript, so one that died can say why.
----@param lines string[] lines of the session's .jsonl transcript
----@return string|nil text last assistant text, cut to 300 characters, nil when there is none
-function M.last_said(lines)
-  for i = #lines, 1, -1 do
-    local ok, entry = pcall(vim.json.decode, lines[i], { luanil = { object = true, array = true } })
-    local text = ok and assistant_text(entry) or nil
-    if text then
-      return text:sub(1, 300)
-    end
-  end
-  return nil
-end
-
----Builds the record nvim leaves for the next check when a session fails.
----@param stage "check"|"work"
----@param message string why it failed
----@param at string ISO 8601 UTC time of the failure
----@return { at: string, stage: string, message: string }
-function M.failure_record(stage, message, at)
-  return { at = at, stage = stage, message = message }
-end
-
----Joins the files the inputs hash covers, skipping missing ones.
----@param contents (string|nil)[] file contents in order, nil for a missing file
----@param count integer how many files were read, since nil holes hide the length
----@return string
-function M.hash_input(contents, count)
-  local present = {}
-  for i = 1, count do
-    if contents[i] then
-      table.insert(present, contents[i])
-    end
-  end
-  return table.concat(present, "\n\0\n")
-end
-
----Minutes until the next scheduled check.
----@param last_ms number|nil uv time of the last check
----@param now_ms number
----@param every_minutes number
----@return integer
-function M.minutes_left(last_ms, now_ms, every_minutes)
-  if not last_ms then
-    return 0
-  end
-  local left = every_minutes - (now_ms - last_ms) / 60000
-  return math.max(0, math.ceil(left))
 end
 
 ---Command line that finds the open PRs mentioning a ticket in the org.

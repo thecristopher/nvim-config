@@ -57,6 +57,7 @@ Before editing anything, check the current branch with `git branch --show-curren
 
 - On `main`/`master`/`develop` (or any default branch): stop and propose a branch named for the nature of the work, then create it once Cristopher agrees.
 - Prefixes: `feature/`, `bugfix/`, `hotfix/`, `refactor/`, `docs/`, `chore/`, `test/`.
+- Every new branch follows `<prefix>/<TICKET-ID>-<small-details>`: the ticket key as written in Jira, then two to four lowercase words joined by hyphens saying what changes. Example: `bugfix/SPLT-2621-aimatch-image-ads`. No bare `bugfix/SPLT-2621`, no `bug/` prefix, even when the repo's older branches use another shape. Without a ticket, use `<prefix>/<small-details>`.
 - If the current branch does not match the nature of the change (a bugfix on a `docs/` branch), say so before continuing.
 
 ---
