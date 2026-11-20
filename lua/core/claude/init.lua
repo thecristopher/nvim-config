@@ -29,6 +29,7 @@ function M.run(prompt, cb)
     end)
   end
 
+  require("core.sound").play("accessing")
   local ok, err = pcall(
     vim.system,
     actions.command(bin),

@@ -35,6 +35,24 @@ M.EVENTS = {
   "hud_move",
   "hud_select",
   "hud_back",
+  "hud_tab",
+  "hud_page",
+  "hud_menu",
+  "hud_use",
+  "hud_check",
+  "hud_combine",
+  "save",
+  "yank",
+  "typing",
+  "branch",
+  "pulled",
+  "pushed",
+  "stash",
+  "unstash",
+  "undo",
+  "accessing",
+  "map",
+  "files",
 }
 
 --- How long an event stays quiet after playing, so a burst of the same moment is one sound.
@@ -105,6 +123,10 @@ M.WEIGHT = {
   bought = 2,
   weapon = 2,
   expedition = 2,
+  pushed = 2,
+  map = 2,
+  files = 2,
+  accessing = 2,
 }
 
 --- The channel an event plays on: every HUD sound shares one, every other moment the other.

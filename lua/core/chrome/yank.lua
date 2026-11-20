@@ -20,12 +20,17 @@ end
 function M.flash()
   vim.hl.on_yank({ higroup = "EldenYank", timeout = M.DURATION })
   glow("EldenYank")
+  -- a cut fires TextYankPost too, only a real yank sounds like one
+  if vim.v.event.operator == "y" then
+    require("core.sound").play("yank")
+  end
 end
 
 --- Lights what the next put lands on: yanky marks it with YankyPut for DURATION, this gives it
 --- the same glow a yank gets. Call it right before a yanky put.
 function M.prime_put()
   glow("YankyPut")
+  require("core.sound").play("yank")
 end
 
 return M

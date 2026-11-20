@@ -449,8 +449,9 @@ local function move_menu(direction)
     actions.cycle(state.menu.index, #state.menu.entries, direction == "j" and 1 or -1)
 end
 
-local function sound(event)
-  require("core.sound").play(event)
+-- plays the HUD's own sound for a moment, or the fallback in a world that has none for it
+local function sound(event, fallback)
+  require("core.sound").play_first({ event, fallback })
 end
 
 -- how long the glint takes to run along the Roundtable's selected frame
@@ -526,7 +527,7 @@ local function switch_tab(step)
   state.tab = actions.cycle(state.tab, #state.tabs, step)
   state.focus, state.menu = "items", nil
   state.cursor.items, state.offset.items = 1, 0
-  sound("hud_move")
+  sound("hud_tab", "hud_move")
   settle_selection()
   pulse_tab()
 end
@@ -652,7 +653,7 @@ local function show_reader(title, lines)
       footer_pos = "center",
     })
     if step ~= 0 then
-      sound("hud_move")
+      sound("hud_page", "hud_move")
     end
   end
   turn(0)
@@ -704,6 +705,7 @@ local function use(item)
     return
   end
   state.menu = nil
+  sound("hud_use", "hud_select")
   toast(item)
   item.use()
   vim.schedule(function()
@@ -715,6 +717,7 @@ local function check(item)
   if not item or not item.check then
     return
   end
+  sound("hud_check", "hud_select")
   -- the safe room reads every item like one of its files, the file's own lines after its details
   if style() == "inventory" then
     local lines = item.check()
@@ -732,6 +735,7 @@ local function combine(item)
   if not item or not item.combine then
     return
   end
+  sound("hud_combine", "hud_select")
   local result = item.combine()
   if type(result) == "table" then
     show_details(item.name, result)
@@ -768,11 +772,11 @@ local function confirm()
   if not item then
     return
   end
-  sound("hud_select")
   if style() ~= "inventory" then
     return use(item)
   end
   if not state.menu then
+    sound("hud_menu", "hud_select")
     local entries = vim.tbl_map(function(command)
       return { label = command.label, enabled = command.ready(item) }
     end, COMMANDS)
@@ -783,6 +787,8 @@ local function confirm()
   state.menu = nil
   if command.ready(item) then
     command.run(item)
+  else
+    sound("hud_back")
   end
   M.refresh()
 end

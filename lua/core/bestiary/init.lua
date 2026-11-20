@@ -79,6 +79,7 @@ function M.open()
     return vim.notify(lore.empty, vim.log.levels.INFO, { title = lore.title })
   end
   local lines, marks = render(entries)
+  require("core.sound").play("files")
   local width = 30
   for _, line in ipairs(lines) do
     width = math.max(width, vim.api.nvim_strwidth(line) + 2)

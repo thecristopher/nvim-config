@@ -37,6 +37,7 @@ function M.open()
     return { text = actions.search_text(entry), entry = entry }
   end, entries)
 
+  require("core.sound").play_first({ "hud_menu", "hud_open" })
   Snacks.picker({
     -- the picker layout already frames every title in the skin's ornaments
     title = require("core.franchise").current().words.arts,

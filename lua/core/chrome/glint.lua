@@ -97,6 +97,7 @@ function M.setup(group)
     callback = function(args)
       -- :w fires this while still in command mode, the glint plays once back in the mode it saved from
       if saved_a_file(args) then
+        require("core.sound").play("save")
         vim.schedule(M.play)
       end
     end,

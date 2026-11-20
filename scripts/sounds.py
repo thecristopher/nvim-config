@@ -538,13 +538,25 @@ CLIPS = {
     },
     "resident_evil": {
         "title": {}, "continue": {}, "comfort": {}, "grace": {}, "door": {}, "expedition": {},
-        "merchant": {}, "welcome": {}, "bought": {}, "weapon": {"max": 4.0},
+        "merchant": {}, "welcome": {}, "bought": {}, "weapon": {"max": 5.0},
         "died": {"max": 5.5}, "rest": {"loudness": -26}, "phantom": {}, "summon": {},
         # the HUD clips keep their body but lose the transients that made them startle, so they sit
         # with the built HUD sounds of the other worlds (peaks of -15 dB, -18 for every move)
         "hud_open": {"loudness": None, "peak": -15}, "hud_close": {"loudness": None, "peak": -15},
         "hud_move": {"loudness": None, "peak": -18}, "hud_select": {"loudness": None, "peak": -15},
         "hud_back": {"loudness": None, "peak": -15},
+        # cut from the Resident Evil HD Remaster UI sounds (youtu.be/Dh7og1sYPoc): the menus, the
+        # status screen, the files, the map, the item box and the typewriter
+        "hud_tab": {"loudness": None, "peak": -18}, "hud_menu": {"loudness": None, "peak": -15},
+        "hud_page": {"loudness": None, "peak": -15}, "hud_page_2": {"loudness": None, "peak": -15},
+        "hud_page_3": {"loudness": None, "peak": -15}, "hud_check": {"loudness": None, "peak": -15},
+        "hud_combine": {"loudness": None, "peak": -15}, "hud_use": {"loudness": None, "peak": -15},
+        # the ones that follow typing, saving and yanking stay as quiet as a move
+        "save": {"loudness": None, "peak": -20}, "yank": {"loudness": None, "peak": -20},
+        "typing": {"loudness": None, "peak": -18}, "undo": {"loudness": None, "peak": -15},
+        "branch": {"loudness": None, "peak": -15}, "stash": {"loudness": None, "peak": -15},
+        "unstash": {"loudness": None, "peak": -15}, "pulled": {"loudness": None, "peak": -15},
+        "pushed": {}, "map": {}, "files": {}, "accessing": {"max": 2.0, "fade": 0.6},
     },
 }
 
