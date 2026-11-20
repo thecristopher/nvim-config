@@ -32,6 +32,7 @@ else
   require("core.hub").setup()
   require("core.voice").setup()
   require("core.drift").setup()
+  require("core.pixel").setup()
   require("core.hud").setup()
   require("core.fog").setup()
   require("core.messages").setup()

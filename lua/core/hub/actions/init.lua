@@ -9,15 +9,18 @@ end
 -- how often a line another world lent this one is read instead of its own
 M.GUEST_CHANCE = 0.15
 
---- Picks the message the quill writes on the hub: the franchise's own lines first, now and then a
---- line another world lent it (lore.hud.guest_messages).
+--- Picks the message the quill writes on the hub: the region's own lines when it has them (so a
+--- role only speaks of its own character), else the franchise's, now and then a line another
+--- world lent it (lore.hud.guest_messages).
 ---@param rand fun(): number random number from 0 to 1
 ---@param from table|nil the lore to read, the franchise in use by default
+---@param region table|nil the region in use, its hub_messages win over the lore's
 ---@return string
-function M.pick_message(rand, from)
+function M.pick_message(rand, from, region)
   from = from or lore()
   local guests = (from.hud or {}).guest_messages or {}
-  local messages = from.hub_messages
+  local own = region and region.hub_messages
+  local messages = (own and #own > 0) and own or from.hub_messages
   if #guests > 0 and rand() < M.GUEST_CHANCE then
     messages = guests
   end

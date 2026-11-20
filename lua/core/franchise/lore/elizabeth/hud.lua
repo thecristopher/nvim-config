@@ -155,12 +155,4 @@ return {
     location = "LOCATION",
     call = "CALL",
   },
-
-  -- lines the other worlds lent her, read now and then between her own
-  guest_messages = {
-    "What are you buying? A cleaner commit?",
-    "Your inventory is full of TODOs, love",
-    "Rest at grace, then refactor",
-    "Let the rot bloom somewhere else",
-  },
 }

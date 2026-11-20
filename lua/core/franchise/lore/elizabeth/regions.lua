@@ -13,6 +13,23 @@ return {
       "Darkhold Library",
       "Witches' Road",
     },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "Chaos magic doesn't fix off by one errors",
+      "Westview had fewer side effects",
+      "No more bugs, she said, and there were none",
+      "The cape is velvet, the code is not",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "HEX", seven_day = "CHAOS" },
+      verbs = {
+        "Rewriting reality",
+        "Weaving a hex",
+        "Tying the cape",
+        "Bending Westview",
+      },
+    },
     character = "Scarlet Witch",
     portrait = "elizabeth_scarlet_witch.jpg",
     figure = "elizabeth_scarlet_witch_figure.jpg",
@@ -56,6 +73,22 @@ return {
       "The Island",
       "Ada's Hideout",
       "Merchant's Corner",
+    },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "A grappling hook won't reach that deadline",
+      "Ada already knows where the bug is hiding",
+      "A red dress and a clean merge",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "HOOK", seven_day = "INTEL" },
+      verbs = {
+        "Checking the grappling hook",
+        "Reading the intel",
+        "Smoothing the red dress",
+        "Slipping past Leon",
+      },
     },
     character = "Ada",
     portrait = "elizabeth_ada.jpg",
@@ -103,6 +136,22 @@ return {
       "House of Grief",
       "The Emerald Grove",
     },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "Selûne's light on your diff",
+      "Shadowheart doesn't trust that regex",
+      "The moon says merge on Monday",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "SPELL", seven_day = "MOON" },
+      verbs = {
+        "Praying to the moon",
+        "Raising the hood",
+        "Hiding the artefact",
+        "Keeping Shar's secrets",
+      },
+    },
     character = "Shadowheart",
     portrait = "elizabeth_shadowheart.jpg",
     figure = "elizabeth_shadowheart_figure.jpg",
@@ -146,6 +195,22 @@ return {
       "Genosha",
       "Muir Island",
       "Cerebro",
+    },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "Focus the blade, then focus the diff",
+      "The Danger Room resets, your tests should too",
+      "Psylocke reads the bug's mind first",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "PSI", seven_day = "BLADE" },
+      verbs = {
+        "Focusing the psychic blade",
+        "Reading the bug's mind",
+        "Sharpening the katana",
+        "Tying the sash",
+      },
     },
     character = "Psylocke",
     portrait = "elizabeth_psylocke.jpg",
@@ -191,6 +256,22 @@ return {
       "Norfair",
       "Tourian",
     },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "Samus would have scanned that first",
+      "Morph ball through the call stack",
+      "Ridley comes back, your bugs shouldn't",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "ENERGY", seven_day = "MISSILE" },
+      verbs = {
+        "Charging the paralyzer",
+        "Scanning the room",
+        "Rolling into a morph ball",
+        "Checking the energy tanks",
+      },
+    },
     character = "Samus",
     portrait = "elizabeth_samus.jpg",
     figure = "elizabeth_samus_figure.jpg",
@@ -234,6 +315,21 @@ return {
       "The Otherplace",
       "Stepping Discs",
     },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "Limbo is closer than your deadline",
+      "One stepping disc to the right file",
+      "Magik's soulsword cuts dead code",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "SOUL", seven_day = "DISC" },
+      verbs = {
+        "Opening a stepping disc",
+        "Drawing the soulsword",
+        "Falling through Limbo",
+      },
+    },
     character = "Magik",
     portrait = "elizabeth_magik.jpg",
     figure = "elizabeth_magik_figure.jpg",
@@ -276,6 +372,22 @@ return {
       "The Law Office",
       "Superhuman Law Division",
       "Judge's Chambers",
+    },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "Objection: that test proves nothing",
+      "She-Hulk rests her case on green tests",
+      "The court finds this diff guilty",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "GAMMA", seven_day = "CASE" },
+      verbs = {
+        "Objecting",
+        "Citing precedent",
+        "Breaking the fourth wall",
+        "Approaching the bench",
+      },
     },
     character = "She-Hulk",
     portrait = "elizabeth_she_hulk.jpg",
@@ -321,6 +433,21 @@ return {
       "Gatefront Ruins",
       "Agheel Lake",
     },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "Triss knows a spell for flaky tests",
+      "A sorceress never ships untested",
+      "Fire, patience and a clean rebase",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "MAGIC", seven_day = "VIGOR" },
+      verbs = {
+        "Weaving a spell",
+        "Opening a portal",
+        "Brushing out the auburn hair",
+      },
+    },
     character = "Triss",
     portrait = "elizabeth_triss.jpg",
     figure = "elizabeth_triss_figure.jpg",
@@ -365,6 +492,22 @@ return {
       "Uptown",
       "Dead Factory",
     },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "Jill has one more way out of this bug",
+      "Jill checks every door before the merge",
+      "Nemesis can wait, the tests can't",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "AMMO", seven_day = "HERB" },
+      verbs = {
+        "Checking the Samurai Edge",
+        "Mixing herbs",
+        "Outrunning Nemesis",
+        "Picking the lock",
+      },
+    },
     character = "Jill",
     portrait = "elizabeth_jill.jpg",
     figure = "elizabeth_jill_figure.jpg",
@@ -407,6 +550,21 @@ return {
       "Miquella's Haligtree",
       "Haligtree Town",
       "Consecrated Snowfield",
+    },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "Let the rot bloom somewhere else",
+      "Malenia never knew defeat, nor a red build",
+      "A waterfowl dance through the diff",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "FOCUS", seven_day = "BLOOM" },
+      verbs = {
+        "Waiting on the bloom",
+        "Dancing like a waterfowl",
+        "Adjusting the winged helm",
+      },
     },
     character = "Malenia",
     portrait = "elizabeth_malenia.jpg",
@@ -451,6 +609,21 @@ return {
       "Justice Society Hall",
       "Starrware Labs",
     },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "Power Girl lifts the build, you lift the coffee",
+      "Kara punches straight through the backlog",
+      "Another earth, the same bug",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "POWER", seven_day = "FLIGHT" },
+      verbs = {
+        "Smoothing the cape",
+        "Flying over Earth-Two",
+        "Lifting something heavy",
+      },
+    },
     character = "Power Girl",
     portrait = "elizabeth_power_girl.jpg",
     figure = "elizabeth_power_girl_figure.jpg",
@@ -494,6 +667,21 @@ return {
       "Jump City",
       "Temple of Azar",
     },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "Azarath Metrion Zinthos, compile",
+      "Raven feels the bug before it shows",
+      "Quiet code, the way Raven likes it",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "MIND", seven_day = "SOUL" },
+      verbs = {
+        "Raising the hood",
+        "Meditating",
+        "Chanting Azarath Metrion Zinthos",
+      },
+    },
     character = "Raven",
     portrait = "elizabeth_raven.jpg",
     figure = "elizabeth_raven_figure.jpg",
@@ -536,6 +724,21 @@ return {
       "South Town",
       "Pao Pao Cafe",
       "Mount Shiranui",
+    },
+    -- what the dressing room mirror says while she plays this role
+    hub_messages = {
+      "Mai fans the flames of a green build",
+      "Mai's fan clears the stack trace",
+      "Fast, bright and no warnings, Shiranui style",
+    },
+    -- Claude Code's bars and spinner while she plays this role
+    claude = {
+      bars = { five_hour = "POW", seven_day = "GUARD" },
+      verbs = {
+        "Folding the fan",
+        "Throwing the fan",
+        "Tying the ribbon",
+      },
     },
     character = "Mai",
     portrait = "elizabeth_mai.jpg",

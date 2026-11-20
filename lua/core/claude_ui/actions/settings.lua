@@ -11,6 +11,18 @@ M.REFRESH_SECONDS = 10
 -- every Eldentree hook runs this script, wherever the repo or nvim live
 M.HOOK_SCRIPT = "claude/hook.lua"
 
+-- the list without its repeats, in its order
+local function unique(list)
+  local kept, seen = {}, {}
+  for _, item in ipairs(list) do
+    if not seen[item] then
+      seen[item] = true
+      table.insert(kept, item)
+    end
+  end
+  return kept
+end
+
 local function is_ours(hook)
   return type(hook.command) == "string" and hook.command:find(M.HOOK_SCRIPT, 1, true) ~= nil
 end
@@ -45,19 +57,24 @@ local function merge_hooks(settings, hook_command, changes)
   end
 end
 
-local function merge_verbs(settings, verbs, changes)
+--- Puts the role's verbs in the spinner, taking back every verb Eldentree wrote before and
+--- keeping the ones that came from somewhere else.
+---@param settings table decoded settings.json, changed in place
+---@param verbs string[] the verbs of the role in use
+---@param known string[] every verb any franchise or role brings
+---@return boolean changed
+function M.set_verbs(settings, verbs, known)
   local current = type(settings.spinnerVerbs) == "table" and settings.spinnerVerbs.verbs or {}
-  local merged, seen = {}, {}
-  for _, verb in ipairs(vim.list_extend(vim.deepcopy(current), verbs)) do
-    if not seen[verb] then
-      seen[verb] = true
-      table.insert(merged, verb)
-    end
+  local ours = {}
+  for _, verb in ipairs(known) do
+    ours[verb] = true
   end
-  if #merged ~= #current then
-    table.insert(changes, ("spinner verbs (+%d)"):format(#merged - #current))
-  end
+  local kept = vim.tbl_filter(function(verb)
+    return not ours[verb]
+  end, current)
+  local merged = unique(vim.list_extend(kept, verbs))
   settings.spinnerVerbs = { mode = "append", verbs = merged }
+  return not vim.deep_equal(current, merged)
 end
 
 local function set(settings, key, value, label, changes)
@@ -70,7 +87,7 @@ end
 
 --- Adds the Eldentree statusline, hooks, verbs and theme to a settings table.
 ---@param settings table decoded settings.json, changed in place
----@param plan { statusline: string, hook: string, verbs: string[], theme: string }
+---@param plan { statusline: string, hook: string, verbs: string[], known?: string[], theme: string }
 ---@return string[] changes what was added or replaced, empty when it was all there already
 function M.merge(settings, plan)
   local changes = {}
@@ -80,25 +97,34 @@ function M.merge(settings, plan)
     refreshInterval = M.REFRESH_SECONDS,
   }, "statusline", changes)
   merge_hooks(settings, plan.hook, changes)
-  merge_verbs(settings, plan.verbs, changes)
+  if M.set_verbs(settings, plan.verbs, plan.known or {}) then
+    table.insert(changes, "spinner verbs")
+  end
   set(settings, "theme", "custom:" .. plan.theme, "theme", changes)
   return changes
 end
 
---- Collects the spinner verbs of every franchise, in franchise order without repeats.
+--- The spinner verbs of the role in use: the franchise's shared ones, then the region's own.
+---@param lore table
+---@param region table|nil
+---@return string[]
+function M.verbs_for(lore, region)
+  local shared = vim.deepcopy((lore.claude or {}).verbs or {})
+  return unique(vim.list_extend(shared, ((region or {}).claude or {}).verbs or {}))
+end
+
+--- Every verb the franchises and their regions bring, so a new role takes the last one's back.
 ---@param lores table[]
 ---@return string[]
-function M.verbs(lores)
-  local verbs, seen = {}, {}
+function M.known_verbs(lores)
+  local verbs = {}
   for _, lore in ipairs(lores) do
-    for _, verb in ipairs((lore.claude or {}).verbs or {}) do
-      if not seen[verb] then
-        seen[verb] = true
-        table.insert(verbs, verb)
-      end
+    vim.list_extend(verbs, (lore.claude or {}).verbs or {})
+    for _, region in ipairs(lore.regions or {}) do
+      vim.list_extend(verbs, (region.claude or {}).verbs or {})
     end
   end
-  return verbs
+  return unique(verbs)
 end
 
 return M

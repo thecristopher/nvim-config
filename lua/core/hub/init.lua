@@ -33,14 +33,15 @@ local function current_weather()
   return actions.weather(require("core.themes").current().name)
 end
 
---- The player message of this session, picked again whenever another world takes over, since it
---- belongs to the world that wrote it.
+--- The player message of this session, picked again whenever another world or region takes over,
+--- since it belongs to the one that wrote it.
 ---@return string
 function M.message()
-  local world = require("core.franchise").current().name
+  local region = require("core.themes").current()
+  local world = require("core.franchise").current().name .. "/" .. region.name
   if not M.current_message or M.message_world ~= world then
     math.randomseed(vim.uv.hrtime() % 2 ^ 31)
-    M.current_message, M.message_world = actions.pick_message(math.random), world
+    M.current_message, M.message_world = actions.pick_message(math.random, nil, region), world
   end
   return M.current_message
 end
