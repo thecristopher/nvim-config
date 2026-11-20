@@ -226,7 +226,7 @@ M.ENTRIES = {
   },
   { icon = "󰕾 ", name = "Sound", desc = "Preview a sound", cmd = "Sound " },
   { icon = "󰀦 ", name = "Banner", desc = "Show a banner", cmd = "Banner " },
-  { icon = "󰋩 ", name = "Pixel", desc = "Preview the region's 8 bit sprite", cmd = "Pixel " },
+  { icon = "󰋩 ", name = "Pixel", desc = "Preview the region's 8 bit sprite", cmd = "Pixel" },
   { icon = "󰑓 ", name = "Rescan repos", desc = "Look for new repos now", cmd = "ReposRescan" },
   {
     icon = "󰝰 ",

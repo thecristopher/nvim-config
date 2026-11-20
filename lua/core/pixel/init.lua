@@ -1,8 +1,9 @@
--- Tiny 8 bit sprites the region's character pops when something happens: a hex on a save, a crown
--- on a win. The sprites live in the lore's `pixels`, keyed by region, and a region without one
--- stays quiet. Each sprite steps through its frames in a small float at the top right of the
--- window, on core/motion's clock, and is gone in under a second. Transparent pixels let the code
--- behind show through. `vim.g.eldentree_pixels = false` turns it off, `:Pixel <moment>` previews.
+-- The tiny 8 bit sprite the region's character pops whenever something happens: a save, a commit,
+-- a PR, a win. One sprite per region, in the lore's `pixels`, and a region without one stays quiet.
+-- It steps through its frames in a small float at the top right of the window, on core/motion's
+-- clock, and is gone in under half a second. Transparent pixels let the code behind show through.
+-- Each region's rows and highlight groups are built once and reused until the colors change.
+-- `vim.g.eldentree_pixels = false` turns it off, `:Pixel` previews.
 local actions = require("core.pixel.actions")
 
 local M = {}
@@ -11,6 +12,9 @@ local ns = vim.api.nvim_create_namespace("eldentree_pixel")
 
 -- the sprite on screen, so a new one replaces it instead of stacking
 local shown = { win = nil, buf = nil, tween = nil }
+
+-- the region whose frames are drawn and painted, and those frames as rows of cells
+local built = { region = nil, rows_by_frame = nil }
 
 local function enabled()
   return vim.g.eldentree_pixels ~= false and require("core.motion").enabled()
@@ -94,16 +98,27 @@ local function paint(rows)
   end
 end
 
-local function sprite_of(moment)
-  local region = require("core.themes").current()
-  local pixels = require("core.franchise").current().pixels
-  return actions.sprite_for(pixels, region.name, moment)
+-- the region's frames as rows with their groups defined, built only when the region or colors change
+local function frames_of_region()
+  local region = require("core.themes").current().name
+  if built.region == region then
+    return built.rows_by_frame
+  end
+  local sprite = actions.sprite_for(require("core.franchise").current().pixels, region)
+  local rows_by_frame = sprite
+    and vim.tbl_map(function(frame)
+      return actions.rows(frame, sprite.colors)
+    end, sprite.frames)
+  if rows_by_frame then
+    define_groups(rows_by_frame)
+  end
+  built.region, built.rows_by_frame = region, rows_by_frame
+  return rows_by_frame
 end
 
-local function placement(frames)
+local function placement(rows)
   local info = vim.fn.getwininfo(vim.api.nvim_get_current_win())[1]
-  local width, height = actions.size(frames)
-  return info and actions.place(info, width, height)
+  return info and actions.place(info, vim.api.nvim_strwidth(rows[1].text), #rows)
 end
 
 local function animate(rows_by_frame)
@@ -123,7 +138,7 @@ local function animate(rows_by_frame)
   })
 end
 
---- Pops the region's sprite for a moment, when it has one and the moment's chance comes up.
+--- Pops the region's sprite, when it has one and the moment's chance comes up.
 ---@param moment string what happened ("saved", "felled", "great")
 ---@param opts? { always?: boolean } always skips the chance, for previews
 function M.pop(moment, opts)
@@ -131,19 +146,12 @@ function M.pop(moment, opts)
   if not enabled() or not (opts.always or actions.pops(moment, math.random())) then
     return
   end
-  local sprite = sprite_of(moment)
-  if not sprite then
+  local rows_by_frame = frames_of_region()
+  local place = rows_by_frame and placement(rows_by_frame[1])
+  if not rows_by_frame or not place then
     return
   end
-  local place = placement(sprite.frames)
-  if not place then
-    return
-  end
-  local rows_by_frame = vim.tbl_map(function(frame)
-    return actions.rows(frame, sprite.colors)
-  end, sprite.frames)
   M.hide()
-  define_groups(rows_by_frame)
   paint(rows_by_frame[1])
   shown.win = open_float(place)
   if shown.win then
@@ -173,15 +181,16 @@ function M.setup()
     pattern = { "EldentreeMotion", "EldentreeFranchise" },
     callback = M.hide,
   })
-  vim.api.nvim_create_user_command("Pixel", function(cmd)
-    M.pop(cmd.args ~= "" and cmd.args or "saved", { always = true })
-  end, {
-    nargs = "?",
-    complete = function()
-      return { "saved", "felled", "great" }
+  -- a colorscheme clears every group, so the next pop builds the region's sprite again
+  vim.api.nvim_create_autocmd("ColorScheme", {
+    group = group,
+    callback = function()
+      built.region, built.rows_by_frame = nil, nil
     end,
-    desc = "Preview the region's 8 bit sprite for a moment",
   })
+  vim.api.nvim_create_user_command("Pixel", function()
+    M.pop("preview", { always = true })
+  end, { desc = "Preview the region's 8 bit sprite" })
 end
 
 return M

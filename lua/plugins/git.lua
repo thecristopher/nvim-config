@@ -77,16 +77,16 @@ return {
       auto_attach = true,
       attach_to_untracked = false,
       current_line_blame = true,
-      -- the blame waits until you stop to read and sits at the window's edge, so it never crowds the
-      -- code or the inline diagnostics at the end of the line, and never flashes while moving
+      -- the blame waits until you stop to read and sits a little after the code, close enough to
+      -- read with the line instead of across the whole window, and never flashes while moving
       current_line_blame_opts = {
         virt_text = true,
-        virt_text_pos = "right_align",
+        virt_text_pos = "eol",
         delay = 1500,
         ignore_whitespace = true,
         virt_text_priority = 100,
       },
-      current_line_blame_formatter = " <author>, <author_time:%R> · <summary>",
+      current_line_blame_formatter = "    <author>, <author_time:%R> · <summary>",
       sign_priority = 6,
       update_debounce = 100,
       status_formatter = nil,

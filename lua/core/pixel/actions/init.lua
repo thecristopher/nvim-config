@@ -1,4 +1,4 @@
--- The pure side of the 8 bit sprites: which sprite a moment plays, how two rows of pixels become
+-- The pure side of the 8 bit sprites: which sprite a region plays, how two rows of pixels become
 -- one row of half blocks, which frame is on screen and where the sprite sits.
 local M = {}
 
@@ -10,21 +10,16 @@ M.SAVE_CHANCE = 0.25
 
 local TRANSPARENT = "."
 
---- Finds the sprite a region plays for a moment.
+--- Finds the sprite a region pops on every moment.
 ---@param pixels table|nil the lore's pixels, keyed by region name
 ---@param region string region name
----@param moment string what happened ("saved", "felled", "great")
 ---@return { frames: string[][], colors: table<string, string> }|nil nil when the region has none
-function M.sprite_for(pixels, region, moment)
+function M.sprite_for(pixels, region)
   local own = pixels and pixels[region]
-  if type(own) ~= "table" or not own.moments or not own.sprites then
+  if type(own) ~= "table" or type(own.frames) ~= "table" or #own.frames == 0 then
     return nil
   end
-  local frames = own.sprites[own.moments[moment] or ""]
-  if not frames or #frames == 0 then
-    return nil
-  end
-  return { frames = frames, colors = own.colors or {} }
+  return { frames = own.frames, colors = own.colors or {} }
 end
 
 --- Tells whether a moment pops its sprite this time.
@@ -94,15 +89,6 @@ function M.rows(frame, colors)
     table.insert(rows, row_of(frame[index], lower, colors))
   end
   return rows
-end
-
---- The size a sprite takes on screen, in cells.
----@param frames string[][]
----@return integer width
----@return integer height
-function M.size(frames)
-  local first = frames[1]
-  return #first[1], math.ceil(#first / 2)
 end
 
 --- The frame on screen after some time, nil once the last one has played.

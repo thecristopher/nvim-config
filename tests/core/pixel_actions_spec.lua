@@ -3,25 +3,20 @@ local actions = require("core.pixel.actions")
 local pixels = {
   westview = {
     colors = { a = "yellow", r = "red" },
-    moments = { saved = "hex" },
-    sprites = { hex = { { "a.", ".r" }, { "aa", "aa" } } },
+    frames = { { "a.", ".r" }, { "aa", "aa" } },
   },
 }
 
 describe("sprite_for", function()
   it("finds the hex Wanda pops when Claire saves her love letter", function()
-    local sprite = actions.sprite_for(pixels, "westview", "saved")
+    local sprite = actions.sprite_for(pixels, "westview") or {}
     assert.equals(2, #sprite.frames)
     assert.equals("yellow", sprite.colors.a)
   end)
 
-  it("stays quiet for a moment the role has no sprite for", function()
-    assert.is_nil(actions.sprite_for(pixels, "westview", "felled"))
-  end)
-
   it("stays quiet for a role without sprites, like Malenia's for now", function()
-    assert.is_nil(actions.sprite_for(pixels, "haligtree", "saved"))
-    assert.is_nil(actions.sprite_for(nil, "westview", "saved"))
+    assert.is_nil(actions.sprite_for(pixels, "haligtree"))
+    assert.is_nil(actions.sprite_for(nil, "westview"))
   end)
 end)
 
@@ -73,12 +68,6 @@ describe("rows", function()
     local rows = actions.rows({ "..", ".." }, {})
     assert.equals("  ", rows[1].text)
     assert.equals(0, #rows[1].marks)
-  end)
-end)
-
-describe("size", function()
-  it("measures a sprite in cells, two pixel rows per cell", function()
-    assert.same({ 10, 4 }, { actions.size({ { "..........", "", "", "", "", "", "", "" } }) })
   end)
 end)
 
