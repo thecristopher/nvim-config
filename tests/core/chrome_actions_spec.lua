@@ -47,6 +47,22 @@ describe("number_group", function()
   end)
 end)
 
+describe("number_color", function()
+  local themes = require("core.themes.actions")
+  local malenia = themes.find("haligtree").palette
+
+  it("keeps the farthest number Malenia jumps to readable", function()
+    local far = actions.number_color(malenia, #actions.GUTTER_STEPS)
+    assert.is_true(themes.contrast(far, malenia.base) >= actions.GUTTER_FLOOR)
+  end)
+
+  it("still fades the numbers away from Malenia's cursor", function()
+    local near = themes.contrast(actions.number_color(malenia, 2), malenia.base)
+    local far = themes.contrast(actions.number_color(malenia, #actions.GUTTER_STEPS), malenia.base)
+    assert.is_true(near > far)
+  end)
+end)
+
 describe("paint_number", function()
   it("colors the number snacks put in the column", function()
     local column = "%@click@  %=12 %#GitSign#▎%T"

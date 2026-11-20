@@ -196,7 +196,9 @@ Bad: `fix`, `various improvements`, `wip`, `feat: add role-validation-system`.
 
 ---
 
-## PRs: same voice, same honesty
+## PRs: plain voice, same honesty
+
+PRs carry no character. No voice, no one liner signed by anyone, no mention of Claire, Malenia or any other character in the body. That flavor stays in commits.
 
 ### Title
 
@@ -206,20 +208,17 @@ Good: `[feature/role-validation] Add role validation to OpenSearch handlers`
 
 ### Body
 
-- 1 to 2 casual sentences up top in the chosen character's voice, positive and forward looking. Never snarky about old code or past decisions.
+- 1 to 2 casual sentences up top in plain words, positive and forward looking. Never snarky about old code or past decisions.
 - Then a `## What changed` section with hyphen bullets, concrete and objective.
-- Optional closing one liner in the character's voice.
-- No test plans. No AI signature. Reread the whole thing for em dashes before submitting.
+- No closing one liner, no test plans, no AI signature. Reread the whole thing for em dashes before submitting.
 
 ```
-Roles existed in the DB but nobody was checking them before letting requests through. Claire took care of that.
+Roles existed in the DB but nobody was checking them before letting requests through. Now every OpenSearch handler checks them first.
 
 ## What changed
 - Seeded 10 new action constants and role_action rows for all roles
 - Wrapped all 13 OpenSearch handlers with requirePermission
 - Added requirePermission helper to shared authorization so future handlers only need one line
-
--- claire: the doors lock now. you're welcome, raccoon city.
 ```
 
 ---

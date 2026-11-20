@@ -109,6 +109,24 @@ end
 
 -- how bright each line number stays as it moves away from the cursor, nearest first
 M.GUTTER_STEPS = { 0.85, 0.68, 0.55, 0.44, 0.34 }
+-- the faintest a number may get and still be read for a relative jump
+M.GUTTER_FLOOR = 3.0
+
+---The color of a line number at one step of the fade, never fainter than GUTTER_FLOOR.
+---@param p table region palette
+---@param index integer step in GUTTER_STEPS, 1 is the nearest to the cursor
+---@return string "#RRGGBB"
+function M.number_color(p, index)
+  local themes = require("core.themes.actions")
+  local fg = themes.blend(p.subtext1, p.base, M.GUTTER_STEPS[index])
+  if themes.contrast(fg, p.base) < M.GUTTER_FLOOR then
+    fg = themes.tint_to_contrast(p.subtext1, p.base, M.GUTTER_FLOOR)
+  end
+  if index == 1 then
+    fg = themes.blend(p.yellow, fg, 0.35)
+  end
+  return fg
+end
 
 ---The highlight group of a relative line number, nil on the cursor line of the window in focus.
 ---Every number of a window out of focus takes the faintest step, so the eye finds the active one.

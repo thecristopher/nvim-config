@@ -162,6 +162,9 @@ return {
           DiagnosticVirtualTextWarn = { fg = c.peach, bg = t.diag_warn_bg, style = { "italic" } },
           DiagnosticVirtualTextHint = { fg = c.teal, bg = t.diag_hint_bg, style = { "italic" } },
           DiagnosticVirtualTextInfo = { fg = c.blue, bg = t.diag_info_bg, style = { "italic" } },
+          -- inlay hints and code lenses are read like a comment, so they take the brighter gray
+          LspInlayHint = { fg = c.overlay1, bg = t.inlay },
+          LspCodeLens = { fg = c.overlay1 },
           -- Diff
           DiffAdd = { bg = t.diff_add },
           DiffChange = { bg = t.diff_change },
