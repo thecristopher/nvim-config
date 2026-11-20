@@ -257,6 +257,7 @@ function M.show(name, opts)
   if opts.sound ~= false then
     require("core.sound").play(name)
   end
+  require("core.pixel").pop(name)
   if actions.rains(name, vim.bo.buftype, vim.g.eldentree_rain) then
     crumble(kind.duration)
   end
