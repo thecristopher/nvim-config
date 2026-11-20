@@ -20,7 +20,6 @@ local function read_settings(file)
 end
 
 local function plan(root)
-  local lores = vim.tbl_map(franchise.lore, franchise.names())
   -- the PATH entry survives upgrades, progpath points inside a versioned install folder
   local nvim = ('"%s" -l'):format(
     vim.fn.exepath("nvim") ~= "" and vim.fn.exepath("nvim") or vim.v.progpath
@@ -28,7 +27,11 @@ local function plan(root)
   return {
     statusline = ('%s "%s/claude/statusline.lua"'):format(nvim, root),
     hook = ('%s "%s/claude/hook.lua"'):format(nvim, root),
-    verbs = settings.verbs(lores),
+    verbs = settings.verbs_for(
+      require("core.franchise").current(),
+      require("core.themes").current()
+    ),
+    known = settings.known_verbs(vim.tbl_map(franchise.lore, franchise.all_names())),
     theme = require("core.claude_ui.actions").THEME_SLUG,
   }
 end

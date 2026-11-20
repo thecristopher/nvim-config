@@ -118,6 +118,14 @@ describe("render", function()
     assert.truthy(bottom:find("HERBS", 1, true))
   end)
 
+  it("draws Wanda's own HEX and CHAOS instead of the stage's bars", function()
+    local wardrobe = franchise.lore("elizabeth")
+    local bottom = plain(statusline.render(MALENIA_SESSION, ctx(wardrobe))[2])
+    assert.truthy(bottom:find("HEX", 1, true))
+    assert.truthy(bottom:find("CHAOS", 1, true))
+    assert.falsy(bottom:find(wardrobe.claude.bars.five_hour, 1, true))
+  end)
+
   it("leaves out the bars a session does not report yet", function()
     local rows = statusline.render({ model = { display_name = "Opus 5.5" } }, ctx(elden))
     assert.equal(1, #rows)
@@ -236,10 +244,52 @@ describe("merge", function()
   end)
 end)
 
-describe("verbs", function()
-  it("gathers every franchise's verbs without repeats", function()
-    local verbs = settings.verbs({ elden, raccoon, elden })
-    assert.equal(#elden.claude.verbs + #raccoon.claude.verbs, #verbs)
-    assert.equal(elden.claude.verbs[1], verbs[1])
+describe("verbs_for", function()
+  local wardrobe = franchise.lore("elizabeth")
+  local function role(name)
+    return vim.iter(wardrobe.regions):find(function(region)
+      return region.name == name
+    end)
+  end
+
+  it("spins Wanda's verbs and the stage's, never Psylocke's", function()
+    local verbs = settings.verbs_for(wardrobe, role("westview"))
+    assert.truthy(vim.tbl_contains(verbs, "Weaving a hex"))
+    assert.truthy(vim.tbl_contains(verbs, wardrobe.claude.verbs[1]))
+    assert.falsy(vim.tbl_contains(verbs, "Focusing the psychic blade"))
+  end)
+
+  it("falls back to the franchise's verbs for a region without its own", function()
+    assert.same(elden.claude.verbs, settings.verbs_for(elden, haligtree))
+  end)
+end)
+
+describe("set_verbs", function()
+  local known = { "Weaving a hex", "Focusing the psychic blade", "Rehearsing the scene" }
+
+  it("swaps Wanda's verbs for Psylocke's and keeps Claire's own", function()
+    local data = {
+      spinnerVerbs = { mode = "append", verbs = { "Plotting", "Weaving a hex" } },
+    }
+    assert.is_true(settings.set_verbs(data, { "Focusing the psychic blade" }, known))
+    assert.same({ "Plotting", "Focusing the psychic blade" }, data.spinnerVerbs.verbs)
+  end)
+
+  it("says nothing changed when Malenia keeps her role", function()
+    local data = { spinnerVerbs = { mode = "append", verbs = { "Rehearsing the scene" } } }
+    assert.is_false(settings.set_verbs(data, { "Rehearsing the scene" }, known))
+  end)
+end)
+
+describe("known_verbs", function()
+  it("gathers every franchise's and every role's verbs without repeats", function()
+    local wardrobe = franchise.lore("elizabeth")
+    local verbs = settings.known_verbs({ elden, raccoon, wardrobe, elden })
+    assert.truthy(vim.tbl_contains(verbs, elden.claude.verbs[1]))
+    assert.truthy(vim.tbl_contains(verbs, "Waiting on the bloom"))
+    assert.equal(#verbs, #vim.tbl_keys(vim.iter(verbs):fold({}, function(seen, verb)
+      seen[verb] = true
+      return seen
+    end)))
   end)
 end)

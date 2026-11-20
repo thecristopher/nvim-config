@@ -170,6 +170,25 @@ describe("guest messages", function()
   end)
 end)
 
+describe("region messages", function()
+  local stage = { hub_messages = { "Lights, camera, refactor" } }
+  local westview = { name = "westview", hub_messages = { "Westview had fewer side effects" } }
+
+  it("lets Wanda speak only of her own world while she plays", function()
+    assert.equal(
+      "Westview had fewer side effects",
+      actions.pick_message(always(0), stage, westview)
+    )
+  end)
+
+  it("falls back to the stage's lines for a role without its own", function()
+    assert.equal(
+      "Lights, camera, refactor",
+      actions.pick_message(always(0), stage, { name = "zebes" })
+    )
+  end)
+end)
+
 describe("occupied with a margin", function()
   it("keeps the weather out of the gaps between Malenia's spaced letters", function()
     local taken = actions.occupied({ { "M", 1 }, { " ", 1 }, { " ", 1 }, { "A", 1 } }, 2)

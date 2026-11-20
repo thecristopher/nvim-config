@@ -125,7 +125,9 @@ local function meter(label, remaining, color, p)
 end
 
 local function meters(data, ctx)
-  local p, bars = ctx.region.palette, ctx.lore.claude.bars
+  -- a role may name its own bars, the franchise's are the fallback
+  local p = ctx.region.palette
+  local bars = (ctx.region.claude or {}).bars or ctx.lore.claude.bars
   local parts = {}
   local rate_limits = data.rate_limits or {}
   local five_hour = remaining_of(rate_limits.five_hour)
