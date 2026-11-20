@@ -152,6 +152,20 @@ describe("derive", function()
   end
 end)
 
+describe("slot_contrast", function()
+  local claire = { base = "#000000", red = "#FF0000", overlay0 = "#777777" }
+
+  it("measures a gray on the base", function()
+    assert.equal(actions.contrast("#777777", "#000000"), actions.slot_contrast(claire, "overlay0"))
+  end)
+
+  it("measures red on its own error background, which reads lower than on the base", function()
+    local on_tint = actions.slot_contrast(claire, "red")
+    assert.equal(actions.contrast("#FF0000", actions.blend("#FF0000", "#000000", 0.10)), on_tint)
+    assert.is_true(on_tint < actions.contrast("#FF0000", "#000000"))
+  end)
+end)
+
 describe("contrast", function()
   it("is 21 for black on white", function()
     assert.equal(21, actions.contrast("#000000", "#FFFFFF"))

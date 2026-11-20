@@ -316,11 +316,18 @@ local function check_syntax(lore, region, problems)
       table.insert(problems, ("%s %s looks like its error color"):format(region.name, role))
     end
   end
-  local comment = themes.contrast(themes.derive(p).comment, p.base)
-  if comment < 3.0 or comment > 3.5 then
+  local tints = themes.derive(p)
+  local comment = themes.contrast(tints.comment, tints.cursorline)
+  if
+    comment < themes.COMMENT_CONTRAST or comment >= themes.contrast(p.subtext0, tints.cursorline)
+  then
     table.insert(
       problems,
-      ("%s comments contrast %.2f, keep them between 3.0 and 3.5"):format(region.name, comment)
+      ("%s comments contrast %.2f on the cursor line, keep them at %.1f or more and under the parameters"):format(
+        region.name,
+        comment,
+        themes.COMMENT_CONTRAST
+      )
     )
   end
 end
@@ -364,6 +371,15 @@ local function check_palette(region, problems)
   end
   if p.yellow == p.red then
     table.insert(problems, region.name .. " uses its accent as the error color")
+  end
+  for slot, floor in pairs(themes.SLOT_FLOORS) do
+    local ratio = themes.slot_contrast(p, slot)
+    if ratio < floor then
+      table.insert(
+        problems,
+        ("%s %s contrast %.2f, it needs %.1f to read"):format(region.name, slot, ratio, floor)
+      )
+    end
   end
   if themes.contrast(themes.derive(p).separator, p.base) < 2.0 then
     table.insert(problems, region.name .. " separators are too faint on its base")

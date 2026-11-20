@@ -204,6 +204,22 @@ for _, name in ipairs(actions.all_names()) do
           assert.is_true(ratio >= 1.07 and ratio < 1.15)
         end
       )
+
+      for slot, floor in pairs(themes.SLOT_FLOORS) do
+        it(("keeps %s's %s readable"):format(region.title, slot), function()
+          assert.is_true(themes.slot_contrast(p, slot) >= floor)
+        end)
+      end
+
+      it(("lets %s's comments read on the cursor line"):format(region.title), function()
+        local tints = themes.derive(p)
+        assert.is_true(themes.contrast(tints.comment, tints.cursorline) >= themes.COMMENT_CONTRAST)
+      end)
+
+      it(("keeps %s's comments quieter than the parameters"):format(region.title), function()
+        local comment = themes.contrast(themes.derive(p).comment, p.base)
+        assert.is_true(comment < themes.contrast(p.subtext0, p.base))
+      end)
     end
   end)
 end

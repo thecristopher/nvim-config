@@ -223,8 +223,24 @@ function M.cap_contrast(fg, bg, ceiling)
   return fg
 end
 
--- comments sit between the line numbers and the code, readable without competing with it
-M.COMMENT_CONTRAST = 3.2
+-- comments read at the WCAG body text minimum even on the cursor line, and stay under the code
+M.COMMENT_CONTRAST = 4.5
+
+-- the contrast each palette slot needs where it is read: the grays carry line numbers, delimiters,
+-- footers and inlay hints, the accent carries text drawn on it, and red carries the error messages
+M.SLOT_FLOORS = { overlay0 = 3.0, overlay1 = 4.0, overlay2 = 4.5, yellow = 4.5, red = 4.5 }
+
+--- Returns the contrast a palette slot reaches where it is read: red on its own diagnostic
+--- background, every other slot on the base.
+---@param p table region palette
+---@param slot string palette slot
+---@return number
+function M.slot_contrast(p, slot)
+  if slot == "red" then
+    return M.contrast(p.red, M.blend(p.red, p.base, 0.10))
+  end
+  return M.contrast(p[slot], p.base)
+end
 
 -- tinted backgrounds are derived, so a new region only needs its 26 base colors
 function M.derive(p)
@@ -232,18 +248,24 @@ function M.derive(p)
     return M.blend(color, p.base, alpha)
   end
   local text_contrast = M.contrast(p.text, p.base)
+  local cursorline = tint(p.yellow, 0.06)
   return {
     -- the accent marks focus (the cursor number, the mode, the scope), the tokens get their own
     -- colors so a keyword never looks like an error in a red region
     keyword = M.away_from_error(p, p.yellow),
     -- functions stay a step under the text, which is always the brightest thing on screen
     func = M.cap_contrast(p.rosewater, p.base, text_contrast * 0.88),
-    comment = M.tint_to_contrast(M.blend(p.yellow, p.subtext0, 0.12), p.base, M.COMMENT_CONTRAST),
+    comment = M.tint_to_contrast(
+      M.blend(p.yellow, p.subtext0, 0.12),
+      cursorline,
+      M.COMMENT_CONTRAST
+    ),
     border = M.blend(p.yellow, p.overlay1, 0.4),
     search = M.away_from_error(p, p.yellow),
-    cursorline = tint(p.yellow, 0.06),
+    cursorline = cursorline,
     cursorline_insert = tint(p.yellow, 0.16),
     visual = tint(p.rosewater, 0.15),
+    -- slot_contrast measures red on this same tint, keep them together
     diag_error_bg = tint(p.red, 0.10),
     diag_warn_bg = tint(p.peach, 0.10),
     diag_hint_bg = tint(p.teal, 0.10),
@@ -255,6 +277,7 @@ function M.derive(p)
     indent = tint(p.overlay0, 0.35),
     indent_scope = tint(p.yellow, 0.25),
     glance_preview = tint(p.surface0, 0.45),
+    inlay = tint(p.surface0, 0.64),
     glance_cursorline = tint(p.yellow, 0.08),
     blame = tint(p.overlay1, 0.85),
     stopped_line = tint(p.yellow, 0.14),

@@ -8,13 +8,8 @@ local EXPRESSION = "%!v:lua.require'core.chrome.gutter'.render()"
 
 local function define_highlights()
   local p = require("core.themes").palette()
-  local blend = require("core.themes.actions").blend
-  for index, step in ipairs(actions.GUTTER_STEPS) do
-    local fg = blend(p.subtext1, p.base, step)
-    if index == 1 then
-      fg = blend(p.yellow, fg, 0.35)
-    end
-    vim.api.nvim_set_hl(0, "EldenNr" .. index, { fg = fg })
+  for index in ipairs(actions.GUTTER_STEPS) do
+    vim.api.nvim_set_hl(0, "EldenNr" .. index, { fg = actions.number_color(p, index) })
   end
 end
 
