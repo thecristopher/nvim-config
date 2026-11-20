@@ -60,6 +60,10 @@ local function run(args, on_ok, task)
 end
 
 -- the network can take a while, so these steps show the moving bar until git answers
+local function sound(event)
+  require("core.sound").play(event)
+end
+
 local function progress(message)
   return require("core.progress").start({ id = "eldentree_git", title = "Git", message = message })
 end
@@ -144,6 +148,7 @@ function M.stage()
   if #skipped > 0 then
     msg = msg .. "\nLeft out: " .. table.concat(skipped, ", ")
   end
+  sound("files")
   notify(msg)
 end
 
@@ -157,6 +162,7 @@ local function create_branch(prefix)
       return notify("Branch name is empty.", vim.log.levels.WARN)
     end
     run({ "switch", "-c", branch }, function()
+      sound("branch")
       notify("Switched to new branch " .. branch)
     end)
   end)
@@ -182,6 +188,7 @@ function M.pull()
   local task = progress("Pulling…")
   run({ "pull" }, function(out)
     task:done("Pulled: " .. last_line(out))
+    sound("pulled")
   end, task)
 end
 
@@ -195,6 +202,7 @@ function M.push()
   local root = M.repo()
   run(actions.push_args(M.has_upstream()), function()
     task:done("Pushed " .. branch)
+    sound("pushed")
     require("core.voice").say("pushed", { branch = branch })
     require("core.ci").soon()
     -- a push can outdate threads or answer them, GitHub needs a moment to catch up
@@ -216,6 +224,7 @@ function M.sync()
     task:update("Merging origin/" .. base .. "…")
     run({ "merge", "--no-edit", "origin/" .. base }, function(out)
       task:done("Merged origin/" .. base .. ": " .. last_line(out))
+      sound("pulled")
     end, task)
   end, task)
 end
@@ -234,6 +243,7 @@ function M.home()
     task:update("Pulling " .. base .. "…")
     run({ "pull" }, function(out)
       task:done("On " .. base .. ": " .. last_line(out))
+      sound("pulled")
     end, task)
   end, task)
 end
@@ -244,6 +254,7 @@ function M.stash()
     return
   end
   run({ "stash", "push", "--include-untracked" }, function(out)
+    sound("stash")
     notify(last_line(out))
   end)
 end
@@ -254,6 +265,7 @@ function M.stash_pop()
     return
   end
   run({ "stash", "pop" }, function()
+    sound("unstash")
     notify("Stash restored.")
   end)
 end
@@ -295,6 +307,7 @@ function M.undo_commit()
     return
   end
   run({ "reset", "--soft", "HEAD~1" }, function()
+    sound("undo")
     notify("Undid: " .. subject)
   end)
 end

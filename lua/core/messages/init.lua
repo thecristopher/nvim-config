@@ -133,6 +133,7 @@ function M.write()
     vim.ui.input({ prompt = "Fill the blank: " }, function(word)
       local text = actions.compose(template, word)
       if text then
+        require("core.sound").play("typing")
         write_message(buf, line, text)
       end
     end)
@@ -158,6 +159,7 @@ function M.erase()
     return
   end
   write_store(store)
+  require("core.sound").play("undo")
   M.render(buf)
 end
 

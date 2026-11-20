@@ -221,7 +221,7 @@ function M.open()
     vibe = vim.trim(vibe)
 
     local vibe_line = vibe ~= ""
-        and ('The user set the vibe: "' .. vibe .. '". Let that flavor the personality of the message.')
+        and ('The user set the vibe: "' .. vibe .. '". Let that color the tone of the message.')
       or "No specific vibe set. Follow the style guide naturally."
 
     local lines = { "Write a git commit message for the staged diff below.", "" }

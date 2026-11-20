@@ -78,6 +78,7 @@ function M.open()
   local rows =
     actions.grid(history, commits(require("core.repos").root(), since), os.date("%Y-%m-%d"))
   local lines, marks = render(rows)
+  require("core.sound").play("files")
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)

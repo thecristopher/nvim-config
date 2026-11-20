@@ -9,21 +9,33 @@ local M = {}
 -- the line said last, so the same one never comes twice in a row
 local last = nil
 
----Has the region's character say their line for a moment, as a notification under their name.
+---The region's character's line for a moment, filled in, or nil when they have nothing to say.
 ---@param moment string like trial_passed, ci_failed, pushed or boss_felled
 ---@param vars table<string, string>|nil values for the line's holes, like branch or boss
-function M.say(moment, vars)
+---@return string|nil line
+---@return string|nil character who says it
+function M.line(moment, vars)
   if vim.g.eldentree_voice == false then
-    return
+    return nil
   end
   local region = require("core.themes").current()
   local voices = require("core.franchise").current().voices
   local line = actions.line(voices, region.name, moment, math.random(), last)
   if not line then
-    return
+    return nil
   end
   last = line
-  vim.notify(actions.fill(line, vars), vim.log.levels.INFO, { title = region.character })
+  return actions.fill(line, vars), region.character
+end
+
+---Has the region's character say their line for a moment, as a notification under their name.
+---@param moment string like trial_passed, ci_failed, pushed or boss_felled
+---@param vars table<string, string>|nil values for the line's holes, like branch or boss
+function M.say(moment, vars)
+  local line, character = M.line(moment, vars)
+  if line then
+    vim.notify(line, vim.log.levels.INFO, { title = character })
+  end
 end
 
 -- the day the character last said good morning, so the greeting comes once a day

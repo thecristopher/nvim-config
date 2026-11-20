@@ -53,6 +53,16 @@ describe("channel", function()
     assert.equal("hud", actions.channel("hud_move"))
     assert.equal("moment", actions.channel("felled"))
   end)
+
+  it("keeps Claire's tab and page turns on the inventory's own channel", function()
+    for _, event in ipairs({ "hud_tab", "hud_page", "hud_menu", "hud_check", "hud_combine" }) do
+      assert.equal("hud", actions.channel(event))
+    end
+  end)
+
+  it("plays Malenia's saves among the moments", function()
+    assert.equal("moment", actions.channel("save"))
+  end)
 end)
 
 describe("arbitrate", function()
@@ -75,6 +85,14 @@ describe("arbitrate", function()
   it("lets a moment replace another of the same weight", function()
     assert.same({ true, true }, { actions.arbitrate("great", "felled") })
   end)
+
+  it("lets the stamp on Inde's pushed love letter cut a yank short", function()
+    assert.same({ true, true }, { actions.arbitrate("pushed", "yank") })
+  end)
+
+  it("keeps a yank quiet while the APPROVED stamp lands", function()
+    assert.same({ false, false }, { actions.arbitrate("yank", "pushed") })
+  end)
 end)
 
 describe("EVENTS", function()
@@ -95,6 +113,26 @@ describe("EVENTS", function()
       assert.is_true(vim.tbl_contains(actions.EVENTS, event))
     end
   end)
+
+  it("lists what Claire does at the desk: saving, yanking and the git chores", function()
+    for _, event in ipairs({ "save", "yank", "branch", "pulled", "pushed", "stash", "unstash" }) do
+      assert.is_true(vim.tbl_contains(actions.EVENTS, event))
+    end
+  end)
+
+  it(
+    "gives the Raccoon City safe room a sound for every event but the other worlds' travels",
+    function()
+      local folder = vim.fn.getcwd() .. "/sounds/resident_evil"
+      local present = vim.fn.readdir(folder)
+      local travels_elsewhere = { fog = true, curtain = true }
+      for _, event in ipairs(actions.EVENTS) do
+        if not travels_elsewhere[event] then
+          assert.is_true(#actions.candidates(present, event) > 0, event .. " has no file")
+        end
+      end
+    end
+  )
 end)
 
 describe("debounce_ms", function()

@@ -195,6 +195,7 @@ function M.open()
       { title = "Map" }
     )
   end
+  require("core.sound").play("map")
   open_float(rooms, root)
 end
 

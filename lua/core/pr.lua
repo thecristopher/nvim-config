@@ -347,18 +347,21 @@ end
 local function published(buf, ctx, title, url)
   vim.bo[buf].modified = false
   require("core.banner").show("great", { subtitle = title })
-  -- only a new PR is worth a word from the character, an update is routine
-  if not ctx.pr then
-    require("core.voice").say("pr_opened", { number = url:match("/pull/(%d+)") or "" })
-  end
   -- a new PR gives the branch threads to follow, GitHub needs a moment to list it
   require("core.threads").refresh(nil, 5000)
   vim.schedule(function()
     pcall(vim.api.nvim_win_close, 0, true)
     pcall(vim.api.nvim_buf_delete, buf, { force = true })
   end)
-  return ctx.pr and say("updated", { number = ctx.pr.number, url = url })
-    or say("created", { url = url })
+  if ctx.pr then
+    return say("updated", { number = ctx.pr.number, url = url })
+  end
+  -- only a new PR is worth a word from the character, said in the same notification as the link
+  -- so the elapsed time still lands after the link
+  local line, character =
+    require("core.voice").line("pr_opened", { number = url:match("/pull/(%d+)") or "" })
+  local created = say("created", { url = url })
+  return line and ("%s: %s\n\n%s"):format(character, line, created) or created
 end
 
 local function publish(buf, ctx, title, body, task)

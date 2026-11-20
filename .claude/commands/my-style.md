@@ -167,29 +167,22 @@ it("keeps Malenia's love letter private from Wesker", () => { ... });
 
 ---
 
-## Commits: written by a character, read like a human
+## Commits: plain and human
 
-Each commit is written in the voice of a Resident Evil character or Malenia. Pick the one whose personality fits the change (Leon dry and done with it, Claire determined, Jill precise, Chris blunt, Ada cryptic, Wesker smug, Malenia calm and relentless).
-
-The voice is the flavor. The content is concrete, objective and human: what changed and why, specific enough that someone reading `git log` a year later understands it.
+Commits carry no character. No voice, no one liner signed by anyone, no closing quip. The content is concrete, objective and human: what changed and why, specific enough that someone reading `git log` a year later understands it.
 
 - Subject: imperative, specific, under 72 chars. "Add" means new, "Update" means changed, "Fix" means a broken thing now works.
 - Body (when needed): a few plain lines on what and why.
-- Last line: an original one liner in the character's voice about this exact change, after a blank line and `--`. Not a real game quote. Skip it if nothing clever lands.
 
 ```
 Add permission check to OpenSearch handlers
 
 Wrapped all 13 handlers with requirePermission so Editorial and QA
 can read but not write.
-
--- leon: apparently we were just letting everyone in. bold strategy.
 ```
 
 ```
 Fix null session crash before the DB lookup
-
--- malenia: I have never known defeat. nil, however, came close.
 ```
 
 Bad: `fix`, `various improvements`, `wip`, `feat: add role-validation-system`.
@@ -198,7 +191,7 @@ Bad: `fix`, `various improvements`, `wip`, `feat: add role-validation-system`.
 
 ## PRs: plain voice, same honesty
 
-PRs carry no character. No voice, no one liner signed by anyone, no mention of Claire, Malenia or any other character in the body. That flavor stays in commits.
+PRs carry no character either. No voice, no one liner signed by anyone, no mention of Claire, Malenia or any other character in the body.
 
 ### Title
 
@@ -253,4 +246,4 @@ Before saying a change is done, verify every item and fix anything that fails:
 
 ---
 
-That is the style. Readable code, honest docs, real tests starring Claire, Malenia and Inde, and commits that sound like a person (or a demigod) wrote them.
+That is the style. Readable code, honest docs, real tests starring Claire, Malenia and Inde, and commits and PRs that sound like a person wrote them.
