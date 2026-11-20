@@ -46,8 +46,8 @@ return {
     folder = { closed = "󰉋", open = "󰝰", empty = "󰉖" },
     thread = "󰍩",
     message = "󰼭",
-    left = "□",
-    cleared = "■",
+    left = "\u{F0027}",
+    cleared = "\u{F0132}",
   },
   -- the code's own signature: a typewriter writes upright, so no italics anywhere, bold keywords and
   -- types stamped on the page, strings in herb green
