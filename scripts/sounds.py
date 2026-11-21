@@ -162,22 +162,6 @@ def re_boss():
     return mix(*layers), ROOM
 
 
-def re_felled():
-    # the item pickup chirp, two notes up
-    first = envelope(tone(880, 0.09, "square"), 0.004, 0.03)
-    second = envelope(tone(1320, 0.22, "square"), 0.004, 0.15)
-    return lowpass(mix((first, 0.5, 0.0), (second, 0.5, 0.1)), 3600), ROOM
-
-
-def re_great():
-    # mission complete: a rising arpeggio that lands on a held chord
-    notes = [523.25, 659.25, 783.99, 1046.5]
-    layers = [(envelope(tone(freq, 0.16, "square"), 0.005, 0.08), 0.35, index * 0.12) for index, freq in enumerate(notes)]
-    held = envelope(lowpass(chord([523.25, 659.25, 783.99], 1.6, "saw"), 2400), 0.05, 0.9)
-    layers.append((held, 0.8, 0.5))
-    return mix(*layers), HALL
-
-
 def er_choir_pad(freqs, seconds, brightness):
     """Detuned saws through a slowly opening filter, the closest thing to a choir from scratch."""
     pad = chord(freqs, seconds, "saw", detune=0.006)
@@ -480,9 +464,10 @@ def er_expedition():
 
 RECIPES = {
     # everything else is a clip from the games: the save room, the typewriter, the merchant, the
-    # inventory, the character select (region), a key (zone), a herb (cleansed) and the radio
+    # inventory, the character select (region), a key (zone and great), a herb (cleansed and
+    # felled) and the radio
     "resident_evil": {
-        "boss": re_boss, "felled": re_felled, "great": re_great,
+        "boss": re_boss,
     },
     # title, died, felled, grace, rest, zone, merchant, phantom and continue are clips from the game, so they are not built here
     "elden_ring": {
@@ -540,8 +525,10 @@ CLIPS = {
         "pushed": {}, "map": {}, "files": {}, "accessing": {"max": 2.0, "fade": 0.6},
         # the radio clicks off when Claude answers
         "accessed": {"loudness": None, "peak": -15},
-        # the character select names who the day belongs to, a key opens a new area, a herb heals
+        # the character select names who the day belongs to, a key opens a new area, a herb heals.
+        # A win heals like the herb and a big one opens the way like the key
         "region": {"max": 3.5}, "zone": {"max": 2.2, "loudness": -27}, "cleansed": {},
+        "felled": {}, "great": {"max": 2.2, "loudness": -27},
     },
 }
 
