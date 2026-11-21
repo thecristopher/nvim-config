@@ -89,7 +89,6 @@ return {
       },
       expedition = { expedition = "Okay, nice and quiet." },
       traveled = { traveled = "Stay close to me, alright?" },
-      returned = { returned = "This place again, fine. I know the way." },
       committing = { committing = "Working on that commit, cover me!" },
     },
   },

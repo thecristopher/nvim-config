@@ -30,7 +30,6 @@ M.SPOKEN = {
   "resting",
   "expedition",
   "traveled",
-  "returned",
   "committing",
 }
 
