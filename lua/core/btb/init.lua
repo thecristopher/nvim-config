@@ -73,6 +73,22 @@ function M.portrait(_, win, persona)
   })
 end
 
+-- the day the coach last asked whether you are ready, so the stage only asks the first time
+local asked_on = nil
+
+-- what the coach says out loud at a coach event, over the stage that already shows her words
+local function speak(event)
+  local today = os.date("%Y-%m-%d")
+  if event == "coach_open" and asked_on ~= today then
+    asked_on = today
+    return require("core.voice").say("lesson_started", nil, { quiet = true })
+  end
+  if event == "hint" then
+    return require("core.voice").say("hint", nil, { quiet = true })
+  end
+  return false
+end
+
 ---Plays the franchise sound that fits a coach event.
 ---@param event string
 function M.sound(event)
@@ -80,6 +96,7 @@ function M.sound(event)
   if sounds then
     require("core.sound").play_first(sounds)
   end
+  speak(event)
 end
 
 ---Refreshes the lessons the HUD shows, in the background.
@@ -137,9 +154,16 @@ local function refresh_statusline()
   require("core.utils").refresh_statusline()
 end
 
+-- clean solves in a row this session, the coach counts them out loud
+local streak = 0
+
 local function celebrate(result)
   local fanfare = actions.celebration(result)
-  local praise = actions.pass_sound(result)
+  local moment
+  moment, streak = actions.solve_moment(result, streak)
+  -- the coach's own voice wins over the merchant's praise, two voices never talk at once
+  local spoke = moment and require("core.voice").say(moment) or false
+  local praise = not spoke and actions.pass_sound(result) or nil
   -- the merchant's praise speaks over the banner where the franchise has it, the banner stays quiet
   local praised = praise and require("core.sound").play(praise) ~= nil
   if fanfare.banner then

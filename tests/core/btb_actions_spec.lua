@@ -138,6 +138,37 @@ describe("celebration", function()
   end)
 end)
 
+describe("solve_moment", function()
+  local clean = { ok = true, outcome = "clean" }
+
+  it("leaves Inde's first clean solve to the merchant's praise", function()
+    assert.are.same({ nil, 1 }, { actions.solve_moment(clean, 0) })
+  end)
+
+  it("has Claire count the second and third clean solves in a row", function()
+    assert.are.same({ "solved_twice", 2 }, { actions.solve_moment(clean, 1) })
+    assert.are.same({ "solved_thrice", 3 }, { actions.solve_moment(clean, 2) })
+  end)
+
+  it("has Claire cheer every solve past the third", function()
+    assert.are.same({ "solved", 4 }, { actions.solve_moment(clean, 3) })
+  end)
+
+  it("closes Inde's lesson when the pass ends the day, and keeps counting", function()
+    local day = { ok = true, outcome = "clean", day = { rank = "A" } }
+    assert.are.same({ "lesson_done", 3 }, { actions.solve_moment(day, 2) })
+  end)
+
+  it("breaks the run on a failure or a pass with hints, quietly", function()
+    assert.are.same({ nil, 0 }, { actions.solve_moment({ ok = false }, 2) })
+    assert.are.same({ nil, 0 }, { actions.solve_moment({ ok = true, outcome = "hinted" }, 2) })
+  end)
+
+  it("lets a redo neither count nor break Malenia's run", function()
+    assert.are.same({ nil, 2 }, { actions.solve_moment({ ok = true, redo = true }, 2) })
+  end)
+end)
+
 describe("portrait_file", function()
   it("finds Claire's portrait among the config's portraits", function()
     local file = actions.portrait_file("/config", { portrait = "claire.jpg" })

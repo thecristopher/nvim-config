@@ -51,6 +51,7 @@ M.EVENTS = {
   "unstash",
   "undo",
   "accessing",
+  "accessed",
   "map",
   "files",
 }
@@ -127,6 +128,7 @@ M.WEIGHT = {
   map = 2,
   files = 2,
   accessing = 2,
+  accessed = 2,
 }
 
 --- The channel an event plays on: every HUD sound shares one, every other moment the other.

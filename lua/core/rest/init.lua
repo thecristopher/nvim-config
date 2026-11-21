@@ -149,6 +149,7 @@ function M.rest()
   local width, height = vim.o.columns, vim.o.lines
   local s = { width = width, height = height, embers = {}, text_rows = {} }
   s.sound = require("core.sound").play("rest")
+  require("core.voice").say("resting", nil, { quiet = true })
   s.style = require("core.franchise").mechanic("rest")
   s.text = actions.layout(width, height, require("core.themes").current().title, {
     style = s.style,

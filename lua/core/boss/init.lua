@@ -291,6 +291,10 @@ local function engage(fight, stage)
   fight.entered_at = vim.uv.now()
   fight.name = stage and stage.name or actions.boss_for(require("core.themes").current().name)
   require("core.sound").play("boss")
+  -- staged fights belong to whoever staged them, like btb's coach
+  if not stage then
+    require("core.voice").say("boss_appeared")
+  end
   animate(fight, actions.ENTRANCE_MS)
 end
 
