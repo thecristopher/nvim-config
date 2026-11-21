@@ -294,6 +294,7 @@ function M.open(repo, picker)
   else
     require("core.sound").play("continue")
   end
+  require("core.voice").say(first_visit and "traveled" or "returned")
 
   if sessions and has_session() then
     require("persistence").load()

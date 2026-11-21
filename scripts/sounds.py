@@ -11,6 +11,8 @@ Usage:
     python3 scripts/sounds.py --clips resident_evil   # just one franchise's clips
     python3 scripts/sounds.py --variants      # derive the VARIANTS of the frequent sounds again
     python3 scripts/sounds.py --import ~/Downloads/clip.mp3 elden_ring bought
+    python3 scripts/sounds.py --voice ~/Downloads/line.mp3 resident_evil raccoon_city morning
+    python3 scripts/sounds.py --typewriter ~/Downloads/type_open.wav ~/Downloads/type_type.wav resident_evil grace
 """
 
 import glob
@@ -174,19 +176,6 @@ def re_great():
     held = envelope(lowpass(chord([523.25, 659.25, 783.99], 1.6, "saw"), 2400), 0.05, 0.9)
     layers.append((held, 0.8, 0.5))
     return mix(*layers), HALL
-
-
-def re_cleansed():
-    # containment: a filter sweep falling away, then a clean confirm chime
-    sweep = envelope(lowpass(noise(1.0, seed=21), lambda index: 3000 * math.exp(-index / 12000.0) + 120), 0.02, 0.4)
-    return mix((sweep, 0.7, 0.0), (bell(1568, 1.0), 0.45, 0.55)), ROOM
-
-
-def re_region():
-    # a new location: a low swell and the click of the map
-    swell = envelope(lowpass(chord([55.0, 82.41], 1.5, "saw"), 260), attack=0.6, release=0.6)
-    click = decay(highpass(noise(0.05, seed=5), 2000), 0.01)
-    return mix((swell, 0.9, 0.0), (click, 0.6, 1.2)), ROOM
 
 
 def er_choir_pad(freqs, seconds, brightness):
@@ -489,19 +478,11 @@ def er_expedition():
     return mix((gong, 0.8, 0.0), (breath, 0.4, 0.05)), HALL, MOMENT
 
 
-# Raccoon City's quiet new area chime: two soft square tones through a radio filter
-def re_zone():
-    first = envelope(tone(659.25, 0.12, "square"), 0.005, 0.06)
-    second = envelope(tone(987.77, 0.3, "square"), 0.005, 0.2)
-    return lowpass(mix((first, 0.5, 0.0), (second, 0.5, 0.13)), 2200), ROOM, {"trim": True}
-
-
 RECIPES = {
-    # title, door, rest (the save room), continue, grace (the typewriter saving), died (game over), merchant,
-    # bought, welcome, weapon, summon, comfort, expedition and the hud_ inventory sounds are clips from the game, so they are not built here
+    # everything else is a clip from the games: the save room, the typewriter, the merchant, the
+    # inventory, the character select (region), a key (zone), a herb (cleansed) and the radio
     "resident_evil": {
-        "boss": re_boss, "felled": re_felled, "great": re_great, "cleansed": re_cleansed,
-        "region": re_region, "zone": re_zone,
+        "boss": re_boss, "felled": re_felled, "great": re_great,
     },
     # title, died, felled, grace, rest, zone, merchant, phantom and continue are clips from the game, so they are not built here
     "elden_ring": {
@@ -557,6 +538,10 @@ CLIPS = {
         "branch": {"loudness": None, "peak": -15}, "stash": {"loudness": None, "peak": -15},
         "unstash": {"loudness": None, "peak": -15}, "pulled": {"loudness": None, "peak": -15},
         "pushed": {}, "map": {}, "files": {}, "accessing": {"max": 2.0, "fade": 0.6},
+        # the radio clicks off when Claude answers
+        "accessed": {"loudness": None, "peak": -15},
+        # the character select names who the day belongs to, a key opens a new area, a herb heals
+        "region": {"max": 3.5}, "zone": {"max": 2.2, "loudness": -27}, "cleansed": {},
     },
 }
 
@@ -643,6 +628,64 @@ def import_clip(source, franchise, event, scratch):
     )
     refine(target, CLIPS.get(franchise, {}).get(event, {}), scratch)
     print(f"{franchise}/{event}.wav imported")
+
+
+# ── typewriter ───────────────────────────────────────────────────────────────────
+# Saving at the typewriter: the carriage comes out, then a run of keystrokes at an uneven pace,
+# each a touch louder or softer, like someone typing their name on the ink ribbon.
+
+# (seconds after the carriage, gain) of every keystroke
+TYPEWRITER_KEYS = [
+    (0.80, 1.0), (0.95, 0.8), (1.13, 0.95), (1.24, 0.75), (1.44, 1.0), (1.56, 0.85),
+    (1.79, 0.9), (1.90, 0.7), (2.06, 1.0),
+]
+
+
+def compose_typewriter(carriage, key, target):
+    """Writes the carriage followed by TYPEWRITER_KEYS keystrokes into target."""
+    inputs = ["-i", carriage] + ["-i", key] * len(TYPEWRITER_KEYS)
+    chains = ["[0:a]aformat=channel_layouts=mono,aresample=%d[c]" % RATE]
+    labels = ["[c]"]
+    for index, (at, gain) in enumerate(TYPEWRITER_KEYS, start=1):
+        delay = int(at * 1000)
+        chains.append(
+            f"[{index}:a]aformat=channel_layouts=mono,aresample={RATE},volume={gain},adelay={delay}[k{index}]"
+        )
+        labels.append(f"[k{index}]")
+    chains.append("".join(labels) + f"amix=inputs={len(labels)}:normalize=0[out]")
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", *inputs, "-filter_complex", ";".join(chains),
+         "-map", "[out]", "-ac", "1", "-ar", str(RATE), target],
+        check=True,
+    )
+
+
+# ── voices ───────────────────────────────────────────────────────────────────────
+# The lines a region's character says out loud live in sounds/<franchise>/voices/<region>/, one
+# file per moment (variants as <moment>_2), with their words in the lore's voices.lua. They play on
+# their own channel over the moments, so they sit a little louder than the moments do.
+
+VOICE_LOUDNESS = -21
+
+
+def import_voice(source, franchise, region, stem, scratch):
+    """Brings a spoken line in as sounds/<franchise>/voices/<region>/<stem>.mp3, the silence at both
+    ends cut and evened out to VOICE_LOUDNESS so every line lands at the same level."""
+    folder = os.path.join(ROOT, franchise, "voices", region)
+    os.makedirs(folder, exist_ok=True)
+    staged = os.path.join(scratch, "voice.wav")
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", source, "-af", ",".join([LEAD, TRIM]),
+         "-ac", "1", "-ar", str(RATE), staged],
+        check=True,
+    )
+    level(staged, scratch, {"loudness": VOICE_LOUDNESS, "gain": 0})
+    target = os.path.join(folder, stem + ".mp3")
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", staged, "-codec:a", "libmp3lame", "-q:a", "4", target],
+        check=True,
+    )
+    print(f"{franchise}/voices/{region}/{stem}.mp3 imported")
 
 
 # ── variants ─────────────────────────────────────────────────────────────────────
@@ -757,7 +800,8 @@ def build(franchise, event, recipe, scratch):
 
 def main():
     """Builds the recipes of the franchises given (all by default), or with --clips finishes the
-    clips in CLIPS, or with --import SOURCE FRANCHISE EVENT brings a new clip in."""
+    clips in CLIPS, with --import SOURCE FRANCHISE EVENT brings a new clip in, or with
+    --voice SOURCE FRANCHISE REGION MOMENT brings a character's spoken line in."""
     if not shutil.which("ffmpeg"):
         sys.exit("ffmpeg is needed: brew install ffmpeg")
     args = sys.argv[1:]
@@ -771,6 +815,16 @@ def main():
             if len(args) != 4:
                 sys.exit("usage: sounds.py --import SOURCE FRANCHISE EVENT")
             return import_clip(args[1], args[2], args[3], scratch)
+        if args[:1] == ["--typewriter"]:
+            if len(args) != 5:
+                sys.exit("usage: sounds.py --typewriter CARRIAGE KEY FRANCHISE EVENT")
+            composed = os.path.join(scratch, "typewriter.wav")
+            compose_typewriter(args[1], args[2], composed)
+            return import_clip(composed, args[3], args[4], scratch)
+        if args[:1] == ["--voice"]:
+            if len(args) != 5:
+                sys.exit("usage: sounds.py --voice SOURCE FRANCHISE REGION MOMENT")
+            return import_voice(args[1], args[2], args[3], args[4], scratch)
         for franchise in args or list(RECIPES):
             os.makedirs(os.path.join(ROOT, franchise), exist_ok=True)
             for event, recipe in RECIPES[franchise].items():

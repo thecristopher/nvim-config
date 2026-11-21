@@ -1,7 +1,8 @@
 -- Plays the franchise's sounds from sounds/<franchise>/<event>.wav (or mp3, aiff, m4a, ogg).
 -- On macOS a resident player (core/sound/player.lua) plays them at once, afplay is the fallback.
 -- Sounds travel on two channels: the HUD's, where each sound replaces the last one, and the
--- moments', where a bigger moment cuts a smaller one and a smaller one stays quiet. Nothing plays
+-- moments', where a bigger moment cuts a smaller one and a smaller one stays quiet. The character's
+-- spoken lines (core/voice) have a third one of their own, over both. Nothing plays
 -- while nvim is out of focus, except a :Sound preview. A missing file stays quiet,
 -- vim.g.eldentree_sound = false silences everything.
 local actions = require("core.sound.actions")
@@ -49,8 +50,8 @@ local function sounding(channel)
   return entry and not entry.done and entry.event or nil
 end
 
-local function start(event, file, command)
-  local channel = actions.channel(event)
+local function start(event, file, command, channel)
+  channel = channel or actions.channel(event)
   local entry = { event = event, channel = channel }
   sounds = sounds + 1
   local function over()
@@ -108,6 +109,27 @@ function M.play(event, opts)
   end
   last_played[event], last_file[event] = now, file
   return start(event, path, command)
+end
+
+--- Plays a character's spoken line on the voice channel, over the moments and the HUD, cutting
+--- the line said before it so two never talk at once.
+---@param path string absolute path of the clip
+---@return { kill: fun() }|nil playing nil when sound is off, out of focus or nothing can play it
+function M.speak(path)
+  if silenced({}) then
+    return nil
+  end
+  local command = actions.command(path, executable)
+  if not (player.ready() or command) then
+    return nil
+  end
+  stop(channels.voice)
+  return start("voice", path, command, "voice")
+end
+
+---@return string the folder of the franchise's sounds
+function M.folder()
+  return folder()
 end
 
 --- Plays the first of the events the franchise has a file for, so each franchise can bring its own.

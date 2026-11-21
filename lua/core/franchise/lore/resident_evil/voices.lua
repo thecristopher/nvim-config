@@ -65,6 +65,33 @@ return {
       "Back? Okay, let's keep moving.",
       "Rested? Good. We've still got a city to get out of.",
     },
+    -- what Claire says out loud, each clip in sounds/resident_evil/voices/raccoon_city/
+    spoken = {
+      morning = { morning = "Hey Christopher, the whole city is going nuts. Ready for today?" },
+      region_arrived = {
+        region_arrived = "I'm looking for my brother Chris. Hey, you have the same name. Weird.",
+      },
+      lesson_started = { lesson_started = "Hey Chris, ready for today's lesson?" },
+      lesson_done = {
+        lesson_done = "You crushed today's lesson. Now, let's get back to the city. Umbrella is going down.",
+        lesson_done_2 = "Alright, another day behind us. Now, tell me more about Rockfort Island.",
+      },
+      solved = { solved = "Not even Leon could have done that better. On to the next one." },
+      solved_twice = { solved_twice = "Twice in a row? Awesome. Let me reload." },
+      solved_thrice = {
+        solved_thrice = "Okay, show off. Third one's the charm. Speaking of charms, where's Sherry?",
+      },
+      hint = { hint = "Don't worry, let me help you." },
+      boss_appeared = { boss_appeared = "Okay, handsome. We'll go through this together, okay?" },
+      resting = { resting = "Let's catch our breath, just for a minute." },
+      woke = {
+        woke = "Don't tell Elizabeth, but I think you're kind of cute. Wait, did you hear that?",
+      },
+      expedition = { expedition = "Okay, nice and quiet." },
+      traveled = { traveled = "Stay close to me, alright?" },
+      returned = { returned = "This place again, fine. I know the way." },
+      committing = { committing = "Working on that commit, cover me!" },
+    },
   },
   rpd = {
     trial_passed = {

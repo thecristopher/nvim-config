@@ -36,6 +36,7 @@ function M.run(prompt, cb)
     { text = true, stdin = prompt, timeout = actions.TIMEOUT_MS },
     function(res)
       vim.schedule(function()
+        require("core.sound").play("accessed")
         cb(actions.explain(res))
       end)
     end

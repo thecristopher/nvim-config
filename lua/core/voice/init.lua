@@ -1,6 +1,7 @@
 -- The character of the day's region speaks up when something happens: tests, CI, a push, a boss,
 -- a commit, a PR, a new region, the first nvim of the day, a merge cleared and waking from rest.
--- Lines live in each lore's voices.lua, a region without lines stays quiet.
+-- Lines live in each lore's voices.lua, a region without lines stays quiet. A region whose `spoken`
+-- names clips says them out loud instead, and only then speaks at the moments in actions.SPOKEN.
 -- vim.g.eldentree_voice = false silences them.
 local actions = require("core.voice.actions")
 
@@ -28,14 +29,47 @@ function M.line(moment, vars)
   return actions.fill(line, vars), region.character
 end
 
----Has the region's character say their line for a moment, as a notification under their name.
+-- the clip played last, so the same one never comes twice in a row
+local last_clip = nil
+
+-- plays the region's clip for a moment and returns what it says, nil when it has none or no
+-- sound can play right now
+local function speak(region, moment)
+  local voices = require("core.franchise").current().voices
+  local clip, line = actions.clip(voices, region.name, moment, math.random(), last_clip)
+  if not clip then
+    return nil
+  end
+  local sound = require("core.sound")
+  local dir = sound.folder() .. "/voices/" .. region.name
+  local ok, files = pcall(vim.fn.readdir, dir)
+  local file = ok and actions.clip_file(files, clip, require("core.sound.actions").EXTENSIONS)
+  if not file or not sound.speak(dir .. "/" .. file) then
+    return nil
+  end
+  last_clip = clip
+  return line
+end
+
+---Has the region's character say their line for a moment: out loud when the region has a clip
+---for it (sounds/<franchise>/voices/<region>/), written otherwise, both as a notification under
+---their name. A moment only heard out loud stays quiet without its clip.
 ---@param moment string like trial_passed, ci_failed, pushed or boss_felled
 ---@param vars table<string, string>|nil values for the line's holes, like branch or boss
-function M.say(moment, vars)
-  local line, character = M.line(moment, vars)
-  if line then
-    vim.notify(line, vim.log.levels.INFO, { title = character })
+---@param opts? { quiet?: boolean } quiet leaves the spoken words off screen, for moments that
+---already show something of their own (the coach's stage, the rest)
+---@return boolean spoke whether the character said it out loud
+function M.say(moment, vars, opts)
+  if vim.g.eldentree_voice == false then
+    return false
   end
+  local region = require("core.themes").current()
+  local spoken = speak(region, moment)
+  local line = spoken and actions.fill(spoken, vars) or M.line(moment, vars)
+  if line and not (spoken and opts and opts.quiet) then
+    vim.notify(line, vim.log.levels.INFO, { title = region.character })
+  end
+  return spoken ~= nil
 end
 
 -- the day the character last said good morning, so the greeting comes once a day
