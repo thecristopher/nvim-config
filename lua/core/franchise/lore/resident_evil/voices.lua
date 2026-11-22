@@ -190,6 +190,62 @@ return {
       "You're up. I'll pretend I didn't see you sleeping on duty.",
       "Rested. Good. Let's finish this before sunrise.",
     },
+    -- what Leon says out loud, each clip in sounds/resident_evil/voices/rpd/
+    spoken = {
+      morning = { morning = "Morning, Chris. No zombies on the radar yet. Give it an hour." },
+      region_arrived = {
+        region_arrived = "Leon Kennedy, RPD. First day on the job, and somehow I'm still late.",
+      },
+      title_shown = { title_shown = "Raccoon City. Hell of a first day." },
+      traveled = { traveled = "Nice place. Smells like trouble." },
+      lesson_started = {
+        lesson_started = "Training day. Relax, I was a rookie once too. For about one night.",
+      },
+      hint = { hint = "Hunnigan, talk to me. Okay. Look right there." },
+      solved = { solved = "That function had it coming." },
+      solved_twice = { solved_twice = "Two down. They really should've unionized." },
+      solved_thrice = {
+        solved_thrice = "Three for three. Somebody call an exterminator. Oh wait, that's me.",
+      },
+      solve_failed = {
+        solve_failed = "Missed. Don't worry, it'll come back. They always come back.",
+      },
+      lesson_done = {
+        lesson_done = "Lesson's done. Hunnigan owes me a coffee for this one.",
+        lesson_done_2 = "That's a wrap. Same time tomorrow, unless the castle needs me.",
+      },
+      boss_appeared = { boss_appeared = "Big guy. Let me guess, you're a hugger." },
+      boss_felled = { boss_felled = "Sorry, but I'm not on the menu." },
+      trial_started = { trial_started = "Let's see what crawls out of this one." },
+      trial_passed = {
+        trial_passed = "All green. Guess the tests finally learned some manners.",
+        trial_passed_2 = "Every test standing. Not bad for a night shift.",
+      },
+      trial_failed = { trial_failed = "Red. Guess the tests didn't get the memo." },
+      committing = { committing = "Writing the commit. Keep an eye on the windows." },
+      committed = {
+        committed = "Committed. That one's going in the report.",
+        committed_2 = "Committed. Unlike some people I know, Ada.",
+      },
+      pushed = { pushed = "Special delivery. No signature required." },
+      pr_drafting = { pr_drafting = "Writing it up. Hunnigan likes her reports short." },
+      pr_opened = { pr_opened = "PR's up. Reviewers, try not to bite." },
+      ci_passed = { ci_passed = "CI cleared it. Somebody tell Hunnigan, she'll never believe it." },
+      ci_failed = { ci_failed = "CI hit a dead end. Story of my career." },
+      conflicts_cleared = {
+        conflicts_cleared = "Two branches walked into a merge. Only one walked out.",
+      },
+      claude_asked = { claude_asked = "Hunnigan, I need intel. And maybe a vacation." },
+      map_opened = { map_opened = "Map's up. Whoever designed this place hated people." },
+      bestiary_opened = {
+        bestiary_opened = "Everyone who wanted me for dinner today. Popular guy.",
+      },
+      chronicle_opened = { chronicle_opened = "Every shift we survived. Put that in my file." },
+      message_written = { message_written = "Leaving a note. Somebody's gonna need it." },
+      resting = { resting = "Five minutes. Even zombies take a smoke break." },
+      woke = { woke = "Nap's over. The bugs didn't wait for you either." },
+      expedition = { expedition = "Where's everyone going? Bingo? Good. Nice and quiet." },
+    },
   },
   spencer_mansion = {
     trial_passed = {
