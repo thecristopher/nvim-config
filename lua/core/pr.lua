@@ -221,6 +221,7 @@ local function draft_via_claude(prompt, cb)
     title = say("title"),
     message = say("drafting"),
   })
+  require("core.voice").say("pr_drafting")
   require("core.claude").run(prompt, function(res)
     if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
       task:fail(say("failed"))

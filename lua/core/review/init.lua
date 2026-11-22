@@ -65,6 +65,7 @@ end
 local function analyze(pr, diff, task)
   task:update(say("reading", { number = pr.number }))
   local prompt = actions.build_prompt(pr, diff, vim.g.eldentree_review_lang)
+  require("core.voice").say("claude_asked")
   require("core.claude").run(prompt, function(res)
     if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
       return task:fail(

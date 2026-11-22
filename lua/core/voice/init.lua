@@ -74,8 +74,8 @@ end
 
 -- the day the character last said good morning, so the greeting comes once a day
 local MORNING_FILE = vim.fn.stdpath("state") .. "/eldentree_morning"
--- after the title screen and the HUD have had their moment
-local MORNING_DELAY_MS = 2500
+-- after the title screen, the HUD and the title's spoken line have had their moment
+local MORNING_DELAY_MS = 4000
 
 local function greet_once_a_day()
   local today = os.date("%Y-%m-%d")

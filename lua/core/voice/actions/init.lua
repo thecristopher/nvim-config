@@ -31,6 +31,14 @@ M.SPOKEN = {
   "expedition",
   "traveled",
   "committing",
+  "pr_drafting",
+  "trial_started",
+  "claude_asked",
+  "map_opened",
+  "bestiary_opened",
+  "chronicle_opened",
+  "message_written",
+  "title_shown",
 }
 
 ---Picks one of the lines, never the one said last when there is another to say.

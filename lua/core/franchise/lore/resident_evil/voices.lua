@@ -81,8 +81,8 @@ return {
       solved_thrice = {
         solved_thrice = "Okay, show off. Third one's the charm. Speaking of charms, where's Sherry?",
       },
-      hint = { hint = "Don't worry, let me help you." },
-      boss_appeared = { boss_appeared = "Okay, handsome. We'll go through this together, okay?" },
+      hint = { hint = "Hey, I've got you. Look over here." },
+      boss_appeared = { boss_appeared = "What is that thing?! Okay, stay behind me, handsome." },
       resting = { resting = "Let's catch our breath, just for a minute." },
       woke = {
         woke = "Don't tell Elizabeth, but I think you're kind of cute. Wait, did you hear that?",
@@ -90,6 +90,39 @@ return {
       expedition = { expedition = "Okay, nice and quiet." },
       traveled = { traveled = "Stay close to me, alright?" },
       committing = { committing = "Working on that commit, cover me!" },
+      trial_passed = {
+        trial_passed = "All green. Okay, maybe this city isn't gonna kill us after all.",
+        trial_passed_2 = "Every test standing. Chris would be proud. I know I am.",
+      },
+      trial_failed = {
+        trial_failed = "Red? Oh, come on. Fine. Grab a herb, we're going back in.",
+      },
+      ci_passed = {
+        ci_passed = "CI cleared it. That's one door in this precinct that actually opened.",
+      },
+      ci_failed = { ci_failed = "CI's down. Great. Just like everything else in this city." },
+      pushed = { pushed = "It's out. Now let's get out of here before something else shows up." },
+      committed = {
+        committed = "Saved. Didn't even need an ink ribbon.",
+        committed_2 = "Locked in. One less thing chasing us.",
+      },
+      pr_opened = { pr_opened = "PR's up. Now we wait, and I really hate waiting." },
+      boss_felled = {
+        boss_felled = "Is it dead? Like, actually dead this time? Okay. You alright?",
+      },
+      conflicts_cleared = { conflicts_cleared = "Merge is clean. Way less gross than the sewers." },
+      pr_drafting = { pr_drafting = "Writing it up. Cover me, I don't trust this hallway." },
+      trial_started = {
+        trial_started = "Okay, running them. Please don't be a Licker, please don't be a Licker.",
+      },
+      claude_asked = { claude_asked = "I'm calling for help. Anybody out there? Hello?" },
+      map_opened = { map_opened = "Let me see that map. This place is a maze." },
+      bestiary_opened = { bestiary_opened = "Look at all the things that tried to eat us today." },
+      chronicle_opened = {
+        chronicle_opened = "Every night we survived. Kind of romantic, if you ignore the zombies.",
+      },
+      message_written = { message_written = "Leaving a note, in case Chris comes through here." },
+      title_shown = { title_shown = "Raccoon City. I just came looking for my brother." },
     },
   },
   rpd = {

@@ -134,6 +134,7 @@ function M.write()
       local text = actions.compose(template, word)
       if text then
         require("core.sound").play("typing")
+        require("core.voice").say("message_written", nil, { quiet = true })
         write_message(buf, line, text)
       end
     end)
