@@ -5,7 +5,8 @@ local function words()
   return require("core.franchise").current().words
 end
 
---- Returns the HUD keys: icon, key, what it does, and the short name its slot prints.
+--- Returns the HUD keys: icon, key, what it does, the short name its slot prints and, when it is
+--- not the HUD's use sound, the sound it plays.
 ---@return table[]
 function M.keys()
   return {
@@ -56,6 +57,7 @@ function M.keys()
       icon = "󰝰 ",
       key = "o",
       desc = "Open Folder",
+      sound = "files",
       action = function()
         require("core.repos").open_folder()
       end,

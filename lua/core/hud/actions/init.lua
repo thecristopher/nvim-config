@@ -501,6 +501,17 @@ function M.direct_keys(hub_keys)
   return out
 end
 
+---The sounds an item tries when used, in order: its own, then the HUD's use and select sounds.
+---@param item { sound?: string }
+---@return string[]
+function M.use_sounds(item)
+  local sounds = { "hud_use", "hud_select" }
+  if item.sound then
+    table.insert(sounds, 1, item.sound)
+  end
+  return sounds
+end
+
 --- Whether something fetched at a moment is old enough to fetch again.
 ---@param fetched_at integer|nil milliseconds, nil when it was never fetched
 ---@param now integer milliseconds
