@@ -124,6 +124,38 @@ function M.celebration(result)
   return { banner = banner, subtitle = words, runes = result.xp or 0 }
 end
 
+-- what the coach says at each clean solve in a row, every one past the last here says "solved".
+-- The first belongs to the merchant's praise, so the coach keeps quiet there
+local STREAK_MOMENTS = { [2] = "solved_twice", [3] = "solved_thrice" }
+
+---What the coach says out loud after a result, and the run of clean solves it leaves. The pass
+---that ends the day closes the lesson, a clean solve counts toward the run, anything else breaks
+---it. A redo neither counts nor breaks it. A lone clean solve is left to the merchant.
+---@param result table the User BtbResult payload
+---@param streak integer clean solves in a row before this one
+---@return string|nil moment a voice moment, nil when the coach keeps quiet
+---@return integer streak
+function M.solve_moment(result, streak)
+  if result.redo then
+    return nil, streak
+  end
+  if not result.ok then
+    return nil, 0
+  end
+  local clean = result.outcome == "clean"
+  local run = clean and streak + 1 or 0
+  if result.day then
+    return "lesson_done", run
+  end
+  if not clean then
+    return nil, run
+  end
+  if run == 1 then
+    return nil, run
+  end
+  return STREAK_MOMENTS[run] or "solved", run
+end
+
 ---The sound a pass plays, the merchant's praise where the franchise has it. A failure plays none.
 ---@param result table the User BtbResult payload
 ---@return string|nil

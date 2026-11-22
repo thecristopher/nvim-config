@@ -105,9 +105,79 @@ describe("line", function()
   end)
 end)
 
+describe("clip", function()
+  local voices = {
+    raccoon_city = {
+      spoken = {
+        lesson_done = {
+          lesson_done = "Umbrella is going down, Inde.",
+          lesson_done_2 = "Another day behind us, Inde.",
+        },
+      },
+    },
+  }
+
+  it("finds the clip Claire says when Inde's lesson ends, with its words", function()
+    local clip, line = actions.clip(voices, "raccoon_city", "lesson_done", 0, nil)
+    assert.equal("lesson_done", clip)
+    assert.equal("Umbrella is going down, Inde.", line)
+  end)
+
+  it("never plays the clip Claire just said twice in a row", function()
+    for _, roll in ipairs({ 0, 0.5, 0.999 }) do
+      assert.equal(
+        "lesson_done_2",
+        (actions.clip(voices, "raccoon_city", "lesson_done", roll, "lesson_done"))
+      )
+    end
+  end)
+
+  it("stays quiet at a moment Claire has no clip for", function()
+    assert.is_nil(actions.clip(voices, "raccoon_city", "solved", 0.5, nil))
+  end)
+
+  it("stays quiet in a region nobody recorded, like the Haligtree", function()
+    assert.is_nil(actions.clip(voices, "haligtree", "lesson_done", 0.5, nil))
+    assert.is_nil(actions.clip(nil, "haligtree", "lesson_done", 0.5, nil))
+  end)
+end)
+
+describe("clip_file", function()
+  local extensions = { mp3 = true, wav = true }
+
+  it("finds Claire's morning clip whatever its extension", function()
+    assert.equal(
+      "morning.mp3",
+      actions.clip_file({ "hint.mp3", "morning.mp3" }, "morning", extensions)
+    )
+  end)
+
+  it("never takes a variant or a file that is not audio for the clip", function()
+    assert.is_nil(actions.clip_file({ "morning_2.mp3", "morning.txt" }, "morning", extensions))
+  end)
+end)
+
 for _, franchise in ipairs({ "resident_evil", "elden_ring" }) do
   describe(franchise .. " voices", function()
     local lore = require("core.franchise.actions").lore(franchise)
+
+    it("keep every spoken clip on a known moment and beside its file", function()
+      local moments = vim.list_extend(vim.deepcopy(actions.MOMENTS), actions.SPOKEN)
+      for region, lines in pairs(lore.voices) do
+        local folder = ("%s/sounds/%s/voices/%s"):format(vim.fn.getcwd(), franchise, region)
+        local files = vim.fn.isdirectory(folder) == 1 and vim.fn.readdir(folder) or {}
+        for moment, clips in pairs(lines.spoken or {}) do
+          assert.truthy(vim.tbl_contains(moments, moment), region .. "." .. moment)
+          for clip, line in pairs(clips) do
+            assert.is_nil(line:find("—", 1, true), line)
+            assert.truthy(
+              actions.clip_file(files, clip, { mp3 = true, wav = true }),
+              region .. "/" .. clip
+            )
+          end
+        end
+      end
+    end)
 
     it("give every region more than one line for every moment", function()
       for _, region in ipairs(lore.regions) do

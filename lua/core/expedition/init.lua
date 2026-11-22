@@ -91,6 +91,7 @@ function M.start(arg)
   )
   -- the last sound before the quiet
   require("core.sound").play("expedition")
+  require("core.voice").say("expedition", nil, { quiet = true })
   local saved = hush()
   local ends_at = os.time() + minutes * 60
   -- Claude Code's hooks run in their own process and read this to stay quiet too

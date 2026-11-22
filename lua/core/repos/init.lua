@@ -289,8 +289,10 @@ function M.open(repo, picker)
 
   vim.fn.chdir(repo)
   M.record_visit(repo)
+  -- only the first visit is spoken, coming back happens too often to hear the same line every time
   if first_visit then
     require("core.banner").show("grace", { subtitle = vim.fs.basename(repo) })
+    require("core.voice").say("traveled")
   else
     require("core.sound").play("continue")
   end
