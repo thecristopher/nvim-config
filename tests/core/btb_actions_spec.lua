@@ -159,8 +159,11 @@ describe("solve_moment", function()
     assert.are.same({ "lesson_done", 3 }, { actions.solve_moment(day, 2) })
   end)
 
-  it("breaks the run on a failure or a pass with hints, quietly", function()
-    assert.are.same({ nil, 0 }, { actions.solve_moment({ ok = false }, 2) })
+  it("has Claire answer a failed submit and break the run", function()
+    assert.are.same({ "solve_failed", 0 }, { actions.solve_moment({ ok = false }, 2) })
+  end)
+
+  it("breaks the run on a pass with hints, quietly", function()
     assert.are.same({ nil, 0 }, { actions.solve_moment({ ok = true, outcome = "hinted" }, 2) })
   end)
 

@@ -81,6 +81,10 @@ return {
       solved_thrice = {
         solved_thrice = "Okay, show off. Third one's the charm. Speaking of charms, where's Sherry?",
       },
+      -- a failed submit says the same as a failed :Trial, the line fits both
+      solve_failed = {
+        trial_failed = "Red? Oh, come on. Fine. Grab a herb, we're going back in.",
+      },
       hint = { hint = "Hey, I've got you. Look over here." },
       boss_appeared = { boss_appeared = "What is that thing?! Okay, stay behind me, handsome." },
       resting = { resting = "Let's catch our breath, just for a minute." },

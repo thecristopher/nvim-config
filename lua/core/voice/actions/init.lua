@@ -25,6 +25,7 @@ M.SPOKEN = {
   "solved",
   "solved_twice",
   "solved_thrice",
+  "solve_failed",
   "hint",
   "boss_appeared",
   "resting",
