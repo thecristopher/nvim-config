@@ -522,7 +522,9 @@ CLIPS = {
         "typing": {"loudness": None, "peak": -18}, "undo": {"loudness": None, "peak": -15},
         "branch": {"loudness": None, "peak": -15}, "stash": {"loudness": None, "peak": -15},
         "unstash": {"loudness": None, "peak": -15}, "pulled": {"loudness": None, "peak": -15},
-        "pushed": {}, "map": {}, "files": {}, "accessing": {"max": 2.0, "fade": 0.6},
+        "pushed": {}, "map": {}, "accessing": {"max": 2.0, "fade": 0.6},
+        # the two page turns end at 0.42 s, the music under them is thinned and its tail let go
+        "files": {"max": 0.42, "fade": 0.08, "highpass": 300},
         # the radio clicks off when Claude answers
         "accessed": {"loudness": None, "peak": -15},
         # the character select names who the day belongs to, a key opens a new area, a herb heals.
@@ -533,7 +535,7 @@ CLIPS = {
 }
 
 # the clip finishing everything starts from: trims both ends, evens out to the moments' loudness
-CLIP_FINISH = {"max": None, "fade": 0.8, "loudness": -24, "peak": None}
+CLIP_FINISH = {"max": None, "fade": 0.8, "loudness": -24, "peak": None, "highpass": None}
 LEAD = "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.02"
 
 
@@ -547,8 +549,11 @@ def duration_of(path):
 
 
 def clip_filters(path, finish):
-    """The filter chain that finishes a clip: both ends trimmed, a fade when it runs too long."""
+    """The filter chain that finishes a clip: both ends trimmed, a fade when it runs too long, and
+    the low end cut under highpass hertz when the game's music hums beneath the sound."""
     steps = [LEAD, TRIM]
+    if finish["highpass"]:
+        steps.append(f"highpass=f={finish['highpass']}:poles=2")
     if finish["max"] and duration_of(path) > finish["max"] + 0.05:
         start = finish["max"] - finish["fade"]
         steps += [f"atrim=0:{finish['max']}", f"afade=t=out:st={start}:d={finish['fade']}"]
