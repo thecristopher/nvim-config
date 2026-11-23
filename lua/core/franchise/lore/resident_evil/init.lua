@@ -90,8 +90,6 @@ return {
   bosses = {
     raccoon_city = "Nemesis T-Type",
     rpd = "Mr. X, Tyrant T-00",
-    spencer_mansion = "Tyrant T-002",
-    umbrella_lab = "William Birkin, G-Type",
     the_island = "Osmund Saddler",
   },
 
@@ -111,20 +109,6 @@ return {
       speed = { 9.0, 15.0 },
       from = "overlay2",
       to = "sky",
-    },
-    spencer_mansion = {
-      glyphs = { "·", "∙", "•" },
-      drift = "float",
-      speed = { 0.1, 0.4 },
-      from = "overlay2",
-      to = "yellow",
-    },
-    umbrella_lab = {
-      glyphs = { "·", "∘", "○" },
-      drift = "float",
-      speed = { 0.2, 0.6 },
-      from = "overlay1",
-      to = "yellow",
     },
     the_island = {
       glyphs = { "·", "∙", "˙" },

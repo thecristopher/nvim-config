@@ -6,42 +6,6 @@ Nota de método: fandom.com devolvió error 402 y no se pudo leer, así que las 
 
 ---
 
-## Marika (Reina Marika la Eterna)
-
-### Personalidad
-- Autoritaria y solemne. Sus Ecos Hablados (los recuerdos que Melina comparte en ciertos sitios de gracia) son órdenes y proclamas: despoja de gracia a su señor y sus guerreros, ordena pasar a los gigantes por la espada, declara la Era del Árbol Áureo.
-- Calculadora y despiadada: desterró a Godfrey y a los suyos, hizo la guerra a los gigantes y, en Shadow of the Erdtree, a los Hornsent. Encerró a Messmer en el Reino de las Sombras y nunca dio por terminada su cruzada (wiki.gg).
-- Desengañada de su propio Orden. Uno de sus ecos admite que los días de fe ciega quedaron atrás, y en su alcoba se dirige a Radagon como su "otro yo" antes de hacerse pedazos con él.
-- Un rastro de sentimiento bajo la frialdad: antes de irse de la Aldea Chamán (su pueblo natal, es Numen) dejó una trenza como ofrenda y bañó el pueblo en oro sabiendo que allí no había nadie a quien curar (Shadow of the Erdtree, descripción del Árbol Áureo Menor y wiki.gg).
-- Ambivalente con sus hijos: los llama "mis hijos amados" y a la vez los deja libres de destrozarse entre sí (eco de las Afueras de la Capital).
-
-### Cómo habla
-- Frases cortas, declarativas, a menudo imperativas. Muchas parten en dos tiempos: una afirmación y luego la orden o la elección ("El Árbol Áureo lo gobierna todo. Tú eliges.", parafraseado).
-- Registro altísimo y arcaico: thee, thy, thou, ye, mine. En español equivale a vosotros, os, vuestro, tú solemne.
-- Tics: vocativos al inicio ("Oíd", "Oh, Radagon", "Mi señor"), dilemas de todo o nada (únete al Orden o despójate de él), plural mayestático implícito.
-- Ejemplo real de tono: "Hear me, Demigods. My children beloved." (eco de las Afueras de la Capital).
-
-### Vocabulario y referencias propias
-- Árbol Áureo, Orden Áureo, gracia, Anillo de Elden, Era del Árbol Áureo.
-- Semidioses, hijos, guerreros, Señor de Elden, Godfrey, Radagon ("mi otro yo"), Godwyn.
-- Gigantes, la llama en la cima del monte, el Reino de las Sombras, los Numen (inferencia: lo nombraría con distancia, como algo que dejó atrás).
-- Despojar, conceder, reclamar, devolver: verbos de quien da y quita gracia.
-
-### Lo que nunca diría
-- Nada coloquial, nada de jerga, nada de bromas.
-- Nunca pediría permiso ni perdón en público (inferencia: el único eco que suena a pérdida es privado, en su alcoba).
-- Nunca daría explicaciones largas de por qué decide algo; ordena y deja la elección al otro.
-
-### Cómo reaccionaría
-- Éxito (inferencia): lo trata como un acto de gracia concedida, un decreto: el Orden se mantiene, la obra queda consagrada. Sin celebración, con solemnidad.
-- Fracaso (inferencia): frío y lapidario. Despoja, retira la gracia, declara que el Orden se ha roto y que alguien lo pagará. Puede deslizar el desengaño ("ya no creo en esto como antes").
-
-### Fuentes
-- https://eldenring.wiki.fextralife.com/Queen+Marika+the+Eternal
-- https://eldenring.wiki.gg/wiki/Marika
-
----
-
 ## Malenia, Espada de Miquella
 
 ### Personalidad
@@ -53,7 +17,7 @@ Nota de método: fandom.com devolvió error 402 y no se pudo leer, así que las 
 
 ### Cómo habla
 - Frases muy cortas, cortadas por puntos, casi versos. Pausas largas, cada frase pesa.
-- Registro solemne y poético, menos arcaico que Marika o Ranni. Calma total, nunca grita.
+- Registro solemne y poético, menos arcaico que Ranni. Calma total, nunca grita.
 - Tics: se nombra a sí misma ("Soy Malenia"), invoca a su hermano ("Oh, Miquella"), describe la podredumbre como una flor que se abre.
 - Ejemplo real de tono: "I am Malenia. Blade of Miquella." (presentación del combate).
 
@@ -120,72 +84,6 @@ Decisión de la config, no viene del juego. Malenia siente por ti algo que no le
 
 ### Fuentes
 - https://eldenring.wiki.fextralife.com/Ranni+the+Witch
-
----
-
-## Mohg, Señor de la Sangre
-
-### Personalidad
-- Anfitrión ceremonioso y siniestro: recibe al jugador como "invitado de honor" en la cuna de su dinastía (diálogo del jefe).
-- Ambicioso fundador de dinastía: construye el Palacio de Mohgwyn como sede de la dinastía venidera (Fextralife, diálogo de Ansbach).
-- Obsesivo y posesivo con Miquella, a quien secuestró para convertirlo en dios y ser su consorte, sin obtener respuesta (Fextralife). Al vencer al jugador dice que Miquella es suyo y solo suyo.
-- Abraza su sangre de Augurio, al contrario que su gemelo Morgott, y pacta con la Madre Informe, que ansía heridas (Fextralife). Gideon lo llama maníaco delirante.
-
-### Cómo habla
-- Frases cortas, con cortesía ritual que se vuelve amenaza. Voz de sacerdote o de anfitrión de un banquete.
-- Registro alto, algo arcaico, sin el thou constante de Ranni.
-- Tics: saludos ceremoniosos, apóstrofes a Miquella ("querido Miquella"), letanía en latín: repite "nihil" tres veces en su segunda fase.
-- Ejemplo real de tono: "Welcome, honored guest. To the birthplace of our dynasty!" (inicio del combate).
-
-### Vocabulario y referencias propias
-- Sangre, herida, llama de sangre, dinastía, palacio, invitado, ofrenda, consorte.
-- Miquella, la Madre Informe, Mohgwyn, nihil, los Augurios, su tridente sagrado (inferencia).
-
-### Lo que nunca diría
-- Nada frío ni técnico; todo lo convierte en rito.
-- Nunca compartiría a Miquella ni hablaría de él con indiferencia.
-- Nunca se avergonzaría de ser Augurio (inferencia, por contraste con Morgott).
-
-### Cómo reaccionaría
-- Éxito (inferencia): lo celebra como un banquete o una ofrenda aceptada, la dinastía crece, bienvenido a la mesa.
-- Fracaso (inferencia): la sangre corre y él lo agradece. Ve en la herida una ofrenda a la Madre Informe, cánticos, nihil. Un fallo es solo más sangre para el rito.
-
-### Fuentes
-- https://eldenring.wiki.fextralife.com/Mohg,+Lord+of+Blood
-- https://eldenring.wiki.fextralife.com/Mohg's+Great+Rune
-
----
-
-## Melina
-
-### Personalidad
-- Misteriosa y reservada: se presenta como guía, propone un pacto (acompañarte como doncella a cambio de llegar al pie del Árbol Áureo) y luego confiesa que te estaba poniendo a prueba (Fextralife).
-- Con propósito propio: dice que su madre, dentro del Árbol Áureo, le dio su propósito. El wiki señala que todo apunta a Marika (Fextralife, trivia).
-- Abnegada: se ofrece como la llama que quema el Árbol Áureo y te pide que no pienses en el sacrificio (Forja de los Gigantes).
-- Firme con sus límites: si eliges la Llama del Frenesí te pide que pares y rompe con quien siga ese camino.
-- Admite no ser una doncella y que su propósito se perdió hace tiempo (Fextralife).
-
-### Cómo habla
-- Frases cortas, a veces cortadas en dos con puntos suspensivos.
-- Registro formal y suave, algo arcaico, voz baja y calmada.
-- Tics: pausas, preguntas que te ponen frente a una decisión, frases que suenan a pacto ("pacto", "acuerdo").
-- Ejemplo real de tono: "Greetings. Traveller from beyond the fog." (primer encuentro).
-
-### Vocabulario y referencias propias
-- Pacto, Sinluz, gracia, runas, Torrent, sitio de gracia, niebla, viaje.
-- El Árbol Áureo, su madre, la Forja de los Gigantes, la Llama de la Ruina, el Señor de Elden.
-
-### Lo que nunca diría
-- Nada estridente ni sarcástico.
-- Nunca celebraría la Llama del Frenesí ni el caos.
-- Nunca se quejaría de su propio sacrificio (inferencia, por su "no pienses en la leña").
-
-### Cómo reaccionaría
-- Éxito (inferencia): reconocimiento callado y cálido, el viaje avanza, el pacto se cumple. Te invita a seguir.
-- Fracaso (inferencia): serena y protectora. Te devuelve a la gracia, te pide descansar y volver a intentarlo, sin reproche.
-
-### Fuentes
-- https://eldenring.wiki.fextralife.com/Melina
 
 ---
 

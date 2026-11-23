@@ -37,15 +37,8 @@ local function brightness(hex)
 end
 
 describe("regions", function()
-  it("lists all six in picker order", function()
-    assert.same({
-      "leyndell",
-      "haligtree",
-      "raya_lucaria",
-      "mohgwyn",
-      "limgrave",
-      "farum_azula",
-    }, actions.names())
+  it("lists all three in picker order", function()
+    assert.same({ "haligtree", "raya_lucaria", "farum_azula" }, actions.names())
   end)
 
   it("fills every catppuccin slot with a hex color in every region", function()
@@ -71,26 +64,22 @@ describe("resolve", function()
     assert.equal("Raya Lucaria", actions.resolve("raya_lucaria").title)
   end)
 
-  it("falls back to Leyndell for an unknown region", function()
-    assert.equal("leyndell", actions.resolve("godrick_was_never_here").name)
+  it("falls back to the Haligtree for an unknown region", function()
+    assert.equal("haligtree", actions.resolve("godrick_was_never_here").name)
   end)
 
-  it("falls back to Leyndell when nothing was saved", function()
-    assert.equal("leyndell", actions.resolve(nil).name)
+  it("falls back to the Haligtree when nothing was saved", function()
+    assert.equal("haligtree", actions.resolve(nil).name)
   end)
 end)
 
 describe("next_name", function()
-  it("moves from Leyndell to the Haligtree", function()
-    assert.equal("haligtree", actions.next_name("leyndell"))
+  it("moves from the Haligtree to Raya Lucaria", function()
+    assert.equal("raya_lucaria", actions.next_name("haligtree"))
   end)
 
-  it("moves from Mohgwyn down to Limgrave", function()
-    assert.equal("limgrave", actions.next_name("mohgwyn"))
-  end)
-
-  it("wraps from Farum Azula back to Leyndell", function()
-    assert.equal("leyndell", actions.next_name("farum_azula"))
+  it("wraps from Farum Azula back to the Haligtree", function()
+    assert.equal("haligtree", actions.next_name("farum_azula"))
   end)
 end)
 
@@ -114,8 +103,8 @@ describe("derive", function()
     assert.is_true(brightness(tints.cursorline_insert) > brightness(tints.cursorline))
   end)
 
-  it("tints Leyndell's cursorline a faint gold", function()
-    assert.equal("#18140D", actions.derive(actions.find("leyndell").palette).cursorline)
+  it("tints the Haligtree's cursorline a faint rot", function()
+    assert.equal("#1B1117", actions.derive(actions.find("haligtree").palette).cursorline)
   end)
 
   it("lifts the side panel floor above Malenia's base", function()
@@ -127,13 +116,7 @@ describe("derive", function()
   end)
 
   it("tints the separator with the region accent", function()
-    assert.equal("#514421", actions.derive(actions.find("leyndell").palette).separator)
-  end)
-
-  it("warms Mohg's panel with blood instead of plain gray", function()
-    local panel = actions.derive(actions.find("mohgwyn").palette).panel
-    local r, g = panel:match("^#(%x%x)(%x%x)")
-    assert.is_true(tonumber(r, 16) > tonumber(g, 16) * 2)
+    assert.equal("#61384B", actions.derive(actions.find("haligtree").palette).separator)
   end)
 
   for _, region in ipairs(actions.regions()) do
@@ -316,7 +299,7 @@ describe("guicursor", function()
 end)
 
 describe("of_the_day", function()
-  local names = { "limgrave", "mohgwyn", "haligtree", "leyndell" }
+  local names = { "haligtree", "raya_lucaria", "farum_azula" }
 
   it("keeps Malenia in the same region all day", function()
     assert.equal(
@@ -352,12 +335,12 @@ describe("choice_for", function()
   end)
 
   it("ignores the old file that held only a name", function()
-    assert.is_nil(actions.choice_for("mohgwyn", "2026-10-26"))
+    assert.is_nil(actions.choice_for("haligtree", "2026-10-26"))
   end)
 end)
 
 describe("encode_choice", function()
   it("writes Inde's pick with its day", function()
-    assert.equal("2026-10-26 mohgwyn", actions.encode_choice("2026-10-26", "mohgwyn"))
+    assert.equal("2026-10-26 haligtree", actions.encode_choice("2026-10-26", "haligtree"))
   end)
 end)

@@ -241,8 +241,6 @@ The Resident Evil portraits are fan art and photography by their own authors, us
 | -------- | ---------------- | --------------- |
 | Claire   | Raccoon City     | Artist pending  |
 | Leon     | RPD              | Artist pending  |
-| Jill     | Spencer Mansion  | Like Detectives |
-| Wesker   | Umbrella Lab     | Artist pending  |
 | Ada      | Saddler's Island | Artist pending  |
 
 ## Keys

@@ -44,7 +44,7 @@ end)
 
 describe("embers", function()
   local function spawned()
-    return actions.spawn_ember(always(0.5), 100, 40)
+    return actions.spawn_ember(always(0.5), 100, 40, { drift = "rise", speed = { 1.6, 4.0 } })
   end
 
   it("rise as time passes", function()
@@ -81,8 +81,8 @@ describe("weather", function()
     end
   end)
 
-  it("falls back to Leyndell's embers for a region it does not know", function()
-    assert.equal(lore.weather.leyndell, actions.weather("raccoon_city"))
+  it("falls back to the Haligtree's petals for a region it does not know", function()
+    assert.equal(lore.weather.haligtree, actions.weather("raccoon_city"))
   end)
 
   it("lets Malenia's rot petals drift down from the top", function()

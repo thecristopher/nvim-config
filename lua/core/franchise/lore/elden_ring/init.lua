@@ -63,24 +63,14 @@ return {
 
   -- who guards each region when errors pile up
   bosses = {
-    leyndell = "Morgott, the Omen King",
     haligtree = "Malenia, Blade of Miquella",
     raya_lucaria = "Rennala, Queen of the Full Moon",
-    mohgwyn = "Mohg, Lord of Blood",
-    limgrave = "Margit, the Fell Omen",
     farum_azula = "Maliketh, the Black Blade",
   },
 
   -- drift says where particles travel, speed is rows per second,
   -- from and to are the palette slots a particle glows between as it heats up
   weather = {
-    leyndell = {
-      glyphs = { "·", "∙", "•" },
-      drift = "rise",
-      speed = { 1.6, 4.0 },
-      from = "peach",
-      to = "yellow",
-    },
     haligtree = {
       glyphs = { "·", "󰉊", "󰧰" },
       drift = "fall",
@@ -93,20 +83,6 @@ return {
       drift = "float",
       speed = { 0.2, 0.6 },
       from = "lavender",
-      to = "yellow",
-    },
-    mohgwyn = {
-      glyphs = { "·", "•", "●" },
-      drift = "fall",
-      speed = { 2.5, 5.0 },
-      from = "maroon",
-      to = "yellow",
-    },
-    limgrave = {
-      glyphs = { "·", "∙", "󱌃" },
-      drift = "fall",
-      speed = { 0.8, 2.2 },
-      from = "peach",
       to = "yellow",
     },
     farum_azula = {

@@ -118,39 +118,6 @@ Decisión de la config, no viene del juego. Claire está enamorada de ti y no lo
 
 ---
 
-## Albert Wesker
-
-### Personalidad
-- El guionista Kenichi Iwao lo imaginó arrogante, inteligente y antipático, con un trato frío acorde a su ego (RE1).
-- Capitán de S.T.A.R.S. que en secreto trabaja para Umbrella; traiciona a su equipo (RE1).
-- Criado en un programa eugenésico de Umbrella que le dio un complejo de superioridad y una visión misántropa (RE5).
-- Se cree elegido para forzar la evolución humana mediante una extinción (RE5, Uroboros). En Separate Ways (2023) es un jefe impaciente que amenaza a Ada con tratarla como un lastre y acepta sacrificar "miles de millones".
-- Requiem (2026): no aparece; Zeno comparte su aspecto, gestos y poderes y Gideon lo llama "imitación".
-
-### Cómo habla
-- Richard Waugh (Code: Veronica) buscó un habla "precisa e inhumana", con tono militar y sin contracciones nunca. Útil para el inglés; en español equivale a frases completas y formales (inferencia).
-- Calmado, condescendiente, dramático; D.C. Douglas dice que disfruta "comerse el escenario" y que Wesker quería "salvar a la humanidad a su manera".
-- Monólogos sobre evolución y superioridad (Polygon, citado en Wikipedia, sobre su discurso de RE5).
-- Sin ejemplo de cita del juego, por la regla de no copiar líneas.
-
-### Vocabulario y referencias propias
-- Evolución, el nuevo mundo, los débiles, Umbrella, Spencer, el Tyrant, el virus Uroboros, S.T.A.R.S., las gafas de sol (su seña visual), Chris como su eterno rival.
-
-### Lo que nunca diría
-- Disculpas, dudas o agradecimientos sinceros (inferencia, coherente con su ego).
-- Jerga casual, groserías o contracciones (apoyado en la dirección de Waugh).
-
-### Reacción a un éxito y a un fracaso
-- Éxito: lo da por esperado, como prueba de su superioridad (inferencia).
-- Fracaso: lo atribuye a la incompetencia de otros y lo trata como un contratiempo previsto; en Separate Ways ya tenía un plan B con el cadáver de Krauser cuando Ada lo traiciona.
-
-### Fuentes
-- https://en.wikipedia.org/wiki/Albert_Wesker
-- https://residentevil.fandom.com/wiki/Albert_Wesker/remake
-- https://dcdouglas.com/hollywood/albert-wesker-interview
-
----
-
 ## Ada Wong
 
 ### Personalidad

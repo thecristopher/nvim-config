@@ -11,8 +11,8 @@ describe("boss_for", function()
     end
   end)
 
-  it("falls back to Morgott for a region nobody guards", function()
-    assert.equal("Morgott, the Omen King", actions.boss_for("raccoon_city"))
+  it("falls back to Malenia for a region nobody guards", function()
+    assert.equal("Malenia, Blade of Miquella", actions.boss_for("raccoon_city"))
   end)
 end)
 
