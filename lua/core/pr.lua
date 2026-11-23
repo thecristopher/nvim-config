@@ -221,6 +221,7 @@ local function draft_via_claude(prompt, cb)
     title = say("title"),
     message = say("drafting"),
   })
+  require("core.voice").say("pr_drafting")
   require("core.claude").run(prompt, function(res)
     if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
       task:fail(say("failed"))
@@ -346,7 +347,15 @@ end
 
 local function published(buf, ctx, title, url)
   vim.bo[buf].modified = false
-  require("core.banner").show("great", { subtitle = title })
+  -- only a new PR is worth a word from the character, said in the same notification as the link
+  -- so the elapsed time still lands after the link
+  local line, character, spoke = nil, nil, false
+  if not ctx.pr then
+    line, character, spoke =
+      require("core.voice").speak("pr_opened", { number = url:match("/pull/(%d+)") or "" })
+  end
+  -- when the character says it out loud the banner keeps quiet, so the two never talk over each other
+  require("core.banner").show("great", { subtitle = title, sound = not spoke })
   -- a new PR gives the branch threads to follow, GitHub needs a moment to list it
   require("core.threads").refresh(nil, 5000)
   vim.schedule(function()
@@ -356,10 +365,6 @@ local function published(buf, ctx, title, url)
   if ctx.pr then
     return say("updated", { number = ctx.pr.number, url = url })
   end
-  -- only a new PR is worth a word from the character, said in the same notification as the link
-  -- so the elapsed time still lands after the link
-  local line, character =
-    require("core.voice").line("pr_opened", { number = url:match("/pull/(%d+)") or "" })
   local created = say("created", { url = url })
   return line and ("%s: %s\n\n%s"):format(character, line, created) or created
 end

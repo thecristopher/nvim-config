@@ -27,6 +27,7 @@ function M.run()
     title = say("title"),
     message = say("facing", { command = table.concat(cmd, " ") }),
   })
+  require("core.voice").say("trial_started", nil, { quiet = true })
   vim.system(
     cmd,
     { cwd = root, text = true },

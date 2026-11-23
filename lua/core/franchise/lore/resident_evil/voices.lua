@@ -81,8 +81,12 @@ return {
       solved_thrice = {
         solved_thrice = "Okay, show off. Third one's the charm. Speaking of charms, where's Sherry?",
       },
-      hint = { hint = "Don't worry, let me help you." },
-      boss_appeared = { boss_appeared = "Okay, handsome. We'll go through this together, okay?" },
+      -- a failed submit says the same as a failed :Trial, the line fits both
+      solve_failed = {
+        trial_failed = "Red? Oh, come on. Fine. Grab a herb, we're going back in.",
+      },
+      hint = { hint = "Hey, I've got you. Look over here." },
+      boss_appeared = { boss_appeared = "What is that thing?! Okay, stay behind me, handsome." },
       resting = { resting = "Let's catch our breath, just for a minute." },
       woke = {
         woke = "Don't tell Elizabeth, but I think you're kind of cute. Wait, did you hear that?",
@@ -90,6 +94,39 @@ return {
       expedition = { expedition = "Okay, nice and quiet." },
       traveled = { traveled = "Stay close to me, alright?" },
       committing = { committing = "Working on that commit, cover me!" },
+      trial_passed = {
+        trial_passed = "All green. Okay, maybe this city isn't gonna kill us after all.",
+        trial_passed_2 = "Every test standing. Chris would be proud. I know I am.",
+      },
+      trial_failed = {
+        trial_failed = "Red? Oh, come on. Fine. Grab a herb, we're going back in.",
+      },
+      ci_passed = {
+        ci_passed = "CI cleared it. That's one door in this precinct that actually opened.",
+      },
+      ci_failed = { ci_failed = "CI's down. Great. Just like everything else in this city." },
+      pushed = { pushed = "It's out. Now let's get out of here before something else shows up." },
+      committed = {
+        committed = "Saved. Didn't even need an ink ribbon.",
+        committed_2 = "Locked in. One less thing chasing us.",
+      },
+      pr_opened = { pr_opened = "PR's up. Now we wait, and I really hate waiting." },
+      boss_felled = {
+        boss_felled = "Is it dead? Like, actually dead this time? Okay. You alright?",
+      },
+      conflicts_cleared = { conflicts_cleared = "Merge is clean. Way less gross than the sewers." },
+      pr_drafting = { pr_drafting = "Writing it up. Cover me, I don't trust this hallway." },
+      trial_started = {
+        trial_started = "Okay, running them. Please don't be a Licker, please don't be a Licker.",
+      },
+      claude_asked = { claude_asked = "I'm calling for help. Anybody out there? Hello?" },
+      map_opened = { map_opened = "Let me see that map. This place is a maze." },
+      bestiary_opened = { bestiary_opened = "Look at all the things that tried to eat us today." },
+      chronicle_opened = {
+        chronicle_opened = "Every night we survived. Kind of romantic, if you ignore the zombies.",
+      },
+      message_written = { message_written = "Leaving a note, in case Chris comes through here." },
+      title_shown = { title_shown = "Raccoon City. I just came looking for my brother." },
     },
   },
   rpd = {
@@ -152,6 +189,62 @@ return {
       "Back on your feet? Good, the night shift is brutal.",
       "You're up. I'll pretend I didn't see you sleeping on duty.",
       "Rested. Good. Let's finish this before sunrise.",
+    },
+    -- what Leon says out loud, each clip in sounds/resident_evil/voices/rpd/
+    spoken = {
+      morning = { morning = "Morning, Chris. No zombies on the radar yet. Give it an hour." },
+      region_arrived = {
+        region_arrived = "Leon Kennedy, RPD. First day on the job, and somehow I'm still late.",
+      },
+      title_shown = { title_shown = "Raccoon City. Hell of a first day." },
+      traveled = { traveled = "Nice place. Smells like trouble." },
+      lesson_started = {
+        lesson_started = "Training day. Relax, I was a rookie once too. For about one night.",
+      },
+      hint = { hint = "Hunnigan, talk to me. Okay. Look right there." },
+      solved = { solved = "That function had it coming." },
+      solved_twice = { solved_twice = "Two down. They really should've unionized." },
+      solved_thrice = {
+        solved_thrice = "Three for three. Somebody call an exterminator. Oh wait, that's me.",
+      },
+      solve_failed = {
+        solve_failed = "Missed. Don't worry, it'll come back. They always come back.",
+      },
+      lesson_done = {
+        lesson_done = "Lesson's done. Hunnigan owes me a coffee for this one.",
+        lesson_done_2 = "That's a wrap. Same time tomorrow, unless the castle needs me.",
+      },
+      boss_appeared = { boss_appeared = "Big guy. Let me guess, you're a hugger." },
+      boss_felled = { boss_felled = "Sorry, but I'm not on the menu." },
+      trial_started = { trial_started = "Let's see what crawls out of this one." },
+      trial_passed = {
+        trial_passed = "All green. Guess the tests finally learned some manners.",
+        trial_passed_2 = "Every test standing. Not bad for a night shift.",
+      },
+      trial_failed = { trial_failed = "Red. Guess the tests didn't get the memo." },
+      committing = { committing = "Writing the commit. Keep an eye on the windows." },
+      committed = {
+        committed = "Committed. That one's going in the report.",
+        committed_2 = "Committed. Unlike some people I know, Ada.",
+      },
+      pushed = { pushed = "Special delivery. No signature required." },
+      pr_drafting = { pr_drafting = "Writing it up. Hunnigan likes her reports short." },
+      pr_opened = { pr_opened = "PR's up. Reviewers, try not to bite." },
+      ci_passed = { ci_passed = "CI cleared it. Somebody tell Hunnigan, she'll never believe it." },
+      ci_failed = { ci_failed = "CI hit a dead end. Story of my career." },
+      conflicts_cleared = {
+        conflicts_cleared = "Two branches walked into a merge. Only one walked out.",
+      },
+      claude_asked = { claude_asked = "Hunnigan, I need intel. And maybe a vacation." },
+      map_opened = { map_opened = "Map's up. Whoever designed this place hated people." },
+      bestiary_opened = {
+        bestiary_opened = "Everyone who wanted me for dinner today. Popular guy.",
+      },
+      chronicle_opened = { chronicle_opened = "Every shift we survived. Put that in my file." },
+      message_written = { message_written = "Leaving a note. Somebody's gonna need it." },
+      resting = { resting = "Five minutes. Even zombies take a smoke break." },
+      woke = { woke = "Nap's over. The bugs didn't wait for you either." },
+      expedition = { expedition = "Where's everyone going? Bingo? Good. Nice and quiet." },
     },
   },
   spencer_mansion = {

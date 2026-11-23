@@ -248,6 +248,16 @@ describe("direct_keys", function()
   end)
 end)
 
+describe("use_sounds", function()
+  it("plays the HUD's use sound for Claire's love note", function()
+    assert.same({ "hud_use", "hud_select" }, hud.use_sounds({ name = "Love note" }))
+  end)
+
+  it("tries Malenia's own sound first when her folder has one", function()
+    assert.same({ "files", "hud_use", "hud_select" }, hud.use_sounds({ sound = "files" }))
+  end)
+end)
+
 describe("stale", function()
   it("fetches what was never fetched", function()
     assert.is_true(hud.stale(nil, 500, 10000))

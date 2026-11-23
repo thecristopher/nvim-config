@@ -51,6 +51,26 @@ local function speak(region, moment)
   return line
 end
 
+---Has the region's character say their line for a moment out loud when the region has a clip
+---for it, and returns the words without showing them, for callers that place them themselves.
+---@param moment string like trial_passed, ci_failed, pushed or boss_felled
+---@param vars table<string, string>|nil values for the line's holes, like branch or boss
+---@return string|nil line what they said or would say, nil when they have nothing
+---@return string|nil character who says it
+---@return boolean spoke whether the character said it out loud
+function M.speak(moment, vars)
+  if vim.g.eldentree_voice == false then
+    return nil, nil, false
+  end
+  local region = require("core.themes").current()
+  local spoken = speak(region, moment)
+  if spoken then
+    return actions.fill(spoken, vars), region.character, true
+  end
+  local line, character = M.line(moment, vars)
+  return line, character, false
+end
+
 ---Has the region's character say their line for a moment: out loud when the region has a clip
 ---for it (sounds/<franchise>/voices/<region>/), written otherwise, both as a notification under
 ---their name. A moment only heard out loud stays quiet without its clip.
@@ -60,22 +80,17 @@ end
 ---already show something of their own (the coach's stage, the rest)
 ---@return boolean spoke whether the character said it out loud
 function M.say(moment, vars, opts)
-  if vim.g.eldentree_voice == false then
-    return false
+  local line, character, spoke = M.speak(moment, vars)
+  if line and not (spoke and opts and opts.quiet) then
+    vim.notify(line, vim.log.levels.INFO, { title = character })
   end
-  local region = require("core.themes").current()
-  local spoken = speak(region, moment)
-  local line = spoken and actions.fill(spoken, vars) or M.line(moment, vars)
-  if line and not (spoken and opts and opts.quiet) then
-    vim.notify(line, vim.log.levels.INFO, { title = region.character })
-  end
-  return spoken ~= nil
+  return spoke
 end
 
 -- the day the character last said good morning, so the greeting comes once a day
 local MORNING_FILE = vim.fn.stdpath("state") .. "/eldentree_morning"
--- after the title screen and the HUD have had their moment
-local MORNING_DELAY_MS = 2500
+-- after the title screen, the HUD and the title's spoken line have had their moment
+local MORNING_DELAY_MS = 4000
 
 local function greet_once_a_day()
   local today = os.date("%Y-%m-%d")

@@ -196,6 +196,7 @@ function M.open()
     )
   end
   require("core.sound").play("map")
+  require("core.voice").say("map_opened", nil, { quiet = true })
   open_float(rooms, root)
 end
 

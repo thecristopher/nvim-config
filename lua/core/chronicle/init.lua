@@ -79,6 +79,7 @@ function M.open()
     actions.grid(history, commits(require("core.repos").root(), since), os.date("%Y-%m-%d"))
   local lines, marks = render(rows)
   require("core.sound").play("files")
+  require("core.voice").say("chronicle_opened", nil, { quiet = true })
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)

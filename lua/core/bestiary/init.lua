@@ -80,6 +80,7 @@ function M.open()
   end
   local lines, marks = render(entries)
   require("core.sound").play("files")
+  require("core.voice").say("bestiary_opened", nil, { quiet = true })
   local width = 30
   for _, line in ipairs(lines) do
     width = math.max(width, vim.api.nvim_strwidth(line) + 2)

@@ -100,6 +100,7 @@ function M.actions()
         key = key.key,
         desc = line or desc,
         flavor = said.flavor,
+        sound = key.sound,
         use = function()
           run(key.action)
         end,

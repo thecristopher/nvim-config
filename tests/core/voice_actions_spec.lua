@@ -47,6 +47,29 @@ describe("MOMENTS", function()
   end)
 end)
 
+describe("SPOKEN", function()
+  it("lets Claire speak up when Inde opens the map, the bestiary or a PR draft", function()
+    for _, moment in ipairs({
+      "pr_drafting",
+      "trial_started",
+      "claude_asked",
+      "map_opened",
+      "bestiary_opened",
+      "chronicle_opened",
+      "message_written",
+      "title_shown",
+    }) do
+      assert.truthy(vim.tbl_contains(actions.SPOKEN, moment), moment)
+    end
+  end)
+
+  it("never asks Malenia to write a line for a moment only heard out loud", function()
+    for _, moment in ipairs(actions.SPOKEN) do
+      assert.is_false(vim.tbl_contains(actions.MOMENTS, moment), moment)
+    end
+  end)
+end)
+
 describe("morning_due", function()
   it("greets Inde on the first nvim of the day", function()
     assert.is_true(actions.morning_due("2026-11-15", "2026-11-16"))

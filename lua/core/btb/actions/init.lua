@@ -130,7 +130,8 @@ local STREAK_MOMENTS = { [2] = "solved_twice", [3] = "solved_thrice" }
 
 ---What the coach says out loud after a result, and the run of clean solves it leaves. The pass
 ---that ends the day closes the lesson, a clean solve counts toward the run, anything else breaks
----it. A redo neither counts nor breaks it. A lone clean solve is left to the merchant.
+---it and a failed submit gets a word of its own. A redo neither counts nor breaks it. A lone clean
+---solve is left to the merchant.
 ---@param result table the User BtbResult payload
 ---@param streak integer clean solves in a row before this one
 ---@return string|nil moment a voice moment, nil when the coach keeps quiet
@@ -140,7 +141,7 @@ function M.solve_moment(result, streak)
     return nil, streak
   end
   if not result.ok then
-    return nil, 0
+    return "solve_failed", 0
   end
   local clean = result.outcome == "clean"
   local run = clean and streak + 1 or 0

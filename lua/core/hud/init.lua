@@ -449,8 +449,13 @@ local function move_menu(direction)
     actions.cycle(state.menu.index, #state.menu.entries, direction == "j" and 1 or -1)
 end
 
+-- true while the last thing done on the HUD was using an item, so the HUD leaving because of it
+-- does not cut the item's sound with the close one
+local left_by_use = false
+
 -- plays the HUD's own sound for a moment, or the fallback in a world that has none for it
 local function sound(event, fallback)
+  left_by_use = false
   require("core.sound").play_first({ event, fallback })
 end
 
@@ -705,7 +710,8 @@ local function use(item)
     return
   end
   state.menu = nil
-  sound("hud_use", "hud_select")
+  require("core.sound").play_first(actions.use_sounds(item))
+  left_by_use = true
   toast(item)
   item.use()
   vim.schedule(function()
@@ -937,10 +943,11 @@ local function watch(buf)
     buffer = buf,
     callback = function()
       require("core.hud.portrait").close()
-      -- quitting nvim is not closing the inventory
-      if vim.v.exiting == vim.NIL then
+      -- quitting nvim is not closing the inventory, and an item that took you away already sounded
+      if vim.v.exiting == vim.NIL and not left_by_use then
         sound("hud_close")
       end
+      left_by_use = false
     end,
   })
   vim.api.nvim_create_autocmd("BufWinEnter", {

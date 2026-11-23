@@ -221,6 +221,7 @@ function M.show()
   end
   open_scene()
   scene.sound = require("core.sound").play("title")
+  require("core.voice").say("title_shown", nil, { quiet = true })
   scene.loop = motion.loop({ interval = 50, on_tick = draw })
 end
 
