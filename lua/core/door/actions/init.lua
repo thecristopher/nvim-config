@@ -4,7 +4,7 @@ local ease = require("core.motion.actions")
 
 local M = {}
 
-M.DURATION = 2400
+M.DURATION = require("core.signpost.actions").DURATION
 M.WIDTH = 26
 M.HEIGHT = 13
 
@@ -13,6 +13,9 @@ M.DARK_UNTIL = 0.12
 M.SWING_FROM = 0.30
 M.SWING_UNTIL = 0.78
 M.LIGHT_FROM = 0.80
+-- the new project loads in the dark, and its name hangs over the door until the light returns
+M.COVERED = M.DARK_UNTIL
+M.SIGN = { from = M.DARK_UNTIL, to = M.LIGHT_FROM }
 
 --- Returns how dark the screen is, 0 shows the editor and 1 is pitch black.
 ---@param raw number progress from 0 to 1

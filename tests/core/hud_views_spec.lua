@@ -405,12 +405,14 @@ describe("wardrobe", function()
     assert.is_truthy(line_of(wardrobe.render(model({ tab = 2 })), "Nothing here yet"))
   end)
 
-  it("rings the mirror with bulbs between the rack and the stages", function()
+  it("rings the mirror with hearts on the left of the rack and the stages", function()
     local roomy = wardrobe.render(model({ width = 200, height = 50, portrait = true }))
     assert.is_false(roomy.plan.stacked)
-    assert.is_true(has_mark(roomy, "EldenHudBulb"))
+    assert.is_true(has_mark(roomy, "EldenHudHeart"))
     local mirror = roomy.anchors.portrait
-    assert.is_true(mirror.col > roomy.plan.indent + roomy.plan.rack_width)
+    assert.is_true(
+      mirror.col + mirror.width < roomy.plan.indent + roomy.plan.stage_width - roomy.plan.body_width
+    )
   end)
 
   it("stands the mirror above both lists when they cannot fit beside it", function()
@@ -425,32 +427,34 @@ describe("wardrobe", function()
     assert.is_truthy(line_of(roomy, name))
   end)
 
-  it("stands the mirror aside everything beside a Claude split", function()
+  it("keeps her on the left beside a Claude split", function()
     local split = wardrobe.render(model({ width = 99, height = 39, portrait = true }))
-    assert.equal("aside", split.plan.shape)
+    assert.equal("left", split.plan.shape)
     assert.equal(split.plan.indent, split.anchors.portrait.col - 2)
   end)
 
-  it("puts her at center stage on a wide screen, the rail and the sign beside her", function()
-    local wide =
-      wardrobe.render(model({ width = 160, height = 48, portrait = true, figure = true }))
-    assert.equal("center", wide.plan.shape)
-    local mirror = wide.anchors.portrait
-    assert.is_true(mirror.col > wide.plan.indent + wide.plan.rack_width)
-    assert.is_true(line_of(wide, "R O U N D T A B L E") < line_of(wide, "Current Quest"))
-  end)
+  it(
+    "stands her whole figure on the left of a wide screen, the sign and the rail beside her",
+    function()
+      local wide =
+        wardrobe.render(model({ width = 160, height = 48, portrait = true, figure = true }))
+      assert.equal("left", wide.plan.shape)
+      assert.equal(wide.plan.indent + 2, wide.anchors.portrait.col)
+      assert.is_true(line_of(wide, "R O U N D T A B L E") < line_of(wide, "Current Quest"))
+    end
+  )
 
-  it("keeps her photo to a share of the screen, like the other franchises' portraits", function()
+  it("gives her photo every row the mirror leaves", function()
     local wide =
       wardrobe.render(model({ width = 160, height = 48, portrait = true, figure = true }))
     local room = 48 - 2 - 3 - wardrobe.MIRROR_ROWS - wardrobe.NAME_ROWS
-    assert.is_true(wide.anchors.portrait.height <= math.floor(room * wardrobe.PORTRAIT_SHARE))
+    assert.equal(room, wide.anchors.portrait.height)
   end)
 
-  it("never lets her photo grow past the tallest portrait the other views draw", function()
+  it("never lets her photo grow past its tallest", function()
     local huge =
       wardrobe.render(model({ width = 400, height = 120, portrait = true, figure = true }))
-    assert.is_true(huge.anchors.portrait.height <= wardrobe.PORTRAIT.max)
+    assert.equal(wardrobe.PORTRAIT.max, huge.anchors.portrait.height)
   end)
 
   it("never gives her less than the share of the tallest photo any shape allows", function()
@@ -459,9 +463,8 @@ describe("wardrobe", function()
         model({ width = size[1], height = size[2], portrait = true, figure = true })
       )
       local room = size[2] - 2 - 3 - wardrobe.MIRROR_ROWS - wardrobe.NAME_ROWS
-      local share = wardrobe.PORTRAIT_SHARE * wardrobe.CENTER_SHARE
       assert.is_true(
-        view.anchors.portrait.height >= math.floor(room * share),
+        view.anchors.portrait.height >= math.floor(room * wardrobe.LEFT_SHARE),
         size[1] .. "x" .. size[2]
       )
     end
@@ -486,9 +489,9 @@ describe("wardrobe", function()
     assert.is_false(has_mark(view, "EldenHudDesk"))
   end)
 
-  it("lights the marquee sign over the rail", function()
+  it("rings the marquee sign over the rail with hearts", function()
     assert.is_true(line_of(view, "D R E S S I N G") < line_of(view, "┳"))
-    assert.is_truthy(view.lines[line_of(view, "D R E S S I N G") + 1]:find(wardrobe.BULB, 1, true))
+    assert.is_truthy(view.lines[line_of(view, "D R E S S I N G") + 1]:find(wardrobe.HEART, 1, true))
   end)
 
   it("tells which tab hangs out of how many", function()
