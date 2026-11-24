@@ -275,28 +275,17 @@ function M.restore_branch_session()
   return true
 end
 
---- Travels to a repo: the fog rolls in, the old project's session is kept, and the new one comes back
---- with the files you had open there. A first visit, or a picker asked for, opens that picker on arrival.
----@param repo string
----@param picker? "files"|"grep"|"recent"
-function M.open(repo, picker)
-  local first_visit = not actions.returning(read_json_list(visits_file), repo)
+-- swaps the project behind the travel: keeps the old session, moves in and brings the new one back
+local function arrive(repo, first_visit, picker)
   local sessions = vim.g.eldentree_project_sessions ~= false and M.root() ~= repo
-  require("core.fog").roll(vim.fs.basename(repo))
   if sessions then
     leave_project()
   end
-
   vim.fn.chdir(repo)
   M.record_visit(repo)
-  -- only the first visit is spoken, coming back happens too often to hear the same line every time
-  if first_visit then
-    require("core.banner").show("grace", { subtitle = vim.fs.basename(repo) })
-    require("core.voice").say("traveled")
-  else
+  if not first_visit then
     require("core.sound").play("continue")
   end
-
   if sessions and has_session() then
     require("persistence").load()
   end
@@ -305,6 +294,26 @@ function M.open(repo, picker)
     picker_after_tree(repo, arrival)
   end
   show_tree(repo)
+end
+
+--- Travels to a repo: the travel covers the screen with its name, the old project's session is kept
+--- behind it and the new one comes back with the files you had open there. A first visit, or a
+--- picker asked for, opens that picker on arrival, and a first visit is announced once the screen clears.
+---@param repo string
+---@param picker? "files"|"grep"|"recent"
+function M.open(repo, picker)
+  local name = vim.fs.basename(repo)
+  local first_visit = not actions.returning(read_json_list(visits_file), repo)
+  require("core.fog").roll(name, {
+    on_covered = function()
+      arrive(repo, first_visit, picker)
+    end,
+    -- only the first visit is spoken, coming back happens too often to hear the same line every time
+    on_done = first_visit and function()
+      require("core.banner").show("grace", { subtitle = name })
+      require("core.voice").say("traveled")
+    end or nil,
+  })
 end
 
 -- a repo travels with its session and fog, any other folder just becomes the cwd beside the tree

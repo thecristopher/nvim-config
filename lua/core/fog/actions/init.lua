@@ -3,11 +3,14 @@
 -- The mist is only background color, never glyphs, so the code always shows through it.
 local M = {}
 
-M.DURATION = 1300
+M.DURATION = require("core.signpost.actions").DURATION
 M.LEVELS = 8
 -- the mist thickens quickly, holds while the new project opens, then takes its time to thin out
 M.RISE = 0.18
-M.HOLD = 0.42
+M.HOLD = 0.55
+-- the new project loads behind the wall once it is thick, and its name shows until the mist thins
+M.COVERED = M.RISE
+M.SIGN = { from = M.RISE, to = M.HOLD + 0.08 }
 -- how opaque the thickest cloud gets, 1 would hide the editor completely
 M.THICKEST = 0.72
 -- how far the clouds drift across the screen during one crossing, in columns

@@ -183,6 +183,18 @@ describe("should_play", function()
   end)
 end)
 
+describe("background", function()
+  it("knows the desk's listener by the start of its session id", function()
+    assert.is_true(actions.background("84ef2984-aaaa-bbbb", { "", "84ef2984" }))
+  end)
+
+  it("lets Claire's own sessions ring", function()
+    assert.is_false(actions.background("c1a1e000-aaaa", { "84ef2984" }))
+    assert.is_false(actions.background(nil, { "84ef2984" }))
+    assert.is_false(actions.background("c1a1e000-aaaa", { "" }))
+  end)
+end)
+
 describe("session_file", function()
   it("keeps only safe characters of Claire's session id", function()
     assert.equal("abc-123", actions.session_file("abc-123/../"))

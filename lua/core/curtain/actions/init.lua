@@ -4,11 +4,14 @@ local ease = require("core.motion.actions")
 
 local M = {}
 
-M.DURATION = 2600
+M.DURATION = require("core.signpost.actions").DURATION
 
 -- the drapes meet, hold a beat while the new stage is announced, then part
-M.CLOSE_UNTIL = 0.34
-M.OPEN_FROM = 0.62
+M.CLOSE_UNTIL = 0.30
+M.OPEN_FROM = 0.64
+-- the new stage is set behind the closed drapes, and its name shows until they have parted a little
+M.COVERED = M.CLOSE_UNTIL
+M.SIGN = { from = M.CLOSE_UNTIL, to = M.OPEN_FROM + 0.06 }
 
 -- columns per fold of velvet, and how bright each column of a fold is (1 is the darkest)
 M.FOLD = { 1, 2, 3, 4, 3, 2 }
@@ -61,16 +64,6 @@ function M.runs(width, side)
     end
   end
   return runs
-end
-
---- Returns how visible the stage name is: it only shows while the drapes are closed.
----@param raw number progress from 0 to 1
----@return number from 0 to 1
-function M.name_alpha(raw)
-  local span = (M.OPEN_FROM - M.CLOSE_UNTIL) / 3
-  local appear = ease.progress(raw - M.CLOSE_UNTIL, span)
-  local leave = 1 - ease.progress(raw - (M.OPEN_FROM - span), span)
-  return math.min(appear, leave)
 end
 
 return M

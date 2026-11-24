@@ -4,6 +4,7 @@
 local actions = require("core.curtain.actions")
 local banner = require("core.banner.actions")
 local motion = require("core.motion")
+local signpost = require("core.signpost")
 
 local M = {}
 
@@ -11,7 +12,7 @@ local ns = vim.api.nvim_create_namespace("eldentree_curtain")
 local current
 
 -- the velvet takes the stage accent, so every costume brings its own curtain
-local function paint_groups(name_alpha)
+local function paint_groups()
   local p = require("core.themes").palette()
   local blend = require("core.themes.actions").blend
   local deep = blend(p.yellow, p.crust, 0.28)
@@ -21,8 +22,6 @@ local function paint_groups(name_alpha)
     local fg = blend(lit, deep, (shade - 1) / (actions.SHADES - 1))
     vim.api.nvim_set_hl(0, "EldenCurtainFold" .. shade, { fg = fg, bg = deep })
   end
-  local name_fg = blend(p.peach, deep, name_alpha)
-  vim.api.nvim_set_hl(0, "EldenCurtainName", { fg = name_fg, bg = deep, bold = true })
 end
 
 local function close(state)
@@ -32,6 +31,8 @@ local function close(state)
   if state.tween then
     state.tween:stop()
   end
+  -- a travel cut short by the next one still arrives, so no project is left half loaded
+  signpost.arrive(state)
   pcall(vim.api.nvim_win_close, state.win, true)
   pcall(vim.api.nvim_buf_delete, state.buf, { force = true })
 end
@@ -73,15 +74,6 @@ local function velvet(width, side)
   return chunks
 end
 
-local function draw_name(state, name)
-  local text = banner.spaced(name:upper())
-  vim.api.nvim_buf_set_extmark(state.buf, ns, math.floor(state.height / 2), 0, {
-    virt_text = { { text, "EldenCurtainName" } },
-    virt_text_win_col = banner.center_col(state.width, vim.fn.strdisplaywidth(text)),
-    priority = 110,
-  })
-end
-
 local function draw(state, raw)
   vim.api.nvim_buf_clear_namespace(state.buf, ns, 0, -1)
   local drape = actions.drape_width(state.width, actions.cover(raw))
@@ -101,24 +93,23 @@ local function draw(state, raw)
       priority = 100,
     })
   end
-  if state.name and actions.name_alpha(raw) > 0 then
-    draw_name(state, state.name)
-  end
 end
 
---- Closes the curtain over the editor and opens it again on the next stage, unless animations
---- are stilled.
+--- Closes the curtain over the editor, announces the next stage on it and opens again, unless
+--- animations are stilled (then both callbacks run at once).
 ---@param name string|nil the stage being announced, like the project or branch you travel to
-function M.open(name)
+---@param opts? TravelOpts
+function M.open(name, opts)
+  opts = opts or {}
+  local state = { name = name, on_covered = opts.on_covered, on_done = opts.on_done }
   if not motion.enabled() or vim.g.eldentree_fog == false then
-    return
+    return signpost.finish(state)
   end
   close(current)
   require("core.sound").play("curtain")
-  local state = open_float()
-  state.name = name
+  state = vim.tbl_extend("force", open_float(), state)
   current = state
-  paint_groups(0)
+  paint_groups()
   state.tween = motion.tween({
     duration = actions.DURATION,
     easing = "linear",
@@ -127,14 +118,22 @@ function M.open(name)
       if not vim.api.nvim_win_is_valid(state.win) then
         return
       end
-      paint_groups(actions.name_alpha(raw))
       draw(state, raw)
+      local sign = signpost.actions.alpha(raw, actions.SIGN.from, actions.SIGN.to)
+      signpost.paint(sign)
+      signpost.draw(state, ns, sign)
+      if raw >= actions.COVERED and not state.covered then
+        vim.schedule(function()
+          signpost.arrive(state)
+        end)
+      end
     end,
     on_done = function()
       close(state)
       if current == state then
         current = nil
       end
+      signpost.finish(state)
     end,
   })
 end

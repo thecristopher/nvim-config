@@ -558,10 +558,10 @@ function M.hud_groups(p, blend, plates)
     EldenHudDesc = { fg = p.subtext0 },
     EldenHudHint = { fg = p.overlay1 },
     EldenHudBanner = { fg = p.yellow, bold = true },
-    -- the dressing room: bulbs resting warm and dim, lit as the hub chases light around them,
+    -- the dressing room: hearts resting soft and dim, lit as the hub chases light around them,
     -- and the dressing table under the mirror
-    EldenHudBulb = { fg = blend(p.peach, p.base, 0.45) },
-    EldenHudBulbLit = { fg = blend(p.peach, "#FFFFFF", 0.65), bold = true },
+    EldenHudHeart = { fg = blend(p.pink, p.base, 0.45) },
+    EldenHudHeartLit = { fg = blend(p.pink, "#FFFFFF", 0.75), bold = true },
     EldenHudDesk = { fg = p.surface1 },
     -- the dressing room's spotlight spills softly onto the pieces beside the selected one
     EldenHudSpotNear = { bg = blend(p.yellow, p.base, 0.06) },

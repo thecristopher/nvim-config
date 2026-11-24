@@ -83,12 +83,12 @@ return {
   },
   terminal = {
     iterm_profile = "Eldentree Resident Evil",
-    kitty_opacity = 1.0,
+    kitty_opacity = 0.96,
     ghostty = {
       ["font-family"] = "JetBrainsMono Nerd Font Mono",
       ["font-style"] = "SemiBold",
       ["font-size"] = 16,
-      ["background-opacity"] = 1,
+      ["background-opacity"] = 0.96,
       ["background-blur"] = false,
     },
   },

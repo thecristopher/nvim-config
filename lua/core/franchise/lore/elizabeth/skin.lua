@@ -87,12 +87,12 @@ return {
   },
   terminal = {
     iterm_profile = "Eldentree Elizabeth",
-    kitty_opacity = 0.96,
+    kitty_opacity = 0.92,
     ghostty = {
       ["font-family"] = "JetBrainsMono Nerd Font Mono",
       ["font-style"] = "Medium",
       ["font-size"] = 16,
-      ["background-opacity"] = 0.92,
+      ["background-opacity"] = 0.88,
       ["background-blur"] = 14,
     },
   },

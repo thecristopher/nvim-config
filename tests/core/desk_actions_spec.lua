@@ -67,7 +67,10 @@ describe("status_lines", function()
       listener_quiet_min = 0,
       work_finished_at = "2026-02-14T20:00:00Z",
     })
-    assert.equal("Listener: up for 12 min, checking the queue every minute", lines[1])
+    assert.equal(
+      "Listener: up for 12 min, checking the queue every minute while the desk is open",
+      lines[1]
+    )
     assert.equal("Work: idle, last finished 2026-02-14T20:00:00Z", lines[2])
   end)
 

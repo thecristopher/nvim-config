@@ -129,21 +129,24 @@ describe("occupied", function()
   end)
 end)
 
-describe("bulb_lit", function()
-  it("lights one bulb in every few along a row", function()
+describe("heart_lit", function()
+  it("lights one heart in every few along a row", function()
     local lit = 0
     for index = 1, 9 do
-      lit = lit + (actions.bulb_lit(index, 1, 0) and 1 or 0)
+      lit = lit + (actions.heart_lit(index, 1, 0) and 1 or 0)
     end
-    assert.equal(9 / actions.BULB_EVERY, lit)
+    assert.equal(9 / actions.HEART_EVERY, lit)
   end)
 
-  it("walks the light one bulb along on the next step, like Claire's marquee", function()
-    assert.equal(actions.bulb_lit(1, 1, 0), actions.bulb_lit(2, 1, actions.BULB_STEP_MS))
-  end)
+  it(
+    "walks the light one heart along on the next step, like the hearts around her mirror",
+    function()
+      assert.equal(actions.heart_lit(1, 1, 0), actions.heart_lit(2, 1, actions.HEART_STEP_MS))
+    end
+  )
 
-  it("starts every row one bulb later so the ring reads as one chase", function()
-    assert.equal(actions.bulb_lit(2, 1, 0), actions.bulb_lit(1, 2, 0))
+  it("starts every row one heart later so the ring reads as one chase", function()
+    assert.equal(actions.heart_lit(2, 1, 0), actions.heart_lit(1, 2, 0))
   end)
 end)
 

@@ -4,6 +4,7 @@ local actions = require("core.door.actions")
 local banner = require("core.banner.actions")
 local motion = require("core.motion")
 local color = require("core.motion.actions")
+local signpost = require("core.signpost")
 
 local M = {}
 
@@ -18,8 +19,8 @@ local function paint_groups(raw)
   local fg = color.mix(color.to_int(dark), color.to_int(wood), actions.door_alpha(raw))
   vim.api.nvim_set_hl(0, "EldenDoorDark", { bg = dark, blend = blend })
   vim.api.nvim_set_hl(0, "EldenDoorPanel", { fg = fg, bg = dark, blend = blend })
-  local note = color.mix(color.to_int(dark), color.to_int(p.overlay1), actions.door_alpha(raw))
-  vim.api.nvim_set_hl(0, "EldenDoorLoading", { fg = note, bg = dark, blend = blend, italic = true })
+  local note = color.mix(color.to_int(dark), color.to_int(p.subtext1), actions.door_alpha(raw))
+  vim.api.nvim_set_hl(0, "EldenDoorLoading", { fg = note, bg = dark, blend = blend })
 end
 
 local function close(state)
@@ -29,6 +30,8 @@ local function close(state)
   if state.tween then
     state.tween:stop()
   end
+  -- a travel cut short by the next one still arrives, so no project is left half loaded
+  signpost.arrive(state)
   pcall(vim.api.nvim_win_close, state.win, true)
   pcall(vim.api.nvim_buf_delete, state.buf, { force = true })
 end
@@ -85,14 +88,19 @@ local function draw_door(state, raw)
   put(state, state.height - 2, math.max(0, state.width - #loading - 4), loading, "EldenDoorLoading")
 end
 
---- Darkens the editor, swings a door open and lets the light back in, unless animations are stilled.
-function M.open()
+--- Darkens the editor, swings a door open under the name of where you go and lets the light back
+--- in, unless animations are stilled (then both callbacks run at once).
+---@param name string|nil where you are going, written on the sign
+---@param opts? TravelOpts
+function M.open(name, opts)
+  opts = opts or {}
+  local state = { name = name, on_covered = opts.on_covered, on_done = opts.on_done }
   if not motion.enabled() or vim.g.eldentree_fog == false then
-    return
+    return signpost.finish(state)
   end
   close(current)
   require("core.sound").play("door")
-  local state = open_float()
+  state = vim.tbl_extend("force", open_float(), state)
   current = state
   paint_groups(0)
   state.tween = motion.tween({
@@ -105,12 +113,21 @@ function M.open()
       end
       paint_groups(raw)
       draw_door(state, raw)
+      local sign = signpost.actions.alpha(raw, actions.SIGN.from, actions.SIGN.to)
+      signpost.paint(sign)
+      signpost.draw(state, ns, sign)
+      if raw >= actions.COVERED and not state.covered then
+        vim.schedule(function()
+          signpost.arrive(state)
+        end)
+      end
     end,
     on_done = function()
       close(state)
       if current == state then
         current = nil
       end
+      signpost.finish(state)
     end,
   })
 end

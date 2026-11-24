@@ -2,6 +2,7 @@
 -- once you arrive. Every cell is a space on a blended float, so the new project shows through.
 local actions = require("core.fog.actions")
 local motion = require("core.motion")
+local signpost = require("core.signpost")
 
 local M = {}
 
@@ -32,6 +33,8 @@ local function close(state)
   if state.tween then
     state.tween:stop()
   end
+  -- a travel cut short by the next one still arrives, so no project is left half loaded
+  signpost.arrive(state)
   pcall(vim.api.nvim_win_close, state.win, true)
   pcall(vim.api.nvim_buf_delete, state.buf, { force = true })
 end
@@ -85,20 +88,28 @@ local function draw_clouds(state, raw)
   end
 end
 
---- Rolls a fog wall over the editor and lets it fade, unless animations are stilled.
---- Worlds that travel another way hand off to the module named after it, like core.door.
----@param name string|nil where you are going, announced by the travels that have room for it
-function M.roll(name)
+---@class TravelOpts
+---@field on_covered? fun() runs once the screen is covered, the moment to load the new place
+---@field on_done? fun() runs once the screen is clear again
+
+--- Rolls a fog wall over the editor with the name of where you go, and lets it fade, unless
+--- animations are stilled (then both callbacks run at once). Worlds that travel another way hand
+--- off to the module named after it, like core.door.
+---@param name string|nil where you are going, written on the sign
+---@param opts? TravelOpts
+function M.roll(name, opts)
+  opts = opts or {}
   local travel = require("core.franchise").mechanic("travel")
   if travel ~= "fog" then
-    return require("core." .. travel).open(name)
+    return require("core." .. travel).open(name, opts)
   end
+  local state = { name = name, on_covered = opts.on_covered, on_done = opts.on_done }
   if not motion.enabled() or vim.g.eldentree_fog == false then
-    return
+    return signpost.finish(state)
   end
   close(current)
   require("core.sound").play("fog")
-  local state = open_float()
+  state = vim.tbl_extend("force", open_float(), state)
   current = state
   paint_groups(0)
   state.tween = motion.tween({
@@ -111,12 +122,21 @@ function M.roll(name)
       end
       paint_groups(actions.density_at(raw))
       draw_clouds(state, raw)
+      local sign = signpost.actions.alpha(raw, actions.SIGN.from, actions.SIGN.to)
+      signpost.paint(sign)
+      signpost.draw(state, ns, sign)
+      if raw >= actions.COVERED and not state.covered then
+        vim.schedule(function()
+          signpost.arrive(state)
+        end)
+      end
     end,
     on_done = function()
       close(state)
       if current == state then
         current = nil
       end
+      signpost.finish(state)
     end,
   })
 end
