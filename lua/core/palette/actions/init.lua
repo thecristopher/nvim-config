@@ -102,6 +102,12 @@ M.ENTRIES = {
     cmd = "Feats",
   },
   {
+    icon = "󰖘 ",
+    name = "Season",
+    desc = "Bring a season for this session",
+    cmd = "Season ",
+  },
+  {
     icon = "󰃭 ",
     name = "Wrapped",
     desc = "The year card, saved as a PNG with s",

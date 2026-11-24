@@ -27,6 +27,7 @@ M.EVENTS = {
   "summon",
   "comfort",
   "expedition",
+  "trophy",
   "bought",
   "welcome",
   "weapon",

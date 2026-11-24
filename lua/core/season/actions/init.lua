@@ -111,6 +111,26 @@ function M.season(date, anniversary)
   return nil
 end
 
+--- Finds a season by its name, nil for any other name.
+---@param name string|nil
+---@return table|nil
+function M.named(name)
+  for _, season in ipairs(M.SEASONS) do
+    if season.name == name then
+      return season
+    end
+  end
+  return nil
+end
+
+--- The names of every season, for completion.
+---@return string[]
+function M.names()
+  return vim.tbl_map(function(season)
+    return season.name
+  end, M.SEASONS)
+end
+
 --- The franchise a season brings, nil when it brings none or that one does not play here.
 ---@param season table|nil
 ---@param playable string[] the franchises that play on this machine

@@ -462,18 +462,42 @@ def er_expedition():
     return mix((gong, 0.8, 0.0), (breath, 0.4, 0.05)), HALL, MOMENT
 
 
+# ── trophy: a feat unlocked, short and bright so it never steps on a banner ─────────────
+
+
+def er_trophy():
+    # three bells climbing a fifth over a held breath of the choir, in the hall
+    bells = mix(*[(bell(freq, 1.6), 0.55, at) for at, freq in ((0.0, 523.25), (0.11, 783.99), (0.22, 1046.5))])
+    breath = envelope(er_choir_pad([261.63, 392.0], 1.4, 1800), attack=0.15, release=0.9)
+    return mix((bells, 1.0, 0.0), (breath, 0.35, 0.05)), HALL, MOMENT
+
+
+def re_trophy():
+    # two clean chimes, the second a fourth higher, like a file added to the records
+    first = decay(bell(1174.66, 0.9), 0.25)
+    second = decay(bell(1567.98, 1.1), 0.3)
+    return mix((first, 0.7, 0.0), (second, 0.8, 0.12)), ROOM, MOMENT
+
+
+def el_trophy():
+    # the music box runs up the chord and a small crowd applauds the award
+    run = melody(["C6", "E6", "G6", "C6"], 0.09, 1.0)
+    crowd = applause(1.2, 30, seed=11)
+    return mix((run, 0.8, 0.0), (crowd, 0.35, 0.25)), STAGE
+
+
 RECIPES = {
     # everything else is a clip from the games: the save room, the typewriter, the merchant, the
     # inventory, the character select (region), a key (zone and great), a herb (cleansed and
     # felled) and the radio
     "resident_evil": {
-        "boss": re_boss,
+        "boss": re_boss, "trophy": re_trophy,
     },
     # title, died, felled, grace, rest, zone, merchant, phantom and continue are clips from the game, so they are not built here
     "elden_ring": {
         "great": er_great, "cleansed": er_cleansed,
         "fog": er_fog, "boss": er_boss, "region": er_region,
-        "comfort": er_comfort, "expedition": er_expedition,
+        "comfort": er_comfort, "expedition": er_expedition, "trophy": er_trophy,
         "hud_open": er_hud_open, "hud_close": er_hud_close, "hud_move": er_hud_move,
         "hud_select": er_hud_select, "hud_back": er_hud_back,
     },
@@ -484,7 +508,7 @@ RECIPES = {
         "cleansed": el_cleansed, "region": el_region, "zone": el_zone, "phantom": el_phantom,
         "continue": el_continue, "summon": el_summon, "comfort": el_comfort, "bought": el_bought,
         "welcome": el_welcome, "merchant": el_merchant, "weapon": el_weapon,
-        "expedition": el_expedition, "hud_open": el_hud_open, "hud_close": el_hud_close,
+        "expedition": el_expedition, "trophy": el_trophy, "hud_open": el_hud_open, "hud_close": el_hud_close,
         "hud_move": el_hud_move, "hud_select": el_hud_select, "hud_back": el_hud_back,
     },
 }

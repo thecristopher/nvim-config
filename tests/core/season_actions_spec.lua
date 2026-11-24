@@ -48,3 +48,17 @@ describe("weather", function()
     end
   end)
 end)
+
+describe("named", function()
+  it("finds Halloween for Claire's preview", function()
+    assert.equal("Halloween", season.named("halloween").title)
+  end)
+
+  it("finds nothing for a season Wesker made up", function()
+    assert.is_nil(season.named("umbrella_summer"))
+  end)
+
+  it("names every season for completion", function()
+    assert.same({ "anniversary", "halloween", "winter", "new_year" }, season.names())
+  end)
+end)
