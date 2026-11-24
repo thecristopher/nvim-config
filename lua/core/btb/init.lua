@@ -154,13 +154,22 @@ local function refresh_statusline()
   require("core.utils").refresh_statusline()
 end
 
--- clean solves in a row this session, the coach counts them out loud
-local streak = 0
+-- clean solves in a row today, the coach counts them out loud. Kept on disk so closing nvim
+-- between exercises does not break the run
+local streak_file = vim.fn.stdpath("state") .. "/eldentree_btb_streak"
+
+local function solve_moment(result)
+  local today = os.date("%Y-%m-%d")
+  local ok, lines = pcall(vim.fn.readfile, streak_file, "", 1)
+  local moment, run =
+    actions.solve_moment(result, actions.saved_streak(ok and lines[1] or nil, today))
+  require("core.utils").write_state(streak_file, { today .. " " .. run })
+  return moment
+end
 
 local function celebrate(result)
   local fanfare = actions.celebration(result)
-  local moment
-  moment, streak = actions.solve_moment(result, streak)
+  local moment = solve_moment(result)
   -- the coach's own voice wins over the merchant's praise, two voices never talk at once
   local spoke = moment and require("core.voice").say(moment) or false
   local praise = not spoke and actions.pass_sound(result) or nil

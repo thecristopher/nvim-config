@@ -159,8 +159,13 @@ describe("solve_moment", function()
     assert.are.same({ "lesson_done", 3 }, { actions.solve_moment(day, 2) })
   end)
 
-  it("has Claire answer a failed submit and break the run", function()
-    assert.are.same({ "solve_failed", 0 }, { actions.solve_moment({ ok = false }, 2) })
+  it("has Claire answer a failed submit and keep the run, the pass decides", function()
+    assert.are.same({ "solve_failed", 2 }, { actions.solve_moment({ ok = false }, 2) })
+  end)
+
+  it("lets Leon count a clean pass that came after one failed submit", function()
+    local run = select(2, actions.solve_moment({ ok = false }, 1))
+    assert.are.same({ "solved_twice", 2 }, { actions.solve_moment(clean, run) })
   end)
 
   it("breaks the run on a pass with hints, quietly", function()
@@ -169,6 +174,21 @@ describe("solve_moment", function()
 
   it("lets a redo neither count nor break Malenia's run", function()
     assert.are.same({ nil, 2 }, { actions.solve_moment({ ok = true, redo = true }, 2) })
+  end)
+end)
+
+describe("saved_streak", function()
+  it("brings back Magik's run from earlier today", function()
+    assert.are.equal(2, actions.saved_streak("2026-11-24 2", "2026-11-24"))
+  end)
+
+  it("starts Claire's run over on a new day", function()
+    assert.are.equal(0, actions.saved_streak("2026-11-23 3", "2026-11-24"))
+  end)
+
+  it("starts from zero when Inde has no run saved", function()
+    assert.are.equal(0, actions.saved_streak(nil, "2026-11-24"))
+    assert.are.equal(0, actions.saved_streak("garbage", "2026-11-24"))
   end)
 end)
 

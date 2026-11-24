@@ -443,6 +443,9 @@ return {
         solved_2 = "Da. That's how we do it in my realm.",
         solved_3 = "Good, malysh. Keep that up and I'll reward you tonight.",
       },
+      -- the clean solves in a row borrow the solved clips that fit a run
+      solved_twice = { solved_2 = "Da. That's how we do it in my realm." },
+      solved_thrice = { solved_3 = "Good, malysh. Keep that up and I'll reward you tonight." },
       hint = {
         hint = "Fine. I'll open a disc, peek inside. Look there.",
         hint_2 = "A hint? Piotr would just punch it. Look closer, there.",

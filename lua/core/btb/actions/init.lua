@@ -129,9 +129,10 @@ end
 local STREAK_MOMENTS = { [2] = "solved_twice", [3] = "solved_thrice" }
 
 ---What the coach says out loud after a result, and the run of clean solves it leaves. The pass
----that ends the day closes the lesson, a clean solve counts toward the run, anything else breaks
----it and a failed submit gets a word of its own. A redo neither counts nor breaks it. A lone clean
----solve is left to the merchant.
+---that ends the day closes the lesson, a clean solve counts toward the run and a pass that is not
+---clean breaks it. A failed submit gets a word of its own and leaves the run alone, since btb
+---still calls a pass clean after one. A redo neither counts nor breaks it. A lone clean solve is
+---left to the merchant.
 ---@param result table the User BtbResult payload
 ---@param streak integer clean solves in a row before this one
 ---@return string|nil moment a voice moment, nil when the coach keeps quiet
@@ -141,7 +142,7 @@ function M.solve_moment(result, streak)
     return nil, streak
   end
   if not result.ok then
-    return "solve_failed", 0
+    return "solve_failed", streak
   end
   local clean = result.outcome == "clean"
   local run = clean and streak + 1 or 0
@@ -155,6 +156,19 @@ function M.solve_moment(result, streak)
     return nil, run
   end
   return STREAK_MOMENTS[run] or "solved", run
+end
+
+---The clean solves in a row saved for today, so a run survives closing nvim. A run saved on
+---another day starts over.
+---@param saved string|nil the saved line, "<date> <count>"
+---@param today string like 2026-11-24
+---@return integer
+function M.saved_streak(saved, today)
+  local day, count = (saved or ""):match("^(%S+) (%d+)$")
+  if day ~= today then
+    return 0
+  end
+  return tonumber(count)
 end
 
 ---The sound a pass plays, the merchant's praise where the franchise has it. A failure plays none.
