@@ -69,6 +69,16 @@ function M.crossed(before, after, step)
   return math.floor(after / step) > math.floor(before / step)
 end
 
+--- Tells whether the merchant shows up for a change of the tally: a new milestone, unless the
+--- caller keeps him away.
+---@param before integer tally before the change
+---@param after integer tally after it
+---@param merchant boolean|nil false keeps the merchant away
+---@return boolean
+function M.merchant_due(before, after, merchant)
+  return merchant ~= false and M.crossed(before, after)
+end
+
 function M.decode(text)
   local held, bloodstain = (text or ""):match("^(%d+)%s+(%d+)$")
   return { held = tonumber(held) or 0, bloodstain = tonumber(bloodstain) or 0 }

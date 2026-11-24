@@ -113,7 +113,8 @@ end
 local function committed(buf, msg)
   pending[buf] = nil
   local subject = msg:match("^([^\n]+)") or ""
-  require("core.banner").show("felled", { subtitle = subject })
+  -- a commit pays its runes without the merchant, he only comes for the purse elsewhere
+  require("core.banner").show("felled", { subtitle = subject, merchant = false })
   local root = require("core.git").repo()
   require("core.voice").say("committed", { branch = require("core.repos").branch(root) or "" })
   vim.schedule(function()

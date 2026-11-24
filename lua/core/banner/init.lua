@@ -240,7 +240,8 @@ local function crumble(duration)
 end
 
 -- shows a banner by kind name ("felled", "great", "died", "grace", "cleansed", "region"),
--- opts.sound = false when another sound already speaks for it
+-- opts.sound = false when another sound already speaks for it, opts.merchant = false pays the
+-- runes without the merchant's visit
 function M.show(name, opts)
   opts = opts or {}
   local kind = actions.kind(name, opts.kind)
@@ -249,7 +250,7 @@ function M.show(name, opts)
   end
   -- runes change hands even when the banner itself stays hidden
   if opts.reward ~= false then
-    require("core.runes").after_banner(name)
+    require("core.runes").after_banner(name, { merchant = opts.merchant })
   end
   if not motion.enabled() or vim.g.eldentree_banners == false then
     return
