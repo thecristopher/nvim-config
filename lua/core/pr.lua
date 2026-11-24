@@ -354,8 +354,9 @@ local function published(buf, ctx, title, url)
     line, character, spoke =
       require("core.voice").speak("pr_opened", { number = url:match("/pull/(%d+)") or "" })
   end
-  -- when the character says it out loud the banner keeps quiet, so the two never talk over each other
-  require("core.banner").show("great", { subtitle = title, sound = not spoke })
+  -- when the character says it out loud the banner keeps quiet, so the two never talk over each
+  -- other, and the merchant waits for another milestone instead of greeting over the PR
+  require("core.banner").show("great", { subtitle = title, sound = not spoke, merchant = false })
   -- a new PR gives the branch threads to follow, GitHub needs a moment to list it
   require("core.threads").refresh(nil, 5000)
   vim.schedule(function()

@@ -16,7 +16,7 @@ return {
         root = dir,
         persona = bridge.persona,
         portrait = bridge.portrait,
-        sound = bridge.sound,
+        sound = bridge.on_sound,
         before_hint = bridge.before_hint,
         progress = require("core.progress").start,
         -- Eldentree decides what completes in an exercise: blink with function names only, Copilot muted

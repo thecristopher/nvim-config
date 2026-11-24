@@ -60,6 +60,20 @@ describe("sound_for", function()
   it("stays quiet on a clean solve, the banner already sings", function()
     assert.is_nil(actions.sound_for("passed_clean"))
   end)
+
+  it("keeps the summon quiet while Claire is asking Inde if she is ready", function()
+    assert.is_nil(actions.sound_for("coach_open", true))
+  end)
+end)
+
+describe("hook_plays", function()
+  it("plays Claire's failed moment through the hook", function()
+    assert.is_true(actions.hook_plays("failed"))
+  end)
+
+  it("leaves the hint Inde bought to User BtbHint", function()
+    assert.is_false(actions.hook_plays("hint"))
+  end)
 end)
 
 describe("pass_sound", function()
@@ -141,8 +155,8 @@ end)
 describe("solve_moment", function()
   local clean = { ok = true, outcome = "clean" }
 
-  it("leaves Inde's first clean solve to the merchant's praise", function()
-    assert.are.same({ nil, 1 }, { actions.solve_moment(clean, 0) })
+  it("has Claire cheer Inde's first clean solve herself", function()
+    assert.are.same({ "solved", 1 }, { actions.solve_moment(clean, 0) })
   end)
 
   it("has Claire count the second and third clean solves in a row", function()
