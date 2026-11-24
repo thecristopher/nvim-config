@@ -89,14 +89,16 @@ local function speak(event)
   return false
 end
 
----Plays the franchise sound that fits a coach event.
+---Plays the franchise sound that fits a coach event, unless the coach is talking: the voice goes
+---first and a bell or a summon clip never crosses it.
 ---@param event string
 function M.sound(event)
-  local sounds = actions.sound_for(event)
-  if sounds then
-    require("core.sound").play_first(sounds)
-  end
   speak(event)
+  local sound = require("core.sound")
+  local sounds = actions.sound_for(event, sound.speaking())
+  if sounds then
+    sound.play_first(sounds)
+  end
 end
 
 ---Refreshes the lessons the HUD shows, in the background.
@@ -310,6 +312,9 @@ end
 
 local shop_file = vim.fn.stdpath("state") .. "/eldentree_merchant"
 
+-- the merchant's thanks for a hint while it still sounds, the coach cuts it to say the hint
+local thanks = nil
+
 local function greet_at_shop()
   local day, franchise = os.date("%Y-%m-%d"), require("core.franchise").name()
   local ok, lines = pcall(vim.fn.readfile, shop_file, "", 1)
@@ -329,7 +334,7 @@ function M.before_hint(info, buy)
   greet_at_shop()
   vim.ui.select({ coach.buy, coach.leave }, { prompt = offer }, function(choice)
     if choice == coach.buy then
-      require("core.sound").play("bought")
+      thanks = require("core.sound").play("bought")
       buy()
     end
   end)
@@ -369,6 +374,10 @@ function M.setup()
     callback = function(event)
       require("core.runes").spend((event.data or {}).cost or 0)
       M.sound("hint")
+      if thanks and require("core.sound").speaking() then
+        thanks.kill()
+      end
+      thanks = nil
     end,
   })
   vim.api.nvim_create_user_command("BtbPath", M.path, { desc = "The back-to-basics path as a map" })

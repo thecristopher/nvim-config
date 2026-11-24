@@ -127,6 +127,12 @@ function M.speak(path)
   return start("voice", path, command, "voice")
 end
 
+---Whether a character's spoken line is still playing.
+---@return boolean
+function M.speaking()
+  return sounding("voice") ~= nil
+end
+
 ---@return string the folder of the franchise's sounds
 function M.folder()
   return folder()
@@ -159,6 +165,11 @@ function M.setup()
       focused = true
     end,
   })
+  -- a terminal inside nvim (Claude's panel) can swallow or swap the focus events, and a key
+  -- pressed in nvim is proof enough that it has the focus
+  vim.on_key(function()
+    focused = true
+  end, vim.api.nvim_create_namespace("eldentree_sound_focus"))
   vim.api.nvim_create_user_command("Sound", function(cmd)
     -- a preview, so it plays even right after the same event fired and over anything playing
     last_played[cmd.args] = nil

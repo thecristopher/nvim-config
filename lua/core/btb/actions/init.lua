@@ -64,10 +64,15 @@ function M.coach_of(region, franchise, coach)
     or { id = M.persona_id(character), character = character, franchise = franchise }
 end
 
----The franchise sounds that may play for a coach event, in order of preference.
+---The franchise sounds that may play for a coach event, in order of preference. None while the
+---character is talking, so a clip never crosses their voice.
 ---@param event string "coach_open" or a moment like "failed"
+---@param talking? boolean whether the character's voice is playing
 ---@return string[]|nil
-function M.sound_for(event)
+function M.sound_for(event, talking)
+  if talking then
+    return nil
+  end
   return M.SOUNDS[event]
 end
 
@@ -124,15 +129,13 @@ function M.celebration(result)
   return { banner = banner, subtitle = words, runes = result.xp or 0 }
 end
 
--- what the coach says at each clean solve in a row, every one past the last here says "solved".
--- The first belongs to the merchant's praise, so the coach keeps quiet there
+-- what the coach says at each clean solve in a row, every other one says "solved"
 local STREAK_MOMENTS = { [2] = "solved_twice", [3] = "solved_thrice" }
 
 ---What the coach says out loud after a result, and the run of clean solves it leaves. The pass
 ---that ends the day closes the lesson, a clean solve counts toward the run and a pass that is not
 ---clean breaks it. A failed submit gets a word of its own and leaves the run alone, since btb
----still calls a pass clean after one. A redo neither counts nor breaks it. A lone clean solve is
----left to the merchant.
+---still calls a pass clean after one. A redo neither counts nor breaks it.
 ---@param result table the User BtbResult payload
 ---@param streak integer clean solves in a row before this one
 ---@return string|nil moment a voice moment, nil when the coach keeps quiet
@@ -150,9 +153,6 @@ function M.solve_moment(result, streak)
     return "lesson_done", run
   end
   if not clean then
-    return nil, run
-  end
-  if run == 1 then
     return nil, run
   end
   return STREAK_MOMENTS[run] or "solved", run

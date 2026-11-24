@@ -10,16 +10,18 @@ whose `coach` names `played_by` and a `bond` (Elizabeth's) makes the coach that 
 rule: the role's personality leads every line and every exercise, the bond only slips through in a
 small detail, and a changed bond makes btb summon them again. `coach.training` and `coach.lessons`
 naming the hub key and the HUD tab. The stage draws the coach with `core/hud/portrait.lua` in its
-own `btb` slot, coach moments reuse the HUD sounds, and every `User BtbResult` fires `felled` on a
+own `btb` slot, coach moments reuse the HUD sounds (quiet while the coach talks, so a clip never
+crosses her voice), and every `User BtbResult` fires `felled` on a
 clean solve or `great` on a level up and pays the XP in runes (a redo pays nothing). The plugin puts
 failing tests on the solution as warnings (on the line the stack or traceback reached), `<leader>kd`
 opens the solution beside the reference with Claude's review on the lines it names, a redo's winbar
 races its ghost, and `<leader>kk` asks the recapped lessons' closing questions before the recap.
 `before_hint` gets `M.before_hint` here, so the franchise's merchant sells each hint (`coach.hint`,
 `coach.buy`, `coach.leave`), greeting with `welcome` on the first visit of the day per franchise
-(`eldentree_merchant` in state) and `merchant` after that, while every pass plays `weapon` where the
-franchise has it and keeps the banner quiet and `User BtbHint` takes its XP out of the runes and has the
-coach say the hint out loud (btb shows the hint in its own float, without the sound hook).
+(`eldentree_merchant` in state) and `merchant` after that. A clean pass is the coach's to cheer
+(`solve_moment`), any other pass plays `weapon` where the franchise has it and keeps the banner
+quiet, and `User BtbHint` takes its XP out of the runes and has the coach say the hint out loud,
+cutting the merchant's `bought` (btb shows the hint in its own float, without the sound hook).
 `<leader>kC` / `:BtbConcepts` draws the concepts from `btb status` as rooms (`coach.concepts`). `b`
 on the HUD starts the lesson and its description reads what is left of the day (from `btb today`),
 the lessons fought so far live in the FILE tab (RE) or their own tab (Elden Ring). The pass that
