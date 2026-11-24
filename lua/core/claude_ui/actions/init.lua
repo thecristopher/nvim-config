@@ -86,7 +86,7 @@ function M.stamp(line)
   return tonumber(vim.trim(line or ""))
 end
 
---- Whether a session is one of the background ones the desk keeps (listener or work), which
+--- Whether a session is one of the desk's background work sessions, which
 --- nobody is watching, so their turns never ring.
 ---@param id string|nil the hook's session id
 ---@param background string[] short ids of the desk's sessions, each the start of a full id

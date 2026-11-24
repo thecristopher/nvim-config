@@ -1,14 +1,13 @@
--- Pure pieces of the desk: config merge, the inbox the listener fills, the status line and the
+-- Pure pieces of the desk: config merge, the inbox the work session fills, the status line and the
 -- implement and review targets.
 local M = {}
 
 M.DEFAULT_CONFIG_PATH = "~/.claude/skills/desk/config.json"
 
--- the scripts behind the listener and the work sessions live with the skill
+-- the scripts behind the work sessions live with the skill
 M.SCRIPTS_DIR = "~/.claude/skills/desk-sync/scripts"
 
 M.LAUNCH_AGENTS = {
-  "~/Library/LaunchAgents/com.cristopher.desk-listener.plist",
   "~/Library/LaunchAgents/com.cristopher.desk-work.plist",
 }
 
@@ -18,13 +17,9 @@ M.DEFAULTS = {
   -- empty means nvim's own state folder, the scripts fall back to the same one
   state_dir = "",
   sync = {
-    listen_model = "haiku",
     work_model = "opus",
   },
 }
-
--- the listener ticks every minute, so this long without one means it is gone
-local LISTENER_QUIET_MIN = 5
 
 ---Merges a decoded config over the defaults, so a partial file still works.
 ---@param raw table|nil decoded config file
@@ -50,24 +45,6 @@ function M.inbox_item(raw)
   return { kind = raw.kind, key = raw.key, repo = repo, queue_id = raw.queue_id }
 end
 
----Describes the listener from its id file and transcript.
----@param s { paused: boolean, listener_age_min: integer|nil, listener_quiet_min: integer|nil }
----@return string
-local function listener_line(s)
-  if s.paused then
-    return "Listener: paused. :Desk resume starts it again"
-  end
-  if not s.listener_age_min then
-    return "Listener: not running. Opening the desk with :Desk starts it"
-  end
-  if (s.listener_quiet_min or 0) >= LISTENER_QUIET_MIN then
-    return ("Listener: silent for %d min, launchd restarts it shortly"):format(s.listener_quiet_min)
-  end
-  return ("Listener: up for %d min, checking the queue every minute while the desk is open"):format(
-    s.listener_age_min
-  )
-end
-
 ---Describes the work session from its lock and result files.
 ---@param s { work_age_min: integer|nil, work_finished_at: string|nil }
 ---@return string
@@ -79,13 +56,13 @@ local function work_line(s)
 end
 
 ---Builds the lines :Desk status shows.
----@param s { installed: boolean, paused: boolean, listener_age_min: integer|nil, listener_quiet_min: integer|nil, work_age_min: integer|nil, work_finished_at: string|nil, inbox: integer }
+---@param s { installed: boolean, work_age_min: integer|nil, work_finished_at: string|nil, inbox: integer }
 ---@return string[]
 function M.status_lines(s)
   if not s.installed then
-    return { "The desk agents are not installed. Run " .. M.SCRIPTS_DIR .. "/install.sh" }
+    return { "The desk agent is not installed. Run " .. M.SCRIPTS_DIR .. "/install.sh" }
   end
-  local lines = { listener_line(s), work_line(s) }
+  local lines = { work_line(s) }
   if s.inbox > 0 then
     table.insert(lines, ("Inbox: %d waiting to open"):format(s.inbox))
   end

@@ -1,7 +1,6 @@
--- The manager desk: opens the desk artifact and opens the tabs it asks for. Opening it starts a
--- listener that reads the desk's queue every minute while the page stays open, and runs analyses
--- and replies on its own; nvim only watches the inbox it fills, so implement and review requests
--- open a tab here.
+-- The manager desk: opens the desk artifact and opens the tabs it asks for. Opening it asks for one
+-- work session that syncs and runs whatever the page queued, nothing runs between visits. nvim
+-- watches the inbox that session fills, so implement and review requests open a tab here.
 local actions = require("core.desk.actions")
 
 local M = {}
@@ -46,31 +45,20 @@ local function state_dir(cfg)
   return vim.fn.stdpath("state") .. "/eldentree_desk"
 end
 
-local function script(name)
-  return vim.fn.expand(actions.SCRIPTS_DIR) .. "/" .. name
-end
-
----The short ids of the desk's background sessions (listener and work), so their hooks stay quiet.
+---The short id of the desk's background work session, so its hooks stay quiet.
 ---@return string[]
 function M.session_ids()
   local cfg = M.config()
   if not cfg then
     return {}
   end
-  local ids = {}
-  for _, file in ipairs({ "listener.id", "work.lock" }) do
-    local ok, lines = pcall(vim.fn.readfile, state_dir(cfg) .. "/" .. file, "", 1)
-    ids[#ids + 1] = ok and lines[1] and lines[1]:match("^(%x+)") or ""
-  end
-  return ids
+  local ok, lines = pcall(vim.fn.readfile, state_dir(cfg) .. "/work.lock", "", 1)
+  return { ok and lines[1] and lines[1]:match("^(%x+)") or "" }
 end
 
--- marks the desk as opened and has listener.sh start the listener now instead of in 5 minutes.
--- The listener leaves the idle file once the page has been closed a while, and stays down until
--- the desk is opened again
-local function start_listener(cfg, on_done)
-  require("core.utils").write_state(state_dir(cfg) .. "/opened", { os.date("!%Y-%m-%dT%H:%M:%SZ") })
-  vim.system({ "bash", script("listener.sh") }, { text = true }, vim.schedule_wrap(on_done))
+-- launchd watches this file and starts a work session when it changes
+local function wake(cfg)
+  require("core.utils").write_state(state_dir(cfg) .. "/wake", { os.date("!%Y-%m-%dT%H:%M:%SZ") })
 end
 
 ---Opens a tab in the ticket's repo with Claude implementing it.
@@ -167,7 +155,7 @@ local function open_item(item)
   end
 end
 
----Opens every request the listener left in the inbox and removes its file.
+---Opens every request the work session left in the inbox and removes its file.
 ---@param dir string the inbox folder
 local function drain_inbox(dir)
   for _, file in ipairs(vim.fn.glob(dir .. "/*.json", false, true)) do
@@ -191,7 +179,7 @@ local function watch_inbox(cfg)
   vim.fn.mkdir(dir, "p")
   drain_inbox(dir)
   inbox_watch = vim.uv.new_fs_event()
-  -- the listener writes the file in one go, a short pause lets the write land before reading
+  -- the work session writes the file in one go, a short pause lets the write land before reading
   local timer = vim.uv.new_timer()
   inbox_watch:start(dir, {}, function()
     timer:stop()
@@ -214,7 +202,7 @@ local function installed()
   return true
 end
 
----Opens the desk artifact in the browser.
+---Opens the desk artifact in the browser and asks for the one sync of this visit.
 function M.open()
   local cfg, reason = M.config()
   if not cfg then
@@ -226,12 +214,8 @@ function M.open()
     return
   end
   vim.ui.open(cfg.artifact_url)
-  if installed() and not vim.uv.fs_stat(state_dir(cfg) .. "/paused") then
-    start_listener(cfg, function(res)
-      if res.code ~= 0 then
-        notify("The listener did not start: " .. vim.trim(res.stdout or ""), vim.log.levels.WARN)
-      end
-    end)
+  if installed() then
+    wake(cfg)
   end
 end
 
@@ -246,7 +230,7 @@ function M.sync()
     notify(actions.status_lines({ installed = false, inbox = 0 })[1], vim.log.levels.WARN)
     return
   end
-  require("core.utils").write_state(state_dir(cfg) .. "/wake", { os.date("!%Y-%m-%dT%H:%M:%SZ") })
+  wake(cfg)
   notify("Sync requested, the work session starts in a few seconds")
 end
 
@@ -273,7 +257,7 @@ local function session_age(id_file)
     transcripts[1] and minutes_old(transcripts[1])
 end
 
----Says whether the listener runs, what the work session is doing and what waits in the inbox.
+---Says what the work session is doing and what waits in the inbox.
 function M.status()
   local cfg, reason = M.config()
   if not cfg then
@@ -281,7 +265,6 @@ function M.status()
     return
   end
   local dir = state_dir(cfg)
-  local listener_age, listener_quiet = session_age(dir .. "/listener.id")
   local work_age = session_age(dir .. "/work.lock")
   local work = read_json(dir .. "/work.json")
   local lock = vim.uv.fs_stat(dir .. "/work.lock")
@@ -293,9 +276,6 @@ function M.status()
   notify(table.concat(
     actions.status_lines({
       installed = installed(),
-      paused = vim.uv.fs_stat(dir .. "/paused") ~= nil,
-      listener_age_min = listener_age,
-      listener_quiet_min = listener_quiet,
       work_age_min = work_age,
       work_finished_at = work and work.finished_at or nil,
       inbox = #vim.fn.glob(dir .. "/inbox/*.json", false, true),
@@ -304,42 +284,12 @@ function M.status()
   ))
 end
 
----Stops the listener until :Desk resume.
-function M.pause()
-  local cfg, reason = M.config()
-  if not cfg then
-    notify(reason, vim.log.levels.WARN)
-    return
-  end
-  require("core.utils").write_state(state_dir(cfg) .. "/paused", { os.date("!%Y-%m-%dT%H:%M:%SZ") })
-  vim.system({ "bash", script("listener.sh") })
-  notify("Listener paused, nothing on the page gets picked up until :Desk resume")
-end
-
----Starts the listener again right away instead of waiting for launchd.
-function M.resume()
-  local cfg, reason = M.config()
-  if not cfg then
-    notify(reason, vim.log.levels.WARN)
-    return
-  end
-  vim.fn.delete(state_dir(cfg) .. "/paused")
-  start_listener(cfg, function(res)
-    if res.code ~= 0 then
-      notify("The listener did not start: " .. vim.trim(res.stdout or ""), vim.log.levels.WARN)
-      return
-    end
-    notify("Listener running while the desk stays open, the page gets picked up within a minute")
-  end)
-end
-
-local SUBCOMMANDS =
-  { open = M.open, sync = M.sync, status = M.status, pause = M.pause, resume = M.resume }
+local SUBCOMMANDS = { open = M.open, sync = M.sync, status = M.status }
 
 local function command(opts)
   local run = SUBCOMMANDS[opts.args ~= "" and opts.args or "open"]
   if not run then
-    notify("Usage: :Desk [open|sync|status|pause|resume]", vim.log.levels.WARN)
+    notify("Usage: :Desk [open|sync|status]", vim.log.levels.WARN)
     return
   end
   run()
@@ -351,7 +301,7 @@ function M.setup()
     complete = function()
       return vim.tbl_keys(SUBCOMMANDS)
     end,
-    desc = "Open the desk, sync it now, see its status, pause or resume the listener",
+    desc = "Open the desk, sync it now or see its status",
   })
   vim.api.nvim_create_user_command("DeskImplement", function(opts)
     M.implement(opts.fargs[1], opts.fargs[2])

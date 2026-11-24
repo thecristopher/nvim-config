@@ -8,7 +8,6 @@ describe("merge_config", function()
 
   it("keeps Claire's values and fills the rest from the defaults", function()
     assert.equal("sonnet", cfg.sync.work_model)
-    assert.equal("haiku", cfg.sync.listen_model)
     assert.equal("~/Documents/GitHub", cfg.repos_dir)
   end)
 
@@ -50,48 +49,32 @@ describe("inbox_item", function()
 end)
 
 describe("status_lines", function()
-  local base = { installed = true, paused = false, inbox = 0 }
+  local base = { installed = true, inbox = 0 }
   local function with(extra)
     return actions.status_lines(vim.tbl_extend("force", base, extra))
   end
 
-  it("asks Leon to install the agents when they are missing", function()
+  it("asks Leon to install the agent when it is missing", function()
     local lines = actions.status_lines({ installed = false, inbox = 0 })
     assert.equal(1, #lines)
     assert.truthy(lines[1]:find("install.sh", 1, true))
   end)
 
-  it("says the listener is up and the work session idle", function()
-    local lines = with({
-      listener_age_min = 12,
-      listener_quiet_min = 0,
-      work_finished_at = "2026-02-14T20:00:00Z",
-    })
-    assert.equal(
-      "Listener: up for 12 min, checking the queue every minute while the desk is open",
-      lines[1]
-    )
-    assert.equal("Work: idle, last finished 2026-02-14T20:00:00Z", lines[2])
-  end)
-
-  it("notices a listener that went silent", function()
-    assert.truthy(
-      with({ listener_age_min = 40, listener_quiet_min = 9 })[1]:find("silent for 9 min", 1, true)
+  it("says when Claire's last work session finished", function()
+    assert.same(
+      { "Work: idle, last finished 2026-02-14T20:00:00Z" },
+      with({ work_finished_at = "2026-02-14T20:00:00Z" })
     )
   end)
 
-  it("says when Malenia paused it, even with a session file left", function()
-    assert.truthy(with({ paused = true, listener_age_min = 3 })[1]:find("paused", 1, true))
-  end)
-
-  it("says when nothing listens yet", function()
-    assert.truthy(with({})[1]:find("not running", 1, true))
+  it("says when nothing ever ran", function()
+    assert.same({ "Work: idle, last finished never" }, with({}))
   end)
 
   it("shows a running work session and what waits in the inbox", function()
-    local lines = with({ listener_age_min = 5, work_age_min = 7, inbox = 2 })
-    assert.equal("Work: running for 7 min", lines[2])
-    assert.equal("Inbox: 2 waiting to open", lines[3])
+    local lines = with({ work_age_min = 7, inbox = 2 })
+    assert.equal("Work: running for 7 min", lines[1])
+    assert.equal("Inbox: 2 waiting to open", lines[2])
   end)
 end)
 
