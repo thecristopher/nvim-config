@@ -10,7 +10,6 @@ return {
     dir = dir,
     name = "back-to-basics",
     cond = vim.fn.isdirectory(dir) == 1,
-    event = "VeryLazy",
     opts = function()
       local bridge = require("core.btb")
       return {

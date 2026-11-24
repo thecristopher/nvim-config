@@ -72,6 +72,8 @@ git clone https://github.com/thecristopher/nvim-config $env:LOCALAPPDATA\nvim
 
 Launch `nvim` and lazy.nvim bootstraps itself and installs every plugin on the first run. Mason installs the language servers.
 
+On a new Mac, `./scripts/install.sh` does the rest in one go: it installs every tool in the `Brewfile` (ripgrep, fd, gh, lazygit, chafa, ImageMagick and the Nerd Font among them), links `~/.config/nvim` to the clone when nothing is there yet, and installs each plugin at the version `lazy-lock.json` pins. Without Homebrew it lists what is missing instead. `:checkhealth eldentree` then says what each missing tool would unlock.
+
 Every option is a global with the `eldentree_` prefix (`vim.g.eldentree_sound = false`, `vim.g.eldentree_franchise = "resident_evil"`), set them in `lua/core/options.lua`, or in `lua/core/options_local.lua` (git ignores it) for the ones only your machine wants.
 
 ## The worlds
@@ -308,6 +310,8 @@ Every leader key lives in one list, `lua/core/leader/actions/init.lua`, grouped 
 | `<leader>TT`                | Run the whole suite (Trial), `<leader>T` holds neotest's single runs               |
 | `<leader>cp`                | Snapshot the buffer or selection as a PNG                                          |
 | `<leader>cx`                | Make this file executable                                                          |
+| `<leader>cj`                | Split a one line table, call or array into lines, or join it back (treesj)         |
+| `<leader>cd`                | Databases (dadbod), with tables and columns completed in SQL buffers               |
 | `<leader>cw`                | Replace the word under the cursor in this file (`<C-w>` clears the prefilled word) |
 | `<leader>uc` / `<leader>uC` | Toggle the `.env` cloak, or peek one line                                          |
 | `[y` / `]y`                 | Right after a paste, swap it for the older or newer yank                           |
@@ -426,6 +430,8 @@ Specs live in `tests/` and run with plenary busted in a headless Neovim.
 ```
 
 CI runs them on Linux and macOS for every PR, and checks the format with `stylua --check lua tests init.lua`. Run `stylua lua tests init.lua` before pushing (mason installs stylua).
+
+`./scripts/startup.sh [runs] [file]` measures the real startup in a pseudo terminal: how long until the first frame and until every plugin that loads on its own is in. The start screen draws in about 100 ms and is fully loaded in about 130 ms.
 
 ## Demos
 

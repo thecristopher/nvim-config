@@ -1,0 +1,16 @@
+# Everything Eldentree calls outside of nvim, installed with ./scripts/install.sh or
+# `brew bundle`. lua/eldentree/tools.lua says what each one unlocks
+brew "neovim"
+brew "git"
+brew "ripgrep"
+brew "fd"
+brew "node"
+brew "tree-sitter-cli"
+brew "gh"
+brew "lazygit"
+brew "curl"
+brew "chafa"
+brew "imagemagick"
+brew "librsvg"
+brew "ffmpeg"
+cask "font-jetbrains-mono-nerd-font"

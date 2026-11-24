@@ -172,6 +172,22 @@ local function setup_attach()
   })
 end
 
+-- mason, its server list and blink's capabilities cost ~90 ms, and servers start in the background
+-- anyway, so a file opened from the command line is drawn first. vim.lsp.enable only attaches to
+-- buffers already open once VimEnter has passed, so it waits for that before the scheduled hop
+local function after_first_frame(fn)
+  if vim.v.vim_did_enter == 1 then
+    vim.schedule(fn)
+    return
+  end
+  vim.api.nvim_create_autocmd("VimEnter", {
+    once = true,
+    callback = function()
+      vim.schedule(fn)
+    end,
+  })
+end
+
 local mason_tools = { "stylua", "shfmt", "prettierd", "shellcheck", "selene" }
 if vim.fn.executable("php") == 1 then
   table.insert(mason_tools, "php-cs-fixer")
@@ -237,17 +253,19 @@ return {
   {
     "neovim/nvim-lspconfig",
     event = { "BufReadPre", "BufNewFile" },
+    -- mason comes with mason-lspconfig once the first frame is drawn
     dependencies = {
-      "mason-org/mason.nvim",
       "folke/lazydev.nvim",
       "b0o/SchemaStore.nvim",
     },
     config = function()
       setup_diagnostics()
       setup_attach()
-      configure_servers()
-      -- mason-lspconfig enables servers, so it must load after vim.lsp.config ran
-      require("lazy").load({ plugins = { "mason-lspconfig.nvim" } })
+      after_first_frame(function()
+        configure_servers()
+        -- mason-lspconfig enables servers, so it must load after vim.lsp.config ran
+        require("lazy").load({ plugins = { "mason-lspconfig.nvim" } })
+      end)
     end,
   },
 }

@@ -57,7 +57,6 @@ end
 return {
   {
     "coder/claudecode.nvim",
-    event = "VeryLazy",
     dependencies = { "folke/snacks.nvim" },
     opts = {
       auto_start = true,

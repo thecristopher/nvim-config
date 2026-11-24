@@ -12,7 +12,6 @@ return {
   -- ── Flash: lightning-fast navigation ──────────────────────────────
   {
     "folke/flash.nvim",
-    event = "VeryLazy",
     opts = {
       labels = "asdfghjklqwertyuiopzxcvbnm",
       search = { mode = "fuzzy", incremental = true },
@@ -136,7 +135,6 @@ return {
   {
     "kylechui/nvim-surround",
     version = "*",
-    event = "VeryLazy",
     opts = {},
   },
 
@@ -145,7 +143,6 @@ return {
   -- instead of // by asking treesitter which language sits under the cursor
   {
     "JoosepAlviste/nvim-ts-context-commentstring",
-    event = "VeryLazy",
     opts = { enable_autocmd = false },
     config = function(_, opts)
       require("ts_context_commentstring").setup(opts)
@@ -165,7 +162,6 @@ return {
   {
     "echasnovski/mini.ai",
     version = false,
-    event = "VeryLazy",
     opts = function()
       local ai = require("mini.ai")
       return {
@@ -189,7 +185,6 @@ return {
   {
     "echasnovski/mini.move",
     version = false,
-    event = "VeryLazy",
     opts = {
       mappings = {
         left = "<M-h>",
@@ -544,7 +539,9 @@ return {
   -- ── yanky: yank history, cycle through it right after a paste ──────
   {
     "gbprod/yanky.nvim",
-    event = "VeryLazy",
+    -- each clipboard read costs ~11 ms here and yanky reads it while loading, so it waits for the
+    -- first yank or put instead of startup. The ring still starts from the numbered registers
+    event = "TextYankPost",
     -- the TextYankPost autocmd in core/autocmds flashes yanks, puts glow through core/chrome/yank
     opts = function()
       return {

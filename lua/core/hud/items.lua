@@ -382,31 +382,34 @@ local changed = {}
 local counted_at
 
 -- reading every project's changes means a git call each, so it runs in the background, and at
--- most once every background.TTL_MS: spawning a dozen processes on every rebuild costs ~7 ms
+-- most once every background.TTL_MS
 local function count_changes(items)
   if not hud_actions.stale(counted_at, vim.uv.now(), background.TTL_MS) then
     return
   end
   counted_at = vim.uv.now()
-  for _, item in ipairs(items) do
-    vim.system(
-      { "git", "-C", item.repo, "status", "--porcelain" },
-      { text = true },
-      vim.schedule_wrap(function(result)
-        if result.code ~= 0 then
-          return
-        end
-        -- porcelain lines open with a space for unstaged changes, so only the line ends are trimmed
-        local lines = vim.split(result.stdout or "", "\n", { trimempty = true })
-        if vim.deep_equal(changed[item.repo], lines) then
-          return
-        end
-        changed[item.repo] = lines
-        item.count = #lines > 0 and #lines or nil
-        require("core.hud").refresh()
-      end)
-    )
-  end
+  -- a dozen spawns cost ~7 ms, so they wait until the HUD being built is on screen
+  vim.schedule(function()
+    for _, item in ipairs(items) do
+      vim.system(
+        { "git", "-C", item.repo, "status", "--porcelain" },
+        { text = true },
+        vim.schedule_wrap(function(result)
+          if result.code ~= 0 then
+            return
+          end
+          -- porcelain lines open with a space for unstaged changes, so only the line ends are trimmed
+          local lines = vim.split(result.stdout or "", "\n", { trimempty = true })
+          if vim.deep_equal(changed[item.repo], lines) then
+            return
+          end
+          changed[item.repo] = lines
+          item.count = #lines > 0 and #lines or nil
+          require("core.hud").refresh()
+        end)
+      )
+    end
+  end)
 end
 
 --- The projects found by the repo scanner, with how many files each one has changed.

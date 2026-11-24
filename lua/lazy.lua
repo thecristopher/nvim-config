@@ -1,1 +1,0 @@
--- Bootstrap moved to init.lua to avoid shadowing the lazy.nvim module name.

@@ -137,7 +137,14 @@ return {
         default = function()
           return in_exercise() and { "lsp" } or SOURCES
         end,
+        -- tables and columns of the database dadbod is connected to
+        per_filetype = {
+          sql = { "dadbod", "snippets", "buffer" },
+          mysql = { "dadbod", "snippets", "buffer" },
+          plsql = { "dadbod", "snippets", "buffer" },
+        },
         providers = {
+          dadbod = { name = "Dadbod", module = "vim_dadbod_completion.blink" },
           lsp = {
             transform_items = function(_, items)
               if not in_exercise() then
