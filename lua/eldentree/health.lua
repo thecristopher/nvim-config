@@ -1,4 +1,5 @@
--- :checkhealth eldentree: every franchise's lore, plus what the terminal can do for them.
+-- :checkhealth eldentree: the programs Eldentree calls, every franchise's lore, plus what the
+-- terminal can do for them.
 local M = {}
 
 local function portrait_exists(file)
@@ -49,7 +50,25 @@ local function check_terminal()
   end
 end
 
+local function check_tools()
+  vim.health.start("Tools")
+  local tools = require("eldentree.tools")
+  local executable = function(bin)
+    return vim.fn.executable(bin) == 1
+  end
+  for _, tool in ipairs(tools.for_platform(tools.TOOLS, vim.fn.has("mac") == 1)) do
+    local name = tools.name(tool)
+    if tools.present(tool, executable) then
+      vim.health.ok(("%s: %s"):format(name, tool.gives))
+    else
+      local report = tool.required and vim.health.error or vim.health.warn
+      report(("%s is missing, so no %s"):format(name, tool.gives), tools.how_to_install(tool))
+    end
+  end
+end
+
 function M.check()
+  check_tools()
   check_franchises()
   check_terminal()
 end

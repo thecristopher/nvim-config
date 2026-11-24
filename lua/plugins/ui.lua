@@ -298,7 +298,6 @@ return {
   -- ── Command / message UI ──────────────────────────────────────────
   {
     "folke/noice.nvim",
-    event = "VeryLazy",
     dependencies = { "MunifTanjim/nui.nvim" },
     opts = {
       cmdline = {
@@ -386,7 +385,6 @@ return {
   -- ── Keybinding hints ──────────────────────────────────────────────
   {
     "folke/which-key.nvim",
-    event = "VeryLazy",
     opts = {
       preset = "modern",
       delay = 300,
@@ -433,7 +431,6 @@ return {
   {
     "echasnovski/mini.animate",
     version = false,
-    event = "VeryLazy",
     config = function()
       local animate = require("mini.animate")
       local timing = animate.gen_timing.linear({ duration = 90, unit = "total" })
@@ -450,7 +447,6 @@ return {
   -- ── smear-cursor: an accent colored trail on every jump ───────────
   {
     "sphamba/smear-cursor.nvim",
-    event = "VeryLazy",
     opts = {
       -- read from the cursor highlight of the current mode so the trail follows mode and region
       cursor_color = "Cursor",

@@ -21,13 +21,13 @@ local function read_json_list(path)
   return (decoded_ok and type(decoded) == "table") and decoded or {}
 end
 
--- the ranked list checks every scanned repo on disk (~9 ms for a hundred), and the HUD asks for it
--- on every rebuild, so it is kept a few seconds and dropped whenever a list is written
+-- the ranked list checks every scanned repo on disk, and the HUD asks for it on every rebuild, so
+-- the whole ranking is kept a few seconds, sliced per limit, and dropped whenever a list is written
 local LIST_TTL_MS = 10000
-local listed = {}
+local listed
 
 local function write_json_list(path, list)
-  listed = {}
+  listed = nil
   require("core.utils").write_state(path, { vim.json.encode(list) })
 end
 
@@ -37,9 +37,15 @@ local function last_activity(repo)
   return stat and stat.mtime.sec or 0
 end
 
+-- straight through libuv, readfile goes through vimscript first
 local function first_line(path)
-  local ok, lines = pcall(vim.fn.readfile, path, "", 1)
-  return ok and lines[1] or nil
+  local fd = vim.uv.fs_open(path, "r", 438)
+  if not fd then
+    return nil
+  end
+  local data = vim.uv.fs_read(fd, 512, 0)
+  vim.uv.fs_close(fd)
+  return data and data:match("^[^\r\n]*") or nil
 end
 
 function M.branch(repo)
@@ -58,6 +64,16 @@ end
 ---@param dir string
 ---@return boolean
 function M.is_repo(dir)
+  local git = vim.uv.fs_stat(dir .. "/.git")
+  if not git then
+    return false
+  end
+  -- opening a file costs ten times a stat here, and the HUD checks every scanned repo, so a .git
+  -- folder only needs a HEAD with something in it. Worktrees and submodules read their .git file
+  if git.type == "directory" then
+    local head = vim.uv.fs_stat(dir .. "/.git/HEAD")
+    return head ~= nil and head.type == "file" and head.size > 0
+  end
   return M.branch(dir) ~= nil
 end
 
@@ -84,34 +100,27 @@ function M.record_visit(dir)
   write_json_list(visits_file, actions.remember(read_json_list(visits_file), root, 30))
 end
 
--- ranks the visited and scanned repos straight from disk
-local function rank_now(limit)
-  local still_there = function(path)
-    return vim.fn.isdirectory(path) == 1 and M.is_repo(path)
-  end
-  local visited = vim.tbl_filter(still_there, read_json_list(visits_file))
-  local scanned = vim.tbl_filter(still_there, read_json_list(scan_file))
+-- ranks the visited and scanned repos straight from disk, a folder that is gone has no HEAD either
+local function rank_now()
+  local visited = vim.tbl_filter(M.is_repo, read_json_list(visits_file))
+  local scanned = vim.tbl_filter(M.is_repo, read_json_list(scan_file))
 
   local activity = {}
   for _, repo in ipairs(scanned) do
     activity[repo] = last_activity(repo)
   end
 
-  return actions.rank(visited, scanned, activity, limit)
+  return actions.rank(visited, scanned, activity)
 end
 
 --- The repos to offer, visited first then the most active, remembered for a few seconds.
 ---@param limit integer|nil
 ---@return string[]
 function M.list(limit)
-  local key = tostring(limit)
-  local kept = listed[key]
-  if kept and vim.uv.now() - kept.at < LIST_TTL_MS then
-    return vim.deepcopy(kept.repos)
+  if not listed or vim.uv.now() - listed.at >= LIST_TTL_MS then
+    listed = { at = vim.uv.now(), repos = rank_now() }
   end
-  local repos = rank_now(limit)
-  listed[key] = { at = vim.uv.now(), repos = repos }
-  return vim.deepcopy(repos)
+  return vim.list_slice(listed.repos, 1, limit or #listed.repos)
 end
 
 function M.dashboard_items(limit)

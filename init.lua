@@ -1,6 +1,9 @@
 -- Eldentree: a Neovim config forged in the Lands Between
 -- macOS, Linux and Windows | Neovim >= 0.11 | also runs inside Cursor and VS Code
 
+-- the bytecode cache before the first require: lazy turns it on too, but only after core has loaded
+vim.loader.enable()
+
 -- Leader keys must be set before lazy.nvim loads plugins
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
@@ -56,6 +59,7 @@ else
   require("core.resize").setup()
   require("core.desk").setup()
   require("core.leader").setup()
+  require("core.later").setup()
 end
 
 -- ── Bootstrap lazy.nvim ──────────────────────────────────────────────────────

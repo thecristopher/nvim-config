@@ -44,14 +44,17 @@ end
 ---@param args string[]
 ---@param done fun(lines: string[], ok: boolean)
 function M.git(root, args, done)
-  vim.system(
-    vim.list_extend({ "git", "-C", root }, args),
-    { text = true },
-    vim.schedule_wrap(function(result)
-      local ok = result.code == 0
-      done(ok and vim.split(vim.trim(result.stdout or ""), "\n", { trimempty = true }) or {}, ok)
-    end)
-  )
+  -- spawning costs ~0.6 ms a process, so it waits until the HUD being built is on screen
+  vim.schedule(function()
+    vim.system(
+      vim.list_extend({ "git", "-C", root }, args),
+      { text = true },
+      vim.schedule_wrap(function(result)
+        local ok = result.code == 0
+        done(ok and vim.split(vim.trim(result.stdout or ""), "\n", { trimempty = true }) or {}, ok)
+      end)
+    )
+  end)
 end
 
 return M
