@@ -1,5 +1,6 @@
 -- The bridge's reactions to the events back-to-basics fires, with sound, voice and runes stubbed.
-local stubbed = { "core.sound", "core.voice", "core.runes", "core.utils", "core.banner", "back-to-basics" }
+local stubbed =
+  { "core.sound", "core.voice", "core.runes", "core.utils", "core.banner", "back-to-basics" }
 
 describe("btb bridge", function()
   local played, said, spent, talking, awarded
