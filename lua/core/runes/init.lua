@@ -58,9 +58,12 @@ local function settle(next_state, gained, merchant)
   })
 end
 
-function M.award(amount)
+--- Pays runes, the counter rolls up to the new tally.
+---@param amount integer
+---@param opts? { merchant?: boolean } merchant = false pays without the merchant's visit
+function M.award(amount, opts)
   if amount > 0 then
-    settle(actions.award(state, amount), amount)
+    settle(actions.award(state, amount), amount, (opts or {}).merchant)
   end
 end
 

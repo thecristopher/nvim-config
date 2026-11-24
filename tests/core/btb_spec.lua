@@ -1,12 +1,13 @@
 -- The bridge's reactions to the events back-to-basics fires, with sound, voice and runes stubbed.
-local stubbed = { "core.sound", "core.voice", "core.runes", "core.utils" }
+local stubbed =
+  { "core.sound", "core.voice", "core.runes", "core.utils", "core.banner", "back-to-basics" }
 
 describe("btb bridge", function()
-  local played, said, spent, talking, cut
+  local played, said, spent, talking, awarded
   local saved = {}
 
   before_each(function()
-    played, said, spent, talking, cut = {}, {}, 0, false, {}
+    played, said, spent, talking, awarded = {}, {}, 0, false, {}
     for _, name in ipairs(stubbed) do
       saved[name] = package.loaded[name]
     end
@@ -20,11 +21,6 @@ describe("btb bridge", function()
       end,
       play = function(event)
         table.insert(played, event)
-        return {
-          kill = function()
-            table.insert(cut, event)
-          end,
-        }
       end,
       speaking = function()
         return talking
@@ -40,7 +36,12 @@ describe("btb bridge", function()
       spend = function(amount)
         spent = spent + amount
       end,
+      award = function(amount, opts)
+        table.insert(awarded, { amount = amount, opts = opts })
+      end,
     }
+    package.loaded["core.banner"] = { show = function() end }
+    package.loaded["back-to-basics"] = { btb = function() end }
     package.loaded["core.btb"] = nil
     require("core.btb").setup()
   end)
@@ -65,8 +66,7 @@ describe("btb bridge", function()
     assert.are.same({}, played)
   end)
 
-  it("has Claire cut the merchant's thanks when Inde buys a hint", function()
-    talking = true
+  it("keeps the merchant silent when Inde buys a hint", function()
     local select = vim.ui.select
     vim.ui.select = function(items, _, choose)
       choose(items[1])
@@ -75,7 +75,16 @@ describe("btb bridge", function()
       vim.api.nvim_exec_autocmds("User", { pattern = "BtbHint", data = { cost = 5 } })
     end)
     vim.ui.select = select
-    assert.are.same({ "bought" }, cut)
+    assert.are.same({ "hud_select" }, played)
+  end)
+
+  it("pays Claire's love letter in runes without the merchant's visit", function()
+    vim.api.nvim_exec_autocmds("User", {
+      pattern = "BtbResult",
+      data = { ok = true, outcome = "struggled", xp = 12, title = "Love letter" },
+    })
+    assert.are.same({ { amount = 12, opts = { merchant = false } } }, awarded)
+    assert.are.same({}, played)
   end)
 
   it("still takes the hint's price out of the runes", function()
