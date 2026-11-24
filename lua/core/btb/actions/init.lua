@@ -14,6 +14,17 @@ M.SOUNDS = {
   skip = { "hud_close" },
 }
 
+-- moments the hook leaves alone because an event of their own already voices them: User BtbHint
+-- fires on every hint bought, with or without a coach line
+local VOICED_ELSEWHERE = { hint = true }
+
+---Whether btb's sound hook should play an event, false for the ones another event voices.
+---@param event string
+---@return boolean
+function M.hook_plays(event)
+  return not VOICED_ELSEWHERE[event]
+end
+
 -- what the statusline shows while the next exercise gets ready in the background
 local AHEAD_ICONS = { forge = "󰈸", brief = "󰭹" }
 

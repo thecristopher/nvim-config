@@ -21,7 +21,8 @@ races its ghost, and `<leader>kk` asks the recapped lessons' closing questions b
 (`eldentree_merchant` in state) and `merchant` after that. A clean pass is the coach's to cheer
 (`solve_moment`), any other pass plays `weapon` where the franchise has it and keeps the banner
 quiet, and `User BtbHint` takes its XP out of the runes and has the coach say the hint out loud,
-cutting the merchant's `bought` (btb shows the hint in its own float, without the sound hook).
+cutting the merchant's `bought`. btb calls the sound hook (`on_sound`) once per moment wherever
+its line shows, and the hook leaves `hint` to `User BtbHint` (`hook_plays`).
 `<leader>kC` / `:BtbConcepts` draws the concepts from `btb status` as rooms (`coach.concepts`). `b`
 on the HUD starts the lesson and its description reads what is left of the day (from `btb today`),
 the lessons fought so far live in the FILE tab (RE) or their own tab (Elden Ring). The pass that

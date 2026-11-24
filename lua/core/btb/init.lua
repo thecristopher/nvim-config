@@ -101,6 +101,14 @@ function M.sound(event)
   end
 end
 
+---btb's sound hook: every coach event and moment, except the ones another event already voices.
+---@param event string
+function M.on_sound(event)
+  if actions.hook_plays(event) then
+    M.sound(event)
+  end
+end
+
 ---Refreshes the lessons the HUD shows, in the background.
 function M.refresh()
   local btb = plugin()
@@ -367,7 +375,7 @@ function M.setup()
     end,
   })
   -- the hint is paid in the franchise's currency too, the XP it costs leaves the purse.
-  -- btb shows a hint in its own float and never calls the sound hook for it, so it is voiced here
+  -- the hook skips the hint, so it is voiced here on every hint bought, coach line or not
   vim.api.nvim_create_autocmd("User", {
     group = group,
     pattern = "BtbHint",

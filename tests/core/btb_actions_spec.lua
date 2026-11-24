@@ -66,6 +66,16 @@ describe("sound_for", function()
   end)
 end)
 
+describe("hook_plays", function()
+  it("plays Claire's failed moment through the hook", function()
+    assert.is_true(actions.hook_plays("failed"))
+  end)
+
+  it("leaves the hint Inde bought to User BtbHint", function()
+    assert.is_false(actions.hook_plays("hint"))
+  end)
+end)
+
 describe("pass_sound", function()
   it("has the merchant praise every pass, a redo included", function()
     assert.are.equal("weapon", actions.pass_sound({ ok = true, outcome = "struggled" }))
