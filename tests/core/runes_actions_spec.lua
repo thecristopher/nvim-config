@@ -107,6 +107,20 @@ describe("crossed", function()
   end)
 end)
 
+describe("merchant_due", function()
+  it("brings the merchant when Claire's purse passes ten thousand", function()
+    assert.is_true(actions.merchant_due(9800, 10200, nil))
+  end)
+
+  it("keeps him away from Inde's commit even across ten thousand", function()
+    assert.is_false(actions.merchant_due(9800, 10200, false))
+  end)
+
+  it("stays quiet for a gain inside the same ten thousand", function()
+    assert.is_false(actions.merchant_due(10200, 10900, nil))
+  end)
+end)
+
 describe("spend", function()
   it("pays for Claire's hint out of the purse", function()
     assert.same({ held = 70, bloodstain = 5 }, actions.spend({ held = 100, bloodstain = 5 }, 30))

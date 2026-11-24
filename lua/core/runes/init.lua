@@ -27,18 +27,18 @@ local function refresh_statusline()
 end
 
 -- worlds with a merchant greet you each time your purse crosses another milestone
-local function visit_merchant(before, after)
+local function visit_merchant(before, after, merchant)
   local lines = require("core.franchise").current().merchant
-  if not lines or not actions.crossed(before, after) then
+  if not lines or not actions.merchant_due(before, after, merchant) then
     return
   end
   require("core.sound").play("merchant")
   vim.notify(lines[math.random(#lines)], vim.log.levels.INFO, { title = "Merchant" })
 end
 
-local function settle(next_state, gained)
+local function settle(next_state, gained, merchant)
   local from = shown
-  visit_merchant(state.held, next_state.held)
+  visit_merchant(state.held, next_state.held, merchant)
   state = next_state
   save()
   if gained and gained > 0 then
@@ -72,10 +72,13 @@ function M.spend(amount)
   end
 end
 
-function M.after_banner(kind)
+--- Pays or takes the runes a banner brings.
+---@param kind string the banner's name, like felled or died
+---@param opts? { merchant?: boolean } merchant = false pays without the merchant's visit
+function M.after_banner(kind, opts)
   local before = state.held
   local next_state = actions.after_banner(state, kind)
-  settle(next_state, next_state.held - before)
+  settle(next_state, next_state.held - before, (opts or {}).merchant)
 end
 
 -- statusline pieces -------------------------------------------------------------------

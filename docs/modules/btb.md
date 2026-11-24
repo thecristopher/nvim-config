@@ -18,7 +18,8 @@ races its ghost, and `<leader>kk` asks the recapped lessons' closing questions b
 `before_hint` gets `M.before_hint` here, so the franchise's merchant sells each hint (`coach.hint`,
 `coach.buy`, `coach.leave`), greeting with `welcome` on the first visit of the day per franchise
 (`eldentree_merchant` in state) and `merchant` after that, while every pass plays `weapon` where the
-franchise has it and keeps the banner quiet and `User BtbHint` takes its XP out of the runes.
+franchise has it and keeps the banner quiet and `User BtbHint` takes its XP out of the runes and has the
+coach say the hint out loud (btb shows the hint in its own float, without the sound hook).
 `<leader>kC` / `:BtbConcepts` draws the concepts from `btb status` as rooms (`coach.concepts`). `b`
 on the HUD starts the lesson and its description reads what is left of the day (from `btb today`),
 the lessons fought so far live in the FILE tab (RE) or their own tab (Elden Ring). The pass that
