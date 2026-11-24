@@ -1,7 +1,8 @@
 -- Claude Code hook command: plays the franchise sound for the event named in the first argument
 -- (grace when a long turn finishes, died when it fails, the fog wall or the door when it needs
 -- you). UserPromptSubmit only stamps when the turn began. Stays quiet during an expedition, after
--- a short turn and on a burst of permission prompts. ELDENTREE_CLAUDE_SOUND=0 keeps it quiet.
+-- a short turn, on a burst of permission prompts and in the desk's background sessions.
+-- ELDENTREE_CLAUDE_SOUND=0 keeps it quiet.
 local actions = require("core.claude_ui.actions")
 local sound = require("core.sound.actions")
 
@@ -52,9 +53,13 @@ function M.run(root, args)
     return
   end
   local hook = args[1] or ""
+  local id = session_id()
+  if actions.background(id, require("core.desk").session_ids()) then
+    return
+  end
   local now = os.time()
   local dir = state_dir()
-  local turn_file = ("%s/turn_%s"):format(dir, actions.session_file(session_id()))
+  local turn_file = ("%s/turn_%s"):format(dir, actions.session_file(id))
   if hook == "UserPromptSubmit" then
     return write_stamp(turn_file, now)
   end

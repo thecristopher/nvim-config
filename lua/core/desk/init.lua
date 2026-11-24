@@ -1,6 +1,7 @@
--- The manager desk: opens the desk artifact and opens the tabs it asks for. A listener kept alive
--- by launchd reads the desk's queue every minute and runs analyses and replies on its own; nvim
--- only watches the inbox it fills, so implement and review requests open a tab here.
+-- The manager desk: opens the desk artifact and opens the tabs it asks for. Opening it starts a
+-- listener that reads the desk's queue every minute while the page stays open, and runs analyses
+-- and replies on its own; nvim only watches the inbox it fills, so implement and review requests
+-- open a tab here.
 local actions = require("core.desk.actions")
 
 local M = {}
@@ -47,6 +48,29 @@ end
 
 local function script(name)
   return vim.fn.expand(actions.SCRIPTS_DIR) .. "/" .. name
+end
+
+---The short ids of the desk's background sessions (listener and work), so their hooks stay quiet.
+---@return string[]
+function M.session_ids()
+  local cfg = M.config()
+  if not cfg then
+    return {}
+  end
+  local ids = {}
+  for _, file in ipairs({ "listener.id", "work.lock" }) do
+    local ok, lines = pcall(vim.fn.readfile, state_dir(cfg) .. "/" .. file, "", 1)
+    ids[#ids + 1] = ok and lines[1] and lines[1]:match("^(%x+)") or ""
+  end
+  return ids
+end
+
+-- marks the desk as opened and has listener.sh start the listener now instead of in 5 minutes.
+-- The listener leaves the idle file once the page has been closed a while, and stays down until
+-- the desk is opened again
+local function start_listener(cfg, on_done)
+  require("core.utils").write_state(state_dir(cfg) .. "/opened", { os.date("!%Y-%m-%dT%H:%M:%SZ") })
+  vim.system({ "bash", script("listener.sh") }, { text = true }, vim.schedule_wrap(on_done))
 end
 
 ---Opens a tab in the ticket's repo with Claude implementing it.
@@ -202,6 +226,13 @@ function M.open()
     return
   end
   vim.ui.open(cfg.artifact_url)
+  if installed() and not vim.uv.fs_stat(state_dir(cfg) .. "/paused") then
+    start_listener(cfg, function(res)
+      if res.code ~= 0 then
+        notify("The listener did not start: " .. vim.trim(res.stdout or ""), vim.log.levels.WARN)
+      end
+    end)
+  end
 end
 
 ---Asks for a sync now: launchd sees the wake file change and starts a work session.
@@ -293,17 +324,13 @@ function M.resume()
     return
   end
   vim.fn.delete(state_dir(cfg) .. "/paused")
-  vim.system(
-    { "bash", script("listener.sh") },
-    { text = true },
-    vim.schedule_wrap(function(res)
-      if res.code ~= 0 then
-        notify("The listener did not start: " .. vim.trim(res.stdout or ""), vim.log.levels.WARN)
-        return
-      end
-      notify("Listener running, the page gets picked up within a minute")
-    end)
-  )
+  start_listener(cfg, function(res)
+    if res.code ~= 0 then
+      notify("The listener did not start: " .. vim.trim(res.stdout or ""), vim.log.levels.WARN)
+      return
+    end
+    notify("Listener running while the desk stays open, the page gets picked up within a minute")
+  end)
 end
 
 local SUBCOMMANDS =

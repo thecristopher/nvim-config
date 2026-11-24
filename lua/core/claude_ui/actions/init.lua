@@ -86,6 +86,23 @@ function M.stamp(line)
   return tonumber(vim.trim(line or ""))
 end
 
+--- Whether a session is one of the background ones the desk keeps (listener or work), which
+--- nobody is watching, so their turns never ring.
+---@param id string|nil the hook's session id
+---@param background string[] short ids of the desk's sessions, each the start of a full id
+---@return boolean
+function M.background(id, background)
+  if not id then
+    return false
+  end
+  for _, short in ipairs(background) do
+    if short ~= "" and vim.startswith(id, short) then
+      return true
+    end
+  end
+  return false
+end
+
 --- Makes a session id safe to use as a file name.
 ---@param id string|nil
 ---@return string

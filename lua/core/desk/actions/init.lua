@@ -58,12 +58,14 @@ local function listener_line(s)
     return "Listener: paused. :Desk resume starts it again"
   end
   if not s.listener_age_min then
-    return "Listener: not running. launchd starts it within 5 minutes, or run :Desk resume"
+    return "Listener: not running. Opening the desk with :Desk starts it"
   end
   if (s.listener_quiet_min or 0) >= LISTENER_QUIET_MIN then
     return ("Listener: silent for %d min, launchd restarts it shortly"):format(s.listener_quiet_min)
   end
-  return ("Listener: up for %d min, checking the queue every minute"):format(s.listener_age_min)
+  return ("Listener: up for %d min, checking the queue every minute while the desk is open"):format(
+    s.listener_age_min
+  )
 end
 
 ---Describes the work session from its lock and result files.

@@ -84,12 +84,12 @@ return {
   },
   terminal = {
     iterm_profile = "Eldentree Elden Ring",
-    kitty_opacity = 0.97,
+    kitty_opacity = 0.93,
     ghostty = {
       ["font-family"] = "JetBrainsMono Nerd Font Mono",
       ["font-style"] = "Light",
       ["font-size"] = 16,
-      ["background-opacity"] = 0.94,
+      ["background-opacity"] = 0.90,
       ["background-blur"] = 8,
     },
   },
