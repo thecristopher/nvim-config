@@ -352,12 +352,14 @@ function M.setup()
       stage_onsite(event.data)
     end,
   })
-  -- the hint is paid in the franchise's currency too, the XP it costs leaves the purse
+  -- the hint is paid in the franchise's currency too, the XP it costs leaves the purse.
+  -- btb shows a hint in its own float and never calls the sound hook for it, so it is voiced here
   vim.api.nvim_create_autocmd("User", {
     group = group,
     pattern = "BtbHint",
     callback = function(event)
       require("core.runes").spend((event.data or {}).cost or 0)
+      M.sound("hint")
     end,
   })
   vim.api.nvim_create_user_command("BtbPath", M.path, { desc = "The back-to-basics path as a map" })
