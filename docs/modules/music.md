@@ -22,3 +22,7 @@ while the panel or the HUD names the song. While the panel is closed and lyrics 
 statusline sings the synced line (`core/music/ticker.lua`, its timer runs only while a song plays),
 which asks LRCLIB for every song while lyrics are shown. The panel refuses to open under `WIDTH + 4`
 columns.
+
+Every new song heard while it plays counts one play per year in `eldentree_music.json` in state
+(`actions/history.lua`, keyed by `track_key`). A pause and a return to the same song never count
+again. `:Wrapped` reads it for the song of the year.

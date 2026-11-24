@@ -16,13 +16,21 @@ local function read_choice()
   return ok and actions.choice_for(lines[1], today()) or nil
 end
 
+-- a season's franchise only stands in for the one of the day, a choice made with :Franchise wins
+local function season_pick()
+  local ok, name = pcall(function()
+    return require("core.season").franchise()
+  end)
+  return ok and name or nil
+end
+
 --- Returns the name of the franchise in use right now.
 ---@return string
 function M.name()
   if vim.g.eldentree_franchise then
     return actions.resolve(vim.g.eldentree_franchise)
   end
-  active = active or read_choice() or actions.of_the_day(os.date("*t"))
+  active = active or read_choice() or season_pick() or actions.of_the_day(os.date("*t"))
   return active
 end
 
@@ -105,7 +113,7 @@ function M.pick()
 end
 
 local function lore_dir(name)
-  return vim.fn.stdpath("config") .. "/lua/core/franchise/lore/" .. name
+  return require("core.utils").root() .. "/lua/core/franchise/lore/" .. name
 end
 
 --- Creates a new franchise from the template and opens its lore to fill in.
@@ -121,7 +129,7 @@ function M.create(text)
   end
 
   vim.fn.mkdir(dir, "p")
-  local template = vim.fn.stdpath("config") .. "/lua/core/franchise/template/"
+  local template = require("core.utils").root() .. "/lua/core/franchise/template/"
   for _, file in ipairs({
     "init.lua",
     "regions.lua",

@@ -36,7 +36,10 @@ local function ask_terminal_about_images()
     return
   end
   images.asked = true
-  local ok = pcall(Snacks.image.terminal.detect, vim.schedule_wrap(images_answered))
+  -- inside the pcall, so a config without snacks.nvim draws half blocks instead of failing
+  local ok = pcall(function()
+    Snacks.image.terminal.detect(vim.schedule_wrap(images_answered))
+  end)
   if not ok then
     images.known = true
   end
@@ -60,10 +63,14 @@ function M.supports_images(opts)
     if not (opts and opts.wait) then
       return false
     end
-    pcall(Snacks.image.terminal.detect)
+    pcall(function()
+      Snacks.image.terminal.detect()
+    end)
     images_answered()
   end
-  local ok, supported = pcall(Snacks.image.supports_terminal)
+  local ok, supported = pcall(function()
+    return Snacks.image.supports_terminal()
+  end)
   if ok then
     return supported == true
   end

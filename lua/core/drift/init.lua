@@ -24,7 +24,7 @@ local function resting()
 end
 
 local function weather()
-  return hub.weather(require("core.themes").current().name)
+  return require("core.season").weather() or hub.weather(require("core.themes").current().name)
 end
 
 --- Clears the sky away until the next update finds room for it.

@@ -19,7 +19,7 @@ local focused = true
 local sounds = 0
 
 local function folder()
-  return vim.fn.stdpath("config") .. "/sounds/" .. require("core.franchise").name()
+  return require("core.utils").root() .. "/sounds/" .. require("core.franchise").name()
 end
 
 local function executable(name)

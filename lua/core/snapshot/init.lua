@@ -152,6 +152,31 @@ function M.capture(first, last, opts)
   return png
 end
 
+--- Saves runs that are already styled (a card no buffer holds, like the year card) as a framed PNG.
+---@param rows { text: string, fg: string|nil, bold: boolean|nil }[][] runs per line
+---@param opts { title: string, name: string, clipboard: boolean|nil }
+---@return string|nil png path
+function M.card(rows, opts)
+  if vim.fn.executable("rsvg-convert") == 0 then
+    return vim.notify(
+      "Snapshots need rsvg-convert (brew install librsvg)",
+      vim.log.levels.WARN,
+      { title = "Snapshot" }
+    )
+  end
+  local region = require("core.themes").current()
+  local svg = actions.svg(rows, {
+    title = opts.title,
+    region = ("ELDENTREE  ·  %s"):format(region.title:upper()),
+    colors = colors(),
+  })
+  local dir = vim.fn.expand("~/Pictures/Eldentree")
+  vim.fn.mkdir(dir, "p")
+  local png = ("%s/%s-%s.png"):format(dir, opts.name, os.date("%Y%m%d-%H%M%S"))
+  render(svg, png, opts.clipboard ~= false)
+  return png
+end
+
 function M.setup()
   vim.api.nvim_create_user_command("Snapshot", function(cmd)
     M.capture(cmd.line1, cmd.line2)

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eldentree, a Neovim config whose branches are worlds</title>
+<meta name="description" content="A Neovim config that wakes up in a different world every day: colors, words, sounds, the start screen, bosses and banners all change with it.">
+<style>
+  :root {
+    --base: #1e1e2e; --mantle: #181825; --crust: #11111b; --surface: #313244;
+    --text: #cdd6f4; --muted: #a6adc8; --gold: #f9e2af; --peach: #fab387;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: radial-gradient(ellipse at top, #2a2433 0%, var(--crust) 60%) fixed;
+    color: var(--text); font: 17px/1.6 ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+  }
+  a { color: var(--gold); }
+  code, pre { font-family: ui-monospace, "JetBrainsMono Nerd Font", Menlo, monospace; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  header { text-align: center; padding: 96px 0 56px; }
+  .eyebrow { letter-spacing: .35em; text-transform: uppercase; color: var(--muted); font-size: 13px; }
+  h1 {
+    margin: 12px 0 8px; font: 600 clamp(48px, 9vw, 96px)/1 Georgia, "Times New Roman", serif;
+    letter-spacing: .12em; color: var(--gold); text-shadow: 0 0 32px rgba(249, 226, 175, .25);
+  }
+  .rule { width: 220px; height: 1px; margin: 20px auto; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  .lede { max-width: 680px; margin: 0 auto; color: var(--muted); font-size: 19px; }
+  .try {
+    display: inline-block; margin-top: 32px; padding: 14px 20px; border: 1px solid #4a4433;
+    border-radius: 10px; background: var(--mantle); color: var(--text); font-size: 14px; text-align: left;
+    max-width: 100%; overflow-x: auto;
+  }
+  .try span { color: var(--gold); user-select: none; }
+  .links { margin-top: 20px; font-size: 15px; }
+  .links a { margin: 0 10px; }
+  section { padding: 56px 0; }
+  h2 { font: 500 30px/1.2 Georgia, serif; color: var(--gold); margin: 0 0 8px; letter-spacing: .04em; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  figure { margin: 0; }
+  figure img {
+    width: 100%; display: block; border-radius: 12px; border: 1px solid var(--surface);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .45);
+  }
+  figcaption { color: var(--muted); font-size: 15px; margin-top: 12px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .card { background: var(--mantle); border: 1px solid var(--surface); border-radius: 12px; padding: 20px 22px; }
+  .card h3 { margin: 0 0 6px; font-size: 17px; color: var(--text); }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .card code { color: var(--peach); font-size: 13px; }
+  footer { text-align: center; color: var(--muted); padding: 48px 0 72px; font-size: 14px; }
+  @media (max-width: 820px) { .pair, .grid { grid-template-columns: 1fr; } header { padding-top: 64px; } }
+</style>
+</head>
+<body>
+<header class="wrap">
+  <div class="eyebrow">A Neovim config</div>
+  <h1>ELDENTREE</h1>
+  <div class="rule"></div>
+  <p class="lede">A tree whose branches are worlds. Every day it wakes up in a different one, and the colors, the words, the sounds, the start screen, the way you travel and the way you rest all change with it.</p>
+  <pre class="try"><span>$ </span>curl -fsSL https://raw.githubusercontent.com/thecristopher/nvim-config/main/scripts/try.sh | bash</pre>
+  <div class="links">
+    <a href="https://github.com/thecristopher/nvim-config">GitHub</a>
+    <a href="https://github.com/thecristopher/nvim-config#install">Install</a>
+    <a href="https://github.com/thecristopher/nvim-config#keys">Keys</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section>
+    <h2>A title screen, once a day</h2>
+    <p class="sub">Block letters per franchise, on the first launch of the day and on every switch.</p>
+    <figure><img data-src="images/demo/title.gif" alt="The Elden Ring title screen"></figure>
+  </section>
+
+  <section>
+    <h2>The start screen is an inventory</h2>
+    <p class="sub">Elden Ring opens the Roundtable Hold. On Resident Evil days it is the STATUS screen.</p>
+    <div class="pair">
+      <figure><img data-src="images/demo/hud.gif" alt="The Elden Ring HUD"><figcaption>Tabs, the item grid and your Sites of Grace.</figcaption></figure>
+      <figure><img data-src="images/demo/hud_re.gif" alt="The Resident Evil inventory"><figcaption>Claire, her DATA and the COMMAND menu.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Fighting your code</h2>
+    <p class="sub">Banners land on commits, PRs, test runs and felled bosses. When you die, the code crumbles into rain behind the banner.</p>
+    <figure><img data-src="images/demo/banner.gif" alt="Banners over the editor"></figure>
+  </section>
+
+  <section>
+    <h2>A game that keeps score</h2>
+    <p class="sub">Everything below is counted from the work you already do.</p>
+    <div class="grid">
+      <div class="card"><h3>Bosses</h3><p>Three errors that linger bring the region's boss. Every fix lands a hit. <code>:Boss</code></p></div>
+      <div class="card"><h3>Bestiary</h3><p>Every kind of error you clear is a foe felled, named from the world's enemies. <code>:Bestiary</code></p></div>
+      <div class="card"><h3>Ranks</h3><p>Each run is ranked S to D on exit, counting only the time you were active.</p></div>
+      <div class="card"><h3>Chronicle</h3><p>Twenty weeks as a grid, lit by your ranks and your commits. <code>:Chronicle</code></p></div>
+      <div class="card"><h3>Feats</h3><p>Twelve trophies that slide in as toasts and stay in a showcase. <code>:Feats</code></p></div>
+      <div class="card"><h3>New game plus</h3><p>A year after your first day the cycle rises and the bosses come back carrying it.</p></div>
+      <div class="card"><h3>Wrapped</h3><p>Your year in one card: hours, ranks, your nemesis and your song, saved as a PNG. <code>:Wrapped</code></p></div>
+      <div class="card"><h3>Seasons</h3><p>Halloween brings Resident Evil, December snows, New Year sparkles.</p></div>
+      <div class="card"><h3>Expeditions</h3><p>A quiet focus block that counts down and ranks itself. <code>:Expedition</code></p></div>
+    </div>
+    <figure style="margin-top: 28px"><img data-src="images/demo/feats.gif" alt="A feat unlocking, the showcase and the year card"><figcaption>A feat unlocks, then the showcase and the year card.</figcaption></figure>
+  </section>
+
+  <section>
+    <h2>Your music, with its lyrics</h2>
+    <p class="sub">Whatever Apple Music or Cider plays sits in the statusline, with the cover and synced lyrics a keypress away.</p>
+    <figure><img data-src="images/demo/music.gif" alt="The now playing panel"></figure>
+  </section>
+
+  <section>
+    <h2>Under the costume, a full daily editor</h2>
+    <p class="sub">Native LSP, Snacks pickers, git and PRs without leaving nvim, CI and review threads in the buffer, tests and debugging, and Claude Code dressed to match. Runs on macOS, Linux and Windows, and inside Cursor and VS Code.</p>
+    <div class="grid">
+      <div class="card"><h3>Your own world</h3><p><code>:Franchise new Silent Hill</code> copies the template, <code>:checkhealth eldentree</code> lists what it still needs.</p></div>
+      <div class="card"><h3>Your own style</h3><p>Commit and PR drafts follow one style guide you can swap for yours.</p></div>
+      <div class="card"><h3>Fast</h3><p>Only the statusline and tabs load before the first frame, everything else one plugin per tick.</p></div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">Eldentree is a fan made Neovim config. Elden Ring and Resident Evil belong to their owners.</footer>
+
+<script>
+  // the GIFs live in the repo, outside the folder Pages serves, so they load from raw GitHub
+  const raw = "https://raw.githubusercontent.com/thecristopher/nvim-config/main/";
+  document.querySelectorAll("img[data-src]").forEach((img) => {
+    img.loading = "lazy";
+    img.src = raw + img.dataset.src;
+  });
+</script>
+</body>
+</html>

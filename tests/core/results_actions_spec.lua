@@ -76,3 +76,21 @@ describe("summary", function()
     )
   end)
 end)
+
+describe("active_after", function()
+  it("counts the minute Claire spent writing Inde's love note", function()
+    assert.equal(60000, actions.active_after(0, 1000, 61000))
+  end)
+
+  it("leaves out the night Malenia left the editor open", function()
+    assert.equal(30000, actions.active_after(30000, 0, 8 * 3600 * 1000))
+  end)
+
+  it("counts a gap right at the limit as work", function()
+    assert.equal(actions.IDLE_GAP_MS, actions.active_after(0, 0, actions.IDLE_GAP_MS))
+  end)
+
+  it("ignores a clock that did not move", function()
+    assert.equal(500, actions.active_after(500, 2000, 2000))
+  end)
+end)

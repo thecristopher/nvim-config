@@ -5,7 +5,7 @@ local actions = require("core.spell.actions")
 
 local M = {}
 
-M.WORDS = vim.fn.stdpath("config") .. "/spell/en.utf-8.add"
+M.WORDS = require("core.utils").root() .. "/spell/en.utf-8.add"
 
 local function mtime(path)
   local stat = vim.uv.fs_stat(path)

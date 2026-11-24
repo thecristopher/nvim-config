@@ -284,12 +284,21 @@ local function felled(buf, fight)
   end
 end
 
+-- past the first cycle the region's boss comes back carrying it, like a second journey
+local function cycled(name)
+  local ok, label = pcall(function()
+    return require("core.feats").cycle_label()
+  end)
+  return (ok and label) and ("%s, %s"):format(name, label) or name
+end
+
 local function engage(fight, stage)
   fight.engaged = true
   fight.peak = math.max(fight.errors, stage and stage.peak or 0)
   fight.health = actions.health(fight.errors, fight.peak)
   fight.entered_at = vim.uv.now()
-  fight.name = stage and stage.name or actions.boss_for(require("core.themes").current().name)
+  fight.name = stage and stage.name
+    or cycled(actions.boss_for(require("core.themes").current().name))
   require("core.sound").play("boss")
   -- staged fights belong to whoever staged them, like btb's coach
   if not stage then

@@ -1,17 +1,27 @@
 -- Keeps score of the run while you work, ranks it when you leave, and hands the last one to the hub.
+-- The run's time is the time you were active: a gap of more than IDLE_GAP_MS between two signs of
+-- life (a move, an edit, a focus) is a break and never counts, so a session left open overnight
+-- does not turn into a twelve hour run.
 local actions = require("core.results.actions")
 
 local M = {}
 
 local state_file = vim.fn.stdpath("state") .. "/eldentree_results.json"
-local started = os.time()
+local active_ms, last_seen = 0, vim.uv.now()
 local run = { saves = 0, fixes = 0 }
 local errors_by_buf = {}
 
 --- Returns the run so far, with how long it has lasted.
 ---@return table run as { seconds, saves, fixes }
 function M.current()
-  return { seconds = os.time() - started, saves = run.saves, fixes = run.fixes }
+  local active = actions.active_after(active_ms, last_seen, vim.uv.now())
+  return { seconds = math.floor(active / 1000), saves = run.saves, fixes = run.fixes }
+end
+
+local function touch()
+  local now = vim.uv.now()
+  active_ms = actions.active_after(active_ms, last_seen, now)
+  last_seen = now
 end
 
 --- Returns the last finished run, nil before the first one.
@@ -62,6 +72,7 @@ function M.setup()
   vim.api.nvim_create_autocmd("BufWritePost", {
     group = group,
     callback = function()
+      touch()
       run.saves = run.saves + 1
     end,
   })
@@ -77,6 +88,16 @@ function M.setup()
       errors_by_buf[ev.buf] = nil
     end,
   })
+  vim.api.nvim_create_autocmd({
+    "CursorMoved",
+    "CursorMovedI",
+    "TextChanged",
+    "TextChangedI",
+    "TextChangedT",
+    "BufEnter",
+    "FocusGained",
+    "CmdlineEnter",
+  }, { group = group, callback = touch })
   vim.api.nvim_create_autocmd("VimLeavePre", { group = group, callback = finish })
 end
 
