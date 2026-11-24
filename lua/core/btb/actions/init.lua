@@ -4,13 +4,12 @@ local M = {}
 
 -- the coach reuses sounds the franchise already has, first match wins, a moment with no match
 -- stays quiet. Opening the stage rings the spirit calling bell where there is one: the coach is summoned.
--- Failing twice in a row gets a word of comfort where the coach has one
 M.SOUNDS = {
   coach_open = { "summon", "hud_open" },
   ready = { "hud_select" },
   hint = { "hud_select" },
   failed = { "hud_back" },
-  failed_again = { "comfort", "hud_back" },
+  failed_again = { "hud_back" },
   skip = { "hud_close" },
 }
 
@@ -180,13 +179,6 @@ function M.saved_streak(saved, today)
     return 0
   end
   return tonumber(count)
-end
-
----The sound a pass plays, the merchant's praise where the franchise has it. A failure plays none.
----@param result table the User BtbResult payload
----@return string|nil
-function M.pass_sound(result)
-  return result.ok and "weapon" or nil
 end
 
 ---Where the coach's portrait lives in the config: her own, or the region's character when a
@@ -420,19 +412,6 @@ end
 ---@return string
 function M.onsite_name(boss, coach)
   return ("%s  ·  %s"):format(boss, coach.onsite)
-end
-
----How the merchant greets you at the hint shop: a welcome on the first visit of the day in this
----franchise, after that he only asks what you are buying.
----@param saved string|nil the day and franchise of the last visit
----@param day string like 2026-10-30
----@param franchise string
----@return string[] sound events in order of preference, so a franchise without a welcome falls back
-function M.shop_greeting(saved, day, franchise)
-  if saved == day .. " " .. franchise then
-    return { "merchant" }
-  end
-  return { "welcome", "merchant" }
 end
 
 ---What the merchant asks before a hint, nil when there is nothing left to sell. A hint aimed at the

@@ -61,6 +61,10 @@ describe("sound_for", function()
     assert.is_nil(actions.sound_for("passed_clean"))
   end)
 
+  it("answers Inde's second failed submit with the HUD's back sound, no comfort line", function()
+    assert.are.same({ "hud_back" }, actions.sound_for("failed_again"))
+  end)
+
   it("keeps the summon quiet while Claire is asking Inde if she is ready", function()
     assert.is_nil(actions.sound_for("coach_open", true))
   end)
@@ -73,47 +77,6 @@ describe("hook_plays", function()
 
   it("leaves the hint Inde bought to User BtbHint", function()
     assert.is_false(actions.hook_plays("hint"))
-  end)
-end)
-
-describe("pass_sound", function()
-  it("has the merchant praise every pass, a redo included", function()
-    assert.are.equal("weapon", actions.pass_sound({ ok = true, outcome = "struggled" }))
-    assert.are.equal("weapon", actions.pass_sound({ ok = true, redo = true }))
-  end)
-
-  it("stays quiet on a failure", function()
-    assert.is_nil(actions.pass_sound({ ok = false }))
-  end)
-end)
-
-describe("shop_greeting", function()
-  it("welcomes Leon on his first visit of the day", function()
-    assert.are.same(
-      { "welcome", "merchant" },
-      actions.shop_greeting("2026-10-29 resident_evil", "2026-10-30", "resident_evil")
-    )
-  end)
-
-  it("only asks what he is buying after that", function()
-    assert.are.same(
-      { "merchant" },
-      actions.shop_greeting("2026-10-30 resident_evil", "2026-10-30", "resident_evil")
-    )
-  end)
-
-  it("welcomes again when Malenia's franchise takes over the same day", function()
-    assert.are.same(
-      { "welcome", "merchant" },
-      actions.shop_greeting("2026-10-30 resident_evil", "2026-10-30", "elden_ring")
-    )
-  end)
-
-  it("welcomes on the very first visit, with nothing saved", function()
-    assert.are.same(
-      { "welcome", "merchant" },
-      actions.shop_greeting(nil, "2026-10-30", "elden_ring")
-    )
   end)
 end)
 

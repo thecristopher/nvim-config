@@ -180,19 +180,15 @@ end
 local function celebrate(result)
   local fanfare = actions.celebration(result)
   local moment = solve_moment(result)
-  -- the coach's own voice wins over the merchant's praise, two voices never talk at once
-  local spoke = moment and require("core.voice").say(moment) or false
-  local praise = not spoke and actions.pass_sound(result) or nil
-  -- the merchant's praise speaks over the banner where the franchise has it, the banner stays quiet
-  local praised = praise and require("core.sound").play(praise) ~= nil
-  if fanfare.banner then
-    require("core.banner").show(
-      fanfare.banner,
-      { reward = false, subtitle = fanfare.subtitle, sound = not praised }
-    )
+  if moment then
+    require("core.voice").say(moment)
   end
+  if fanfare.banner then
+    require("core.banner").show(fanfare.banner, { reward = false, subtitle = fanfare.subtitle })
+  end
+  -- a lesson belongs to the coach, the merchant never talks over it
   if fanfare.runes > 0 then
-    require("core.runes").award(fanfare.runes)
+    require("core.runes").award(fanfare.runes, { merchant = false })
   end
 end
 
@@ -318,19 +314,7 @@ local function stage_onsite(fight)
   end
 end
 
-local shop_file = vim.fn.stdpath("state") .. "/eldentree_merchant"
-
--- the merchant's thanks for a hint while it still sounds, the coach cuts it to say the hint
-local thanks = nil
-
-local function greet_at_shop()
-  local day, franchise = os.date("%Y-%m-%d"), require("core.franchise").name()
-  local ok, lines = pcall(vim.fn.readfile, shop_file, "", 1)
-  require("core.sound").play_first(actions.shop_greeting(ok and lines[1] or nil, day, franchise))
-  require("core.utils").write_state(shop_file, { day .. " " .. franchise })
-end
-
----Asked before a hint is revealed: the franchise's merchant names the price, you buy or leave.
+---Asked before a hint is revealed: the shop names the price in silence, you buy or leave.
 ---@param info { id: string, hints_left?: integer, cost?: integer, nudge_ready?: boolean }
 ---@param buy fun()
 function M.before_hint(info, buy)
@@ -339,10 +323,8 @@ function M.before_hint(info, buy)
   if not offer then
     return buy()
   end
-  greet_at_shop()
   vim.ui.select({ coach.buy, coach.leave }, { prompt = offer }, function(choice)
     if choice == coach.buy then
-      thanks = require("core.sound").play("bought")
       buy()
     end
   end)
@@ -382,10 +364,6 @@ function M.setup()
     callback = function(event)
       require("core.runes").spend((event.data or {}).cost or 0)
       M.sound("hint")
-      if thanks and require("core.sound").speaking() then
-        thanks.kill()
-      end
-      thanks = nil
     end,
   })
   vim.api.nvim_create_user_command("BtbPath", M.path, { desc = "The back-to-basics path as a map" })

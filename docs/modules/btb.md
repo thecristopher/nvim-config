@@ -12,16 +12,16 @@ small detail, and a changed bond makes btb summon them again. `coach.training` a
 naming the hub key and the HUD tab. The stage draws the coach with `core/hud/portrait.lua` in its
 own `btb` slot, coach moments reuse the HUD sounds (quiet while the coach talks, so a clip never
 crosses her voice), and every `User BtbResult` fires `felled` on a
-clean solve or `great` on a level up and pays the XP in runes (a redo pays nothing). The plugin puts
+clean solve or `great` on a level up and pays the XP in runes (a redo pays nothing) without the
+merchant's milestone visit. The plugin puts
 failing tests on the solution as warnings (on the line the stack or traceback reached), `<leader>kd`
 opens the solution beside the reference with Claude's review on the lines it names, a redo's winbar
 races its ghost, and `<leader>kk` asks the recapped lessons' closing questions before the recap.
-`before_hint` gets `M.before_hint` here, so the franchise's merchant sells each hint (`coach.hint`,
-`coach.buy`, `coach.leave`), greeting with `welcome` on the first visit of the day per franchise
-(`eldentree_merchant` in state) and `merchant` after that. A clean pass is the coach's to cheer
-(`solve_moment`), any other pass plays `weapon` where the franchise has it and keeps the banner
-quiet, and `User BtbHint` takes its XP out of the runes and has the coach say the hint out loud,
-cutting the merchant's `bought`. btb calls the sound hook (`on_sound`) once per moment wherever
+`before_hint` gets `M.before_hint` here, so each hint is sold at the franchise's shop (`coach.hint`,
+`coach.buy`, `coach.leave`) in silence: a lesson belongs to the coach, so the merchant never
+speaks inside one. A clean pass is the coach's to cheer (`solve_moment`), a second failed submit
+only plays `hud_back`, and `User BtbHint` takes its XP out of the runes and has the coach say the
+hint out loud. btb calls the sound hook (`on_sound`) once per moment wherever
 its line shows, and the hook leaves `hint` to `User BtbHint` (`hook_plays`).
 `<leader>kC` / `:BtbConcepts` draws the concepts from `btb status` as rooms (`coach.concepts`). `b`
 on the HUD starts the lesson and its description reads what is left of the day (from `btb today`),
