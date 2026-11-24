@@ -662,6 +662,13 @@ local function trophy_icon(key)
   return (hud_lore().trophy_icons or {})[key] or M.TROPHY_ICON
 end
 
+-- the feats unlocked so far, as one more trophy that opens the showcase
+local function feats_tile(said)
+  local unlocked, total = require("core.feats.actions").count(require("core.feats").store())
+  local scope = ("feats unlocked of %d"):format(total)
+  return trophy(trophy_icon("title"), said.title, ("%d/%d"):format(unlocked, total), scope, "Feats")
+end
+
 --- The trophies of every run so far: foes felled, the finest rank, the days fought and the longest
 --- streak, in the franchise's words.
 ---@return table[]
@@ -683,6 +690,7 @@ function M.trophies()
     trophy(trophy_icon("rank"), said.rank, summary.rank or "-", ranked, "Chronicle"),
     trophy(trophy_icon("days"), said.days, summary.days, "days with a finished run", "Chronicle"),
     trophy(trophy_icon("streak"), said.streak, summary.streak, "days in a row", "Chronicle"),
+    feats_tile(said),
   }, "trophy")
 end
 

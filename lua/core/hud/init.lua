@@ -192,8 +192,14 @@ local function greeting()
   return require("core.franchise").line("hud.greeting_" .. part)
 end
 
+-- a config that loads Eldentree as a plugin may not use lazy.nvim, then the plugin tally is zero
+local function lazy_stats()
+  local ok, lazy = pcall(require, "lazy")
+  return ok and lazy.stats() or { count = 0, startuptime = 0 }
+end
+
 local function stats()
-  local lazy = require("lazy").stats()
+  local lazy = lazy_stats()
   return ("Neovim %s  ·  %d plugins  ·  %.0fms  ·  %d %s"):format(
     tostring(vim.version()):match("^[%d.]+"),
     lazy.count,
@@ -209,7 +215,7 @@ local function portrait_image()
 end
 
 local function portrait_file()
-  return vim.fn.stdpath("config") .. "/images/portraits/" .. (portrait_image() or "")
+  return require("core.utils").root() .. "/images/portraits/" .. (portrait_image() or "")
 end
 
 -- a region without its portrait yet, or a terminal that can draw neither pixels nor chafa, goes without

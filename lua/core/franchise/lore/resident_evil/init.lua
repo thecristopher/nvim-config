@@ -167,7 +167,8 @@ return {
   },
 
   -- the days you fought, as a grid
-  chronicle = { title = "Mission Log" },
+  -- the year card (:Wrapped) names its year with year
+  chronicle = { title = "Mission Log", year = "Mission Report %d" },
 
   -- the HUD's trophies: foes felled from the bestiary, the best rank, the days fought and the
   -- longest streak of days in a row, from the chronicle
@@ -178,6 +179,23 @@ return {
     days = "Days survived",
     streak = "Longest streak",
     empty = "No records yet",
+    -- the toast over an unlocked feat, how a cycle past the first is named, and every feat
+    unlocked = "Trophy unlocked",
+    cycle = "New Game Plus %d",
+    feats = {
+      first_blood = "First Kill",
+      hundred_foes = "Hundred Infected",
+      thousand_foes = "Outbreak Contained",
+      first_s = "S Rank Survivor",
+      ten_s = "Infinite Rocket Launcher",
+      week_streak = "Seven Days in Raccoon City",
+      month_streak = "Survived the Month",
+      hundred_days = "Veteran Agent",
+      marathon = "No Save Room in Sight",
+      hundred_saves = "Ink Ribbon Hoarder",
+      night_shift = "Night Shift at the RPD",
+      new_cycle = "New Game Plus",
+    },
   },
 
   banners = {

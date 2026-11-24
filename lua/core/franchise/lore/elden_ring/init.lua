@@ -142,7 +142,8 @@ return {
   },
 
   -- the days you fought, as a grid
-  chronicle = { title = "Chronicle of the Tarnished" },
+  -- the year card (:Wrapped) names its year with year
+  chronicle = { title = "Chronicle of the Tarnished", year = "Your %d in the Lands Between" },
 
   -- the HUD's trophies: foes felled from the bestiary, the best rank, the days fought and the
   -- longest streak of days in a row, from the chronicle
@@ -153,6 +154,23 @@ return {
     days = "Days in the Lands Between",
     streak = "Longest streak",
     empty = "No remembrance yet, Tarnished",
+    -- the toast over an unlocked feat, how a cycle past the first is named, and every feat
+    unlocked = "Remembrance gained",
+    cycle = "Journey %d",
+    feats = {
+      first_blood = "First Blood",
+      hundred_foes = "Hunter of the Lands Between",
+      thousand_foes = "Elden Lord's Thousand",
+      first_s = "Grace Given",
+      ten_s = "Chosen by Grace",
+      week_streak = "Seven Graces Lit",
+      month_streak = "Lord of the Long Road",
+      hundred_days = "Hundred Days Tarnished",
+      marathon = "The Long Siege",
+      hundred_saves = "Grace Touched a Hundred Times",
+      night_shift = "Night's Cavalry",
+      new_cycle = "Journey Anew",
+    },
   },
 
   banners = {

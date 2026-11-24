@@ -99,8 +99,8 @@ M.QUESTS = {
   conflict = { "boss", "left" },
   bestiary = { "title", "empty", "enemies" },
   expedition = { "name", "started", "ended" },
-  chronicle = { "title" },
-  trophies = { "title", "felled", "rank", "days", "streak", "empty" },
+  chronicle = { "title", "year" },
+  trophies = { "title", "felled", "rank", "days", "streak", "empty", "unlocked", "cycle", "feats" },
 }
 
 -- what the HUD reads from lore.hud: a world name for every hub key (see core/hud/keys), a category
@@ -432,10 +432,19 @@ local function check_region(lore, region, portrait_exists, problems)
   end
 end
 
+local function check_feats(lore, problems)
+  local named = (lore.trophies or {}).feats
+  if type(named) ~= "table" then
+    return
+  end
+  missing_keys(named, require("core.feats.actions").ids(), "trophies.feats", problems)
+end
+
 local function check_quests(lore, problems)
   for name, keys in pairs(M.QUESTS) do
     missing_keys(lore[name], keys, name, problems)
   end
+  check_feats(lore, problems)
   local enemies = (lore.bestiary or {}).enemies
   if enemies ~= nil and (type(enemies) ~= "table" or #enemies == 0) then
     table.insert(problems, "bestiary.enemies is empty")

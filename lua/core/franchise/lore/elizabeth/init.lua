@@ -251,7 +251,8 @@ return {
   },
 
   -- the days you worked, as a grid
-  chronicle = { title = "Call Sheet" },
+  -- the year card (:Wrapped) names its year with year
+  chronicle = { title = "Call Sheet", year = "The %d Season" },
 
   -- the HUD's trophies: foes felled from the bestiary, the best rank, the days fought and the
   -- longest streak of days in a row, from the chronicle
@@ -262,6 +263,23 @@ return {
     days = "Show days",
     streak = "Longest run",
     empty = "No awards yet, the season just began",
+    -- the toast over an unlocked feat, how a cycle past the first is named, and every feat
+    unlocked = "Award won",
+    cycle = "Encore %d",
+    feats = {
+      first_blood = "Opening Night",
+      hundred_foes = "Hundred Curtain Calls",
+      thousand_foes = "Standing Ovation",
+      first_s = "Rave Review",
+      ten_s = "Critics' Darling",
+      week_streak = "Sold Out Week",
+      month_streak = "Season Run",
+      hundred_days = "Hundred Shows",
+      marathon = "Double Feature",
+      hundred_saves = "Hundred Takes",
+      night_shift = "Midnight Premiere",
+      new_cycle = "The Encore",
+    },
   },
 
   banners = {

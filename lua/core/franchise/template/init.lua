@@ -86,7 +86,8 @@ return {
   -- a focus block with its own rank
   expedition = { name = "Focus", started = "Focus for %d minutes", ended = "Focus over" },
 
-  chronicle = { title = "Chronicle" },
+  -- the year card (:Wrapped) names its year with year
+  chronicle = { title = "Chronicle", year = "Your %d" },
 
   -- the HUD's trophies: foes felled from the bestiary, the best rank, the days fought and the
   -- longest streak of days in a row, from the chronicle
@@ -97,6 +98,23 @@ return {
     days = "Days played",
     streak = "Longest streak",
     empty = "No trophies yet",
+    -- the toast over an unlocked feat, how a cycle past the first is named, and every feat
+    unlocked = "Trophy unlocked",
+    cycle = "Cycle %d",
+    feats = {
+      first_blood = "First Blood",
+      hundred_foes = "Hundred Foes",
+      thousand_foes = "Thousand Foes",
+      first_s = "First S Rank",
+      ten_s = "Ten S Ranks",
+      week_streak = "Week Streak",
+      month_streak = "Month Streak",
+      hundred_days = "Hundred Days",
+      marathon = "Marathon",
+      hundred_saves = "Hundred Saves",
+      night_shift = "Night Shift",
+      new_cycle = "New Cycle",
+    },
   },
 
   banners = {

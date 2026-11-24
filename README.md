@@ -28,6 +28,10 @@ Banners land on commits, PRs, test runs and felled bosses. When you die, the cod
 
 ![Banners](images/demo/banner.gif)
 
+Feats unlock as you work and slide in above the statusline. `:Feats` keeps the showcase, and `:Wrapped` tells your year in one card, with your nemesis and the song you played the most.
+
+![Feats and the year card](images/demo/feats.gif)
+
 Whatever Apple Music or Cider is playing sits in the statusline, with the cover and the lyrics a keypress away.
 
 ![Now playing panel](images/demo/music.gif)
@@ -58,7 +62,14 @@ On Elden Ring days it is Malenia, and the exercises live in the Lands Between.
 
 ## Install
 
-Back up any existing config first, then clone this repo where Neovim looks for its config.
+To try it first without touching your own config, run it under its own `NVIM_APPNAME`. Its plugins and state live apart from `~/.config/nvim`, and `--clean` removes all of it.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/thecristopher/nvim-config/main/scripts/try.sh | bash
+# later: ./scripts/try.sh --clean (or the same curl with "bash -s -- --clean")
+```
+
+To keep it, back up any existing config first, then clone this repo where Neovim looks for its config.
 
 ```sh
 # macOS and Linux
@@ -90,6 +101,10 @@ Every option is a global with the `eldentree_` prefix (`vim.g.eldentree_sound = 
 | `core/motion`    | The shared animation engine, one clock for every animation so they move on the same frame. `<leader>um` or `:Motion` stills everything, ambient loops stop while nvim is unfocused |
 | `core/whitespace` | Trims trailing whitespace on save, only on the lines you changed |
 
+### Borrowing the engine
+
+The worlds, the games and the screens also work inside another config, installed as a plugin next to snacks.nvim, and `require("eldentree").setup({ only = { ... } })` takes just the modules you want. Here, `vim.g.eldentree_modules = { skip = { "music" } }` turns modules off. See [docs/modules/engine.md](docs/modules/engine.md).
+
 ### Your own world
 
 Each franchise is a folder in `lua/core/franchise/lore/<name>/`, found on its own with nothing to register: `regions.lua` holds the palettes, `skin.lua` how components look, and `init.lua` the bosses, weather, banners, words, coach and mechanics. `:Franchise new Silent Hill` copies the template into a new folder, and `:checkhealth eldentree` lists what it still needs (missing words, bosses, weather, portraits, palette contrast).
@@ -112,8 +127,11 @@ Each franchise is a folder in `lua/core/franchise/lore/<name>/`, found on its ow
 | `core/voice`      | The character of the day's region speaks up when tests pass or fail, CI finishes, a push lands or a boss falls, in a notification under their name. Lines live in each lore's `voices.lua`, written from the sheets in `docs/voices/`. Every character has one, Claire and Malenia with a soft spot for you, and `:checkhealth eldentree` asks each region for every moment. `vim.g.eldentree_voice = false` silences them |
 | `core/bestiary`   | Every kind of error or warning you clear by editing is a foe felled, named from the franchise's enemies by its code. `:Bestiary` / `<leader>jb` shows which ones you fight the most in the repo |
 | `core/runes`      | Statusline rune tally (pesetas in Resident Evil, where the Merchant greets every 10,000). Saves and banners pay out, dying leaves a bloodstain |
-| `core/results`    | Ranks each run from S to D by fixes and saves, and the Resident Evil STATUS panel shows the last one |
+| `core/results`    | Ranks each run from S to D by fixes and saves, and the Resident Evil STATUS panel shows the last one. A run counts only the time you were active: a gap of more than 5 minutes between two moves, edits or focuses is a break |
 | `core/chronicle`  | `:Chronicle` / `<leader>jc`: the last 20 weeks as a grid, each day lit by its run's rank and your commits in the repo |
+| `core/feats`      | Twelve feats you unlock once and keep (your first foe, a week in a row, an S rank, a 3 AM save, four hours in one run...). Each one slides in as a toast with the franchise's sound, `:Feats` / `<leader>ja` shows the showcase. A full year after your first day the cycle rises (Journey 2, New Game Plus 2, Encore 2) and the region's boss comes back carrying it |
+| `core/wrapped`    | `:Wrapped [year]` / `<leader>jw`: the year in one card, hours, days, ranks, your best day, your nemesis and the feats you unlocked and the song you played the most while working. `s` saves it as a PNG in `~/Pictures/Eldentree`. The first start of each week tells how the last one went, `:Wrapped week` tells it again |
+| `core/season`     | Halloween brings Resident Evil and rising embers, the end of December snows, New Year sparkles, and the day in `vim.g.eldentree_anniversary = "MM-DD"` brings Elizabeth and hearts. A choice made with `:Franchise` still wins. `vim.g.eldentree_seasons = false` turns them off |
 | `core/expedition` | `:Expedition [minutes]` / `<leader>je`: a focus block. Sounds, animations and quiet notifications step aside, the statusline counts down and the end ranks the block on its own |
 | `core/trial`      | `:Trial` / `<leader>TT` runs the project's tests in the background and announces the verdict |
 | `core/ecg`        | Resident Evil's statusline ECG: Fine, Caution or Danger from the buffer's diagnostics |
@@ -233,7 +251,7 @@ Portraits in `images/portraits/` are 828x1008 crops of the originals in `images/
 
 Some sounds are clips from the games, the rest are made from scratch by `python3 scripts/sounds.py` out of synthesized tones and noise, with ffmpeg for the echo. Run it again after tweaking a recipe, or pass a franchise to rebuild only that one. `:Sound died` previews any of them.
 
-To use your own instead, drop audio files into `sounds/elden_ring/`, `sounds/resident_evil/` or `sounds/elizabeth/`, named after the moment they belong to: `title`, `door`, `fog`, `curtain`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`, `zone`, `phantom`, `continue`, `summon` (the spirit calling bell that opens back-to-basics' coach stage), `comfort` (failing the same exercise again), `bought` (a hint bought from the merchant), `welcome` (the merchant opening the hint shop for the first time that day, after that `merchant` asks what you are buying), `weapon` (the merchant praising a back-to-basics pass, the banner stays quiet when it plays), `expedition` (the last sound before an expedition goes quiet), and the inventory HUD's `hud_open`, `hud_close`, `hud_move`, `hud_select`, `hud_back`. Variants like `died_2.wav` take turns. `python3 scripts/sounds.py --import ~/Downloads/clip.mp3 elden_ring bought` brings one in trimmed and leveled like the rest, and `--clips` finishes every clip again. Every sound plays at 60% volume (`VOLUME` in `core/sound/actions`). Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
+To use your own instead, drop audio files into `sounds/elden_ring/`, `sounds/resident_evil/` or `sounds/elizabeth/`, named after the moment they belong to: `title`, `door`, `fog`, `curtain`, `rest`, `boss`, `merchant`, `felled`, `great`, `died`, `grace`, `cleansed`, `region`, `zone`, `phantom`, `continue`, `summon` (the spirit calling bell that opens back-to-basics' coach stage), `comfort` (failing the same exercise again), `bought` (a hint bought from the merchant), `welcome` (the merchant opening the hint shop for the first time that day, after that `merchant` asks what you are buying), `weapon` (the merchant praising a back-to-basics pass, the banner stays quiet when it plays), `expedition` (the last sound before an expedition goes quiet), `trophy` (a feat unlocked, built here for every world), and the inventory HUD's `hud_open`, `hud_close`, `hud_move`, `hud_select`, `hud_back`. Variants like `died_2.wav` take turns. `python3 scripts/sounds.py --import ~/Downloads/clip.mp3 elden_ring bought` brings one in trimmed and leveled like the rest, and `--clips` finishes every clip again. Every sound plays at 60% volume (`VOLUME` in `core/sound/actions`). Missing files stay quiet, `vim.g.eldentree_sound = false` silences everything.
 
 ### Portrait credits
 
@@ -260,6 +278,8 @@ Every leader key lives in one list, `lua/core/leader/actions/init.lua`, grouped 
 | `<leader>jm`       | Project map                                                                    |
 | `<leader>jb`       | Bestiary of the repo                                                           |
 | `<leader>jc`       | Chronicle of the weeks you fought                                              |
+| `<leader>ja`       | Feats, unlocked or locked                                                      |
+| `<leader>jw`       | The year card (Wrapped)                                                        |
 | `<leader>je`       | Start or end an expedition (focus block)                                       |
 | `<leader>jd`       | Open the desk                                                                  |
 | `<leader>jf`       | Choose today's franchise                                                       |
@@ -402,6 +422,9 @@ On macOS, F11 shows the desktop unless "Use F1, F2, etc. keys as standard functi
 | `:Bestiary`                                    | The foes felled in this repo                    |
 | `:Expedition [minutes\|stop]`                  | A quiet focus block with its own rank           |
 | `:Chronicle`                                   | The weeks you fought, as a grid                 |
+| `:Season <name\|off>`                           | Bring a season (halloween, winter, new_year, anniversary) for the session |
+| `:Feats [preview]`                             | Every feat, or a preview of the unlock toast    |
+| `:Wrapped [year\|week]`                        | The year in one card (`s` saves a PNG), or last week |
 | `:Trial`                                       | Run the project's tests                         |
 | `:Map`                                         | Open the project map                            |
 | `:Repos` / `:ReposRescan`                      | Browse or rescan known repositories             |

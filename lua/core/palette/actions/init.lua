@@ -95,6 +95,26 @@ M.ENTRIES = {
     cmd = "Chronicle",
   },
   {
+    icon = "󰔸 ",
+    name = "Feats",
+    desc = "Every feat, unlocked or locked",
+    key = "<leader>ja",
+    cmd = "Feats",
+  },
+  {
+    icon = "󰖘 ",
+    name = "Season",
+    desc = "Bring a season for this session",
+    cmd = "Season ",
+  },
+  {
+    icon = "󰃭 ",
+    name = "Wrapped",
+    desc = "The year card, saved as a PNG with s",
+    key = "<leader>jw",
+    cmd = "Wrapped",
+  },
+  {
     icon = "󰙅 ",
     name = "Concepts",
     desc = "back-to-basics concepts as a map",

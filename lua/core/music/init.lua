@@ -83,6 +83,21 @@ local function follow_ticker()
   ticker.stop()
 end
 
+local history_file = vim.fn.stdpath("state") .. "/eldentree_music.json"
+
+-- every new song heard while working counts one play toward the year card
+local function count_play(key, track)
+  if not key or not track.playing then
+    return
+  end
+  local history = require("core.music.actions.history")
+  local ok, lines = pcall(vim.fn.readfile, history_file)
+  local decoded_ok, store = pcall(vim.json.decode, ok and table.concat(lines, "\n") or "")
+  store = (decoded_ok and type(store) == "table") and store or {}
+  history.record(store, tostring(os.date("%Y")), key, track)
+  require("core.utils").write_state(history_file, { vim.json.encode(store) })
+end
+
 -- a new song (or the silence after one) tints the groups, may be announced and tells the HUD
 local function follow_song(source, track)
   local key = actions.track_key(track)
@@ -90,6 +105,7 @@ local function follow_song(source, track)
     return
   end
   song.key = key
+  count_play(key, track)
   tint.follow(track, source)
   if actions.announces(song.last, key, focused, song_on_screen()) then
     announce(track)

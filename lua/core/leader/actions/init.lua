@@ -120,6 +120,8 @@ M.BINDINGS = {
   { key = "jm", desc = "Project map", call = "core.map:open" },
   { key = "jb", desc = "Bestiary", call = "core.bestiary:open" },
   { key = "jc", desc = "Chronicle", call = "core.chronicle:open" },
+  { key = "ja", desc = "Feats", call = "core.feats:open" },
+  { key = "jw", desc = "The year card", call = "core.wrapped:open" },
   { key = "je", desc = "Expedition (focus block)", call = "core.expedition:start" },
   { key = "jd", desc = "Open the desk", call = "core.desk:open" },
   { key = "jf", desc = "Choose today's franchise", call = "core.franchise:pick" },

@@ -13,6 +13,22 @@ M.RANKS = {
   { rank = "C", per_hour = 4 },
 }
 
+-- a gap longer than this between two signs of life is time away, not time at work
+M.IDLE_GAP_MS = 5 * 60 * 1000
+
+--- Adds the time since the last sign of life to the active time, unless the gap was a break.
+---@param active_ms integer active time so far
+---@param last_ms integer when the last sign of life came
+---@param now_ms integer
+---@return integer active_ms
+function M.active_after(active_ms, last_ms, now_ms)
+  local gap = now_ms - last_ms
+  if gap <= 0 or gap > M.IDLE_GAP_MS then
+    return active_ms
+  end
+  return active_ms + gap
+end
+
 --- Scores a run: fixes count the most, saves keep the pace honest.
 ---@param run { seconds: integer, saves: integer, fixes: integer }
 ---@return number points per hour

@@ -30,7 +30,7 @@ end
 local session
 
 local function current_weather()
-  return actions.weather(require("core.themes").current().name)
+  return require("core.season").weather() or actions.weather(require("core.themes").current().name)
 end
 
 --- The player message of this session, picked again whenever another world or region takes over,

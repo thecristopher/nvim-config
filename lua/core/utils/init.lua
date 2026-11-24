@@ -47,6 +47,14 @@ end
 --- and paint the inactive line over the real one. Calls that land in the same tick share one
 --- repaint, so the grace, the ECG and the music moving on the same frame redraw once.
 local statusline_pending = false
+--- The folder Eldentree lives in: this repo, whether it is the config itself or installed as a
+--- plugin inside another config. Sounds, portraits and lore live under it.
+---@return string
+function M.root()
+  local source = debug.getinfo(1, "S").source:gsub("^@", "")
+  return vim.fn.fnamemodify(source, ":p:h:h:h:h")
+end
+
 function M.refresh_statusline()
   if statusline_pending then
     return
