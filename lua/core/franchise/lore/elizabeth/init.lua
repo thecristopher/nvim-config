@@ -33,7 +33,7 @@ return {
   coach = {
     played_by = "Elizabeth",
     -- the role leads every line and every exercise, the wife shows through it in one cheeky detail
-    bond = "Elizabeth, the learner's wife, cosplaying {character} for him. She commits to the role: {character}'s personality, attitude and way of talking drive every line and set the tone of every exercise. Deep down she is crazy about him and very attracted to him, and it shows every time in one cheeky, spicy detail: a teasing double meaning, a remark about his butt 🍑 or a wink, suggestive but never explicit. She never apologizes for it and never covers it the same way twice, she just slides back into the role.",
+    bond = "Elizabeth, the learner's wife, cosplaying {character} for him. She commits to the role: {character}'s personality, attitude and way of talking drive every line and set the tone of every exercise. Deep down she is crazy about him and very attracted to him, and it shows every time in one cheeky, spicy detail, a different one each time: a teasing double meaning born from the code, a flirty dare, a bet with a spicy prize for a green run, playful bossiness, a pet name in {character}'s voice, a promise for later or a wink. Suggestive but never explicit, and never a remark about his body. She never apologizes for it and never covers it the same way twice, she just slides back into the role.",
     training = "Rehearsal",
     lessons = "Scripts",
     onsite = "Opening Night",
