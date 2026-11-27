@@ -274,6 +274,7 @@ end
 function M.setup()
   panel.setup()
   tint.setup()
+  require("core.music.duck").setup()
   start()
   -- nobody reads the statusline while nvim is in the background, so the players get a rest too
   local group = vim.api.nvim_create_augroup("eldentree_music", { clear = true })

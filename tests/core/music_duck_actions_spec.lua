@@ -1,0 +1,45 @@
+local duck = require("core.music.actions.duck")
+
+describe("parse_volume", function()
+  it("reads the volume Claire left Music at", function()
+    assert.equal(80, duck.parse_volume("80\n"))
+  end)
+
+  it("reads nothing while Music is closed", function()
+    assert.is_nil(duck.parse_volume(""))
+    assert.is_nil(duck.parse_volume(nil))
+  end)
+
+  it("ignores a volume out of range", function()
+    assert.is_nil(duck.parse_volume("140"))
+  end)
+end)
+
+describe("lowered", function()
+  it("drops Malenia's love song under the voice without silencing it", function()
+    assert.equal(30, duck.lowered(100))
+    assert.equal(15, duck.lowered(50))
+  end)
+end)
+
+describe("ramp", function()
+  it("climbs back to where Inde had the volume, ending exactly there", function()
+    assert.same({ 44, 58, 72, 86, 100 }, duck.ramp(30, 100, 5))
+  end)
+
+  it("ends where it was even in one step", function()
+    assert.same({ 70 }, duck.ramp(21, 70, 1))
+  end)
+end)
+
+describe("commands", function()
+  it("asks Music for its volume only when it is running", function()
+    local command = duck.volume_command()
+    assert.equal("osascript", command[1])
+    assert.truthy(command[3]:find('application "Music" is running', 1, true))
+  end)
+
+  it("sets the volume Leon asked for", function()
+    assert.truthy(duck.set_volume_command(42)[3]:find("set sound volume to 42", 1, true))
+  end)
+end)

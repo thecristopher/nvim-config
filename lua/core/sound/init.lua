@@ -112,6 +112,10 @@ function M.play(event, opts)
   return start(event, path, command)
 end
 
+local function announce(pattern)
+  vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false })
+end
+
 --- Plays a character's spoken line on the voice channel, over the moments and the HUD, cutting
 --- the line said before it so two never talk at once.
 ---@param path string absolute path of the clip
@@ -127,7 +131,17 @@ function M.speak(path, on_done)
     return nil
   end
   stop(channels.voice)
-  return start("voice", path, command, "voice", on_done)
+  local playing = start("voice", path, command, "voice", function()
+    announce("EldentreeVoiceEnded")
+    if on_done then
+      on_done()
+    end
+  end)
+  if playing then
+    -- the music steps back while a character speaks (core/music/duck)
+    announce("EldentreeVoiceStarted")
+  end
+  return playing
 end
 
 ---Whether a sound would be heard right now: sound is on, a screen is attached and nvim has focus.

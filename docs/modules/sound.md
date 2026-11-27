@@ -31,7 +31,7 @@ compiled by `swiftc` into `stdpath("cache")/eldentree/sound_player` whenever its
 run by `core/sound/player.lua`): an `AVAudioEngine` that stays running with every file decoded once,
 since afplay took a second to wake the audio device on every sound and the HUD channel cut most of
 them before they were heard. afplay, paplay or ffplay are the fallback until it is built or where it
-cannot be. Nothing plays while nvim is unfocused except a `:Sound` preview (a key pressed in nvim
+cannot be. A spoken line fires `User EldentreeVoiceStarted` when it starts and `EldentreeVoiceEnded` when it is over, which `core/music` follows to lower the music under it. Nothing plays while nvim is unfocused except a `:Sound` preview (a key pressed in nvim
 brings the focus back, since a terminal inside it can swallow the focus events), and a sound never
 repeats the variant it played last. `scripts/sounds.py` builds `VARIANTS` of the frequent sounds
 (`--variants`), and `CLIPS` may tame a clip's `peak`.

@@ -39,6 +39,18 @@ describe("progress task", function()
     assert.are.equal(count, #shown)
   end)
 
+  it("keeps Claire's final love note on screen until keep hides it", function()
+    local task = progress.start({ id = "claire_note", title = "Test", message = "Claire writes" })
+    local kept
+    task:done("For Inde, on our anniversary", {
+      keep = function(id)
+        kept = id
+      end,
+    })
+    assert.is_false(shown[#shown].opts.timeout)
+    assert.are.equal("claire_note", kept)
+  end)
+
   it("fails in red", function()
     local task = progress.start({ id = "wesker_test", title = "Test", message = "Wesker pushes" })
     task:fail("rejected")

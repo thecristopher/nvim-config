@@ -26,3 +26,10 @@ columns.
 Every new song heard while it plays counts one play per year in `eldentree_music.json` in state
 (`actions/history.lua`, keyed by `track_key`). A pause and a return to the same song never count
 again. `:Wrapped` reads it for the song of the year.
+
+While a character's spoken line plays (`User EldentreeVoiceStarted` and `EldentreeVoiceEnded` from
+`core/sound`'s `speak`) Apple Music drops to `RATIO` of its volume and climbs back in
+`RESTORE_STEPS` once the voice is over, `RESTORE_DELAY_MS` later so a line cut by the next one keeps
+it down (`core/music/duck.lua`, math and osascript calls in `actions/duck.lua`). Only on macOS and
+only while Apple Music is the one playing, Cider is left alone. Closing nvim while the music is down
+puts the volume back, `vim.g.eldentree_music_duck = false` turns it off.

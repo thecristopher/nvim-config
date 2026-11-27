@@ -47,8 +47,13 @@ function M.start(opts)
     task.timer = nil
     local took = actions.elapsed(vim.uv.now() - task.started)
     local text = actions.wrap(("%s (%s)"):format(message, took), actions.text_width(vim.o.columns))
-    -- the final word replaces the bar under the same id and fades with the notifier's timeout
-    vim.notify(text, level, { id = task.id, title = task.title, timeout = keep and false or nil })
+    -- the final word replaces the bar under the same id and fades with the notifier's timeout,
+    -- unless keep hides it (`keep and false or nil` would always be nil)
+    local notify_opts = { id = task.id, title = task.title }
+    if keep then
+      notify_opts.timeout = false
+    end
+    vim.notify(text, level, notify_opts)
     if keep then
       keep(task.id)
     end
