@@ -316,20 +316,22 @@ return {
     },
     -- what the dressing room mirror says while she plays this role
     hub_messages = {
-      "Triss knows a spell for flaky tests",
-      "A sorceress never ships untested",
+      "Triss knows a sorcery for flaky tests",
+      "A Tarnished never ships untested",
       "Fire, patience and a clean rebase",
     },
     -- Claude Code's bars and spinner while she plays this role
     claude = {
-      bars = { five_hour = "MAGIC", seven_day = "VIGOR" },
+      bars = { five_hour = "FP", seven_day = "VIGOR" },
       verbs = {
-        "Weaving a spell",
-        "Opening a portal",
-        "Brushing out the auburn hair",
+        "Resting at grace",
+        "Reading a ground message",
+        "Whistling for Torrent",
       },
     },
     character = "Triss",
+    -- the name is shared with The Witcher's sorceress, btb has to know she is someone else
+    coach_note = "Triss here is not Triss Merigold from The Witcher, nothing of that world belongs to her. She is the learner's own Elden Ring character, a Tarnished he created who starts in Limgrave: her world is the Lands Between, sites of grace, runes, Torrent, the fog gates, Margit and the Erdtree, and her magic is the sorceries and incantations of Elden Ring.",
     portrait = "elizabeth_triss.jpg",
     figure = "elizabeth_triss_figure.jpg",
     title = "Limgrave",

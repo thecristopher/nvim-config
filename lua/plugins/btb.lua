@@ -17,6 +17,8 @@ return {
         persona = bridge.persona,
         portrait = bridge.portrait,
         sound = bridge.on_sound,
+        -- the coach's quick reactions land in the dialogue box, never in a notification
+        speak = bridge.speak,
         before_hint = bridge.before_hint,
         progress = require("core.progress").start,
         -- Eldentree decides what completes in an exercise: blink with function names only, Copilot muted

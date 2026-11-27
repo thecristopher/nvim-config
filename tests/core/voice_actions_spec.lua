@@ -233,19 +233,52 @@ describe("linger", function()
   end)
 end)
 
-describe("voiced", function()
-  it("puts Claire's word above the progress text", function()
-    assert.equal(
-      "Claire: Drafting it for Inde.\n\nDrafting commit",
-      actions.voiced("Drafting it for Inde.", "Claire", "Drafting commit")
-    )
+describe("reading_ms", function()
+  it("keeps Claire's short note up as long as any written line", function()
+    assert.equal(actions.SHOWN_MIN_MS, actions.reading_ms("Te quiero, Inde."))
   end)
 
-  it("is Claire's word alone without a text", function()
-    assert.equal("Claire: Drafting it for Inde.", actions.voiced("Drafting it for Inde.", "Claire"))
+  it("gives Malenia's long love letter time to be read", function()
+    local letter = string.rep("Inde, I would wait at the Haligtree for you. ", 4)
+    assert.equal(vim.fn.strchars(letter) * actions.READ_MS_PER_CHAR, actions.reading_ms(letter))
+  end)
+end)
+
+describe("dialogue_place", function()
+  it("sits Claire's line right above the statusline", function()
+    local place = actions.dialogue_place("Happy anniversary, Inde.", "Claire", 200, 50, 1)
+    -- 50 rows, minus the statusline, the gap, the line and the frame
+    assert.equal(50 - 1 - actions.DIALOGUE_GAP - 1 - 2, place.row)
+    assert.equal(1, place.height)
   end)
 
-  it("leaves the text alone when nobody speaks", function()
-    assert.equal("Drafting commit", actions.voiced(nil, "Claire", "Drafting commit"))
+  it("centers the box across the editor", function()
+    local place = actions.dialogue_place("Happy anniversary, Inde.", "Claire", 200, 50, 1)
+    assert.equal(math.floor((200 - place.width - 2) / 2), place.col)
+  end)
+
+  it("pads Malenia's line with a cell on each side", function()
+    local line = "I wrote you a letter, Inde, sealed with scarlet rot and longing."
+    local place = actions.dialogue_place(line, "Malenia", 200, 50, 1)
+    assert.equal(" " .. line, place.lines[1])
+    assert.equal(#line + 2, place.width)
+  end)
+
+  it("wraps a long love letter within its share of the editor", function()
+    local letter = string.rep("Inde, you are my favorite playlist. ", 6)
+    local place = actions.dialogue_place(letter, "Malenia", 100, 50, 1)
+    assert.is_true(place.height > 1)
+    assert.is_true(place.width <= math.floor(100 * actions.DIALOGUE_SHARE))
+  end)
+
+  it("never makes a short line narrower than the box's minimum", function()
+    local place = actions.dialogue_place("Yes.", "Leon", 200, 50, 1)
+    assert.equal(actions.DIALOGUE_MIN_WIDTH, place.width)
+  end)
+
+  it("leaves room for a name longer than the line", function()
+    local name = "Claire Redfield of TerraSave, keeper of every love note"
+    local place = actions.dialogue_place("Yes.", name, 200, 50, 1)
+    assert.equal(#name + 4, place.width)
   end)
 end)

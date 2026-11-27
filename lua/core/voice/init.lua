@@ -78,33 +78,18 @@ function M.speak(moment, vars, on_done)
   return line, character, false
 end
 
--- every spoken line gets its own notification, so a line cut by the next one only takes its own
-local said = 0
-
 -- keeps a spoken line's words on screen until the voice is over: the returned function takes
 -- them away a moment after it, and the cap takes them away if the voice never says it ended
-local function hold(id)
+local function hold(hide)
   local shown_at = vim.uv.now()
-  local gone = false
-  local function hide()
-    if gone then
-      return
-    end
-    gone = true
-    local ok, snacks = pcall(require, "snacks")
-    if ok and snacks.notifier then
-      snacks.notifier.hide(id)
-    end
-  end
   vim.defer_fn(hide, actions.SHOWN_MAX_MS)
   return function()
     vim.defer_fn(hide, actions.linger(vim.uv.now() - shown_at))
   end
 end
 
--- speaks a moment and hands back keep(id), which holds the notification with that id until the
--- voice is over (the voice can end before speak returns, a clip that fails to decode, so keep
--- releases at once then)
+-- speaks a moment and hands back keep(hide), which holds the words until the voice is over (the
+-- voice can end before speak returns, a clip that fails to decode, so keep releases at once then)
 local function speaking(moment, vars)
   local over, release = false, nil
   local line, character, spoke = M.speak(moment, vars, function()
@@ -113,8 +98,8 @@ local function speaking(moment, vars)
       release()
     end
   end)
-  local function keep(id)
-    release = hold(id)
+  local function keep(hide)
+    release = hold(hide)
     if over then
       release()
     end
@@ -122,25 +107,11 @@ local function speaking(moment, vars)
   return line, character, spoke, keep
 end
 
----Has the character say their line for a moment and returns it leading the text, for a notification
----that already shows something (a progress bar, a result), so the two never stack. Without text
----it is the line alone, nil when the character has nothing to say.
----@param moment string like committing or pr_drafting
----@param text string|nil what the notification says without the character
----@param vars table<string, string>|nil values for the line's holes
----@return string|nil text
----@return boolean spoke whether the character said it out loud
----@return (fun(id: string))|nil keep holds the notification with that id until the voice is over,
----nil for a written line, which fades like any other
-function M.voiced(moment, text, vars)
-  local line, character, spoke, keep = speaking(moment, vars)
-  return actions.voiced(line, character, text), spoke, spoke and keep or nil
-end
-
 ---Has the region's character say their line for a moment: out loud when the region has a clip
----for it (sounds/<franchise>/voices/<region>/), written otherwise, both as a notification under
----their name. A spoken line stays on screen until its voice is over, whether the clip is cached
----or still on its way from Fish Audio. A moment only heard out loud stays quiet without its clip.
+---for it (sounds/<franchise>/voices/<region>/), written otherwise, both in the dialogue box under
+---their name, apart from the notifications. A spoken line stays on screen until its voice is over,
+---whether the clip is cached or still on its way from Fish Audio. A moment only heard out loud
+---stays quiet without its clip.
 ---@param moment string like trial_passed, ci_failed, pushed or boss_felled
 ---@param vars table<string, string>|nil values for the line's holes, like branch or boss
 ---@param opts? { quiet?: boolean } quiet leaves the spoken words off screen, for moments that
@@ -148,18 +119,16 @@ end
 ---@return boolean spoke whether the character said it out loud
 function M.say(moment, vars, opts)
   local quiet = opts and opts.quiet
-  said = said + 1
-  local id = "eldentree_voice_" .. said
   local line, character, spoke, keep = speaking(moment, vars)
   if not line or (spoke and quiet) then
     return spoke
   end
-  if not spoke then
-    vim.notify(line, vim.log.levels.INFO, { title = character })
-    return spoke
+  local dialogue = require("core.voice.dialogue")
+  if spoke then
+    keep(dialogue.speak(character, line))
+  else
+    dialogue.write(character, line)
   end
-  vim.notify(line, vim.log.levels.INFO, { title = character, id = id, timeout = false })
-  keep(id)
   return spoke
 end
 

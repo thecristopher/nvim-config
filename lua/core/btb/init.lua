@@ -101,6 +101,14 @@ function M.sound(event)
   end
 end
 
+---btb's speak hook: the coach's quick reactions go to the dialogue box at the bottom, apart from
+---the notifications, and wait for a voice that is still speaking.
+---@param name string the coach's name
+---@param line string
+function M.speak(name, line)
+  require("core.voice.dialogue").write(name, line)
+end
+
 ---btb's sound hook: every coach event and moment, except the ones another event already voices.
 ---@param event string
 function M.on_sound(event)

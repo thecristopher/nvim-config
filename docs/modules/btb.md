@@ -8,7 +8,11 @@ so it summons them once, without romance, and the stage draws the region's portr
 whose `coach` names `played_by` and a `bond` (Elizabeth's) makes the coach that person in the role
 (`played_coach`, persona `elizabeth-<role>`), and btb summons them with the bond instead of the ally
 rule: the role's personality leads every line and every exercise, the bond only slips through in a
-small detail, and a changed bond makes btb summon them again. `coach.training` and `coach.lessons`
+small detail, and a changed bond makes btb summon them again. A region's `coach_note` is added to
+the bond when the character's name could mislead (Triss is the learner's own Tarnished, not The
+Witcher's sorceress). The coach's quick reactions and the comment on a pass go to the voice's
+dialogue box through btb's `speak` hook (`M.speak`), never in a notification, and a written line
+there waits for a voice still speaking. `coach.training` and `coach.lessons`
 naming the hub key and the HUD tab. The stage draws the coach with `core/hud/portrait.lua` in its
 own `btb` slot, coach moments reuse the HUD sounds (quiet while the coach talks, so a clip never
 crosses her voice), and every `User BtbResult` fires `felled` on a

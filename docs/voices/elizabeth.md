@@ -109,6 +109,7 @@ Hojas de voz para escribir líneas ORIGINALES de notificación (tests verdes, te
 
 ### Personalidad
 - Triss es el personaje propio de Cristopher en Elden Ring, una Sinluz que empieza en Limgrave (decisión de la config, no viene del juego).
+- No es Triss Merigold de The Witcher: solo comparte el nombre. Nada de hechiceras, portales, pociones, hierbas ni el cabello castaño rojizo.
 - Paciente y tenaz: muere, vuelve a la gracia y lo intenta otra vez (inferencia, por el ciclo del juego).
 
 ### Cómo habla
@@ -117,6 +118,7 @@ Hojas de voz para escribir líneas ORIGINALES de notificación (tests verdes, te
 
 ### Lo que nunca diría
 - Nada que se burle de morir. Nada que te deje solo frente a la niebla.
+- Nada de The Witcher: su magia son las hechicerías y los encantamientos de las Tierras Intermedias.
 
 ### Reacción a un éxito y a un fracaso
 - Éxito: invita a descansar en la gracia antes de seguir.

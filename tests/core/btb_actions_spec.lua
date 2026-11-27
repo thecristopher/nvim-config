@@ -24,6 +24,15 @@ describe("coach_of", function()
     }, actions.coach_of({ character = "Malenia" }, "Inde", inde))
   end)
 
+  it("tells btb who Triss really is when the region leaves a note", function()
+    local inde = { played_by = "Inde Navarrete", bond = "his wife, cosplaying {character}" }
+    local limgrave = { character = "Triss", coach_note = "Not Triss Merigold, his own Tarnished." }
+    assert.are.equal(
+      "his wife, cosplaying Triss Not Triss Merigold, his own Tarnished.",
+      actions.coach_of(limgrave, "Inde", inde).bond
+    )
+  end)
+
   it("never mistakes a played role for the partner of the same name", function()
     local inde = { played_by = "Inde Navarrete", bond = "his wife" }
     assert.are.equal("inde-navarrete-ada", actions.coach_of({ character = "Ada" }, "Inde", inde).id)
