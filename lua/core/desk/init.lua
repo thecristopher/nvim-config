@@ -1,6 +1,7 @@
--- The manager desk: opens the desk artifact and opens the tabs it asks for. Opening it asks for one
--- work session that syncs and runs whatever the page queued, nothing runs between visits. nvim
--- watches the inbox that session fills, so implement and review requests open a tab here.
+-- The manager desk: opens the Desk app (or the artifact in the browser) and the tabs it asks for.
+-- Opening it asks for a work session that syncs and runs whatever the page queued. nvim watches the
+-- inbox the page and that session fill, opens implement and review tabs from it and leaves what it
+-- did in the outbox, where the desk bridge picks it up for the page.
 local actions = require("core.desk.actions")
 
 local M = {}
@@ -61,14 +62,22 @@ local function wake(cfg)
   require("core.utils").write_state(state_dir(cfg) .. "/wake", { os.date("!%Y-%m-%dT%H:%M:%SZ") })
 end
 
+-- says what happened in nvim, and hands it to whoever asked (the page through the outbox)
+local function tell(done, msg, level)
+  notify(msg, level)
+  if done then
+    done(msg)
+  end
+end
+
 ---Opens a tab in the ticket's repo with Claude implementing it.
 ---@param key string ticket key
 ---@param repo? string repo folder name under repos_dir
-function M.implement(key, repo)
+---@param done? fun(msg: string) told what happened
+function M.implement(key, repo, done)
   local cfg, reason = M.config()
   if not cfg then
-    notify(reason, vim.log.levels.WARN)
-    return
+    return tell(done, reason, vim.log.levels.WARN)
   end
   local repos = vim.fn.expand(cfg.repos_dir)
   local dir = actions.implement_target({ key = key, repo = repo }, repos, function(p)
@@ -78,80 +87,148 @@ function M.implement(key, repo)
   vim.cmd.tcd(vim.fn.fnameescape(dir))
   vim.fn.jobstart(actions.implement_cmd(key), { term = true, cwd = dir })
   vim.cmd.startinsert()
-  notify("Implementing " .. key)
+  tell(done, ("Implementing %s in %s"):format(key, vim.fn.fnamemodify(dir, ":t")))
 end
 
 ---Opens a tab in the PR's repo and has Claude review it with core.review.
 ---@param target { number: integer, repo: string, dir: string|nil, title: string }
-local function review_target(target)
+---@param done? fun(msg: string)
+local function review_target(target, done)
   if not target.dir then
-    notify(
-      ("Clone %s into the repos folder to review PR #%d"):format(target.repo, target.number),
-      vim.log.levels.WARN
+    local msg = ("Clone %s into the repos folder to review PR #%d"):format(
+      target.repo,
+      target.number
     )
-    return
+    return tell(done, msg, vim.log.levels.WARN)
   end
   vim.cmd.tabnew()
   vim.cmd.tcd(vim.fn.fnameescape(target.dir))
   require("core.review").review(target.number)
+  tell(done, ("Reviewing %s #%d"):format(target.repo, target.number))
 end
 
----Finds the open PR that mentions a ticket and reviews it, asking when there are several.
+local function decode(res)
+  local ok, data = pcall(vim.json.decode, res.stdout or "")
+  return res.code == 0 and ok and data or nil
+end
+
+---Finds open PRs from the branches of the local clones whose name holds the key.
+---@param cfg table desk config with repos_dir already expanded
 ---@param key string ticket key
-function M.review(key)
+---@param cb fun(prs: table[])
+local function prs_by_branch(cfg, key, cb)
+  vim.system(actions.branch_scan_argv(cfg.repos_dir, key), { text = true }, function(res)
+    local hits = actions.branch_hits(res.stdout)
+    local found, left = {}, #hits
+    if left == 0 then
+      return cb(found)
+    end
+    for _, hit in ipairs(hits) do
+      vim.system(actions.pr_by_branch_argv(cfg.github_org, hit), { text = true }, function(pr)
+        vim.list_extend(found, actions.with_repo(decode(pr) or {}, hit.repo))
+        left = left - 1
+        if left == 0 then
+          cb(found)
+        end
+      end)
+    end
+  end)
+end
+
+---Finds the open PRs of a ticket: those that mention its key, else those on a branch named after it.
+---@param cfg table desk config with repos_dir already expanded, the callbacks cannot call vim.fn
+---@param key string ticket key
+---@param cb fun(prs: table[]|nil) nil when gh could not search
+local function find_prs(cfg, key, cb)
+  vim.system(actions.pr_search_argv(key, cfg.github_org), { text = true }, function(res)
+    local prs = decode(res)
+    if not prs or #prs > 0 then
+      return cb(prs)
+    end
+    prs_by_branch(cfg, key, cb)
+  end)
+end
+
+---Reviews one of several PRs, asking which.
+local function pick_target(key, targets, done)
+  tell(done, ("Asked in nvim which of %d PRs of %s to review"):format(#targets, key))
+  vim.ui.select(targets, {
+    prompt = "Review which PR of " .. key,
+    format_item = function(t)
+      return ("%s #%d  %s"):format(t.repo, t.number, t.title)
+    end,
+  }, function(choice)
+    if choice then
+      review_target(choice)
+    end
+  end)
+end
+
+---Finds the open PR of a ticket and reviews it, asking when there are several.
+---@param key string ticket key
+---@param done? fun(msg: string) told what happened
+function M.review(key, done)
   local cfg, reason = M.config()
   if not cfg then
-    notify(reason, vim.log.levels.WARN)
-    return
+    return tell(done, reason, vim.log.levels.WARN)
   end
   if (cfg.github_org or "") == "" then
-    notify("Set github_org in the desk config to find the PRs of a ticket", vim.log.levels.WARN)
-    return
+    return tell(
+      done,
+      "Set github_org in the desk config to find the PRs of a ticket",
+      vim.log.levels.WARN
+    )
   end
-  vim.system(
-    actions.pr_search_argv(key, cfg.github_org),
-    { text = true },
-    vim.schedule_wrap(function(res)
-      local ok, prs = pcall(vim.json.decode, res.stdout or "")
-      if res.code ~= 0 or not ok then
-        notify("gh could not search the PRs of " .. key, vim.log.levels.WARN)
-        return
+  local repos = vim.fn.expand(cfg.repos_dir)
+  find_prs(
+    vim.tbl_extend("force", cfg, { repos_dir = repos }),
+    key,
+    vim.schedule_wrap(function(prs)
+      if not prs then
+        return tell(done, "gh could not search the PRs of " .. key, vim.log.levels.WARN)
       end
-      local targets = actions.review_targets(prs, vim.fn.expand(cfg.repos_dir), function(p)
+      local targets = actions.review_targets(prs, repos, function(p)
         return vim.fn.isdirectory(p) == 1
       end)
       if #targets == 0 then
-        notify("No open PR mentions " .. key)
-        return
+        return tell(done, ("No open PR for %s, by key or by branch"):format(key))
       end
       if #targets == 1 then
-        return review_target(targets[1])
+        return review_target(targets[1], done)
       end
-      vim.ui.select(targets, {
-        prompt = "Review which PR of " .. key,
-        format_item = function(t)
-          return ("%s #%d  %s"):format(t.repo, t.number, t.title)
-        end,
-      }, function(choice)
-        if choice then
-          review_target(choice)
-        end
-      end)
+      pick_target(key, targets, done)
     end)
   )
 end
 
-local function open_item(item)
+---Leaves what nvim did with a request in the outbox, where the desk bridge waits to tell the page.
+---@param dir string the state folder
+---@param queue_id string|nil
+---@param msg string
+local function report(dir, queue_id, msg)
+  if not queue_id then
+    return
+  end
+  local outbox = dir .. "/outbox"
+  vim.fn.mkdir(outbox, "p")
+  local part = ("%s/%s.json.part"):format(outbox, queue_id)
+  require("core.utils").write_state(part, { vim.json.encode({ text = msg }) })
+  vim.uv.fs_rename(part, ("%s/%s.json"):format(outbox, queue_id))
+end
+
+local function open_item(item, state)
+  local done = function(msg)
+    report(state, item.queue_id, msg)
+  end
   -- a tab popping up mid sentence would steal the typing, so say it instead
   if vim.api.nvim_get_mode().mode:sub(1, 1) == "i" then
     local cmd = item.kind == "implement" and "DeskImplement" or "DeskReview"
-    notify(("%s is ready, run :%s %s"):format(item.key, cmd, item.key))
-    return
+    return tell(done, ("%s is ready in nvim, run :%s %s"):format(item.key, cmd, item.key))
   end
   if item.kind == "implement" then
-    M.implement(item.key, item.repo)
+    M.implement(item.key, item.repo, done)
   else
-    M.review(item.key)
+    M.review(item.key, done)
   end
 end
 
@@ -165,7 +242,7 @@ local function drain_inbox(dir)
       local item = actions.inbox_item(read_json(claimed))
       vim.fn.delete(claimed)
       if item then
-        open_item(item)
+        open_item(item, vim.fn.fnamemodify(dir, ":h"))
       end
     end
   end
@@ -202,7 +279,7 @@ local function installed()
   return true
 end
 
----Opens the desk artifact in the browser and asks for the one sync of this visit.
+---Opens the Desk app, or the artifact in the browser when the app is not installed, and asks for a sync.
 function M.open()
   local cfg, reason = M.config()
   if not cfg then
@@ -213,7 +290,9 @@ function M.open()
     notify("Set artifact_url in the desk config to the published desk link", vim.log.levels.WARN)
     return
   end
-  vim.ui.open(cfg.artifact_url)
+  vim.system(actions.open_argv(cfg, function(p)
+    return vim.uv.fs_stat(p) ~= nil
+  end))
   if installed() then
     wake(cfg)
   end

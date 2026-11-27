@@ -142,3 +142,73 @@ describe("review_targets", function()
     assert.equal("haligtree", targets[2].repo)
   end)
 end)
+
+describe("open_argv", function()
+  local cfg = actions.merge_config({ artifact_url = "https://claude.ai/artifact/inde-desk" })
+
+  it("opens Claire's installed Desk app", function()
+    local argv = actions.open_argv(cfg, function()
+      return true
+    end)
+    assert.equal("open", argv[1])
+    assert.truthy(argv[2]:find("Claude Apps/KTLO Desk.app", 1, true))
+  end)
+
+  it("falls back to the artifact in the browser when the app is missing", function()
+    assert.same(
+      { "open", "https://claude.ai/artifact/inde-desk" },
+      actions.open_argv(cfg, function()
+        return false
+      end)
+    )
+  end)
+end)
+
+describe("branch_hits", function()
+  local stdout = table.concat({
+    "love-notes\tbugfix/LOVE-4-anniversary-playlist",
+    "love-notes\torigin/bugfix/LOVE-4-anniversary-playlist",
+    "haligtree\torigin/feature/LOVE-4-malenia-letter",
+    "haligtree\torigin",
+  }, "\n")
+  local hits = actions.branch_hits(stdout)
+
+  it("keeps one hit per repo and branch, remote name dropped", function()
+    assert.same({
+      { repo = "love-notes", branch = "bugfix/LOVE-4-anniversary-playlist" },
+      { repo = "haligtree", branch = "feature/LOVE-4-malenia-letter" },
+    }, hits)
+  end)
+
+  it("finds nothing in empty output", function()
+    assert.same({}, actions.branch_hits(""))
+  end)
+end)
+
+describe("pr_by_branch_argv", function()
+  it("asks gh for the open PR of Malenia's branch in its repo", function()
+    local argv = actions.pr_by_branch_argv(
+      "haligtree-org",
+      { repo = "haligtree", branch = "feature/LOVE-4-letter" }
+    )
+    assert.same(
+      { "gh", "pr", "list", "-R", "haligtree-org/haligtree", "--head", "feature/LOVE-4-letter" },
+      vim.list_slice(argv, 1, 7)
+    )
+  end)
+end)
+
+describe("with_repo", function()
+  it("tags gh pr list results with their repo so review_targets reads them", function()
+    local prs = actions.with_repo({ { number = 3, title = "Inde's date night" } }, "love-notes")
+    assert.equal("love-notes", prs[1].repository.name)
+    assert.equal(3, prs[1].number)
+  end)
+end)
+
+describe("inbox_item queue id", function()
+  it("drops a queue id that could walk out of the outbox, like Wesker's", function()
+    local item = actions.inbox_item({ kind = "review", key = "RE-1", queue_id = "../wesker" })
+    assert.is_nil(item.queue_id)
+  end)
+end)
