@@ -53,7 +53,7 @@ every session in this repo (see the style section below).
 - `lua/core/fog/`: fog wall that rolls over the editor when you travel to a Site of Grace (`:Fog`, `<leader>uf` or `vim.g.eldentree_fog = false`)
 - `lua/core/messages/`: Elden Ring style messages left on lines of code, stored per repo in state (`<leader>mw` write, `md` erase, `ml` list, `:Inscribe`, `:Inscriptions`). A save with no messages to move writes nothing
 - `lua/core/folds/`: the closed fold text nvim-ufo shows (first line plus a hidden line tally)
-- `lua/core/desk/`: the manager desk (`:Desk`, `<leader>jd`), the work agent that syncs it on open, and the inbox nvim watches for implement and review requests ([details](docs/modules/desk.md))
+- `lua/core/desk/`: the manager desk (`:Desk`, `<leader>jd`) opened as its Claude app, the work agent its clicks wake, and the inbox nvim watches for implement and review requests, answered through the outbox ([details](docs/modules/desk.md))
 - `lua/core/review/`: `:Review [number|url]` / `<leader>pr` has Claude (headless, subscription) analyze a PR's diff into a float, `d` opens the diff per file
 - `lua/core/git/`: quick git keys under `<leader>g` (`QUICK_KEYS`), every call runs in the buffer's repo, `<leader>pc` commits in the background with a Claude draft ([details](docs/modules/git.md))
 - `lua/core/btb/` and `lua/plugins/btb.lua`: back-to-basics drills under `<leader>k`, coached by the character of the day, hints sold by the franchise's merchant ([details](docs/modules/btb.md))

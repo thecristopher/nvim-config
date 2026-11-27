@@ -13,6 +13,8 @@ M.LAUNCH_AGENTS = {
 
 M.DEFAULTS = {
   artifact_url = "",
+  -- the Desk installed as an app of the Claude desktop app, the only place its buttons reach this Mac
+  app_name = "KTLO Desk",
   repos_dir = "~/Documents/GitHub",
   -- empty means nvim's own state folder, the scripts fall back to the same one
   state_dir = "",
@@ -42,7 +44,9 @@ function M.inbox_item(raw)
     return nil
   end
   local repo = type(raw.repo) == "string" and raw.repo ~= "" and raw.repo or nil
-  return { kind = raw.kind, key = raw.key, repo = repo, queue_id = raw.queue_id }
+  -- the id names the outbox file, so it can never hold a path
+  local id = type(raw.queue_id) == "string" and raw.queue_id:match("^[%w_-]+$") or nil
+  return { kind = raw.kind, key = raw.key, repo = repo, queue_id = id }
 end
 
 ---Describes the work session from its lock and result files.
@@ -108,6 +112,86 @@ function M.pr_search_argv(key, org)
     "--json",
     "number,title,url,repository",
   }
+end
+
+---Where the Claude desktop app installs the Desk app.
+---@param name string app name, the page's title
+---@return string
+function M.app_path(name)
+  return ("~/Applications/Claude Apps/%s.app"):format(name)
+end
+
+---Command line that opens the Desk: its app when installed, else the artifact in the browser.
+---@param cfg table merged desk config
+---@param app_exists fun(path: string): boolean
+---@return string[]
+function M.open_argv(cfg, app_exists)
+  local app = cfg.app_name ~= "" and vim.fn.expand(M.app_path(cfg.app_name)) or ""
+  if app ~= "" and app_exists(app) then
+    return { "open", app }
+  end
+  return { "open", cfg.artifact_url }
+end
+
+---Shell command that lists the local and remote branches of every clone whose name holds the key.
+---@param repos_dir string expanded folder holding the clones
+---@param key string ticket key
+---@return string[] prints one "repo<TAB>branch" line per hit
+function M.branch_scan_argv(repos_dir, key)
+  local script = [[for d in "$1"/*/; do
+  r=$(basename "$d")
+  git -C "$d" branch -a --list "*$2*" --format='%(refname:short)' 2>/dev/null | sed "s|^|$r	|"
+done]]
+  return { "sh", "-c", script, "sh", repos_dir, key }
+end
+
+---Turns branch scan output into unique repo and branch pairs, remote names dropped.
+---@param stdout string output of branch_scan_argv
+---@return { repo: string, branch: string }[]
+function M.branch_hits(stdout)
+  local out, seen = {}, {}
+  for line in (stdout or ""):gmatch("[^\n]+") do
+    local repo, branch = line:match("^([^\t]+)\t(.+)$")
+    branch = branch and branch:gsub("^origin/", "")
+    local id = repo and (repo .. "\t" .. branch)
+    if id and branch ~= "HEAD" and branch ~= "origin" and not seen[id] then
+      seen[id] = true
+      table.insert(out, { repo = repo, branch = branch })
+    end
+  end
+  return out
+end
+
+---Command line that finds the open PR of a branch in one repo.
+---@param org string GitHub org or user that owns the repos
+---@param hit { repo: string, branch: string }
+---@return string[]
+function M.pr_by_branch_argv(org, hit)
+  return {
+    "gh",
+    "pr",
+    "list",
+    "-R",
+    org .. "/" .. hit.repo,
+    "--head",
+    hit.branch,
+    "--state",
+    "open",
+    "--json",
+    "number,title,url",
+  }
+end
+
+---Gives gh pr list results the repository field gh search returns, so both feed review_targets.
+---@param prs table[] decoded output of pr_by_branch_argv
+---@param repo string repo the list ran in
+---@return table[]
+function M.with_repo(prs, repo)
+  local out = {}
+  for _, pr in ipairs(prs or {}) do
+    table.insert(out, vim.tbl_extend("force", pr, { repository = { name = repo } }))
+  end
+  return out
 end
 
 ---Turns gh search results into review targets, each with the local clone it runs from.
