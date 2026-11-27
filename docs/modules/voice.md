@@ -19,3 +19,33 @@ repo, commit and PR drafting, `:Trial` starting, `:Review` asking Claude, the ma
 chronicle opening, a ground message written, the title screen), quiet without a clip, and
 `say(moment, vars, { quiet = true })` leaves the words off screen where the moment already shows its
 own. So far Claire in `raccoon_city` and Leon in `rpd` speak.
+
+## Studio
+
+`lua/core/voice/studio/`: a role cast with a Fish Audio voice speaks its takes out loud. The takes
+live in each lore's `script.lua`, two per moment written with Drama 3 direction (`[how it is said]`
+before the words, `<emphasis>`, `<whisper>`, `<soft>`, `<slow>`, `[break]`), and `voice` is the Fish
+Audio voice id the role is cast with. A role without `voice` stays written, and `say` falls back to
+the recorded clips and the written lines whenever the studio has nothing to play.
+
+- A moment plays a cached take at once. A share of them (`FRESH_CHANCE`) voices a take nobody has
+  heard yet, so new lines keep coming without every moment waiting on the network.
+- Holes (`HOLES` in its actions) let a take say what really happened: `{branch}` read as words
+  (`speakable_branch`), `{number}` and `{boss}`. Those are voiced on the spot and cached per text.
+- A baker caches the role in use ahead of time with Drama 3, one take every 20 seconds while the
+  budget allows. Once every take has audio, a writer asks Claude (headless, quiet) for fresh takes
+  for the moments with the fewest, from the role's voice sheet in `docs/voices/` and the takes it
+  already has, a few runs a day (`MAX_FRESH` kept per moment).
+- Money: Drama 3 while the day's spend stays under `vim.g.eldentree_studio_daily` (0.50) and the
+  balance above `vim.g.eldentree_studio_floor` (0.50), the free model (`s2.1-pro-free`) after that
+  or when Fish Audio answers 402. The ledger lives in `eldentree_studio.json` in state, and the
+  prepaid balance is the hard cap.
+- Audio and fresh takes live in `stdpath("data")/eldentree/voices`, out of the repo:
+  `<voice id>/<model>-<hash>-<length>.mp3` at 64 kbps, and `lines.json` for the fresh takes.
+- The key comes from `FISH_API_KEY` or `~/.config/fish-audio/key`
+  (`vim.g.eldentree_fish_key_file`).
+- `:Voice status` shows the mode, the money and how much of the role is voiced. `:Voice local`
+  never calls Fish Audio again and plays only what is cached, `:Voice live` brings it back.
+  `:Voice write` asks Claude for fresh takes now. `:Voice export [file]` packs the audio and fresh
+  takes into a `.tar.gz` (the desktop by default), `:Voice import <file>` adds one without
+  overwriting what is cached. `vim.g.eldentree_studio = false` turns the studio off.

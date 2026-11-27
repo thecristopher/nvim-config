@@ -11,6 +11,8 @@ return {
   regions = require("core.franchise.lore.elizabeth.regions"),
   skin = require("core.franchise.lore.elizabeth.skin"),
   voices = require("core.franchise.lore.elizabeth.voices"),
+  -- the takes said out loud through Fish Audio, see lua/core/voice/studio
+  script = require("core.franchise.lore.elizabeth.script"),
   -- the 8 bit sprites each role pops on a save or a win, see lua/core/pixel
   pixels = require("core.franchise.lore.elizabeth.pixels"),
   lines = require("core.franchise.lore.elizabeth.lines"),

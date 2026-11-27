@@ -127,6 +127,12 @@ function M.speak(path)
   return start("voice", path, command, "voice")
 end
 
+---Whether a sound would be heard right now: sound is on, a screen is attached and nvim has focus.
+---@return boolean
+function M.audible()
+  return not silenced({})
+end
+
 ---Whether a character's spoken line is still playing.
 ---@return boolean
 function M.speaking()

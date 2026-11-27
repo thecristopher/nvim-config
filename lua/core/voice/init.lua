@@ -63,6 +63,11 @@ function M.speak(moment, vars)
     return nil, nil, false
   end
   local region = require("core.themes").current()
+  -- a role cast with a Fish Audio voice speaks through the studio, the recorded clips stay behind it
+  local performed = require("core.voice.studio").perform(region, moment, vars)
+  if performed then
+    return performed, region.character, true
+  end
   local spoken = speak(region, moment)
   if spoken then
     return actions.fill(spoken, vars), region.character, true
@@ -102,8 +107,10 @@ local function greet_once_a_day()
   M.say("morning")
 end
 
----Greets you on the first nvim of the day, in the voice of the day's character.
+---Greets you on the first nvim of the day, in the voice of the day's character, and opens the
+---voice studio.
 function M.setup()
+  require("core.voice.studio").setup()
   vim.api.nvim_create_autocmd("UIEnter", {
     group = vim.api.nvim_create_augroup("eldentree_voice", { clear = true }),
     once = true,

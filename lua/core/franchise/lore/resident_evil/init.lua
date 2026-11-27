@@ -6,6 +6,8 @@ return {
   regions = require("core.franchise.lore.resident_evil.regions"),
   skin = require("core.franchise.lore.resident_evil.skin"),
   voices = require("core.franchise.lore.resident_evil.voices"),
+  -- the takes said out loud through Fish Audio, see lua/core/voice/studio
+  script = require("core.franchise.lore.resident_evil.script"),
   -- the 8 bit sprites each region pops on a save or a win, see lua/core/pixel
   pixels = require("core.franchise.lore.resident_evil.pixels"),
   lines = require("core.franchise.lore.resident_evil.lines"),
