@@ -6,6 +6,8 @@ return {
   regions = require("core.franchise.lore.elden_ring.regions"),
   skin = require("core.franchise.lore.elden_ring.skin"),
   voices = require("core.franchise.lore.elden_ring.voices"),
+  -- the takes said out loud through Fish Audio, see lua/core/voice/studio
+  script = require("core.franchise.lore.elden_ring.script"),
   -- the 8 bit sprites each region pops on a save or a win, see lua/core/pixel
   pixels = require("core.franchise.lore.elden_ring.pixels"),
   lines = require("core.franchise.lore.elden_ring.lines"),

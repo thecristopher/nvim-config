@@ -27,8 +27,8 @@ voice is over, so commit and PR drafting, the commit landing and a new PR show t
 in their progress notification instead of a second one stacked over it. Drafting shows only the
 line over the bar, under its own id (`commit_claude_draft`, `pr_helper_draft`) so the editor's hint
 never replaces it, and the bar goes once the draft is in while the line stays (`task:done(message,
-{ keep })` in `core/progress`). Claire, Leon and every one of Elizabeth's roles speak through the studio (Triss borrows
-Shadowheart's voice), their audio lives out of the repo.
+{ keep })` in `core/progress`). Malenia, Ranni, Maliketh, Claire, Leon and every one of Elizabeth's roles speak through the
+studio (Triss borrows Shadowheart's voice, Elden Ring's Malenia shares the one Elizabeth's wears), their audio lives out of the repo.
 
 ## Studio
 

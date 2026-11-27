@@ -351,7 +351,7 @@ describe("writer", function()
   end)
 end)
 
-for _, franchise in ipairs({ "resident_evil", "elizabeth" }) do
+for _, franchise in ipairs({ "elden_ring", "resident_evil", "elizabeth" }) do
   describe(franchise .. " script", function()
     local lore = require("core.franchise.actions").lore(franchise)
     local voice = require("core.voice.actions")
