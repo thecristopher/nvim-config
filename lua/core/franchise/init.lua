@@ -135,6 +135,7 @@ function M.create(text)
     "regions.lua",
     "skin.lua",
     "voices.lua",
+    "script.lua",
     "lines.lua",
     "hud.lua",
   }) do

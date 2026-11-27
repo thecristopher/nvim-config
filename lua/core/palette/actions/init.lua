@@ -245,6 +245,12 @@ M.ENTRIES = {
     cmd = "Motion",
   },
   { icon = "󰕾 ", name = "Sound", desc = "Preview a sound", cmd = "Sound " },
+  {
+    icon = "󰍬 ",
+    name = "Voice",
+    desc = "Voice studio: status, live, local, write, export",
+    cmd = "Voice ",
+  },
   { icon = "󰀦 ", name = "Banner", desc = "Show a banner", cmd = "Banner " },
   { icon = "󰋩 ", name = "Pixel", desc = "Preview the region's 8 bit sprite", cmd = "Pixel" },
   { icon = "󰑓 ", name = "Rescan repos", desc = "Look for new repos now", cmd = "ReposRescan" },

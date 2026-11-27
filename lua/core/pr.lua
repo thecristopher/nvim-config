@@ -216,17 +216,19 @@ end
 -- ── Claude draft (async, this is the slow step) ────────────────────────────
 
 local function draft_via_claude(prompt, cb)
+  -- the character's word is the bar's message, and once the draft is in it stays alone until
+  -- the voice is over, under its own id so the editor's hint never replaces it
+  local line, _, keep = require("core.voice").voiced("pr_drafting")
   local task = require("core.progress").start({
-    id = "pr_helper",
+    id = "pr_helper_draft",
     title = say("title"),
-    message = say("drafting"),
+    message = line or say("drafting"),
   })
-  require("core.voice").say("pr_drafting")
   require("core.claude").run(prompt, function(res)
     if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
       task:fail(say("failed"))
     else
-      task:done(say("ready"))
+      task:done(line or say("ready"), { keep = keep })
     end
     cb(res)
   end)
@@ -349,10 +351,11 @@ local function published(buf, ctx, title, url)
   vim.bo[buf].modified = false
   -- only a new PR is worth a word from the character, said in the same notification as the link
   -- so the elapsed time still lands after the link
-  local line, character, spoke = nil, nil, false
+  local created, spoke, keep = nil, false, nil
   if not ctx.pr then
-    line, character, spoke =
-      require("core.voice").speak("pr_opened", { number = url:match("/pull/(%d+)") or "" })
+    local number = { number = url:match("/pull/(%d+)") or "" }
+    created, spoke, keep =
+      require("core.voice").voiced("pr_opened", say("created", { url = url }), number)
   end
   -- when the character says it out loud the banner keeps quiet, so the two never talk over each
   -- other, and the merchant waits for another milestone instead of greeting over the PR
@@ -366,8 +369,7 @@ local function published(buf, ctx, title, url)
   if ctx.pr then
     return say("updated", { number = ctx.pr.number, url = url })
   end
-  local created = say("created", { url = url })
-  return line and ("%s: %s\n\n%s"):format(character, line, created) or created
+  return created, { keep = keep }
 end
 
 local function publish(buf, ctx, title, body, task)

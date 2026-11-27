@@ -50,12 +50,16 @@ local function sounding(channel)
   return entry and not entry.done and entry.event or nil
 end
 
-local function start(event, file, command, channel)
+local function start(event, file, command, channel, on_done)
   channel = channel or actions.channel(event)
   local entry = { event = event, channel = channel }
   sounds = sounds + 1
+  -- afplay's exit lands in a fast callback, so the caller hears about it on the main loop
   local function over()
     entry.done = true
+    if on_done then
+      vim.schedule(on_done)
+    end
   end
   if player.play(channel, sounds, file, over) then
     entry.resident = true
@@ -94,10 +98,7 @@ function M.play(event, opts)
   if not play then
     return
   end
-  local ok, files = pcall(vim.fn.readdir, folder())
-  if not ok then
-    return
-  end
+  local files = require("core.utils").list_dir(folder())
   local file = actions.pick(files, event, math.random, last_file[event])
   local path = file and folder() .. "/" .. file
   local command = path and actions.command(path, executable)
@@ -114,8 +115,10 @@ end
 --- Plays a character's spoken line on the voice channel, over the moments and the HUD, cutting
 --- the line said before it so two never talk at once.
 ---@param path string absolute path of the clip
+---@param on_done? fun() called once the line is over, ended on its own or cut, never when it did
+---not start
 ---@return { kill: fun() }|nil playing nil when sound is off, out of focus or nothing can play it
-function M.speak(path)
+function M.speak(path, on_done)
   if silenced({}) then
     return nil
   end
@@ -124,7 +127,13 @@ function M.speak(path)
     return nil
   end
   stop(channels.voice)
-  return start("voice", path, command, "voice")
+  return start("voice", path, command, "voice", on_done)
+end
+
+---Whether a sound would be heard right now: sound is on, a screen is attached and nvim has focus.
+---@return boolean
+function M.audible()
+  return not silenced({})
 end
 
 ---Whether a character's spoken line is still playing.
@@ -142,10 +151,7 @@ end
 ---@param events string[] in order of preference
 ---@return { kill: fun() }|nil playing
 function M.play_first(events)
-  local ok, files = pcall(vim.fn.readdir, folder())
-  if not ok then
-    return
-  end
+  local files = require("core.utils").list_dir(folder())
   local event = actions.first_available(files, events)
   return event and M.play(event) or nil
 end

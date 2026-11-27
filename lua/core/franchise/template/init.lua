@@ -7,6 +7,8 @@ return {
   regions = require("core.franchise.lore.__name__.regions"),
   skin = require("core.franchise.lore.__name__.skin"),
   voices = require("core.franchise.lore.__name__.voices"),
+  -- the takes said out loud through Fish Audio, see lua/core/voice/studio
+  script = require("core.franchise.lore.__name__.script"),
   lines = require("core.franchise.lore.__name__.lines"),
   -- what the HUD calls its keys, tabs and items, see lua/core/hud
   hud = require("core.franchise.lore.__name__.hud"),

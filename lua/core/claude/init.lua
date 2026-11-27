@@ -16,8 +16,10 @@ local function find_bin()
   )
 end
 
--- cb always gets a vim.system style result, even when claude never started
-function M.run(prompt, cb)
+-- cb always gets a vim.system style result, even when claude never started. opts.quiet skips the
+-- accessing sounds, for runs nobody asked for and nobody waits on
+function M.run(prompt, cb, opts)
+  local quiet = opts and opts.quiet
   local bin = find_bin()
   if not bin then
     return vim.schedule(function()
@@ -29,14 +31,18 @@ function M.run(prompt, cb)
     end)
   end
 
-  require("core.sound").play("accessing")
+  if not quiet then
+    require("core.sound").play("accessing")
+  end
   local ok, err = pcall(
     vim.system,
     actions.command(bin),
     { text = true, stdin = prompt, timeout = actions.TIMEOUT_MS },
     function(res)
       vim.schedule(function()
-        require("core.sound").play("accessed")
+        if not quiet then
+          require("core.sound").play("accessed")
+        end
         cb(actions.explain(res))
       end)
     end

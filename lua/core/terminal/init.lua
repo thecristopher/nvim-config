@@ -181,9 +181,9 @@ end
 -- forgets this nvim and any that died without saying goodbye, then lists who is still around
 local function unregister_instance()
   pcall(vim.fn.delete, INSTANCES_DIR .. "/" .. own_pid())
-  local ok, names = pcall(vim.fn.readdir, INSTANCES_DIR)
-  local alive = actions.others_alive(ok and names or {}, own_pid(), is_alive)
-  for _, name in ipairs(ok and names or {}) do
+  local names = require("core.utils").list_dir(INSTANCES_DIR)
+  local alive = actions.others_alive(names, own_pid(), is_alive)
+  for _, name in ipairs(names) do
     if not vim.tbl_contains(alive, tonumber(name)) then
       pcall(vim.fn.delete, INSTANCES_DIR .. "/" .. name)
     end

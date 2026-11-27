@@ -222,3 +222,30 @@ for _, franchise in ipairs({ "resident_evil", "elden_ring" }) do
     end)
   end)
 end
+
+describe("linger", function()
+  it("keeps a short line up as long as a written one", function()
+    assert.equal(actions.SHOWN_MIN_MS - 1000, actions.linger(1000))
+  end)
+
+  it("leaves a moment to read after a long voice", function()
+    assert.equal(actions.LINGER_MS, actions.linger(9000))
+  end)
+end)
+
+describe("voiced", function()
+  it("puts Claire's word above the progress text", function()
+    assert.equal(
+      "Claire: Drafting it for Inde.\n\nDrafting commit",
+      actions.voiced("Drafting it for Inde.", "Claire", "Drafting commit")
+    )
+  end)
+
+  it("is Claire's word alone without a text", function()
+    assert.equal("Claire: Drafting it for Inde.", actions.voiced("Drafting it for Inde.", "Claire"))
+  end)
+
+  it("leaves the text alone when nobody speaks", function()
+    assert.equal("Drafting commit", actions.voiced(nil, "Claire", "Drafting commit"))
+  end)
+end)

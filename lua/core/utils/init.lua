@@ -42,6 +42,24 @@ function M.write_state(path, lines, flags)
   return (pcall(vim.fn.writefile, lines, path, (flags or "") .. "S"))
 end
 
+--- The names in a folder, sorted, and an empty list when it does not exist. Use it instead of
+--- readdir, which prints E484 for a missing folder even inside pcall, since it never throws.
+---@param dir string
+---@return string[]
+function M.list_dir(dir)
+  local names = {}
+  local handle = vim.uv.fs_scandir(dir)
+  while handle do
+    local name = vim.uv.fs_scandir_next(handle)
+    if not name then
+      break
+    end
+    names[#names + 1] = name
+  end
+  table.sort(names)
+  return names
+end
+
 --- Repaints the statusline. lualine draws one global statusline, so only the current window is
 --- refreshed: refreshing every window lets lualine lose track of the focused one in command mode
 --- and paint the inactive line over the real one. Calls that land in the same tick share one
