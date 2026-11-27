@@ -94,10 +94,7 @@ function M.play(event, opts)
   if not play then
     return
   end
-  local ok, files = pcall(vim.fn.readdir, folder())
-  if not ok then
-    return
-  end
+  local files = require("core.utils").list_dir(folder())
   local file = actions.pick(files, event, math.random, last_file[event])
   local path = file and folder() .. "/" .. file
   local command = path and actions.command(path, executable)
@@ -148,10 +145,7 @@ end
 ---@param events string[] in order of preference
 ---@return { kill: fun() }|nil playing
 function M.play_first(events)
-  local ok, files = pcall(vim.fn.readdir, folder())
-  if not ok then
-    return
-  end
+  local files = require("core.utils").list_dir(folder())
   local event = actions.first_available(files, events)
   return event and M.play(event) or nil
 end

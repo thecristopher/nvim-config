@@ -64,3 +64,21 @@ describe("write_state", function()
     assert.is_false(utils.write_state("/nonexistent/haligtree/note", { "lost" }))
   end)
 end)
+
+describe("list_dir", function()
+  it("lists a folder's names in order", function()
+    local dir = vim.fn.tempname()
+    vim.fn.mkdir(dir, "p")
+    for _, name in ipairs({ "leon.mp3", "claire.mp3" }) do
+      vim.fn.writefile({}, dir .. "/" .. name)
+    end
+    assert.same({ "claire.mp3", "leon.mp3" }, utils.list_dir(dir))
+    vim.fn.delete(dir, "rf")
+  end)
+
+  it("gives an empty list for a missing folder without printing E484", function()
+    vim.v.errmsg = ""
+    assert.same({}, utils.list_dir("/nonexistent/raccoon_city"))
+    assert.equal("", vim.v.errmsg)
+  end)
+end)

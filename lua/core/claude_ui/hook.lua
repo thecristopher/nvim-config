@@ -32,8 +32,8 @@ end
 local function play(root, event)
   local franchise = require("core.franchise")
   local folder = ("%s/sounds/%s"):format(root, franchise.name())
-  local ok, files = pcall(vim.fn.readdir, folder)
-  local file = ok and sound.pick(files, event, math.random) or nil
+  local files = require("core.utils").list_dir(folder)
+  local file = sound.pick(files, event, math.random)
   if not file then
     return
   end

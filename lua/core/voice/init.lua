@@ -42,8 +42,8 @@ local function speak(region, moment)
   end
   local sound = require("core.sound")
   local dir = sound.folder() .. "/voices/" .. region.name
-  local ok, files = pcall(vim.fn.readdir, dir)
-  local file = ok and actions.clip_file(files, clip, require("core.sound.actions").EXTENSIONS)
+  local files = require("core.utils").list_dir(dir)
+  local file = actions.clip_file(files, clip, require("core.sound.actions").EXTENSIONS)
   if not file or not sound.speak(dir .. "/" .. file) then
     return nil
   end

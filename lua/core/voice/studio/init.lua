@@ -44,10 +44,7 @@ end
 -- the script takes recorded by hand in the repo's voice folder, take to the clip's path
 local function recorded(region, takes)
   local dir = require("core.sound").folder() .. "/voices/" .. region.name
-  local ok, files = pcall(vim.fn.readdir, dir)
-  if not ok then
-    return {}
-  end
+  local files = require("core.utils").list_dir(dir)
   local found = actions.recorded(takes, files, require("core.sound.actions").EXTENSIONS)
   return vim.tbl_map(function(file)
     return dir .. "/" .. file
