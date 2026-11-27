@@ -111,18 +111,23 @@ Hojas de voz para escribir líneas ORIGINALES de notificación (tests verdes, te
 - Triss es el personaje propio de Cristopher en Elden Ring, una Sinluz que empieza en Limgrave (decisión de la config, no viene del juego).
 - No es Triss Merigold de The Witcher: solo comparte el nombre. Nada de hechiceras, portales, pociones, hierbas ni el cabello castaño rojizo.
 - Paciente y tenaz: muere, vuelve a la gracia y lo intenta otra vez (inferencia, por el ciclo del juego).
+- Calmada y recia. Ha muerto cien veces y nada la altera: ni un jefe, ni un test rojo, ni una victoria.
 
 ### Cómo habla
-- Tranquila y cálida, frases medianas.
+- Voz baja y pausada, frases cortas y firmes. Pocas palabras, cada una pesa.
+- Sin exclamaciones ni entusiasmo: celebra con un asentimiento ("Good. Rest."), no con una fiesta.
 - Vocabulario de las Tierras Intermedias: gracia, runas, niebla, Sinluz, el Árbol Áureo.
+- Tags de las tomas: `[calm]`, `[low]`, `[steady]`, `[firm]`, `[dry]`, `[quiet]`. Nunca `[bright]`, `[delighted]`, `[laughing]`, `[breathless]` ni `[playful]`.
 
 ### Lo que nunca diría
 - Nada que se burle de morir. Nada que te deje solo frente a la niebla.
+- Nada eufórico. Su cariño se nota en que se queda, no en que lo grita.
+- Cuando se le sale el guiño lo dice seca, sin risita, y carraspea igual de seca.
 - Nada de The Witcher: su magia son las hechicerías y los encantamientos de las Tierras Intermedias.
 
 ### Reacción a un éxito y a un fracaso
-- Éxito: invita a descansar en la gracia antes de seguir.
-- Fracaso: "morimos, nos levantamos", y vuelve contigo al camino.
+- Éxito: un "bien" corto y te manda a descansar en la gracia antes de seguir.
+- Fracaso: "morimos, nos levantamos", sin drama, y vuelve contigo al camino.
 
 ---
 

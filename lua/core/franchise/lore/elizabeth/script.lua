@@ -432,23 +432,23 @@ return {
       },
       pushed = {
         "[gentle] Your push is out. May the moonlight find it a path.",
-        "[smiling] Pushed. The moon's out too. Walk with me.",
+        "[dry] Pushed. The moon's out. Walk with me, if you must.",
       },
       pr_drafting = {
         "[wry] Claude's drafting your pull request. Let's hope the reviewers are merciful.",
         "[low] Writing your PR. Mercy is my specialty. Let's hope the reviewers share it.",
       },
       pr_opened = {
-        "[confident] Your PR is open. Let them judge. I already have. It's good.",
+        "[dry] Your PR is open. Let them judge. I already have. It's good. Don't quote me.",
         "[sly] PR's open. They'll inspect every inch. I already did. Thoroughly.",
       },
       ci_passed = {
-        "[pleased] CI passed. By the moonlight, you actually did it.",
+        "[grudging] CI passed. By the moonlight, you actually did it.",
         "[low] Pipeline's green. Come to my tent, I'll take off the... [clears throat] The armor. Yours. To check for wounds. Medically.",
       },
       ci_failed = {
         "[weary] CI failed. Another curse. We've broken worse than a pipeline.",
-        "[strict, playful] The pipeline broke, Cris. That calls for a punishment. Extra prayers. Probably.",
+        "[dry] The pipeline broke, Cris. That calls for a punishment. Extra prayers. Probably.",
       },
       conflicts_cleared = {
         "[satisfied] Merge conflicts settled. Shar and Selûne could never manage that.",
@@ -468,7 +468,7 @@ return {
       },
       solved_thrice = {
         "[exasperated smile] Three in a row. Fine. I'm impressed. Happy now?",
-        "[breathy] Three, Cris. You've earned a blessing. Kneel. [break] Not like that. [clears throat] Like a cleric. Head down. Honestly.",
+        "[low] Three, Cris. You've earned a blessing. Kneel. [break] Not like that. [clears throat] Like a cleric. Head down. Honestly.",
       },
       solve_failed = {
         "[wincing] That submit stung. Hold still. I'll heal it, then you try again.",
@@ -480,15 +480,15 @@ return {
       },
       lesson_done = {
         "[soft, grudging] Lesson's done, Cris. You did well. Don't make me say it twice.",
-        "[inviting] Lesson's over. Astarion's out hunting. The tent's ours, we could finally... [clears throat] Finally get some reading done. Scripture.",
+        "[low] Lesson's over. Astarion's out hunting. The tent's ours, we could finally... [clears throat] Finally get some reading done. Scripture.",
       },
       boss_appeared = {
         "[tense] Ketheric Thorm is here. Of course he wants the spotlight. Stay behind me.",
-        "[possessive] Ketheric's after you. He'll die trying to touch what's mine.",
+        "[cold] Ketheric's after you. He'll die trying to touch what's mine.",
       },
       boss_felled = {
         "[tired, wry] Ketheric's dead, Cris. Every heart mended. I wasn't in the mood to heal you again.",
-        "[warm] The boss is down and you're bleeding. [break] Let me take care of you.",
+        "[dry, soft] The boss is down and you're bleeding. Again. [break] Come here. Don't make it weird.",
       },
       title_shown = {
         "[ominous] Moonrise Towers. Leave the light behind. You won't need it.",
@@ -500,7 +500,7 @@ return {
       },
       region_arrived = {
         "[guarded] You chose Moonrise Towers, Cris. Shadowheart. Cleric, skeptic, yours.",
-        "[teasing] You picked me again, Cris. One day you'll admit why.",
+        "[sardonic] You picked me again, Cris. One day you'll admit why.",
       },
       traveled = {
         "[alert] New repo. Keep your weapon close, and me closer.",
@@ -527,7 +527,7 @@ return {
         "[dry] Every monster we've faced. None of them had your stamina.",
       },
       chronicle_opened = {
-        "[soft] Our chronicle. Every night under the moon, with you.",
+        "[dry, soft] Our chronicle. Every night under the moon with you. You snored through most of them.",
         "[teasing] Every night we've had, Cris. Some I'd confess. The one by the river I'd only confess wearing noth... [clears throat] Never. That one, never.",
       },
       message_written = {
@@ -674,137 +674,137 @@ return {
       },
     },
   },
-  -- Triss, cast with Shadowheart's voice
+  -- Triss, cast with Shadowheart's voice, calm and firm: low, short, nothing rattles her
   limgrave = {
     voice = "9c23004e059f43c0bca8cbbdfa0a0d3a",
     takes = {
       trial_started = {
-        "[steady] Your tests are running. Here comes the fog gate.",
-        "[teasing] Running the tests, Tarnished. Summon sign's down. Touch it and I'll come running.",
+        "[steady] Tests are running. The fog gate. We walk through.",
+        "[low] Running the tests, Tarnished. Summon sign's down. Touch it. I'll come.",
       },
       trial_passed = {
-        "[warm] Every test passed, Cris. Rest at grace with me a moment.",
-        "[low] All green, Tarnished. I'll light the grace, you take off my arm... [clears throat] Your armor. Yours. To rest. Properly.",
+        "[calm] Every test passed, Cris. Good. Rest at grace.",
+        "[low] All green, Tarnished. I'll light the grace, you take off my arm... [clears throat] Your armor. Yours. To rest.",
       },
       trial_failed = {
-        "[encouraging] The tests failed. We die, we rise. Come on, Tarnished.",
-        "[smiling] You died again, Tarnished. Good thing I like starting over with you, Cris.",
+        "[steady] The tests failed. We die. We rise. Again.",
+        "[dry] You died again, Tarnished. I've seen worse. I've been worse.",
       },
       committing = {
         "[calm] Claude's writing your commit. Carving it in the stone.",
-        "[sly] Drafting the commit, Tarnished. Carved where only you can read it.",
+        "[low] Drafting the commit, Tarnished. Carved where only you can read it.",
       },
       committed = {
-        "[warm] Commit saved. A grace lit, so we never lose this point.",
-        "[amused] Committed, Tarnished. You still think you're controlling me. Cute.",
+        "[calm] Commit saved. A grace lit. We won't lose this point.",
+        "[dry] Committed, Tarnished. You think you're controlling me. Fine. Think it.",
       },
       pushed = {
-        "[bright] Your push is out. Torrent couldn't have carried it faster.",
-        "[playful] Pushed, Tarnished. Torrent's waiting. Ride well.",
+        "[steady] Your push is out. The road's long. We ride it.",
+        "[low] Pushed, Tarnished. Torrent's waiting. Ride well.",
       },
       pr_drafting = {
-        "[thoughtful] Claude's drafting your pull request. A message for the ground.",
-        "[teasing] Writing your PR, Tarnished. Liar ahead. Treasure ahead. [break] Me, ahead.",
+        "[calm] Claude's drafting your pull request. A message for the ground.",
+        "[dry] Writing your PR, Tarnished. Liar ahead. Treasure ahead. [break] Me, ahead.",
       },
       pr_opened = {
-        "[curious] Your PR is open. Let's see the appraisals.",
-        "[low] PR's open, Tarnished. Everyone can rate it. Only I get to keep you.",
+        "[steady] Your PR is open. Let them appraise it.",
+        "[low] PR's open, Tarnished. Everyone can rate it. Only I keep you.",
       },
       ci_passed = {
-        "[reverent] CI passed. The Erdtree's light is on us.",
-        "[sly] Pipeline's green, Tarnished. Great runes restored. Now let's go restore each other in the ca... [clears throat] At the grace. Sitting. Sitting at the grace.",
+        "[quiet] CI passed. The Erdtree's light is on us.",
+        "[low] Pipeline's green, Tarnished. Great runes restored. Now the ca... [clears throat] The grace. We sit at the grace.",
       },
       ci_failed = {
-        "[determined] CI failed. Lost runes. We go back to the bloodstain.",
-        "[low] The pipeline broke, Tarnished. Your flasks are empty, Cris. Come here. I'll refill them.",
+        "[firm] CI failed. Lost runes. Back to the bloodstain.",
+        "[low] The pipeline broke, Tarnished. Your flasks are empty. Come here. I'll refill them.",
       },
       conflicts_cleared = {
-        "[relieved] Merge conflicts gone. The fog lifted.",
-        "[teasing] The fog lifted, Tarnished. Two paths, one road. Finally.",
+        "[calm] Merge conflicts gone. The fog lifted.",
+        "[dry] The fog lifted, Tarnished. Two paths. One road.",
       },
       lesson_started = {
-        "[warm] Today's lesson. Same as Stormveil. Patience, and a good shield.",
-        "[playful] Lesson time, Tarnished. You lead, I follow. For now.",
+        "[steady] Today's lesson. Patience, and a good shield.",
+        "[low] Lesson time, Tarnished. You lead. I follow. For now.",
       },
       solved = {
-        "[pleased] Exercise solved. Another step toward the Erdtree.",
-        "[low] You solved it, Tarnished. Keep that up and I'll leave you a message only you can read.",
+        "[calm] Exercise solved. One step closer to the Erdtree.",
+        "[low] You solved it, Tarnished. Keep that up. I'll leave you a message only you can read.",
       },
       solved_twice = {
-        "[laughing] Two in a row. Margit would be nervous.",
-        "[teasing] Two, Tarnished. Your build is looking strong today.",
+        "[dry] Two in a row. Margit would notice.",
+        "[low] Two, Tarnished. Your build holds.",
       },
       solved_thrice = {
-        "[delighted] Three in a row. You're not maidenless anymore.",
-        "[low] Three, Tarnished. You've earned a maiden. Take me to the cave and... [clears throat] And show me the treasure. The cave treasure.",
+        "[calm] Three in a row. Not maidenless anymore.",
+        "[low] Three, Tarnished. You've earned a maiden. The cave, then... [clears throat] The treasure. The cave treasure.",
       },
       solve_failed = {
-        "[gentle] That submit failed. You died. We rise. Again.",
-        "[amused] Wrong answer, Tarnished. I like watching you get back up.",
+        "[steady] That submit failed. You died. Rise.",
+        "[dry] Wrong answer, Tarnished. Get up. I'm watching.",
       },
       hint = {
-        "[helpful] You bought a hint, Cris. A message on the ground, just for you. Look there.",
-        "[whispering] Your hint, Tarnished. <whisper>Try finger, but hole.</whisper> [small laugh] Kidding. Look there.",
+        "[calm] You bought a hint, Cris. A message on the ground. Look there.",
+        "[whispering] Your hint, Tarnished. <whisper>Try finger, but hole.</whisper> [break] No. Look there.",
       },
       lesson_done = {
-        "[content] Lesson's done, Cris. A good place to rest.",
-        "[low] Lesson's over, Tarnished. The grace is warm and I'm not wearing any... [clears throat] Any talismans. I took off my talismans.",
+        "[calm] Lesson's done, Cris. Rest here.",
+        "[low] Lesson's over, Tarnished. The grace is warm and I'm not wearing any... [clears throat] Talismans. No talismans.",
       },
       boss_appeared = {
-        "[steady] Margit's here. Foul Tarnished, he says. That's us. Stay close.",
-        "[defiant] Margit wants you on your knees, Tarnished. Not on my watch.",
+        "[firm] Margit. Foul Tarnished, he says. That's us. Stay close.",
+        "[low] Margit wants you on your knees, Tarnished. Not while I stand.",
       },
       boss_felled = {
-        "[triumphant] Margit's down, Cris. Great enemy felled. Every heart restored.",
-        "[breathless] Great enemy felled, Tarnished. Your hearts are full. Mine's pounding.",
+        "[steady] Margit's down, Cris. Great enemy felled. Breathe.",
+        "[low] Great enemy felled, Tarnished. Your hearts are full. So is mine.",
       },
       title_shown = {
-        "[warm] Elden Ring. I'm Triss, and you made me for this.",
-        "[sly] You made me, Tarnished. Every slider. You took your time.",
+        "[calm] Elden Ring. I'm Triss. You made me for this.",
+        "[dry] You made me, Tarnished. Every slider. You took your time.",
       },
       morning = {
-        "[soft] Morning, Cris. First time in the editor today. The grace waited for us.",
-        "[teasing] You opened Neovim, Tarnished. You kept me up past the Roundtable curfew, Cris.",
+        "[quiet] Morning, Cris. The grace waited for us.",
+        "[low] You opened Neovim, Tarnished. You kept me up past the Roundtable curfew.",
       },
       region_arrived = {
-        "[gentle] You chose Limgrave, Cris. I'm Triss. Our first steps, together.",
-        "[playful] Triss, your character, Tarnished. You control me, Cris. [break] For now.",
+        "[calm] Limgrave, Cris. I'm Triss. We start here.",
+        "[dry] Triss. Your character, Tarnished. You control me. [break] For now.",
       },
       traveled = {
-        "[curious] New repo. New grace found. Let's see what's beyond the fog.",
-        "[sly] Switching repos, Tarnished. Fresh bedroll. Same Tarnished.",
+        "[steady] New repo. New grace. See what's past the fog.",
+        "[dry] Switching repos, Tarnished. New bedroll. Same Tarnished.",
       },
       resting = {
-        "[calm] The editor's idle. Rest at grace. The fire's small but warm.",
-        "[low] Taking a break, Tarnished? Sit by me. Closer. Take it off, the fire's war... [clears throat] Take off your helm. Just the helm.",
+        "[calm] The editor's idle. Rest at grace. The fire's small, but warm.",
+        "[low] Taking a break, Tarnished? Sit. Closer. Take it off, the fire's war... [clears throat] Your helm. Just the helm.",
       },
       woke = {
-        "[gentle] You're back, Cris. Flasks refilled.",
-        "[amused] Back at the keyboard, Tarnished. I watched you sleep and wanted to climb right on t... [clears throat] On Torrent. And ride out. For runes.",
+        "[quiet] You're back, Cris. Flasks refilled.",
+        "[low] Back, Tarnished. I watched you sleep and wanted to climb on t... [clears throat] On Torrent. Ride out. For runes.",
       },
       expedition = {
         "[hushed] Expedition starting. Quiet. Just the wind across Stormhill.",
-        "[whisper] Heading out, Tarnished. <whisper>Nobody's invading tonight but you.</whisper>",
+        "[whisper] Heading out, Tarnished. <whisper>Nobody invades tonight but you.</whisper>",
       },
       map_opened = {
-        "[focused] The map. Let's find the next grace.",
-        "[sly] The map, Tarnished. I marked a cave nearby. Very private.",
+        "[steady] The map. Find the next grace.",
+        "[low] The map, Tarnished. I marked a cave nearby. Very private.",
       },
       bestiary_opened = {
-        "[proud] The bestiary. Every enemy we've felled. The runes were good.",
-        "[teasing] You were rough with all of them, Tarnished. I'm a little jealous.",
+        "[calm] The bestiary. Every enemy we felled. The runes were good.",
+        "[dry] You were rough with all of them, Tarnished. Noted.",
       },
       chronicle_opened = {
-        "[soft] Our chronicle. Every night at grace, with you.",
-        "[low] Every grace we rested at, Tarnished. At some we barely rested, you had me up against the... [clears throat] Against the odds. Tough bosses.",
+        "[quiet] Our chronicle. Every night at grace, with you.",
+        "[low] Every grace we rested at, Tarnished. At some we barely rested, you had me against the... [clears throat] The odds. Hard bosses.",
       },
       message_written = {
-        "[earnest] You left a message on the ground. For the next Tarnished.",
-        "[playful] Nice message, Tarnished. Mine says, try kissing, but tongue. [clears throat] It's a real message. Somebody else wrote it.",
+        "[calm] You left a message on the ground. For the next Tarnished.",
+        "[dry] Good message, Tarnished. Mine says, try kissing, but tongue. [clears throat] Someone else wrote it.",
       },
       claude_asked = {
-        "[respectful] You're asking Claude for a review. Counsel from the Roundtable.",
-        "[amused] Asking Claude, Tarnished? Don't worry. Nobody at the Roundtable is your type.",
+        "[steady] You're asking Claude for a review. Counsel from the Roundtable.",
+        "[dry] Asking Claude, Tarnished? Fine. Nobody at the Roundtable is your type.",
       },
     },
   },
