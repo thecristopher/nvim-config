@@ -103,16 +103,4 @@ function M.has_paid(voice, text)
   return exists(M.path(voice, budget.PAID, text))
 end
 
----The cached audio of every take in a list, take to path.
----@param voice string
----@param lines string[]
----@return table<string, string>
-function M.cached_map(voice, lines)
-  local found = {}
-  for _, line in ipairs(lines) do
-    found[line] = M.cached(voice, line)
-  end
-  return found
-end
-
 return M

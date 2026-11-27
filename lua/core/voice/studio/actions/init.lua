@@ -138,6 +138,53 @@ function M.next_to_bake(moments, takes, fresh, has_paid)
   return nil
 end
 
+---The clip name a script take is recorded under in the repo: the moment for the first take, then
+---moment_2, moment_3, the same names the voice sheet and `spoken` use.
+---@param moment string
+---@param index integer the take's place in the script
+---@return string
+function M.clip_name(moment, index)
+  return index == 1 and moment or ("%s_%d"):format(moment, index)
+end
+
+---The script takes already recorded in the repo's voice folder, take to its file name.
+---@param takes table<string, string[]> the script's takes by moment
+---@param files string[] file names in sounds/<franchise>/voices/<region>
+---@param extensions table<string, boolean> audio extensions the player takes
+---@return table<string, string>
+function M.recorded(takes, files, extensions)
+  local found = {}
+  for moment, list in pairs(takes) do
+    for index, take in ipairs(list) do
+      found[take] = voice.clip_file(files, M.clip_name(moment, index), extensions)
+    end
+  end
+  return found
+end
+
+---The cached files a prune deletes: a free take whose paid version exists, and any take no role
+---says anymore once it is older than the grace period, so a branch's take outlives the day.
+---@param files { name: string, age_s: integer }[] the voice folder's audio files
+---@param live table<string, boolean> cache names some role can still say
+---@param grace_s integer how old an orphan gets before it goes
+---@return string[] names to delete
+function M.prune_plan(files, live, grace_s)
+  local present = {}
+  for _, file in ipairs(files) do
+    present[file.name] = true
+  end
+  local doomed = {}
+  for _, file in ipairs(files) do
+    local paid_twin = file.name:gsub("^s2%.1%-pro%-free%-", "drama-3-")
+    local superseded = paid_twin ~= file.name and present[paid_twin]
+    local orphan = not live[file.name] and file.age_s > grace_s
+    if superseded or orphan then
+      table.insert(doomed, file.name)
+    end
+  end
+  return doomed
+end
+
 ---How much of a role is voiced: takes with audio out of every take it can cache ahead.
 ---@param takes table<string, string[]>
 ---@param fresh table<string, string[]>

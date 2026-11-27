@@ -141,6 +141,54 @@ describe("next_to_bake", function()
   end)
 end)
 
+describe("clip_name", function()
+  it("names Claire's first take after the moment and the second with a number", function()
+    assert.equal("morning", actions.clip_name("morning", 1))
+    assert.equal("morning_2", actions.clip_name("morning", 2))
+  end)
+end)
+
+describe("recorded", function()
+  local takes = { morning = { "Morning, Inde.", "Coffee first." }, woke = { "You're back." } }
+  local extensions = { mp3 = true }
+
+  it("finds the script takes Claire recorded by hand in the repo", function()
+    local found =
+      actions.recorded(takes, { "morning.mp3", "morning_2.mp3", "notes.txt" }, extensions)
+    assert.equal("morning.mp3", found["Morning, Inde."])
+    assert.equal("morning_2.mp3", found["Coffee first."])
+    assert.is_nil(found["You're back."])
+  end)
+end)
+
+describe("prune_plan", function()
+  local month = 30 * 86400
+  local live = { ["drama-3-aaa-10.mp3"] = true, ["s2.1-pro-free-aaa-10.mp3"] = true }
+
+  it("deletes Malenia's free take once her paid one exists", function()
+    local files = {
+      { name = "drama-3-aaa-10.mp3", age_s = 10 },
+      { name = "s2.1-pro-free-aaa-10.mp3", age_s = 10 },
+    }
+    assert.same({ "s2.1-pro-free-aaa-10.mp3" }, actions.prune_plan(files, live, month))
+  end)
+
+  it("keeps a branch's take nobody can name until it is a month old", function()
+    local files = { { name = "drama-3-bbb-20.mp3", age_s = 3600 } }
+    assert.same({}, actions.prune_plan(files, live, month))
+  end)
+
+  it("deletes a take nobody says once it is older than a month", function()
+    local files = { { name = "drama-3-bbb-20.mp3", age_s = month + 1 } }
+    assert.same({ "drama-3-bbb-20.mp3" }, actions.prune_plan(files, live, month))
+  end)
+
+  it("keeps an old take Claire still says", function()
+    local files = { { name = "drama-3-aaa-10.mp3", age_s = month * 3 } }
+    assert.same({}, actions.prune_plan(files, live, month))
+  end)
+end)
+
 describe("coverage", function()
   it("counts how much of Malenia's role is voiced", function()
     local voiced, total = actions.coverage(

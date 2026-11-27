@@ -1,7 +1,7 @@
 -- :Voice, the studio's controls: status, live or local, write fresh takes now, export and import.
 local M = {}
 
-M.SUBCOMMANDS = { "status", "live", "local", "write", "export", "import" }
+M.SUBCOMMANDS = { "status", "live", "local", "write", "prune", "export", "import" }
 
 local function notify(message, level)
   vim.notify(message, level or vim.log.levels.INFO, { title = "Voice studio" })
@@ -29,6 +29,14 @@ local HANDLERS = {
     notify("Local: only cached takes play, Fish Audio is never called")
   end,
   write = write,
+  prune = function(arg)
+    local prune = require("core.voice.studio.prune")
+    if arg == "all" then
+      prune.all()
+      return notify("Cache emptied, recorded clips kept")
+    end
+    notify(("Pruned %d takes nobody needs"):format(prune.run()))
+  end,
   export = function(arg)
     require("core.voice.studio.archive").export(arg)
   end,
@@ -56,7 +64,7 @@ function M.setup()
       end
       return M.SUBCOMMANDS
     end,
-    desc = "The voice studio: status, live, local, write, export, import",
+    desc = "The voice studio: status, live, local, write, prune, export, import",
   })
 end
 

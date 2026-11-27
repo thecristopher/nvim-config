@@ -41,9 +41,22 @@ local function order(takes)
   end, all)
 end
 
+-- the script takes recorded by hand in the repo's voice folder, take to the clip's path
+local function recorded(region, takes)
+  local dir = require("core.sound").folder() .. "/voices/" .. region.name
+  local ok, files = pcall(vim.fn.readdir, dir)
+  if not ok then
+    return {}
+  end
+  local found = actions.recorded(takes, files, require("core.sound.actions").EXTENSIONS)
+  return vim.tbl_map(function(file)
+    return dir .. "/" .. file
+  end, found)
+end
+
 ---The role a region plays in the studio, nil when the franchise has no script for it.
 ---@param region table a region from core.themes
----@return table|nil role { key, franchise, character, world, bond, voice, takes, order }
+---@return table|nil role { key, franchise, character, world, bond, voice, takes, order, recorded }
 function M.role(region)
   local franchise = require("core.franchise")
   local lore = franchise.current()
@@ -60,7 +73,13 @@ function M.role(region)
     voice = script.voice,
     takes = script.takes or {},
     order = order(script.takes or {}),
+    recorded = recorded(region, script.takes or {}),
   }
+end
+
+-- the audio a take has: the clip recorded in the repo first, then the cache
+local function audio(role, text)
+  return role.recorded[text] or store.cached(role.voice, text)
 end
 
 -- writes what a voicing cost into the ledger read again now, so a balance read meanwhile survives
@@ -123,7 +142,10 @@ function M.perform(region, moment, vars)
   end
   local fresh = (store.library()[role.key] or {})[moment]
   local lines = actions.pool(role.takes[moment], fresh, speakable(vars))
-  local cached = store.cached_map(role.voice, lines)
+  local cached = {}
+  for _, line in ipairs(lines) do
+    cached[line] = audio(role, line)
+  end
   local take, voice_first = actions.choose(lines, cached, {
     roll = math.random(),
     fresh_roll = math.random(),
@@ -179,7 +201,7 @@ end
 local function bake_next(role)
   local fresh = store.library()[role.key] or {}
   local take = actions.next_to_bake(role.order, role.takes, fresh, function(text)
-    return store.has_paid(role.voice, text)
+    return role.recorded[text] ~= nil or store.has_paid(role.voice, text)
   end)
   if not take then
     return write_more(role)
@@ -251,7 +273,7 @@ function M.status()
   end
   local fresh = store.library()[role.key] or {}
   local voiced, total = actions.coverage(role.takes, fresh, function(text)
-    return store.cached(role.voice, text) ~= nil
+    return audio(role, text) ~= nil
   end)
   return vim.list_extend(lines, {
     ("%s: %d of %d takes voiced"):format(role.character, voiced, total),
@@ -265,6 +287,7 @@ function M.setup()
     return
   end
   vim.defer_fn(function()
+    require("core.voice.studio.prune").daily()
     refresh_balance(true)
     M.start()
   end, 15000)

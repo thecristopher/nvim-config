@@ -18,7 +18,7 @@ failed submit from `solve_moment`, hint, boss appearing, rest, expedition, the f
 repo, commit and PR drafting, `:Trial` starting, `:Review` asking Claude, the map, bestiary and
 chronicle opening, a ground message written, the title screen), quiet without a clip, and
 `say(moment, vars, { quiet = true })` leaves the words off screen where the moment already shows its
-own. So far Claire in `raccoon_city` and Leon in `rpd` speak.
+own. Claire, Leon and Magik speak through the studio, their audio lives out of the repo.
 
 ## Studio
 
@@ -28,6 +28,10 @@ before the words, `<emphasis>`, `<whisper>`, `<soft>`, `<slow>`, `[break]`), and
 Audio voice id the role is cast with. A role without `voice` stays written, and `say` falls back to
 the recorded clips and the written lines whenever the studio has nothing to play.
 
+- A script take recorded by hand in the repo (`sounds/<franchise>/voices/<region>/`, the first take
+  as `<moment>`, the second as `<moment>_2`, `clip_name` in its actions) counts as voiced: it plays
+  first and is never baked again. Clips made by hand in the Fish Audio app can also go straight into
+  the cache under their take's name (`store.path(voice, "drama-3", take)`), the way Claire's 64 did.
 - A moment plays a cached take at once. A share of them (`FRESH_CHANCE`) voices a take nobody has
   heard yet, so new lines keep coming without every moment waiting on the network.
 - Holes (`HOLES` in its actions) let a take say what really happened: `{branch}` read as words
@@ -46,6 +50,10 @@ the recorded clips and the written lines whenever the studio has nothing to play
   (`vim.g.eldentree_fish_key_file`).
 - `:Voice status` shows the mode, the money and how much of the role is voiced. `:Voice local`
   never calls Fish Audio again and plays only what is cached, `:Voice live` brings it back.
-  `:Voice write` asks Claude for fresh takes now. `:Voice export [file]` packs the audio and fresh
+  `:Voice write` asks Claude for fresh takes now. `:Voice prune` deletes free takes that have a paid
+  version and takes no role says anymore once they are a month old (it also runs once a day on its
+  own), `:Voice prune all` empties the cache and leaves the recorded clips alone. `:Voice export [file]` packs the audio and fresh
   takes into a `.tar.gz` (the desktop by default), `:Voice import <file>` adds one without
-  overwriting what is cached. `vim.g.eldentree_studio = false` turns the studio off.
+  overwriting what is cached. That is how the voices reach another machine, Windows included
+  (`tar` and `curl` ship with Windows 10 and later, the cache lands in its own
+  `stdpath("data")`). `vim.g.eldentree_studio = false` turns the studio off.
