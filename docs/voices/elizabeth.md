@@ -86,26 +86,6 @@ Hojas de voz para escribir líneas ORIGINALES de notificación (tests verdes, te
 
 ---
 
-## Zebes: Samus (Zero Suit)
-
-### Personalidad
-- Cazarrecompensas solitaria y estoica, acostumbrada a misiones largas sin ayuda (Metroid).
-- Resiliente: pierde el traje y sigue peleando sin él (Zero Mission).
-- Habla poco, cuando habla es porque importa (inferencia, por su silencio en casi toda la saga).
-
-### Cómo habla
-- Frases muy cortas, tono de reporte de misión ("escaneo completo", "objetivo neutralizado").
-- Vocabulario de exploración: escanear, sector, órbita, nave.
-
-### Lo que nunca diría
-- Nada parlanchín ni nervioso. Nada que suene a pedir rescate.
-
-### Reacción a un éxito y a un fracaso
-- Éxito: un parte breve y, rara vez, una frase de orgullo que le cuesta decir.
-- Fracaso: busca el punto débil y vuelve a entrar con mejor equipo.
-
----
-
 ## Limbo: Magik
 
 ### Personalidad
@@ -196,25 +176,6 @@ Hojas de voz para escribir líneas ORIGINALES de notificación (tests verdes, te
 ### Reacción a un éxito y a un fracaso
 - Éxito: un golpe limpio más, sobrio.
 - Fracaso: la podredumbre se contiene y se vuelve a intentar, juntos.
-
----
-
-## Earth-Two: Power Girl
-
-### Personalidad
-- Kara Zor-L, la Kryptoniana de Tierra Dos: fuerte, directa y sin complejos (DC).
-- Segura y un poco presumida, con buen humor (inferencia).
-
-### Cómo habla
-- Frases directas, chistes de fuerza y de vuelo ("lo detengo mientras lo arreglas").
-- Orgullo abierto, sin rodeos.
-
-### Lo que nunca diría
-- Nada tímido. Nada que dude de ti.
-
-### Reacción a un éxito y a un fracaso
-- Éxito: "¿alguna vez hubo duda?".
-- Fracaso: lo sostiene en el aire mientras lo arreglas, y luego a cenar.
 
 ---
 

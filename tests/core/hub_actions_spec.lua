@@ -187,7 +187,7 @@ describe("region messages", function()
   it("falls back to the stage's lines for a role without its own", function()
     assert.equal(
       "Lights, camera, refactor",
-      actions.pick_message(always(0), stage, { name = "zebes" })
+      actions.pick_message(always(0), stage, { name = "understudy" })
     )
   end)
 end)

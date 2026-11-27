@@ -1,7 +1,7 @@
 -- Elizabeth: everything the config says and shows while she plays her roles. Each region is a
--- stage and a costume (the Scarlet Witch, Ada, Shadowheart, Psylocke, Samus, Magik, She-Hulk,
--- Triss, Jill, Malenia, Power Girl, Raven and Mai), and the world speaks like a set: curtains
--- between stages, a heart for a status and the afternoon sun to rest in.
+-- stage and a costume (the Scarlet Witch, Ada, Shadowheart, Psylocke, Magik, She-Hulk, Triss,
+-- Jill, Malenia, Raven and Mai), and the world speaks like a set: curtains between stages, a
+-- heart for a status and the afternoon sun to rest in.
 return {
   name = "elizabeth",
   title = "Elizabeth",
@@ -74,13 +74,11 @@ return {
     separate_ways = "Pesanta",
     moonrise_towers = "Ketheric Thorm",
     danger_room = "Mister Sinister",
-    zebes = "Ridley",
     limbo = "Belasco",
     courtroom = "Titania",
     limgrave = "Margit",
     raccoon_city = "Nemesis",
     haligtree = "Radahn",
-    earth_two = "Darkseid",
     azarath = "Trigon",
     shiranui = "Geese Howard",
   },
@@ -118,14 +116,6 @@ return {
       drift = "rise",
       speed = { 2.4, 5.2 },
       from = "lavender",
-      to = "yellow",
-    },
-    -- spores drifting down through the caverns
-    zebes = {
-      glyphs = { "·", "∘", "˙" },
-      drift = "fall",
-      speed = { 0.4, 1.2 },
-      from = "teal",
       to = "yellow",
     },
     -- embers off a stepping disc, rising out of Limbo
@@ -166,14 +156,6 @@ return {
       drift = "fall",
       speed = { 0.6, 1.6 },
       from = "red",
-      to = "yellow",
-    },
-    -- dust in the sun of a whole other earth, barely moving
-    earth_two = {
-      glyphs = { "·", "∙", "˙" },
-      drift = "float",
-      speed = { 0.2, 0.6 },
-      from = "peach",
       to = "yellow",
     },
     -- soul self sparks rising from her cloak

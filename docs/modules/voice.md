@@ -18,7 +18,8 @@ failed submit from `solve_moment`, hint, boss appearing, rest, expedition, the f
 repo, commit and PR drafting, `:Trial` starting, `:Review` asking Claude, the map, bestiary and
 chronicle opening, a ground message written, the title screen), quiet without a clip, and
 `say(moment, vars, { quiet = true })` leaves the words off screen where the moment already shows its
-own. Claire, Leon and Magik speak through the studio, their audio lives out of the repo.
+own. Claire, Leon and every one of Elizabeth's roles speak through the studio (Triss borrows
+Shadowheart's voice), their audio lives out of the repo.
 
 ## Studio
 

@@ -140,7 +140,7 @@ return {
   },
   -- Scarlet Witch
   westview = {
-    -- voice = "<Fish Audio voice id>", the role stays written until it has one
+    voice = "0dc74c8ebf83432290d6f454ff4e0db9",
     takes = {
       trial_started = {
         "[warm, a bit nervous] Your tests are running. Cue the laugh track, just in case.",
@@ -274,7 +274,7 @@ return {
   },
   -- Ada
   separate_ways = {
-    -- voice = "<Fish Audio voice id>", the role stays written until it has one
+    voice = "a211b99d46894b6ca652f6ff2cee84f1",
     takes = {
       trial_started = {
         "[cool] Your tests are running. Let's see who's been lying to us.",
@@ -408,7 +408,7 @@ return {
   },
   -- Shadowheart
   moonrise_towers = {
-    -- voice = "<Fish Audio voice id>", the role stays written until it has one
+    voice = "9c23004e059f43c0bca8cbbdfa0a0d3a",
     takes = {
       trial_started = {
         "[dry prayer] Your tests are running. Selûne, now would be nice.",
@@ -542,7 +542,7 @@ return {
   },
   -- Psylocke
   danger_room = {
-    -- voice = "<Fish Audio voice id>", the role stays written until it has one
+    voice = "fb89e1ed27b6409da8648554f15ae8fb",
     takes = {
       trial_started = {
         "[serene, British] Your tests are running. I already know the result, but do go on.",
@@ -674,143 +674,9 @@ return {
       },
     },
   },
-  -- Samus
-  zebes = {
-    -- voice = "<Fish Audio voice id>", the role stays written until it has one
-    takes = {
-      trial_started = {
-        "[clipped, mission log] Running your tests. Diagnostics online.",
-        "[low, dry] Scanning your tests, hunter. Hold still. I scan thoroughly.",
-      },
-      trial_passed = {
-        "[satisfied] Every test passed, Cris. Mission complete.",
-        "[low] All green, hunter. The suit comes off tonight.",
-      },
-      trial_failed = {
-        "[focused] Tests failed. Weak point located. Going back in.",
-        "[dry] Red, hunter. Your energy's low, Cris. [break] Mine isn't. Try again.",
-      },
-      committing = {
-        "[clipped] Claude's writing your commit. Recording mission log.",
-        "[flat] Logging your commit, hunter. Some data I don't log. Last night, for example.",
-      },
-      committed = {
-        "[clipped] Commit saved. Data logged.",
-        "[low] Committed, hunter. The bounty's mine. So are you.",
-      },
-      pushed = {
-        "[brief] Push delivered. Returning to the gunship.",
-        "[dry] Payload pushed, hunter. Gunship has one bunk. We'll manage.",
-      },
-      pr_drafting = {
-        "[flat] Claude's drafting your PR. Report for the Federation. Short.",
-        "[dry] Writing the pull request, hunter. Classified sections redacted. You know which.",
-      },
-      pr_opened = {
-        "[formal] Your PR is open. Awaiting Federation review.",
-        "[low] PR transmitted, hunter. While they review, I'll do my own inspection.",
-      },
-      ci_passed = {
-        "[clipped] CI passed. Sector secure.",
-        "[low] Pipeline clear, hunter. Power suit off. Zero Suit optional.",
-      },
-      ci_failed = {
-        "[focused] CI failed. Scanning the logs for the cause.",
-        "[dry] The pipeline failed, hunter. I don't fail, Cris. Come here. I'll show you how.",
-      },
-      conflicts_cleared = {
-        "[clipped] Merge conflicts purged. Station stable.",
-        "[dry] Two signals merged, hunter. One frequency. Ours.",
-      },
-      lesson_started = {
-        "[stern] Today's lesson. Training simulation. Any objections? Good.",
-        "[low] Simulation running, hunter. Do as I say. All of it.",
-      },
-      solved = {
-        "[curt] Exercise solved. Target down.",
-        "[low] Solved, hunter. You've earned a debrief. In private.",
-      },
-      solved_twice = {
-        "[clipped] Two in a row. Efficient.",
-        "[dry] Two, hunter. Good grip on the controls.",
-      },
-      solved_thrice = {
-        "[rare approval] Three in a row. You'd make a decent hunter.",
-        "[low] Three, hunter. Bounty doubled, Cris. I pay in person.",
-      },
-      solve_failed = {
-        "[flat] Submit missed. Recalibrate. Again.",
-        "[dry] Wrong answer, hunter. Morph ball, roll back. [break] I'll watch.",
-      },
-      hint = {
-        "[clipped] You bought a hint, Cris. Scan complete. Weak point. There.",
-        "[low] Your hint, hunter. Weak point detected. I know all of yours.",
-      },
-      lesson_done = {
-        "[brief] Lesson complete, Cris. Good work, hunter.",
-        "[low] Simulation over, hunter. Real training starts on the ship.",
-      },
-      boss_appeared = {
-        "[cold] Ridley's here. Again. He always wants the spotlight.",
-        "[hard] Ridley, hunter. Stay behind me. Only I get to see you vulnerable.",
-      },
-      boss_felled = {
-        "[flat] Ridley's down, Cris. Every heart restored. He'll be back. They always are.",
-        "[breathing hard] Boss down, hunter. Armor's damaged. [break] Help me get the rest off.",
-      },
-      title_shown = {
-        "[distant] Zebes. The last Metroid is in captivity. The galaxy is at peace.",
-        "[low] The last Metroid is in captivity, hunter. Now, so are you.",
-      },
-      morning = {
-        "[brisk] Morning, Cris. First boot of the editor today. Systems online. Energy tanks full.",
-        "[dry] You opened Neovim, hunter. You're still in my bunk, Cris. Acceptable.",
-      },
-      region_arrived = {
-        "[clipped] You chose Zebes, Cris. Hostile environment. Stay close.",
-        "[low] Samus Aran, hunter. Tonight the bounty is you, Cris.",
-      },
-      traveled = {
-        "[alert] New repo. Unknown sector. Stay behind me.",
-        "[dry] Switching repos, hunter. Hatch is narrow. We'll have to squeeze.",
-      },
-      resting = {
-        "[brief] Editor idle. Save station. Systems restoring.",
-        "[low] Taking a break, hunter. Save station. Armor off. Come here.",
-      },
-      woke = {
-        "[clipped] You're back, Cris. Systems restored.",
-        "[dry] Back at the keyboard, hunter. I watched you rest, Cris. Zero Suit only. You missed it.",
-      },
-      expedition = {
-        "[clipped] Expedition. Radio silence. Moving out.",
-        "[low] Heading out, hunter. Radio silence. Nobody hears what happens on this ship.",
-      },
-      map_opened = {
-        "[flat] Map station. Downloading the area.",
-        "[dry] Map downloaded, hunter. Every tunnel. I know where they all lead.",
-      },
-      bestiary_opened = {
-        "[clipped] Bestiary open. Every villain on this planet. Neutralized.",
-        "[dry] Scan logs, hunter. You're the only life form I scanned twice.",
-      },
-      chronicle_opened = {
-        "[quiet] Our chronicle. Every mission, completed.",
-        "[low] Mission history, hunter. Some missions ran long, Cris. I didn't complain.",
-      },
-      message_written = {
-        "[clipped] Message left on the floor. Beacon placed.",
-        "[dry] Beacon placed, hunter. Mine says, Zero Suit ahead.",
-      },
-      claude_asked = {
-        "[flat] Asking Claude for a review. Contacting Adam. [break] Fine. Close enough.",
-        "[dry] Calling Claude, hunter. It says I'm distracted. It's right.",
-      },
-    },
-  },
   -- She-Hulk
   courtroom = {
-    -- voice = "<Fish Audio voice id>", the role stays written until it has one
+    voice = "88b15132c1c246f9aa9ae83c48f785ab",
     takes = {
       trial_started = {
         "[booming, cheerful] Your tests are running. The trial begins. All rise.",
@@ -942,9 +808,9 @@ return {
       },
     },
   },
-  -- Triss
+  -- Triss, cast with Shadowheart's voice
   limgrave = {
-    -- voice = "<Fish Audio voice id>", the role stays written until it has one
+    voice = "9c23004e059f43c0bca8cbbdfa0a0d3a",
     takes = {
       trial_started = {
         "[steady] Your tests are running. Here comes the fog gate.",
@@ -1078,7 +944,7 @@ return {
   },
   -- Jill
   raccoon_city = {
-    -- voice = "<Fish Audio voice id>", the role stays written until it has one
+    voice = "8c2ead349a024794af1381200adbd5d9",
     takes = {
       trial_started = {
         "[focused] Your tests are running. Here comes the clock tower bell.",
@@ -1212,7 +1078,7 @@ return {
   },
   -- Malenia
   haligtree = {
-    -- voice = "<Fish Audio voice id>", the role stays written until it has one
+    voice = "b797aa08ed774aa3bbab09db3254817e",
     takes = {
       trial_started = {
         "[solemn] Your tests begin.",
@@ -1344,143 +1210,9 @@ return {
       },
     },
   },
-  -- Power Girl
-  earth_two = {
-    -- voice = "<Fish Audio voice id>", the role stays written until it has one
-    takes = {
-      trial_started = {
-        "[confident] Your tests are running. I'm not worried. Are you?",
-        "[playful] Running the tests. Want the x-ray? [break] On the code. Mostly.",
-      },
-      trial_passed = {
-        "[smug] Every test passed, Cris. Was there ever any doubt?",
-        "[low] All green. I could carry you to bed. With one hand.",
-      },
-      trial_failed = {
-        "[supportive] The tests failed. I'll hold it up while you fix it.",
-        "[teasing] Red, Cris. Don't worry. I'm very good at picking you up.",
-      },
-      committing = {
-        "[brisk] Claude's writing your commit. Strong and short.",
-        "[sly] Drafting the commit. Hard and fast. That's how I like them.",
-      },
-      committed = {
-        "[proud] Commit saved. Rock solid.",
-        "[low] Committed. Invulnerable to everything. Except you.",
-      },
-      pushed = {
-        "[laughing] Your push is out. Faster than a speeding bullet. Okay, that's my cousin's line.",
-        "[playful] Pushed. Hard. I don't know my own strength sometimes.",
-      },
-      pr_drafting = {
-        "[CEO mode] Claude's drafting your PR. Executive summary. Bullet points.",
-        "[smirk] Writing your pull request. Karen Starr, CEO. On top of this one too.",
-      },
-      pr_opened = {
-        "[proud] Your PR is open. The Justice Society's gonna love it.",
-        "[teasing] PR's open. Everyone's going to stare. I'm used to that.",
-      },
-      ci_passed = {
-        "[cheering] CI passed. Up, up, and away.",
-        "[low] Pipeline's green. Up, up, and away. To the bedroom.",
-      },
-      ci_failed = {
-        "[calm] CI dropped it. I'll catch it before it hits the ground.",
-        "[sly] The pipeline failed, Cris. Lie back. I'll do the heavy lifting.",
-      },
-      conflicts_cleared = {
-        "[satisfied] Merge conflicts flattened. Literally.",
-        "[grin] Two branches fighting. I squeezed them together. Gently. Mostly.",
-      },
-      lesson_started = {
-        "[bossy] Today's lesson. I'm the boss today. Karen Starr's orders.",
-        "[low] Lesson time. I'm the boss, you're the intern. [break] Do everything I say.",
-      },
-      solved = {
-        "[easy] Exercise solved. Easy.",
-        "[playful] You solved it. Keep that up and you get the heat vision. The nice kind.",
-      },
-      solved_twice = {
-        "[proud] Two in a row. Strength runs in the family.",
-        "[teasing] Two. Keep that stamina. You'll need it.",
-      },
-      solved_thrice = {
-        "[impressed] Three in a row. You're practically Kryptonian.",
-        "[low] Three, Cris. Man of steel tonight, huh? Prove it.",
-      },
-      solve_failed = {
-        "[encouraging] That submit missed. Shake it off, swing again.",
-        "[playful] Wrong answer. Want me to hold your hand? Or something else?",
-      },
-      hint = {
-        "[quick] You bought a hint, Cris. X-ray says, there.",
-        "[whispering] Your hint. I see right through it. <whisper>Through you too.</whisper> There.",
-      },
-      lesson_done = {
-        "[cheerful] Lesson's done, Cris. Strong work. Dinner's on Starrware.",
-        "[low] Lesson's over. Dinner first. Then Kryptonian stamina.",
-      },
-      boss_appeared = {
-        "[knuckles] Darkseid's in my scene. Hold my cape.",
-        "[protective] Darkseid's here. Get behind me. Nobody lays a finger on my man.",
-      },
-      boss_felled = {
-        "[bored] Darkseid's down, Cris. Every heart mended. Was that supposed to be hard?",
-        "[breathless grin] Boss is down. Okay, that got my blood up. Come here.",
-      },
-      title_shown = {
-        "[proud] Earth-Two. Different world, same hero.",
-        "[sly] Earth-Two. Different world. Same girl on top.",
-      },
-      morning = {
-        "[upbeat] Morning, Cris. First time in the editor today. I already flew around the planet. Coffee?",
-        "[teasing] You opened Neovim, Cris. The bed's broken again. I'll buy a stronger one.",
-      },
-      region_arrived = {
-        "[confident] You chose Earth-Two, Cris. Power Girl. Yes, I'm the strong one.",
-        "[playful] You picked the strongest girl on two Earths, Cris. Good luck keeping up.",
-      },
-      traveled = {
-        "[brisk] New repo. I'll fly ahead and check it.",
-        "[low] Switching repos. Hold on tight. Tighter.",
-      },
-      resting = {
-        "[relaxed] The editor's idle. Even I like a nap.",
-        "[sly] Taking a break? Lie down. I'll be on top of things.",
-      },
-      woke = {
-        "[warm] You're back, Cris. I held you the whole time.",
-        "[teasing] Back at the keyboard, Cris. I used the x-ray once while you were out. No regrets.",
-      },
-      expedition = {
-        "[soft] Expedition starting. A little silence. Even I like it.",
-        "[whisper] Heading out. <whisper>I can hear your heartbeat from here. It's racing.</whisper>",
-      },
-      map_opened = {
-        "[airy] The map. Everything looks small from up here.",
-        "[sly] The view from up here. Everything looks small. [break] Not you. Relax.",
-      },
-      bestiary_opened = {
-        "[proud] The bestiary. Every villain who thought they could take me.",
-        "[amused] Every villain who tried to take me down. You're the only one I let.",
-      },
-      chronicle_opened = {
-        "[proud] Our chronicle. Every win we've stacked up.",
-        "[low] Every night, Cris. Some of them I had to rebuild the bed after.",
-      },
-      message_written = {
-        "[playful] A message on the floor. Mine's written with heat vision. Very neat.",
-        "[sly] You left a note. Mine says, she's stronger than she looks. Ask him.",
-      },
-      claude_asked = {
-        "[sheepish] You're asking Claude for a review. Don't tell anyone. I have a reputation.",
-        "[teasing] Calling Claude? First time I've needed help. Second, if you count last night.",
-      },
-    },
-  },
   -- Raven
   azarath = {
-    -- voice = "<Fish Audio voice id>", the role stays written until it has one
+    voice = "f9eb6364c86d428bb8b78dbdc44a176f",
     takes = {
       trial_started = {
         "[monotone] Your tests are running. Azarath Metrion Zinthos.",
@@ -1614,7 +1346,7 @@ return {
   },
   -- Mai
   shiranui = {
-    -- voice = "<Fish Audio voice id>", the role stays written until it has one
+    voice = "6802faefa8f04ef18e8969ba6519e4a5",
     takes = {
       trial_started = {
         "[announcer energy] Your tests are running! Round one. Fight!",

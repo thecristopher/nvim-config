@@ -99,8 +99,8 @@ end)
 describe("places_of", function()
   it("sends Inde's folders into her role's own world before the shared stage", function()
     local lore = { places = { "Backstage" } }
-    local zebes = { places = { "Planet Zebes", "Brinstar" } }
-    assert.are.same({ "Planet Zebes", "Brinstar", "Backstage" }, actions.places_of(lore, zebes))
+    local azarath = { places = { "Azarath", "Titans Tower" } }
+    assert.are.same({ "Azarath", "Titans Tower", "Backstage" }, actions.places_of(lore, azarath))
   end)
 
   it("keeps Malenia's lore places when the region brings none", function()
@@ -108,13 +108,13 @@ describe("places_of", function()
     assert.are.same({ "Elphael" }, actions.places_of({ places = { "Elphael" } }, nil))
   end)
 
-  it("never names a Danger Room folder after Zebes", function()
+  it("never names a Danger Room folder after Azarath", function()
     local lore = require("core.franchise.actions").lore("elizabeth")
     local danger_room = vim.iter(lore.regions):find(function(region)
       return region.name == "danger_room"
     end)
     local places = actions.places_of(lore, danger_room)
     assert.is_true(vim.tbl_contains(places, "The Danger Room"))
-    assert.is_false(vim.tbl_contains(places, "Planet Zebes"))
+    assert.is_false(vim.tbl_contains(places, "Titans Tower"))
   end)
 end)
