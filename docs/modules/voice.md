@@ -21,7 +21,9 @@ failed submit from `solve_moment`, hint, boss appearing, rest, expedition, the f
 repo, commit and PR drafting, `:Trial` starting, `:Review` asking Claude, the map, bestiary and
 chronicle opening, a ground message written, the title screen), quiet without a clip, and
 `say(moment, vars, { quiet = true })` leaves the words off screen where the moment already shows its
-own. Claire, Leon and every one of Elizabeth's roles speak through the studio (Triss borrows
+own. `voiced(moment, text, vars)` says the line and returns it leading `text` (`Character: line`
+over it), so commit and PR drafting, the commit landing and a new PR show the character's word in
+their progress notification instead of a second one stacked over it. Claire, Leon and every one of Elizabeth's roles speak through the studio (Triss borrows
 Shadowheart's voice), their audio lives out of the repo.
 
 ## Studio

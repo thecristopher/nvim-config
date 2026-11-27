@@ -232,3 +232,16 @@ describe("linger", function()
     assert.equal(actions.LINGER_MS, actions.linger(9000))
   end)
 end)
+
+describe("voiced", function()
+  it("puts Claire's word above the progress text", function()
+    assert.equal(
+      "Claire: Drafting it for Inde.\n\nDrafting commit",
+      actions.voiced("Drafting it for Inde.", "Claire", "Drafting commit")
+    )
+  end)
+
+  it("leaves the text alone when nobody speaks", function()
+    assert.equal("Drafting commit", actions.voiced(nil, "Claire", "Drafting commit"))
+  end)
+end)

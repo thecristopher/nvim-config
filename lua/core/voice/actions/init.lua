@@ -136,4 +136,17 @@ function M.clip_file(files, clip, extensions)
   return nil
 end
 
+---A notification's text led by what the character says, so a wait and the character's word share
+---one notification instead of stacking two.
+---@param line string|nil what the character says, nil leaves the text alone
+---@param character string|nil who says it
+---@param text string what the notification says without them
+---@return string
+function M.voiced(line, character, text)
+  if not line then
+    return text
+  end
+  return character and ("%s: %s\n\n%s"):format(character, line, text) or (line .. "\n\n" .. text)
+end
+
 return M

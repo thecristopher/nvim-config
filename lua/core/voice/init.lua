@@ -78,6 +78,18 @@ function M.speak(moment, vars, on_done)
   return line, character, false
 end
 
+---Has the character say their line for a moment and returns it leading the text, for a notification
+---that already shows something (a progress bar, a result), so the two never stack.
+---@param moment string like committing or pr_drafting
+---@param text string what the notification says without the character
+---@param vars table<string, string>|nil values for the line's holes
+---@return string text
+---@return boolean spoke whether the character said it out loud
+function M.voiced(moment, text, vars)
+  local line, character, spoke = M.speak(moment, vars)
+  return actions.voiced(line, character, text), spoke
+end
+
 -- every spoken line gets its own notification, so a line cut by the next one only takes its own
 local said = 0
 

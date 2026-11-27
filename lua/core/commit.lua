@@ -58,9 +58,9 @@ local function draft_via_claude(prompt, cb)
   local task = require("core.progress").start({
     id = "commit_claude",
     title = say("title"),
-    message = say("drafting"),
+    -- the character's word rides on the bar, so drafting shows one notification
+    message = require("core.voice").voiced("committing", say("drafting")),
   })
-  require("core.voice").say("committing")
   require("core.claude").run(prompt, function(res)
     if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
       task:fail(say("failed"))
@@ -116,14 +116,15 @@ local function committed(buf, msg)
   -- a commit pays its runes without the merchant, he only comes for the purse elsewhere
   require("core.banner").show("felled", { subtitle = subject, merchant = false })
   local root = require("core.git").repo()
-  require("core.voice").say("committed", { branch = require("core.repos").branch(root) or "" })
+  local branch = { branch = require("core.repos").branch(root) or "" }
   vim.schedule(function()
     for _, win in ipairs(vim.fn.win_findbuf(buf)) do
       pcall(vim.api.nvim_win_close, win, true)
     end
     pcall(vim.api.nvim_buf_delete, buf, { force = true })
   end)
-  return say("done", { subject = subject })
+  -- said in the bar's final word, so the commit lands in one notification
+  return require("core.voice").voiced("committed", say("done", { subject = subject }), branch)
 end
 
 -- git commit runs in the background, so a slow pre-commit hook moves the bar instead of freezing
