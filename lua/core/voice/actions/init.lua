@@ -140,13 +140,14 @@ end
 ---one notification instead of stacking two.
 ---@param line string|nil what the character says, nil leaves the text alone
 ---@param character string|nil who says it
----@param text string what the notification says without them
----@return string
+---@param text string|nil what the notification says without them, nil for the line alone
+---@return string|nil
 function M.voiced(line, character, text)
   if not line then
     return text
   end
-  return character and ("%s: %s\n\n%s"):format(character, line, text) or (line .. "\n\n" .. text)
+  local said = character and ("%s: %s"):format(character, line) or line
+  return text and (said .. "\n\n" .. text) or said
 end
 
 return M

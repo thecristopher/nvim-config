@@ -216,17 +216,19 @@ end
 -- ── Claude draft (async, this is the slow step) ────────────────────────────
 
 local function draft_via_claude(prompt, cb)
+  -- the character's word is the bar's message, and once the draft is in it stays alone until
+  -- the voice is over, under its own id so the editor's hint never replaces it
+  local line, _, keep = require("core.voice").voiced("pr_drafting")
   local task = require("core.progress").start({
-    id = "pr_helper",
+    id = "pr_helper_draft",
     title = say("title"),
-    -- the character's word rides on the bar, so drafting shows one notification
-    message = require("core.voice").voiced("pr_drafting", say("drafting")),
+    message = line or say("drafting"),
   })
   require("core.claude").run(prompt, function(res)
     if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
       task:fail(say("failed"))
     else
-      task:done(say("ready"))
+      task:done(line or say("ready"), { keep = keep })
     end
     cb(res)
   end)
@@ -349,10 +351,10 @@ local function published(buf, ctx, title, url)
   vim.bo[buf].modified = false
   -- only a new PR is worth a word from the character, said in the same notification as the link
   -- so the elapsed time still lands after the link
-  local created, spoke = nil, false
+  local created, spoke, keep = nil, false, nil
   if not ctx.pr then
     local number = { number = url:match("/pull/(%d+)") or "" }
-    created, spoke =
+    created, spoke, keep =
       require("core.voice").voiced("pr_opened", say("created", { url = url }), number)
   end
   -- when the character says it out loud the banner keeps quiet, so the two never talk over each
@@ -367,7 +369,7 @@ local function published(buf, ctx, title, url)
   if ctx.pr then
     return say("updated", { number = ctx.pr.number, url = url })
   end
-  return created
+  return created, { keep = keep }
 end
 
 local function publish(buf, ctx, title, body, task)

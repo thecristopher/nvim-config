@@ -6,7 +6,7 @@ local M = {}
 
 ---@class EldenProgress
 ---@field update fun(self: EldenProgress, message?: string, fraction?: number)
----@field done fun(self: EldenProgress, message?: string)
+---@field done fun(self: EldenProgress, message?: string, opts?: { keep?: fun(id: string) })
 ---@field fail fun(self: EldenProgress, message: string)
 
 local function style()
@@ -41,13 +41,17 @@ function M.start(opts)
     vim.notify(text, vim.log.levels.INFO, { id = task.id, title = task.title, timeout = false })
   end
 
-  local function finish(message, level)
+  -- keep takes over hiding the final word (a character still speaking it), so it never fades early
+  local function finish(message, level, keep)
     stop(task.timer)
     task.timer = nil
     local took = actions.elapsed(vim.uv.now() - task.started)
     local text = actions.wrap(("%s (%s)"):format(message, took), actions.text_width(vim.o.columns))
     -- the final word replaces the bar under the same id and fades with the notifier's timeout
-    vim.notify(text, level, { id = task.id, title = task.title })
+    vim.notify(text, level, { id = task.id, title = task.title, timeout = keep and false or nil })
+    if keep then
+      keep(task.id)
+    end
   end
 
   function task:update(message, fraction)
@@ -58,9 +62,9 @@ function M.start(opts)
     end
   end
 
-  function task:done(message)
+  function task:done(message, opts)
     if self.timer then
-      finish(message or self.message, vim.log.levels.INFO)
+      finish(message or self.message, vim.log.levels.INFO, opts and opts.keep)
     end
   end
 

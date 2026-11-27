@@ -22,8 +22,12 @@ repo, commit and PR drafting, `:Trial` starting, `:Review` asking Claude, the ma
 chronicle opening, a ground message written, the title screen), quiet without a clip, and
 `say(moment, vars, { quiet = true })` leaves the words off screen where the moment already shows its
 own. `voiced(moment, text, vars)` says the line and returns it leading `text` (`Character: line`
-over it), so commit and PR drafting, the commit landing and a new PR show the character's word in
-their progress notification instead of a second one stacked over it. Claire, Leon and every one of Elizabeth's roles speak through the studio (Triss borrows
+over it, the line alone without `text`) with a `keep(id)` that holds that notification until the
+voice is over, so commit and PR drafting, the commit landing and a new PR show the character's word
+in their progress notification instead of a second one stacked over it. Drafting shows only the
+line over the bar, under its own id (`commit_claude_draft`, `pr_helper_draft`) so the editor's hint
+never replaces it, and the bar goes once the draft is in while the line stays (`task:done(message,
+{ keep })` in `core/progress`). Claire, Leon and every one of Elizabeth's roles speak through the studio (Triss borrows
 Shadowheart's voice), their audio lives out of the repo.
 
 ## Studio

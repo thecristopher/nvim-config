@@ -241,6 +241,10 @@ describe("voiced", function()
     )
   end)
 
+  it("is Claire's word alone without a text", function()
+    assert.equal("Claire: Drafting it for Inde.", actions.voiced("Drafting it for Inde.", "Claire"))
+  end)
+
   it("leaves the text alone when nobody speaks", function()
     assert.equal("Drafting commit", actions.voiced(nil, "Claire", "Drafting commit"))
   end)

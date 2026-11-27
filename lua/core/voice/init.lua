@@ -78,18 +78,6 @@ function M.speak(moment, vars, on_done)
   return line, character, false
 end
 
----Has the character say their line for a moment and returns it leading the text, for a notification
----that already shows something (a progress bar, a result), so the two never stack.
----@param moment string like committing or pr_drafting
----@param text string what the notification says without the character
----@param vars table<string, string>|nil values for the line's holes
----@return string text
----@return boolean spoke whether the character said it out loud
-function M.voiced(moment, text, vars)
-  local line, character, spoke = M.speak(moment, vars)
-  return actions.voiced(line, character, text), spoke
-end
-
 -- every spoken line gets its own notification, so a line cut by the next one only takes its own
 local said = 0
 
@@ -114,6 +102,41 @@ local function hold(id)
   end
 end
 
+-- speaks a moment and hands back keep(id), which holds the notification with that id until the
+-- voice is over (the voice can end before speak returns, a clip that fails to decode, so keep
+-- releases at once then)
+local function speaking(moment, vars)
+  local over, release = false, nil
+  local line, character, spoke = M.speak(moment, vars, function()
+    over = true
+    if release then
+      release()
+    end
+  end)
+  local function keep(id)
+    release = hold(id)
+    if over then
+      release()
+    end
+  end
+  return line, character, spoke, keep
+end
+
+---Has the character say their line for a moment and returns it leading the text, for a notification
+---that already shows something (a progress bar, a result), so the two never stack. Without text
+---it is the line alone, nil when the character has nothing to say.
+---@param moment string like committing or pr_drafting
+---@param text string|nil what the notification says without the character
+---@param vars table<string, string>|nil values for the line's holes
+---@return string|nil text
+---@return boolean spoke whether the character said it out loud
+---@return (fun(id: string))|nil keep holds the notification with that id until the voice is over,
+---nil for a written line, which fades like any other
+function M.voiced(moment, text, vars)
+  local line, character, spoke, keep = speaking(moment, vars)
+  return actions.voiced(line, character, text), spoke, spoke and keep or nil
+end
+
 ---Has the region's character say their line for a moment: out loud when the region has a clip
 ---for it (sounds/<franchise>/voices/<region>/), written otherwise, both as a notification under
 ---their name. A spoken line stays on screen until its voice is over, whether the clip is cached
@@ -127,15 +150,7 @@ function M.say(moment, vars, opts)
   local quiet = opts and opts.quiet
   said = said + 1
   local id = "eldentree_voice_" .. said
-  -- the voice can end before speak returns (a clip that fails to decode), so the release waits
-  -- until the words are up
-  local over, release = false, nil
-  local line, character, spoke = M.speak(moment, vars, function()
-    over = true
-    if release then
-      release()
-    end
-  end)
+  local line, character, spoke, keep = speaking(moment, vars)
   if not line or (spoke and quiet) then
     return spoke
   end
@@ -144,10 +159,7 @@ function M.say(moment, vars, opts)
     return spoke
   end
   vim.notify(line, vim.log.levels.INFO, { title = character, id = id, timeout = false })
-  release = hold(id)
-  if over then
-    release()
-  end
+  keep(id)
   return spoke
 end
 
