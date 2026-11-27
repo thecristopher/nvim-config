@@ -1,6 +1,6 @@
 # Voice
 
-`lua/core/voice/`: the region's character speaks as a notification titled with their name when
+`lua/core/voice/`: the region's character speaks in the dialogue box, titled with their name, when
 `:Trial` passes or fails, CI finishes, a push lands or an unstaged boss falls
 (`require("core.voice").say(moment, vars)`). Lines live per region and moment in the lore's
 `voices.lua` (`{branch}`, `{boss}` holes), written from the voice sheets in `docs/voices/`.
@@ -12,8 +12,8 @@ false` silences all. `MOMENTS` also has `committed` ({branch}), `pr_opened` ({nu
 A region's `spoken` in `voices.lua` maps moments to clips in `sounds/<franchise>/voices/<region>/`
 (file name without extension to the words it says, brought in with `scripts/sounds.py --voice`), and
 `say` plays one out loud on the voice channel of `core/sound` (`speak`, over the moments and the
-HUD) with its words as the notification, falling back to the written line when sound is off or nvim
-is unfocused. A spoken line's notification stays up until its voice is over, a cached clip or a
+HUD) with its words in the dialogue box, falling back to the written line when sound is off or nvim
+is unfocused. A spoken line stays up until its voice is over, a cached clip or a
 Fish Audio take still on its way alike (`on_done` through `core/sound`'s `speak`), then lingers
 `LINGER_MS` and never leaves before `SHOWN_MIN_MS` (`linger` in its actions), with `SHOWN_MAX_MS`
 as a cap for a voice that never says it ended. `SPOKEN` lists the moments only heard out loud (btb's lesson, solves in a row and a
@@ -21,13 +21,16 @@ failed submit from `solve_moment`, hint, boss appearing, rest, expedition, the f
 repo, commit and PR drafting, `:Trial` starting, `:Review` asking Claude, the map, bestiary and
 chronicle opening, a ground message written, the title screen), quiet without a clip, and
 `say(moment, vars, { quiet = true })` leaves the words off screen where the moment already shows its
-own. `voiced(moment, text, vars)` says the line and returns it leading `text` (`Character: line`
-over it, the line alone without `text`) with a `keep(id)` that holds that notification until the
-voice is over, so commit and PR drafting, the commit landing and a new PR show the character's word
-in their progress notification instead of a second one stacked over it. Drafting shows only the
-line over the bar, under its own id (`commit_claude_draft`, `pr_helper_draft`) so the editor's hint
-never replaces it, and the bar goes once the draft is in while the line stays (`task:done(message,
-{ keep })` in `core/progress`). Malenia, Ranni, Maliketh, Claire, Leon and every one of Elizabeth's roles speak through the
+own.
+
+The dialogue box (`core/voice/dialogue.lua`) is one float centered at the bottom, right above the
+statusline, with the character's name on the skin's frame. Notifications keep the top right, so
+what a character says and what the editor reports never share a stack. A new line replaces the one
+on screen (`speak`), except a written line arriving while a voice speaks, which waits for it to
+end (`write`). A written line stays `reading_ms` (`READ_MS_PER_CHAR`, never under `SHOWN_MIN_MS`), and `dialogue_place` in its actions sizes it
+(`DIALOGUE_SHARE` of the editor at most, `DIALOGUE_MIN_WIDTH` at least, `DIALOGUE_GAP` rows above
+the statusline). Commit and PR drafting, the commit landing and a new PR speak there too, and their
+progress notification keeps only its own words. Malenia, Ranni, Maliketh, Claire, Leon and every one of Elizabeth's roles speak through the
 studio (Triss borrows Shadowheart's voice, Elden Ring's Malenia shares the one Elizabeth's wears), their audio lives out of the repo.
 
 ## Studio

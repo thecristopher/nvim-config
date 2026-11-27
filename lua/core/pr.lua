@@ -216,19 +216,19 @@ end
 -- ── Claude draft (async, this is the slow step) ────────────────────────────
 
 local function draft_via_claude(prompt, cb)
-  -- the character's word is the bar's message, and once the draft is in it stays alone until
-  -- the voice is over, under its own id so the editor's hint never replaces it
-  local line, _, keep = require("core.voice").voiced("pr_drafting")
+  -- the character speaks in the dialogue box, the bar keeps its own id so the editor's hint
+  -- never replaces it
+  require("core.voice").say("pr_drafting")
   local task = require("core.progress").start({
     id = "pr_helper_draft",
     title = say("title"),
-    message = line or say("drafting"),
+    message = say("drafting"),
   })
   require("core.claude").run(prompt, function(res)
     if res.code ~= 0 or vim.trim(res.stdout or "") == "" then
       task:fail(say("failed"))
     else
-      task:done(line or say("ready"), { keep = keep })
+      task:done(say("ready"))
     end
     cb(res)
   end)
@@ -349,13 +349,11 @@ end
 
 local function published(buf, ctx, title, url)
   vim.bo[buf].modified = false
-  -- only a new PR is worth a word from the character, said in the same notification as the link
-  -- so the elapsed time still lands after the link
-  local created, spoke, keep = nil, false, nil
+  -- only a new PR is worth a word from the character
+  local spoke = false
   if not ctx.pr then
     local number = { number = url:match("/pull/(%d+)") or "" }
-    created, spoke, keep =
-      require("core.voice").voiced("pr_opened", say("created", { url = url }), number)
+    spoke = require("core.voice").say("pr_opened", number)
   end
   -- when the character says it out loud the banner keeps quiet, so the two never talk over each
   -- other, and the merchant waits for another milestone instead of greeting over the PR
@@ -369,7 +367,7 @@ local function published(buf, ctx, title, url)
   if ctx.pr then
     return say("updated", { number = ctx.pr.number, url = url })
   end
-  return created, { keep = keep }
+  return say("created", { url = url })
 end
 
 local function publish(buf, ctx, title, body, task)

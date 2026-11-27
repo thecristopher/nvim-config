@@ -45,9 +45,13 @@ end
 ---@param character string the region's character, the role being played
 ---@param franchise string
 ---@param coach { played_by: string, bond: string }
+---@param note? string the region's coach_note, who the character really is when the name misleads
 ---@return { id: string, character: string, franchise: string, bond: string }
-function M.played_coach(character, franchise, coach)
+function M.played_coach(character, franchise, coach, note)
   local bond = coach.bond:gsub("{character}", character)
+  if note and note ~= "" then
+    bond = bond .. " " .. note
+  end
   return {
     id = M.persona_id(coach.played_by .. " " .. character),
     character = character,
@@ -58,7 +62,7 @@ end
 
 ---The coach of the day is the character of the day's region: someone playing the role when the
 ---lore says who, a partner by her persona, anyone else as a character btb summons the first time.
----@param region { character?: string }|nil
+---@param region { character?: string, coach_note?: string }|nil
 ---@param franchise string the franchise's title, like "Resident Evil"
 ---@param coach { played_by?: string, bond?: string }|nil the lore's coach table
 ---@return string|{ id: string, character: string, franchise: string, bond?: string }|nil
@@ -68,7 +72,7 @@ function M.coach_of(region, franchise, coach)
     return nil
   end
   if coach and coach.played_by and coach.bond then
-    return M.played_coach(character, franchise, coach)
+    return M.played_coach(character, franchise, coach, region.coach_note)
   end
   return M.PARTNERS[character]
     or { id = M.persona_id(character), character = character, franchise = franchise }

@@ -60,14 +60,25 @@ function M.pick(lines, roll, last)
   return fresh[math.min(#fresh, math.floor(roll * #fresh) + 1)]
 end
 
--- a spoken line stays on screen at least as long as a written one, the notifier's timeout
+-- a written line stays at least this long in the dialogue box, and a spoken one too
 M.SHOWN_MIN_MS = 4000
 -- and a moment after the voice ends, so the last words can still be read
 M.LINGER_MS = 1200
 -- a voice that never says it ended (a hung request, a lost player) lets go of its words here
 M.SHOWN_MAX_MS = 60000
 
----How long a spoken line's notification waits to leave once the voice is over.
+-- a written line stays a little longer for every character it has, so a long one can be read
+M.READ_MS_PER_CHAR = 45
+
+---How long a written line stays in the dialogue box: long enough to read it, never under the
+---shortest stay.
+---@param line string
+---@return integer
+function M.reading_ms(line)
+  return math.max(M.SHOWN_MIN_MS, vim.fn.strchars(line) * M.READ_MS_PER_CHAR)
+end
+
+---How long a spoken line waits to leave the dialogue box once the voice is over.
 ---@param shown_ms number how long it has been on screen
 ---@return integer
 function M.linger(shown_ms)
@@ -136,18 +147,38 @@ function M.clip_file(files, clip, extensions)
   return nil
 end
 
----A notification's text led by what the character says, so a wait and the character's word share
----one notification instead of stacking two.
----@param line string|nil what the character says, nil leaves the text alone
----@param character string|nil who says it
----@param text string|nil what the notification says without them, nil for the line alone
----@return string|nil
-function M.voiced(line, character, text)
-  if not line then
-    return text
+-- the dialogue box never runs wider than this share of the editor, a longer line wraps
+M.DIALOGUE_SHARE = 0.6
+-- nor narrower than this, so a short line still reads as a box
+M.DIALOGUE_MIN_WIDTH = 24
+-- empty rows between the box and the statusline
+M.DIALOGUE_GAP = 1
+
+---Where the dialogue box sits and what it shows: centered at the bottom, right above the
+---statusline, wrapped to its width with a cell of padding on each side.
+---@param line string what the character says
+---@param title string|nil the character's name on the frame, the box is at least as wide
+---@param columns integer the editor's width
+---@param lines integer the editor's height
+---@param bottom_rows integer rows taken under the box (statusline and command line)
+---@return { row: integer, col: integer, width: integer, height: integer, lines: string[] }
+function M.dialogue_place(line, title, columns, lines, bottom_rows)
+  local limit = math.max(M.DIALOGUE_MIN_WIDTH, math.floor(columns * M.DIALOGUE_SHARE)) - 2
+  local wrapped = require("core.progress.actions").wrap(line, limit)
+  local shown, widest = {}, vim.fn.strdisplaywidth(title or "") + 2
+  for _, text in ipairs(vim.split(wrapped, "\n", { plain = true })) do
+    table.insert(shown, " " .. text)
+    widest = math.max(widest, vim.fn.strdisplaywidth(text))
   end
-  local said = character and ("%s: %s"):format(character, line) or line
-  return text and (said .. "\n\n" .. text) or said
+  local width = math.min(math.max(widest + 2, M.DIALOGUE_MIN_WIDTH), columns - 2)
+  -- the frame takes a row above and below and a column on each side
+  return {
+    row = math.max(0, lines - bottom_rows - M.DIALOGUE_GAP - #shown - 2),
+    col = math.max(0, math.floor((columns - width - 2) / 2)),
+    width = width,
+    height = #shown,
+    lines = shown,
+  }
 end
 
 return M
