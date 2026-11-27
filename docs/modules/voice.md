@@ -13,7 +13,10 @@ A region's `spoken` in `voices.lua` maps moments to clips in `sounds/<franchise>
 (file name without extension to the words it says, brought in with `scripts/sounds.py --voice`), and
 `say` plays one out loud on the voice channel of `core/sound` (`speak`, over the moments and the
 HUD) with its words as the notification, falling back to the written line when sound is off or nvim
-is unfocused. `SPOKEN` lists the moments only heard out loud (btb's lesson, solves in a row and a
+is unfocused. A spoken line's notification stays up until its voice is over, a cached clip or a
+Fish Audio take still on its way alike (`on_done` through `core/sound`'s `speak`), then lingers
+`LINGER_MS` and never leaves before `SHOWN_MIN_MS` (`linger` in its actions), with `SHOWN_MAX_MS`
+as a cap for a voice that never says it ended. `SPOKEN` lists the moments only heard out loud (btb's lesson, solves in a row and a
 failed submit from `solve_moment`, hint, boss appearing, rest, expedition, the first travel to a
 repo, commit and PR drafting, `:Trial` starting, `:Review` asking Claude, the map, bestiary and
 chronicle opening, a ground message written, the title screen), quiet without a clip, and

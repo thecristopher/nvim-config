@@ -49,7 +49,6 @@ FACES = {
     "elizabeth_raven": (0.50, 0.38, 1.0),
     "elizabeth_scarlet_witch": (0.50, 0.42, 1.0),
     "elizabeth_shadowheart": (0.50, 0.39, 1.0),
-    "elizabeth_she_hulk": (0.50, 0.42, 1.0),
     "elizabeth_triss": (0.50, 0.42, 1.0),
     "leon": (0.50, 0.38, 1.0),
     "malenia": (0.50, 0.0, 1.0),
@@ -69,7 +68,6 @@ PHOTOS = {
     "elizabeth_raven",
     "elizabeth_scarlet_witch",
     "elizabeth_shadowheart",
-    "elizabeth_she_hulk",
     "elizabeth_triss",
 }
 
@@ -90,7 +88,6 @@ FIGURES = [
     "elizabeth_raven",
     "elizabeth_scarlet_witch",
     "elizabeth_shadowheart",
-    "elizabeth_she_hulk",
     "elizabeth_triss",
 ]
 

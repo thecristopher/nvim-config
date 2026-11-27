@@ -131,8 +131,11 @@ end
 ---@param region table a region from core.themes
 ---@param moment string
 ---@param vars table<string, string>|nil
+---@param on_done? fun() called once the take is over, or right away when it could not play, so
+---the words leave the screen with the voice
 ---@return string|nil
-function M.perform(region, moment, vars)
+function M.perform(region, moment, vars, on_done)
+  on_done = on_done or function() end
   local role = enabled() and M.role(region)
   if not (role and role.voice and require("core.sound").audible()) then
     return nil
@@ -153,15 +156,16 @@ function M.perform(region, moment, vars)
     return nil
   end
   last_take = take
+  local function play(path)
+    if not (path and require("core.sound").speak(path, on_done)) then
+      vim.schedule(on_done)
+    end
+  end
   if not voice_first then
-    require("core.sound").speak(cached[take])
+    play(cached[take])
     return actions.plain(take)
   end
-  voice_take(role, take, function(path)
-    if path then
-      require("core.sound").speak(path)
-    end
-  end)
+  voice_take(role, take, play)
   return actions.plain(take)
 end
 

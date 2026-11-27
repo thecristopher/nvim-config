@@ -1,5 +1,5 @@
 -- Elizabeth: everything the config says and shows while she plays her roles. Each region is a
--- stage and a costume (the Scarlet Witch, Ada, Shadowheart, Psylocke, Magik, She-Hulk, Triss,
+-- stage and a costume (the Scarlet Witch, Ada, Shadowheart, Psylocke, Magik, Triss,
 -- Jill, Malenia, Raven and Mai), and the world speaks like a set: curtains between stages, a
 -- heart for a status and the afternoon sun to rest in.
 return {
@@ -75,7 +75,6 @@ return {
     moonrise_towers = "Ketheric Thorm",
     danger_room = "Mister Sinister",
     limbo = "Belasco",
-    courtroom = "Titania",
     limgrave = "Margit",
     raccoon_city = "Nemesis",
     haligtree = "Radahn",
@@ -124,14 +123,6 @@ return {
       drift = "rise",
       speed = { 1.8, 4.2 },
       from = "peach",
-      to = "yellow",
-    },
-    -- gamma sparks, quick and bright like an objection
-    courtroom = {
-      glyphs = { "·", "∙", "•" },
-      drift = "rise",
-      speed = { 2.2, 4.8 },
-      from = "green",
       to = "yellow",
     },
     -- grace motes floating over the first site of grace

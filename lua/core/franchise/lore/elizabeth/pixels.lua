@@ -278,52 +278,6 @@ return {
       },
     },
   },
-  courtroom = {
-    colors = { m = "maroon", g = "green", a = "yellow", w = "text" },
-    -- She-Hulk's gavel comes down on the block: order in the court
-    frames = {
-      {
-        "..mmm.....",
-        "..mmm.....",
-        "...m......",
-        "....m.....",
-        "..........",
-        "..........",
-        "..........",
-        "..gggggg..",
-      },
-      {
-        "..........",
-        "..........",
-        "..........",
-        "..........",
-        "...mmm....",
-        "...mmmmmmm",
-        "...mmm....",
-        "..gggggg..",
-      },
-      {
-        "a........a",
-        "..a....a..",
-        "..........",
-        "..........",
-        "...mmm....",
-        "...mmmmmmm",
-        "a..mmm...a",
-        "w.gggggg.w",
-      },
-      {
-        "..........",
-        "..........",
-        "..........",
-        "..........",
-        "..........",
-        "..........",
-        "a........a",
-        "..gggggg..",
-      },
-    },
-  },
   limgrave = {
     colors = { r = "red", p = "peach", a = "yellow", w = "text" },
     -- Triss' fireball, a spark that swells into a burst of flame

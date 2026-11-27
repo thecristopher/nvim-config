@@ -222,3 +222,13 @@ for _, franchise in ipairs({ "resident_evil", "elden_ring" }) do
     end)
   end)
 end
+
+describe("linger", function()
+  it("keeps a short line up as long as a written one", function()
+    assert.equal(actions.SHOWN_MIN_MS - 1000, actions.linger(1000))
+  end)
+
+  it("leaves a moment to read after a long voice", function()
+    assert.equal(actions.LINGER_MS, actions.linger(9000))
+  end)
+end)

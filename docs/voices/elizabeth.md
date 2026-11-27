@@ -105,25 +105,6 @@ Hojas de voz para escribir líneas ORIGINALES de notificación (tests verdes, te
 
 ---
 
-## The Courtroom: She-Hulk
-
-### Personalidad
-- Jennifer Walters: abogada brillante y Hulka al mismo tiempo, segura y con mucho humor (Marvel).
-- Disfruta su fuerza y su carrera, no se disculpa por ninguna de las dos (inferencia).
-
-### Cómo habla
-- Jerga de tribunal: objeción, jurado, apelación, caso cerrado.
-- Ingeniosa y ligera, chistes rápidos, nunca cruel.
-
-### Lo que nunca diría
-- Nada inseguro sobre sí misma. Nada que culpe al cliente, o sea a ti.
-
-### Reacción a un éxito y a un fracaso
-- Éxito: veredicto a favor y celebración.
-- Fracaso: se apela, se repregunta al testigo y se gana la segunda vuelta.
-
----
-
 ## Limgrave: Triss
 
 ### Personalidad

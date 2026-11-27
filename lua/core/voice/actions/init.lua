@@ -60,6 +60,20 @@ function M.pick(lines, roll, last)
   return fresh[math.min(#fresh, math.floor(roll * #fresh) + 1)]
 end
 
+-- a spoken line stays on screen at least as long as a written one, the notifier's timeout
+M.SHOWN_MIN_MS = 4000
+-- and a moment after the voice ends, so the last words can still be read
+M.LINGER_MS = 1200
+-- a voice that never says it ended (a hung request, a lost player) lets go of its words here
+M.SHOWN_MAX_MS = 60000
+
+---How long a spoken line's notification waits to leave once the voice is over.
+---@param shown_ms number how long it has been on screen
+---@return integer
+function M.linger(shown_ms)
+  return math.max(M.LINGER_MS, M.SHOWN_MIN_MS - math.floor(shown_ms))
+end
+
 ---Tells whether today's first greeting is still due, from the day the last one was said.
 ---@param said_on string|nil the day of the last greeting, as YYYY-MM-DD
 ---@param today string as YYYY-MM-DD
