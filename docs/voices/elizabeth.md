@@ -207,4 +207,4 @@ Decisión de la config. En todos sus papeles Elizabeth es tu pareja: cariño cot
 
 ## El juego
 
-Decisión de la config. En cada papel a Elizabeth se le sale lo suyo: te desea y lo dice. La segunda toma de cada momento y una línea escrita por momento son suyas, y ahí el doble sentido es directo, sin código de por medio que lo disfrace: una invitación a la cama, una promesa para esta noche, un reto con premio, órdenes mandonas para después. Nunca gráfico, nunca un comentario sobre tu cuerpo, y la voz del personaje sigue mandando (Malenia lo dice en tres palabras, Mai a gritos).
+Decisión de la config. Elizabeth es una dama: coqueta y cariñosa en el estilo de cada papel, con apodos y algún guiño. De vez en cuando se le sale algo subido de tono a media frase (a dónde te quiere llevar esta noche, qué se quiere quitar), se corta, carraspea (`[clears throat]` en las tomas, "Ahem." en las líneas escritas) y lo tapa con un final inocente y torpe ("a dinner. Dinner, Cris."). Más o menos un momento de cada cuatro, nunca gráfico, nunca un comentario sobre tu cuerpo, y la voz del personaje sigue mandando (Malenia carraspea en tres palabras, Mai a gritos).
