@@ -18,6 +18,10 @@ local function lines_file()
   return M.root() .. "/lines.json"
 end
 
+local function banned_file()
+  return M.root() .. "/banned.json"
+end
+
 local function read_json(path)
   local ok, lines = pcall(vim.fn.readfile, path)
   if not ok then
@@ -66,6 +70,27 @@ end
 ---@param library table<string, table<string, string[]>>
 function M.save_library(library)
   write_json(lines_file(), library)
+end
+
+---The takes banned with :Voice ban, by role, never said or written again.
+---@return table<string, string[]>
+function M.banned()
+  return read_json(banned_file()) or {}
+end
+
+---Keeps the banned takes of every role.
+---@param banned table<string, string[]>
+function M.save_banned(banned)
+  write_json(banned_file(), banned)
+end
+
+---Deletes every cached audio of a take, on both models.
+---@param voice string
+---@param text string
+function M.forget(voice, text)
+  for _, model in ipairs({ budget.PAID, budget.FREE }) do
+    vim.uv.fs_unlink(M.path(voice, model, text))
+  end
 end
 
 ---Where a take's audio lives for a voice and a model, whether it exists yet or not.

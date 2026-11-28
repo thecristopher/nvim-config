@@ -248,7 +248,7 @@ M.ENTRIES = {
   {
     icon = "󰍬 ",
     name = "Voice",
-    desc = "Voice studio: status, live, local, write, export",
+    desc = "Voice studio: status, live, local, write, last, ban, export",
     cmd = "Voice ",
   },
   { icon = "󰀦 ", name = "Banner", desc = "Show a banner", cmd = "Banner " },

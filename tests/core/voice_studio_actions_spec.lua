@@ -61,6 +61,52 @@ describe("pool", function()
   it("never lists the same take twice", function()
     assert.same({ "All green." }, actions.pool({ "All green." }, { "All green." }, nil))
   end)
+
+  it("marks the takes that name Inde's push as only worth saying now", function()
+    local _, eventful = actions.pool(
+      { "Pushed {branch}.", "Happy {weekday}, Inde." },
+      nil,
+      { branch = "love notes", weekday = "Friday" },
+      "pushed"
+    )
+    assert.is_true(eventful["Pushed love notes."])
+    assert.is_nil(eventful["Happy Friday, Inde."])
+  end)
+
+  it("remembers the take each of Claire's lines came from", function()
+    local _, _, origin = actions.pool({ "Pushed {branch}." }, nil, { branch = "dates" }, "pushed")
+    assert.equal("Pushed {branch}.", origin["Pushed dates."])
+  end)
+end)
+
+describe("written", function()
+  it("turns Malenia's takes into words to read when she cannot be heard", function()
+    assert.same(
+      { "Rise. Again.", "Kneel, Inde." },
+      actions.written({ "[firm] Rise. [break] Again." }, { "<soft>Kneel, Inde.</soft>" }, nil)
+    )
+  end)
+end)
+
+describe("without", function()
+  it("leaves out the takes Inde banned from Claire's role", function()
+    local kept = actions.without({ morning = { "Coffee?", "Rise and shine." } }, { "Coffee?" })
+    assert.same({ "Rise and shine." }, kept.morning)
+  end)
+end)
+
+describe("holes", function()
+  it("lets Leon name the branch at a push and the day anywhere", function()
+    assert.same({ "branch", "weekday", "daypart", "repo" }, actions.holes("pushed"))
+    assert.same({ "weekday", "daypart", "repo" }, actions.holes("morning"))
+  end)
+end)
+
+describe("on_time", function()
+  it("plays Claire's take while the moment still matters, and not after", function()
+    assert.is_true(actions.on_time(actions.LATE_MS))
+    assert.is_false(actions.on_time(actions.LATE_MS + 1))
+  end)
 end)
 
 describe("cache_name", function()
@@ -76,11 +122,30 @@ describe("choose", function()
   local lines = { "Heard before.", "Never heard." }
   local cached = { ["Heard before."] = "/voices/claire/heard.mp3" }
 
-  it("voices a take nobody heard when the fresh roll lands under the chance", function()
-    local take, voice_first =
+  it("plays a cached take at once and voices the unheard one behind it", function()
+    local take, voice_first, prefetch =
       actions.choose(lines, cached, { roll = 0, fresh_roll = 0, can_voice = true })
+    assert.equal("Heard before.", take)
+    assert.is_false(voice_first)
+    assert.equal("Never heard.", prefetch)
+  end)
+
+  it("waits on the network for a take that names Inde's push right now", function()
+    local take, voice_first, prefetch = actions.choose(lines, cached, {
+      roll = 0,
+      fresh_roll = 0,
+      can_voice = true,
+      eventful = { ["Never heard."] = true },
+    })
     assert.equal("Never heard.", take)
     assert.is_true(voice_first)
+    assert.is_nil(prefetch)
+  end)
+
+  it("never prefetches while the studio is local", function()
+    local _, _, prefetch =
+      actions.choose(lines, cached, { roll = 0, fresh_roll = 0, can_voice = false })
+    assert.is_nil(prefetch)
   end)
 
   it("plays a cached take the rest of the time", function()
@@ -320,6 +385,31 @@ describe("writer", function()
     assert.truthy(prompt:find("Already said: Radahn falls.", 1, true))
   end)
 
+  it("asks Claude for several candidates and names the shared holes", function()
+    local prompt = writer.prompt({
+      character = "Claire",
+      world = "Raccoon City",
+      moments = { "morning" },
+      takes = {},
+      fresh = {},
+      banned = { "Rise and grind, Inde." },
+    })
+    assert.truthy(prompt:find("array of " .. writer.CANDIDATES, 1, true))
+    assert.truthy(prompt:find("{weekday}", 1, true))
+    assert.truthy(prompt:find("- Rise and grind, Inde.", 1, true))
+  end)
+
+  it("keeps the first of Malenia's candidates that passes the checks", function()
+    local answer = '{"morning": ["[a] [b] Too many directions.", "[soft] Morning, Inde."]}'
+    assert.same({ morning = "[soft] Morning, Inde." }, writer.parse(answer, { "morning" }))
+  end)
+
+  it("throws away a candidate that paraphrases a take Claire already has", function()
+    local known = { morning = { "[warm] Coffee is ready, Inde." } }
+    local answer = '{"morning": ["[soft] Inde, coffee is ready."]}'
+    assert.same({}, writer.parse(answer, { "morning" }, known))
+  end)
+
   it("keeps one take per moment asked from Claude's answer, even inside a code fence", function()
     local answer = '```json\n{"morning": "[warm] Morning, Inde.", "woke": "x", "pushed": ""}\n```'
     assert.same(
@@ -342,6 +432,23 @@ describe("writer", function()
     assert.same({ "2", "3", "4", "5", "6", "7" }, merged.morning)
   end)
 
+  it("lets a take nobody voiced go before one Inde paid for", function()
+    local fresh = { morning = { "1", "2", "3", "4", "5", "6" } }
+    local merged = writer.merge(fresh, { morning = "7" }, function(take)
+      return take == "1"
+    end)
+    assert.same({ "1", "3", "4", "5", "6", "7" }, merged.morning)
+  end)
+
+  it("never lets an import bring back a take Inde banned", function()
+    local joined = writer.join(
+      {},
+      { ["elden_ring/haligtree"] = { solved = { "Rise.", "Kneel." } } },
+      { ["elden_ring/haligtree"] = { "Rise." } }
+    )
+    assert.same({ "Kneel." }, joined["elden_ring/haligtree"].solved)
+  end)
+
   it("joins an imported library into Malenia's without repeating a take", function()
     local joined = writer.join(
       { ["elden_ring/haligtree"] = { solved = { "Rise." } } },
@@ -356,18 +463,43 @@ for _, franchise in ipairs({ "elden_ring", "resident_evil", "elizabeth" }) do
     local lore = require("core.franchise.actions").lore(franchise)
     local voice = require("core.voice.actions")
     local moments = vim.list_extend(vim.deepcopy(voice.MOMENTS), voice.SPOKEN)
+    local named =
+      { pushed = "branch", pr_opened = "number", boss_felled = "boss", morning = "weekday" }
 
-    it("gives every role two takes for every moment, without em dashes", function()
+    it("gives every role at least two takes for every moment, without em dashes", function()
       for region, role in pairs(lore.script) do
         for _, moment in ipairs(moments) do
           local takes = role.takes[moment]
-          assert.equal(2, takes and #takes or 0, region .. "." .. moment)
+          assert.is_true((takes and #takes or 0) >= 2, region .. "." .. moment)
           for _, take in ipairs(takes) do
             assert.is_nil(take:find("—", 1, true), take)
           end
         end
       end
     end)
+
+    it("uses only holes each moment can fill, and markup the studio reads", function()
+      local check = require("core.voice.studio.actions.check")
+      for region, role in pairs(lore.script) do
+        for moment, takes in pairs(role.takes) do
+          for _, take in ipairs(takes) do
+            assert.is_true(check.holes_ok(take, moment), region .. "." .. moment .. ": " .. take)
+          end
+        end
+      end
+    end)
+
+    it(
+      "names what happened in a third take at a push, a PR, a felled boss and the morning",
+      function()
+        for region, role in pairs(lore.script) do
+          for moment, hole in pairs(named) do
+            local takes = table.concat(role.takes[moment], "\n")
+            assert.truthy(takes:find("{" .. hole .. "}", 1, true), region .. "." .. moment)
+          end
+        end
+      end
+    )
 
     it("casts only regions the franchise has", function()
       local regions = {}
@@ -380,3 +512,43 @@ for _, franchise in ipairs({ "elden_ring", "resident_evil", "elizabeth" }) do
     end)
   end)
 end
+
+describe("check", function()
+  local check = require("core.voice.studio.actions.check")
+
+  it("takes Malenia's direction first, a break and one closed tag", function()
+    assert.is_true(check.markup_ok("[low] Rise. [break] <whisper>Inde waits.</whisper>"))
+  end)
+
+  it("refuses a direction in the middle of Claire's line", function()
+    assert.is_false(check.markup_ok("Pushed. [grinning] Let's ride."))
+  end)
+
+  it("refuses a tag left open or one the studio cannot voice", function()
+    assert.is_false(check.markup_ok("<whisper>Inde, come here."))
+    assert.is_false(check.markup_ok("<shout>Inde!</shout>"))
+  end)
+
+  it("refuses two shaped words in one of Leon's lines", function()
+    assert.is_false(check.markup_ok("<soft>Easy</soft>, <emphasis>Inde</emphasis>."))
+  end)
+
+  it("lets the day name any moment but the branch only a push", function()
+    assert.is_true(check.holes_ok("Happy {weekday}, Inde.", "solved"))
+    assert.is_false(check.holes_ok("Solved on {branch}.", "solved"))
+    assert.is_true(check.holes_ok("{branch} is out.", "pushed"))
+  end)
+
+  it("hears the same words in another order as the same line", function()
+    assert.equal(1, check.similarity("Coffee is ready, Inde.", "[soft] Inde, coffee is ready."))
+  end)
+
+  it("keeps a take that says something new to Claire", function()
+    assert.is_true(check.new_enough("Your playlist is pushed.", { "Morning, Inde." }))
+  end)
+
+  it("refuses a take longer than the prompt allows", function()
+    local long = ("love "):rep(check.MAX_WORDS + 1)
+    assert.is_false(check.usable(long, "morning", {}))
+  end)
+end)

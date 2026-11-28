@@ -223,6 +223,76 @@ for _, franchise in ipairs({ "resident_evil", "elden_ring" }) do
   end)
 end
 
+describe("pick with a memory", function()
+  it("skips every love note Claire said lately while others remain", function()
+    local lines = { "a", "b", "c", "d" }
+    assert.equal("d", actions.pick(lines, 0, { "a", "b", "c" }))
+  end)
+
+  it("lets the oldest memory go when Malenia has few lines", function()
+    assert.equal("a", actions.pick({ "a", "b" }, 0, { "b", "a" }))
+  end)
+end)
+
+describe("remember", function()
+  it("puts Inde's newest line first and keeps only a few", function()
+    local recent = actions.remember({ "c", "b", "a", "z" }, "d")
+    assert.same({ "d", "c", "b", "a" }, recent)
+  end)
+
+  it("never keeps the same line twice", function()
+    assert.same({ "a", "b" }, actions.remember({ "b", "a" }, "a"))
+  end)
+end)
+
+describe("admit", function()
+  it("plays at once when nobody is speaking", function()
+    assert.equal("play", actions.admit(nil, "map_opened"))
+  end)
+
+  it("lets a failed CI cut Claire while she talks about the push", function()
+    assert.equal("play", actions.admit(actions.NORMAL, "ci_failed"))
+  end)
+
+  it("makes the push wait for Malenia to finish the commit", function()
+    assert.equal("queue", actions.admit(actions.NORMAL, "pushed"))
+  end)
+
+  it("keeps the map quiet while Leon is speaking", function()
+    assert.equal("drop", actions.admit(actions.NORMAL, "map_opened"))
+  end)
+end)
+
+describe("enqueue", function()
+  it("keeps the louder moment waiting over a newer quieter one", function()
+    local waiting = actions.enqueue({ moment = "ci_failed" }, { moment = "pushed" })
+    assert.equal("ci_failed", waiting.moment)
+  end)
+
+  it("lets the newest moment wait when it is as loud", function()
+    local waiting = actions.enqueue({ moment = "committed" }, { moment = "pushed" })
+    assert.equal("pushed", waiting.moment)
+  end)
+end)
+
+describe("still_fresh", function()
+  it("drops a moment that waited too long for Claire to finish", function()
+    assert.is_true(actions.still_fresh(0, actions.QUEUE_TTL_MS))
+    assert.is_false(actions.still_fresh(0, actions.QUEUE_TTL_MS + 1))
+  end)
+end)
+
+describe("context", function()
+  it("names a Friday evening in Inde's playlist repo", function()
+    local vars = actions.context({ hour = 19, wday = 6 }, "anniversary-playlist")
+    assert.same({ weekday = "Friday", daypart = "evening", repo = "anniversary playlist" }, vars)
+  end)
+
+  it("calls the small hours night", function()
+    assert.equal("night", actions.context({ hour = 2, wday = 1 }).daypart)
+  end)
+end)
+
 describe("linger", function()
   it("keeps a short line up as long as a written one", function()
     assert.equal(actions.SHOWN_MIN_MS - 1000, actions.linger(1000))

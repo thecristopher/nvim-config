@@ -67,9 +67,14 @@ function M.run()
   return deleted
 end
 
----Empties the cache: every voiced take and every fresh take. Clips recorded in the repo stay.
+---Empties the cache: every voiced take and every fresh take. Clips recorded in the repo and the
+---takes banned with :Voice ban stay.
 function M.all()
+  local banned = store.banned()
   vim.fn.delete(store.root(), "rf")
+  if not vim.tbl_isempty(banned) then
+    store.save_banned(banned)
+  end
 end
 
 ---Prunes once a day, remembered in the ledger.

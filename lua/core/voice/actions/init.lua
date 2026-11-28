@@ -42,22 +42,148 @@ M.SPOKEN = {
   "title_shown",
 }
 
----Picks one of the lines, never the one said last when there is another to say.
+-- how loud a moment is: a louder one cuts a quieter voice, an equal one waits its turn and an
+-- aside never interrupts anyone. Moments not listed are NORMAL
+M.URGENT, M.NORMAL, M.ASIDE = 3, 2, 1
+M.PRIORITY = {
+  trial_passed = M.URGENT,
+  trial_failed = M.URGENT,
+  ci_passed = M.URGENT,
+  ci_failed = M.URGENT,
+  boss_felled = M.URGENT,
+  boss_appeared = M.URGENT,
+  pr_opened = M.URGENT,
+  conflicts_cleared = M.URGENT,
+  solved = M.URGENT,
+  solved_twice = M.URGENT,
+  solved_thrice = M.URGENT,
+  solve_failed = M.URGENT,
+  lesson_done = M.URGENT,
+  trial_started = M.ASIDE,
+  committing = M.ASIDE,
+  pr_drafting = M.ASIDE,
+  claude_asked = M.ASIDE,
+  map_opened = M.ASIDE,
+  bestiary_opened = M.ASIDE,
+  chronicle_opened = M.ASIDE,
+  message_written = M.ASIDE,
+  title_shown = M.ASIDE,
+  resting = M.ASIDE,
+}
+
+-- a moment waiting for the voice before it goes stale past this, it no longer says what just happened
+M.QUEUE_TTL_MS = 10000
+
+---How loud a moment is.
+---@param moment string
+---@return integer
+function M.priority(moment)
+  return M.PRIORITY[moment] or M.NORMAL
+end
+
+---What a new moment does while a character is still speaking: play now (cutting the voice), wait
+---for it to end, or stay quiet.
+---@param speaking integer|nil the priority of the voice speaking, nil when nobody is
+---@param moment string the new moment
+---@return "play"|"queue"|"drop"
+function M.admit(speaking, moment)
+  local priority = M.priority(moment)
+  if not speaking or priority > speaking then
+    return "play"
+  end
+  if priority == M.ASIDE then
+    return "drop"
+  end
+  return "queue"
+end
+
+---The moment that waits for the voice: the newest, unless the one already waiting is louder.
+---@param waiting { moment: string }|nil the moment waiting now
+---@param incoming { moment: string } the new one
+---@return { moment: string }
+function M.enqueue(waiting, incoming)
+  if waiting and M.priority(waiting.moment) > M.priority(incoming.moment) then
+    return waiting
+  end
+  return incoming
+end
+
+---Whether a moment that waited is still worth saying.
+---@param queued_at number when it started waiting, in ms
+---@param now number in ms
+---@return boolean
+function M.still_fresh(queued_at, now)
+  return now - queued_at <= M.QUEUE_TTL_MS
+end
+
+-- lines kept in memory per moment, so a line comes back only after the others had their turn
+M.RECENT_SIZE = 4
+
+---Picks one of the lines, avoiding the ones said most recently while there are others to say.
 ---@param lines string[]|nil
 ---@param roll number between 0 and 1, where in the list to land
----@param last string|nil the line said last time
+---@param recent string|string[]|nil the line said last, or the lines said lately, newest first
 ---@return string|nil
-function M.pick(lines, roll, last)
-  local fresh = vim.tbl_filter(function(line)
-    return line ~= last
-  end, lines or {})
-  if #fresh == 0 then
-    fresh = lines or {}
-  end
-  if #fresh == 0 then
+function M.pick(lines, roll, recent)
+  lines = lines or {}
+  if #lines == 0 then
     return nil
   end
+  recent = type(recent) == "string" and { recent } or recent or {}
+  -- at least one line always stays in play, the oldest memory gives way first
+  local avoid = {}
+  for index = 1, math.min(#recent, #lines - 1) do
+    avoid[recent[index]] = true
+  end
+  local fresh = vim.tbl_filter(function(line)
+    return not avoid[line]
+  end, lines)
+  if #fresh == 0 then
+    fresh = lines
+  end
   return fresh[math.min(#fresh, math.floor(roll * #fresh) + 1)]
+end
+
+---The lines said lately with a new one in front, at most RECENT_SIZE.
+---@param recent string[]|nil newest first
+---@param line string the line just said
+---@return string[]
+function M.remember(recent, line)
+  local kept = { line }
+  for _, said in ipairs(recent or {}) do
+    if said ~= line and #kept < M.RECENT_SIZE then
+      table.insert(kept, said)
+    end
+  end
+  return kept
+end
+
+local DAYPARTS = {
+  { until_hour = 5, name = "night" },
+  { until_hour = 12, name = "morning" },
+  { until_hour = 18, name = "afternoon" },
+  { until_hour = 22, name = "evening" },
+  { until_hour = 24, name = "night" },
+}
+
+---The holes every moment can fill, from the clock and the project: {weekday}, {daypart} and {repo}.
+---@param date { hour: integer, wday: integer } like os.date("*t")
+---@param repo string|nil the project's folder name
+---@return table<string, string>
+function M.context(date, repo)
+  local weekdays = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" }
+  local daypart = "night"
+  for _, part in ipairs(DAYPARTS) do
+    if date.hour < part.until_hour then
+      daypart = part.name
+      break
+    end
+  end
+  local vars = { weekday = weekdays[date.wday], daypart = daypart }
+  if repo and repo ~= "" then
+    vars.repo = vim.trim((repo:gsub("^%.", ""):gsub("[%-_.]+", " ")))
+  end
+  return vars
 end
 
 -- a written line stays at least this long in the dialogue box, and a spoken one too

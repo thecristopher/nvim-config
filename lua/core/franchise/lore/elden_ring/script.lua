@@ -4,6 +4,8 @@
 -- `voice` is the Fish Audio voice id the role is cast with, a role without one stays written. The
 -- studio writes new takes from these in moderation, so they are the base every new line keeps the
 -- character of.
+-- A third take at a push, a PR, a felled boss and the morning names what happened: {branch},
+-- {number}, {boss} and {weekday}. Any take may also say {daypart} or {repo}.
 return {
   -- Malenia
   haligtree = {
@@ -32,6 +34,7 @@ return {
       pushed = {
         "[serene] Your push is sent. On wings.",
         "[fierce, quiet] Pushed. Let it bloom where they least expect it.",
+        "[serene] {branch} takes flight. I watched every petal leave.",
       },
       pr_drafting = {
         "[terse] Claude drafts your pull request. Speak plainly. Pride needs no ornament.",
@@ -40,6 +43,7 @@ return {
       pr_opened = {
         "[proud] Your pull request is open. Let them judge. My blade already has.",
         "[steady] It stands before the judges now. I will await the verdict at your side.",
+        "[steady] Pull request {number}. Your work, laid bare before the judges. It will hold.",
       },
       ci_passed = {
         "[solemn pride] CI passed. A flower the rot never reached.",
@@ -88,6 +92,7 @@ return {
       boss_felled = {
         "[solemn] The foe falls. You fought as I would. Perhaps better.",
         "[soft] It is over. Stay. Let the petals settle.",
+        "[solemn] {boss} falls. Not one wasted motion. [break] I am proud.",
       },
       title_shown = {
         "[ethereal] The Haligtree. Where the snow falls, and the rot sleeps.",
@@ -96,6 +101,7 @@ return {
       morning = {
         "[quiet] Morning. You open the editor. The petals are still. Begin.",
         "[gentle] You return. I waited, as I always will.",
+        "[quiet] {weekday} morning. The petals are still. Draw your blade.",
       },
       region_arrived = {
         "[formal] I am Malenia. Blade of Miquella. Today I stand beside you.",
@@ -166,6 +172,7 @@ return {
       pushed = {
         "[curt] Thy push is sent. Farewell, then.",
         "[cool] Pushed, under a cold moon. Our plan proceeds.",
+        "[cool] {branch} departs. I shall not wave, but I did watch.",
       },
       pr_drafting = {
         "[dry] Claude drafts thy pull request. Tell it not to flatter the Golden Order.",
@@ -174,6 +181,7 @@ return {
       pr_opened = {
         "[amused] Thy pull request is cast. Let us see who dares to read it.",
         "[cool] It goes to the academy. They shall not understand it, and that is fine.",
+        "[amused] Pull request {number}. Let the academy squint at it.",
       },
       ci_passed = {
         "[cool approval] CI passed. Perhaps thou'rt worth thy service after all.",
@@ -222,6 +230,7 @@ return {
       boss_felled = {
         "[subdued] It falls. Mother sleeps again. [break] Let her.",
         "[cool] The foe is beaten. Remarkable, no? One less obstacle before the stars.",
+        "[cool] {boss} is beaten. One fewer obstacle before the stars.",
       },
       title_shown = {
         "[distant] Raya Lucaria. Beneath a moon that is not mine. Not yet.",
@@ -230,6 +239,7 @@ return {
       morning = {
         "[unimpressed] Morning? How dreadfully bright. Very well, let us work.",
         "[cool] Thou art back. The stars kept their places while thou slept.",
+        "[unimpressed] {weekday}, again. Very well. The stars wait for no one, and neither shall we.",
       },
       region_arrived = {
         "[formal, cool] I am Ranni. The witch. Thou hast found me. Few do.",
@@ -300,6 +310,7 @@ return {
       pushed = {
         "[commanding] Thy push goes forth under my guard.",
         "[grave] Sent. Let no thief lay hand upon it.",
+        "[commanding] {branch} is loosed. I stand guard at its back.",
       },
       pr_drafting = {
         "[stern] Claude drafts thy pull request. Plain words. Duty needs no flourish.",
@@ -308,6 +319,7 @@ return {
       pr_opened = {
         "[grave] Thy pull request faces judgment. Stand with it.",
         "[low] It goes forth. I shall keep guard while they read.",
+        "[grave] Pull request {number} faces judgment. I shall not leave thy side.",
       },
       ci_passed = {
         "[grave] CI passes. The seal endures.",
@@ -356,6 +368,7 @@ return {
       boss_felled = {
         "[grave] It is struck down. Death claims its due.",
         "[low] The foe is ended. The shadow keeps its watch.",
+        "[grave] {boss} is struck down. Death takes its due.",
       },
       title_shown = {
         "[grave] Crumbling Farum Azula. Where the storm never ends.",
@@ -364,6 +377,7 @@ return {
       morning = {
         "[stern] Thou returnest. The storm did not abate. Neither shall we.",
         "[grave] Morning. My blade is drawn. Draw thine.",
+        "[stern] {weekday}. The storm abates not. Rise, and draw thy blade.",
       },
       region_arrived = {
         "[commanding] I am Maliketh, the Black Blade. Thou art under my watch.",

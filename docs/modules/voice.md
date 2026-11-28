@@ -23,6 +23,20 @@ chronicle opening, a ground message written, the title screen), quiet without a 
 `say(moment, vars, { quiet = true })` leaves the words off screen where the moment already shows its
 own.
 
+Only one character speaks at a time. Each moment has a priority (`PRIORITY` in its actions:
+`URGENT` for verdicts, bosses, a new PR and the lesson's solves, `ASIDE` for openings and drafts,
+`NORMAL` for the rest), and `admit` decides what a new moment does while a voice is speaking: a
+louder one cuts in, an aside stays quiet, anything else waits for the voice to end. One moment
+waits at most (`enqueue` keeps the louder, or the newest), and it goes stale after `QUEUE_TTL_MS`.
+A cut voice ending late never releases the queue, the voice speaking now owns it by id.
+
+Every moment fills `{weekday}`, `{daypart}` and `{repo}` (`context` in its actions) under its own
+holes. The lines said lately per moment live in `eldentree_voice_recent.json` in state
+(`core/voice/recent.lua`, `RECENT_SIZE`), so a line comes back only after the others had their
+turn, across restarts too. The written fallback of a moment in `MOMENTS` also reads every take of
+the role's script and fresh ones as words (`written` in the studio's actions), so a new line can be
+read when it cannot be heard. `:Voice last` shows what was said last and how.
+
 The dialogue box (`core/voice/dialogue.lua`) is one float centered at the bottom, right above the
 statusline, with the character's name on the skin's frame. Notifications keep the top right, so
 what a character says and what the editor reports never share a stack. A new line replaces the one
@@ -45,14 +59,29 @@ the recorded clips and the written lines whenever the studio has nothing to play
   as `<moment>`, the second as `<moment>_2`, `clip_name` in its actions) counts as voiced: it plays
   first and is never baked again. Clips made by hand in the Fish Audio app can also go straight into
   the cache under their take's name (`store.path(voice, "drama-3", take)`), the way Claire's 64 did.
-- A moment plays a cached take at once. A share of them (`FRESH_CHANCE`) voices a take nobody has
-  heard yet, so new lines keep coming without every moment waiting on the network.
+- A moment plays a cached take at once. A share of them (`FRESH_CHANCE`) also voices a take nobody
+  has heard yet in the background (`choose` returns it as the prefetch), so the next time it plays
+  from the cache. Only a moment with nothing cached, or a take that names what just happened, waits
+  on the network, and a take that arrives after `LATE_MS` stays cached without playing: its words
+  leave written.
+- A take already on its way to Fish Audio is never asked twice: the baker and every moment that
+  wants it wait on the same request.
 - Holes (`HOLES` in its actions) let a take say what really happened: `{branch}` read as words
-  (`speakable_branch`), `{number}` and `{boss}`. Those are voiced on the spot and cached per text.
+  (`speakable_branch`), `{number}` and `{boss}`. `SHARED_HOLES` (`{weekday}`, `{daypart}`,
+  `{repo}`) work at any moment. Every role has a third take at `pushed`, `pr_opened`,
+  `boss_felled` and `morning` with one, and a spec keeps each hole on a moment that can fill it.
+  Takes with holes are voiced when they happen and cached per text.
 - A baker caches the role in use ahead of time with Drama 3, one take every 20 seconds while the
   budget allows. Once every take has audio, a writer asks Claude (headless, quiet) for fresh takes
   for the moments with the fewest, from the role's voice sheet in `docs/voices/` and the takes it
-  already has, a few runs a day (`MAX_FRESH` kept per moment).
+  already has, a few runs a day (`MAX_FRESH` kept per moment). Claude answers `CANDIDATES` lines
+  per moment and the first that passes `actions/check.lua` joins: one leading direction, one known
+  paired tag at most, closed, holes the moment can fill, `MAX_WORDS`, and no paraphrase of a take
+  the role has or banned (`SIMILAR` word overlap). Past `MAX_FRESH`, the oldest take without audio
+  leaves first, so paid audio stays.
+- `:Voice ban` bans the take said last: it leaves the role and the library, its audio goes, and the
+  writer is told to write nothing like it. Bans live in `banned.json` beside `lines.json`, travel
+  with an export, survive `:Voice prune all` and stop an import from bringing the take back.
 - Money: Drama 3 while the day's spend stays under `vim.g.eldentree_studio_daily` (0.50) and the
   balance above `vim.g.eldentree_studio_floor` (0.50), the free model (`s2.1-pro-free`) after that
   or when Fish Audio answers 402. The ledger lives in `eldentree_studio.json` in state, and the

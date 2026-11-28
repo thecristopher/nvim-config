@@ -3,6 +3,8 @@
 -- <soft> and <slow> around the words they shape, [break] for a pause. `voice` is the Fish Audio
 -- voice id the role is cast with, a role without one stays written. The studio writes new takes
 -- from these in moderation, so they are the base every new line keeps the character of.
+-- A third take at a push, a PR, a felled boss and the morning names what happened: {branch},
+-- {number}, {boss} and {weekday}. Any take may also say {daypart} or {repo}.
 return {
   -- Claire
   raccoon_city = {
@@ -31,6 +33,7 @@ return {
       pushed = {
         "[grinning] Your push went through. Hop on the bike, we're out of here.",
         "[revving energy] Pushed to the remote. Nice and clean. Let's move before something follows it.",
+        "[grinning] {branch} is out. Hop on, we're riding before anything follows it.",
       },
       pr_drafting = {
         "[scribbling] Claude's drafting your pull request. Tell it to keep it short. Nobody reads past the zombies.",
@@ -39,6 +42,7 @@ return {
       pr_opened = {
         "[impatient] Your pull request is open. Now we wait, and I <emphasis>really</emphasis> hate waiting.",
         "[protective] PR's up. If a reviewer gives you trouble, they deal with me.",
+        "[impatient] Pull request {number} is up. If a reviewer gives you grief, send them to me.",
       },
       ci_passed = {
         "[pleasantly surprised] CI passed. One door in this precinct that actually opened.",
@@ -87,6 +91,7 @@ return {
       boss_felled = {
         "[out of breath] Is the boss dead? <emphasis>Actually</emphasis> dead? [break] Okay. You alright, Chris?",
         "[panting, soft] We beat Birkin. Every heart's back. Come here, let me make sure you're okay.",
+        "[out of breath] {boss} is down. <emphasis>Finally.</emphasis> You okay?",
       },
       title_shown = {
         "[quiet] Raccoon City. I came looking for my brother, and I found you.",
@@ -95,6 +100,7 @@ return {
       morning = {
         "[cheerful] Morning, Chris! First time in the editor today. The whole city's going nuts. Ready?",
         "[sleepy smile] Hey Chris, you opened Neovim. Coffee first, zombies later. That's the rule.",
+        "[cheerful] Happy {weekday}! Coffee, then we take this city back.",
       },
       region_arrived = {
         "[curious] You picked Raccoon City, Chris. I'm looking for my brother. Same name as you. Weird, right?",
@@ -165,6 +171,7 @@ return {
       pushed = {
         "[cool] Push delivered. No signature required.",
         "[relaxed] Your branch is on the remote. Escort complete. Nobody had to carry it.",
+        "[relaxed] {branch} made it out. Cleaner than any escort I've done.",
       },
       pr_drafting = {
         "[flat] Claude's drafting your PR. Keep it short. Hunnigan hates long reports.",
@@ -173,6 +180,7 @@ return {
       pr_opened = {
         "[wry] Your PR is open. Reviewers, try not to bite.",
         "[confident] Pull request's up. Let them come. I've parried worse than a code review.",
+        "[wry] Pull request {number}'s open. Reviewers, play nice.",
       },
       ci_passed = {
         "[mock disbelief] CI passed. Somebody tell Hunnigan. She'll never believe it.",
@@ -221,6 +229,7 @@ return {
       boss_felled = {
         "[cool] Boss is down, Cris. Sorry, big guy. We're not on the menu.",
         "[catching breath] Mr. X is down. Hearts are back. Should've knocked.",
+        "[cool] {boss} is down. Should've stayed in bed.",
       },
       title_shown = {
         "[weary] Raccoon City. Hell of a first day.",
@@ -229,6 +238,7 @@ return {
       morning = {
         "[casual] Morning, Cris. First time in the editor today. No zombies on the radar. Give it an hour.",
         "[dry] You opened Neovim, Cris. Coffee's terrible and the code's worse. Let's fix one of them.",
+        "[casual] {weekday}, Cris. Coffee's bad, the radar's quiet. Let's work.",
       },
       region_arrived = {
         "[sheepish] You picked the R.P.D., Cris. First day on the job, and I'm still late.",
