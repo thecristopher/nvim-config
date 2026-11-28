@@ -3,6 +3,8 @@
 -- <soft> and <slow> around the words they shape, [break] for a pause. `voice` is the Fish Audio
 -- voice id the role is cast with, a role without one stays written. The studio writes new takes
 -- from these in moderation, so they are the base every new line keeps the character of.
+-- A third take at a push, a PR, a felled boss and the morning names what happened: {branch},
+-- {number}, {boss} and {weekday}. Any take may also say {daypart} or {repo}.
 return {
   -- Magik
   limbo = {
@@ -31,6 +33,7 @@ return {
       pushed = {
         "[effortless] Your push went through the Stepping Disc. Don't wave. It's gone.",
         "[smirk] Pushed, malysh. One clean cut. That's all it ever takes with me.",
+        "[smirk] {branch} went through the Stepping Disc, malysh. Clean cut.",
       },
       pr_drafting = {
         "[impatient] Claude is drafting your pull request. Short. We don't explain ourselves.",
@@ -39,6 +42,7 @@ return {
       pr_opened = {
         "[sardonic] Your PR is open. Like a portal, with fewer screaming demons. Probably.",
         "[sardonic] Pull request open, malysh. Let them come. I'll stand at the door with my sword.",
+        "[sardonic] Pull request {number}, malysh. I'll guard the door with my sword.",
       },
       ci_passed = {
         "[dry] CI passed. Piotr would cry. He cries at everything.",
@@ -87,6 +91,7 @@ return {
       boss_felled = {
         "[cold triumph] Belasco is down, Cris. Every heart mended. He met the Darkchild.",
         "[dark smile] The boss is on the floor, malysh. Where he belongs.",
+        "[cold triumph] {boss} met the Darkchild. He won't get up.",
       },
       title_shown = {
         "[ominous] Limbo. Abandon hope. Or don't. I like it when they hope.",
@@ -95,6 +100,7 @@ return {
       morning = {
         "[groggy, dry] Morning, Cris. First time in the editor. The demons are asleep. Unlike me.",
         "[smirk] You opened Neovim, malysh. You look rested, Cris. I'll fix that. With work. Lots of it.",
+        "[groggy, dry] {weekday} morning, malysh. The demons sleep in. I don't get to.",
       },
       region_arrived = {
         "[regal] You chose Limbo, Cris. I am Magik, Sorceress Supreme. Wipe your feet.",
@@ -165,6 +171,7 @@ return {
       pushed = {
         "[wistful] Your push left the Hex. I'll keep the porch light on.",
         "[amused] Pushed, love. Out there it's rated G. [small laugh] In here, it depends on the night.",
+        "[wistful] {branch} just left the Hex, love. I'll leave the porch light on.",
       },
       pr_drafting = {
         "[narrator voice] Claude's drafting your PR. Previously, on our code.",
@@ -173,6 +180,7 @@ return {
       pr_opened = {
         "[proud] Your pull request is open. The whole town will read it.",
         "[playful] PR's open, love. Everyone's watching. [small laugh] I like an audience. Sometimes.",
+        "[proud] Pull request {number} is open, love. The whole town is reading.",
       },
       ci_passed = {
         "[delighted] CI passed. That's a wrap. The whole town's cheering.",
@@ -221,6 +229,7 @@ return {
       boss_felled = {
         "[fierce, then calm] Agatha's gone, Cris. Every heart mended. Nobody touches what's ours.",
         "[breathless] She's gone, love. Your hearts are full. Mine's still racing.",
+        "[fierce, then calm] {boss} is gone, Cris. Nobody touches what's ours.",
       },
       title_shown = {
         "[sitcom bright] Westview. Our show, our rules. Roll the theme song.",
@@ -229,6 +238,7 @@ return {
       morning = {
         "[sunny] Good morning, Cris. First time in the editor today. Coffee's on. The code can wait one sip.",
         "[sleepy, flirty] You opened Neovim, love. You look good in my sheets, Cris. Coffee, or five more minutes?",
+        "[sunny] Happy {weekday}, love. Coffee's on. The code can wait one sip.",
       },
       region_arrived = {
         "[welcoming] You chose Westview, Cris. Today I'm Wanda, and you're home.",
@@ -299,6 +309,7 @@ return {
       pushed = {
         "[vanishing] Your push is out. And I was never here.",
         "[playful] Pushed, handsome. Smooth exit. I'm good at those.",
+        "[playful] {branch} slipped out clean, handsome. I taught you that.",
       },
       pr_drafting = {
         "[businesslike] Claude's drafting your PR. Wesker likes them short. So do I.",
@@ -307,6 +318,7 @@ return {
       pr_opened = {
         "[cool] Your pull request is open. Let's see who bites first.",
         "[sultry] PR's open, handsome. Let's see who bites first.",
+        "[cool] Pull request {number}. Let's see who bites first.",
       },
       ci_passed = {
         "[pleased] CI passed. Smooth. Almost as smooth as me.",
@@ -355,6 +367,7 @@ return {
       boss_felled = {
         "[businesslike] Pesanta's down, Cris. Every heart mended. I keep the amber, you keep the credit.",
         "[satisfied] Boss is down, handsome. You're out of breath. It suits you.",
+        "[satisfied] {boss} is down, handsome. I keep the amber, you keep the credit.",
       },
       title_shown = {
         "[smooth] Separate Ways. Different paths, same ending. Me, one step ahead.",
@@ -363,6 +376,7 @@ return {
       morning = {
         "[aloof] Opening the editor this early, Cris? You must like me.",
         "[teasing] Morning, handsome. First time in Neovim today, Cris. You were up before I left. I noticed.",
+        "[teasing] {weekday} already, handsome. You were up before me. I noticed.",
       },
       region_arrived = {
         "[mysterious] You picked Separate Ways, Cris. Ada Wong. Today, I work for you.",
@@ -433,6 +447,7 @@ return {
       pushed = {
         "[gentle] Your push is out. May the moonlight find it a path.",
         "[dry] Pushed. The moon's out. Walk with me, if you must.",
+        "[dry] {branch} is out. May the moonlight find it a path. Or not. It's fine.",
       },
       pr_drafting = {
         "[wry] Claude's drafting your pull request. Let's hope the reviewers are merciful.",
@@ -441,6 +456,7 @@ return {
       pr_opened = {
         "[dry] Your PR is open. Let them judge. I already have. It's good. Don't quote me.",
         "[sly] PR's open. They'll inspect every inch. I already did. Thoroughly.",
+        "[dry] Pull request {number} is open. I already judged it. It's good. Don't quote me.",
       },
       ci_passed = {
         "[grudging] CI passed. By the moonlight, you actually did it.",
@@ -489,6 +505,7 @@ return {
       boss_felled = {
         "[tired, wry] Ketheric's dead, Cris. Every heart mended. I wasn't in the mood to heal you again.",
         "[dry, soft] The boss is down and you're bleeding. Again. [break] Come here. Don't make it weird.",
+        "[tired, wry] {boss} is dead. And you're bleeding again. Come here.",
       },
       title_shown = {
         "[ominous] Moonrise Towers. Leave the light behind. You won't need it.",
@@ -497,6 +514,7 @@ return {
       morning = {
         "[dry, caring] Morning, Cris. First time in the editor today, and you look terrible. Come here.",
         "[smirk] You opened Neovim, Cris. You were very devoted last night. To your prayers. Naturally.",
+        "[dry, caring] {weekday} morning, and you look terrible. Come here.",
       },
       region_arrived = {
         "[guarded] You chose Moonrise Towers, Cris. Shadowheart. Cleric, skeptic, yours.",
@@ -567,6 +585,7 @@ return {
       pushed = {
         "[precise] Your push is out. One draw, one cut, done.",
         "[purring] Pushed, anata. Clean, fast, deep. My favorite kind of strike.",
+        "[precise] {branch} is out, anata. One draw, one cut.",
       },
       pr_drafting = {
         "[dry] Claude is drafting your pull request. Short. Like a death poem.",
@@ -575,6 +594,7 @@ return {
       pr_opened = {
         "[knowing] Your PR is open. I already read the reviewers. They will approve.",
         "[sly] PR's open, anata. Everyone sees your work. Only I see inside your head.",
+        "[knowing] Pull request {number}. I already read the reviewers. They'll approve.",
       },
       ci_passed = {
         "[pleased] CI passed. Precise. Sugoi.",
@@ -623,6 +643,7 @@ return {
       boss_felled = {
         "[cool triumph] Sinister is down, Cris. Every heart mended. The psychic katana never misses.",
         "[breathless] The boss is down, anata. Your pulse is racing. Lovely.",
+        "[cool triumph] {boss} is down, anata. The psychic katana never misses.",
       },
       title_shown = {
         "[elegant] The Danger Room. Draw your blade.",
@@ -631,6 +652,7 @@ return {
       morning = {
         "[quiet] Ohayou, Cris. First time in the editor today. Your mind is clear. Rare.",
         "[teasing] Ohayou, anata. You opened Neovim, Cris. Your thoughts are loud this morning. And rather naughty.",
+        "[quiet] Ohayou, anata. {weekday}, and your mind is clear. Rare.",
       },
       region_arrived = {
         "[formal] You chose the Danger Room, Cris. Kwannon. Psylocke. Mind the lasers.",
@@ -701,6 +723,7 @@ return {
       pushed = {
         "[steady] Your push is out. The road's long. We ride it.",
         "[low] Pushed, Tarnished. Torrent's waiting. Ride well.",
+        "[steady] {branch} rides out, Tarnished. Torrent knows the road.",
       },
       pr_drafting = {
         "[calm] Claude's drafting your pull request. A message for the ground.",
@@ -709,6 +732,7 @@ return {
       pr_opened = {
         "[steady] Your PR is open. Let them appraise it.",
         "[low] PR's open, Tarnished. Everyone can rate it. Only I keep you.",
+        "[low] Pull request {number} is open. Let them appraise it. I keep you.",
       },
       ci_passed = {
         "[quiet] CI passed. The Erdtree's light is on us.",
@@ -757,6 +781,7 @@ return {
       boss_felled = {
         "[steady] Margit's down, Cris. Great enemy felled. Breathe.",
         "[low] Great enemy felled, Tarnished. Your hearts are full. So is mine.",
+        "[steady] {boss} is down. Great enemy felled. Breathe.",
       },
       title_shown = {
         "[calm] Elden Ring. I'm Triss. You made me for this.",
@@ -765,6 +790,7 @@ return {
       morning = {
         "[quiet] Morning, Cris. The grace waited for us.",
         "[low] You opened Neovim, Tarnished. You kept me up past the Roundtable curfew.",
+        "[quiet] {weekday} morning, Tarnished. The grace waited for us.",
       },
       region_arrived = {
         "[calm] Limgrave, Cris. I'm Triss. We start here.",
@@ -835,6 +861,7 @@ return {
       pushed = {
         "[brisk] Your push is out. Heading for the extraction point.",
         "[low] Pushed, rookie. Extraction's in ten. Plenty of time.",
+        "[brisk] {branch} is headed for extraction, rookie.",
       },
       pr_drafting = {
         "[professional] Claude's writing your PR. Short and true, for the chief.",
@@ -843,6 +870,7 @@ return {
       pr_opened = {
         "[wry] Your PR is open. Requesting backup. Not Brad.",
         "[teasing] PR's open, rookie. Everybody wants a look. I was here first.",
+        "[wry] Pull request {number} is open. Requesting backup. Not Brad.",
       },
       ci_passed = {
         "[calm] CI passed. Area secure.",
@@ -891,6 +919,7 @@ return {
       boss_felled = {
         "[breathing hard] Nemesis is down, Cris. Every heart mended. Stay sharp, he gets back up.",
         "[breathless] Boss is down, rookie. My heart's still racing.",
+        "[breathing hard] {boss} is down, rookie. Stay sharp. They get back up.",
       },
       title_shown = {
         "[grim] Raccoon City. The last escape.",
@@ -899,6 +928,7 @@ return {
       morning = {
         "[brisk] Morning, Cris. First time in the editor today. Check your ammo, then the code.",
         "[teasing] You opened Neovim, rookie. Coffee's on, Cris. You look like you need it.",
+        "[brisk] {weekday}, rookie. Check your ammo, then the code.",
       },
       region_arrived = {
         "[resolute] You chose Raccoon City, Cris. Jill Valentine, S.T.A.R.S. The city falls, not us.",
@@ -969,6 +999,7 @@ return {
       pushed = {
         "[serene] Your push is sent. On wings.",
         "[low] Sent. Now my wings fold. Around you.",
+        "[serene] {branch} takes wing, Cris. Now mine fold. Around you.",
       },
       pr_drafting = {
         "[terse] Claude writes your plea. Few words.",
@@ -977,6 +1008,7 @@ return {
       pr_opened = {
         "[proud] Your pull request is open. Let them judge. My blade already has.",
         "[low] It is open. Let them look. Only you may touch.",
+        "[low] Pull request {number} is open. Let them look. Only you may touch.",
       },
       ci_passed = {
         "[solemn pride] CI passed. My blade has never known defeat.",
@@ -1025,6 +1057,7 @@ return {
       boss_felled = {
         "[solemn] Radahn falls, Cris. Every heart mended. As all must.",
         "[slow] He falls. Your hearts, mended. Mine, undone.",
+        "[solemn] {boss} falls, Cris. As all must.",
       },
       title_shown = {
         "[ethereal] Elphael. The Haligtree sleeps.",
@@ -1033,6 +1066,7 @@ return {
       morning = {
         "[quiet] Morning, Cris. You open the editor. The rot sleeps. I do not.",
         "[soft] You return to Neovim, Cris. You stayed the night. Few ever dare.",
+        "[soft] {weekday} morning, Cris. The rot sleeps. I do not.",
       },
       region_arrived = {
         "[formal] You chose Elphael, Cris. I am Malenia. Blade of Miquella.",
@@ -1103,6 +1137,7 @@ return {
       pushed = {
         "[low] Your push is gone. Into the dark.",
         "[flat] Pushed into the dark. It's nice there. Quiet.",
+        "[flat] {branch} is gone into the dark. It's quiet there. Nice.",
       },
       pr_drafting = {
         "[annoyed] Claude's drafting your PR. Don't hover.",
@@ -1111,6 +1146,7 @@ return {
       pr_opened = {
         "[bored] Your pull request is open. Wake me when the reviews come in.",
         "[flat] PR's open. Everyone can see it. I prefer things private.",
+        "[bored] Pull request {number} is open. Wake me when the reviews come in.",
       },
       ci_passed = {
         "[monotone] CI passed. Fine. That's good.",
@@ -1159,6 +1195,7 @@ return {
       boss_felled = {
         "[dry] Trigon's gone, Cris. Every heart mended. My father hit harder.",
         "[breathless] The boss is gone. I'm shaking. [break] Hold me. That's an order.",
+        "[dry] {boss} is gone. My father hit harder.",
       },
       title_shown = {
         "[quiet] Azarath. Peace. Mostly.",
@@ -1167,6 +1204,7 @@ return {
       morning = {
         "[groggy] Morning, Cris. First time in the editor. Tea first. Then talking. Maybe.",
         "[flat] You opened Neovim, Cris. Tea first. Talking later. Maybe.",
+        "[groggy] {weekday}. Tea first. Then talking. Maybe.",
       },
       region_arrived = {
         "[flat] You chose Azarath, Cris. Raven. Keep your voice down.",
@@ -1237,6 +1275,7 @@ return {
       pushed = {
         "[whoosh] Your push is flying! Like my kachousen!",
         "[flirty] Pushed! Ooh, you push hard, Cris-kun. I like that in a sparring partner.",
+        "[whoosh] {branch} is flying, Cris-kun! Like my kachousen!",
       },
       pr_drafting = {
         "[cheerful] Claude's drafting your PR! Make it kawaii!",
@@ -1245,6 +1284,7 @@ return {
       pr_opened = {
         "[excited] Your PR is up! Judges, score it!",
         "[teasing] PR's open, Cris-kun! Everyone's watching. Good thing I love an audience.",
+        "[excited] Pull request {number} is up! Judges, score it!",
       },
       ci_passed = {
         "[cheering] CI passed! Yatta! The crowd goes wild!",
@@ -1293,6 +1333,7 @@ return {
       boss_felled = {
         "[victorious] Geese is down, Cris! Every heart healed! Yatta!",
         "[giddy] Boss is down! Whew, I'm all sweaty. You don't mind, right?",
+        "[victorious] {boss} is down! Yatta, Cris-kun!",
       },
       title_shown = {
         "[bright] The Shiranui Dojo! Bow when you enter!",
@@ -1301,6 +1342,7 @@ return {
       morning = {
         "[energetic] Ohayou, Cris! First time in the editor today. Ready to fight? I am!",
         "[playful] Ohayou, Cris-kun! You opened Neovim. I already stretched. Want to see how flexible I am?",
+        "[energetic] Ohayou, Cris-kun! Happy {weekday}! Ready to fight? I am!",
       },
       region_arrived = {
         "[showy] You chose the Shiranui Dojo, Cris! Shiranui Mai, at your service! Nippon ichi!",

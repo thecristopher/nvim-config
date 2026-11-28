@@ -13,6 +13,16 @@ local function sheet(franchise, character)
   return ok and writer.sheet_section(table.concat(lines, "\n"), character) or nil
 end
 
+-- every take a moment already has, banned ones too, so a paraphrase of any never joins
+local function known(role, fresh)
+  local all = {}
+  for _, moment in ipairs(role.order) do
+    all[moment] = vim.list_extend(vim.deepcopy(role.takes[moment] or {}), fresh[moment] or {})
+    vim.list_extend(all[moment], role.banned or {})
+  end
+  return all
+end
+
 ---Whether a run is on its way, so two never ask for the same moments.
 ---@return boolean
 function M.busy()
@@ -21,7 +31,7 @@ end
 
 ---Asks Claude for one fresh take per moment for the role's moments with the fewest, and adds the
 ---answer to the library.
----@param role { key: string, franchise: string, character: string, world: string, bond?: string, takes: table<string, string[]>, order: string[] }
+---@param role { key: string, franchise: string, character: string, world: string, bond?: string, voice?: string, takes: table<string, string[]>, banned: string[], order: string[] }
 ---@param cb fun(added: integer) called on the main loop with how many takes joined the library
 function M.write(role, cb)
   if writing then
@@ -38,15 +48,18 @@ function M.write(role, cb)
     moments = moments,
     takes = role.takes,
     fresh = fresh,
+    banned = role.banned,
   })
   require("core.claude").run(prompt, function(res)
     writing = false
-    local new = res.code == 0 and writer.parse(res.stdout, moments) or {}
+    local new = res.code == 0 and writer.parse(res.stdout, moments, known(role, fresh)) or {}
     if vim.tbl_isempty(new) then
       return cb(0)
     end
     local library = store.library()
-    library[role.key] = writer.merge(library[role.key], new)
+    library[role.key] = writer.merge(library[role.key], new, function(take)
+      return role.voice ~= nil and store.cached(role.voice, take) ~= nil
+    end)
     store.save_library(library)
     cb(vim.tbl_count(new))
   end, { quiet = true })

@@ -1,15 +1,16 @@
 -- Pure logic of the studio's writer: the prompt that asks Claude for fresh takes in a character's
 -- voice, and how its answer joins the takes the role already has.
+local check = require("core.voice.studio.actions.check")
 local studio = require("core.voice.studio.actions")
 
 local M = {}
 
 -- moments asked for in one run, so a run stays short and every moment gets its turn
 M.MOMENTS_PER_RUN = 8
--- fresh takes kept per moment, the oldest leave first
+-- fresh takes kept per moment, the oldest without audio leave first
 M.MAX_FRESH = 6
--- a take longer than this is a speech, not a notification
-M.MAX_CHARS = 240
+-- candidates asked per moment, the first one that passes the checks is kept
+M.CANDIDATES = 3
 
 -- what happened at each moment, in the words the prompt uses
 M.CONTEXT = {
@@ -84,21 +85,53 @@ function M.moments_to_write(moments, fresh, count)
   return vim.list_slice(ranked, 1, count)
 end
 
+-- what each shared hole says, so a take knows when it can use one
+local SHARED = {
+  weekday = "the day of the week, like Monday",
+  daypart = "morning, afternoon, evening or night",
+  repo = "the project's name, read as words",
+}
+
+-- the holes a moment can use, the one that says what happened first
+local function hole_brief(moment)
+  local lines = {}
+  for _, hole in ipairs(studio.HOLES[moment] or {}) do
+    table.insert(
+      lines,
+      ("  Say the real {%s} with that exact hole in one candidate at least."):format(hole)
+    )
+  end
+  local shared = vim.tbl_map(function(hole)
+    return ("{%s} (%s)"):format(hole, SHARED[hole])
+  end, studio.SHARED_HOLES)
+  table.insert(lines, "  You may also use " .. table.concat(shared, ", ") .. ".")
+  return lines
+end
+
 -- one moment of the prompt: what happened, the holes it may use and the takes to never repeat
 local function moment_brief(moment, takes, fresh)
-  local holes = studio.HOLES[moment]
   local lines = { ("- %s: %s."):format(moment, M.CONTEXT[moment] or moment) }
-  if holes then
-    table.insert(lines, ("  You may say the real {%s} with that exact hole."):format(holes[1]))
-  end
+  vim.list_extend(lines, hole_brief(moment))
   for _, take in ipairs(vim.list_extend(vim.deepcopy(takes or {}), fresh or {})) do
     table.insert(lines, "  Already said: " .. take)
   end
   return table.concat(lines, "\n")
 end
 
+-- the takes Cris banned, the kind of line never to write again
+local function banned_brief(banned)
+  if not banned or #banned == 0 then
+    return nil
+  end
+  local lines = { "He disliked these lines, never write anything like them:" }
+  for _, take in ipairs(banned) do
+    table.insert(lines, "- " .. take)
+  end
+  return table.concat(lines, "\n")
+end
+
 ---The prompt that asks Claude for one fresh take per moment in a character's voice.
----@param brief { character: string, world: string, sheet: string|nil, bond: string|nil, moments: string[], takes: table<string, string[]>, fresh: table<string, string[]> }
+---@param brief { character: string, world: string, sheet: string|nil, bond: string|nil, moments: string[], takes: table<string, string[]>, fresh: table<string, string[]>, banned?: string[] }
 ---@return string
 function M.prompt(brief)
   local parts = {
@@ -121,10 +154,14 @@ function M.prompt(brief)
       "- Say what just happened in words he recognizes, in the character's own world.",
       "- Call him Cris only now and then, a pet name the character uses is fine too.",
       "- Fish Audio Drama 3 markup: one [direction] at the start written the way you'd say it to an actor, at most one <emphasis>word</emphasis> or <whisper>words</whisper>, and [break] for a pause.",
-      "- New ideas only: never repeat or paraphrase a line marked as already said.",
+      "- New ideas only: never repeat or paraphrase a line marked as already said, nor each other.",
       "- No em dashes, no quotes around the line.",
     }, "\n")
   )
+  local banned = banned_brief(brief.banned)
+  if banned then
+    table.insert(parts, banned)
+  end
   local moments = {}
   for _, moment in ipairs(brief.moments) do
     table.insert(moments, moment_brief(moment, brief.takes[moment], brief.fresh[moment]))
@@ -132,68 +169,95 @@ function M.prompt(brief)
   table.insert(parts, "Moments:\n" .. table.concat(moments, "\n"))
   table.insert(
     parts,
-    "Answer with only a JSON object mapping each moment name to its one new line, nothing else."
+    ("Answer with only a JSON object mapping each moment name to an array of %d different candidate lines, best first, nothing else."):format(
+      M.CANDIDATES
+    )
   )
   return table.concat(parts, "\n\n")
 end
 
--- a take is kept when it is text of a sane length, without em dashes, for a moment that was asked
-local function usable(moment, line, asked)
-  return asked[moment]
-    and type(line) == "string"
-    and #vim.trim(line) > 0
-    and #line <= M.MAX_CHARS
-    and not line:find("—", 1, true)
+-- the candidates Claude answered for a moment, one line or a list of them
+local function candidates(answer)
+  if type(answer) == "string" then
+    return { answer }
+  end
+  return type(answer) == "table" and answer or {}
 end
 
----The fresh takes in Claude's answer, one per moment that was asked, the rest thrown away.
+---The fresh takes in Claude's answer, the first candidate per moment that passes the checks, the
+---rest thrown away.
 ---@param stdout string|nil the answer, a JSON object possibly wrapped in prose or a code fence
 ---@param moments string[] the moments that were asked
+---@param known? table<string, string[]> what each moment already has, banned takes too, so a
+---paraphrase of one never joins
 ---@return table<string, string>
-function M.parse(stdout, moments)
+function M.parse(stdout, moments, known)
   local json = (stdout or ""):match("%b{}")
   local ok, data = pcall(vim.json.decode, json or "")
   if not ok or type(data) ~= "table" then
     return {}
   end
-  local asked = {}
-  for _, moment in ipairs(moments) do
-    asked[moment] = true
-  end
   local takes = {}
-  for moment, line in pairs(data) do
-    if usable(moment, line, asked) then
-      takes[moment] = vim.trim(line)
+  for _, moment in ipairs(moments) do
+    for _, candidate in ipairs(candidates(data[moment])) do
+      if check.usable(candidate, moment, (known or {})[moment]) then
+        takes[moment] = vim.trim(candidate)
+        break
+      end
     end
   end
   return takes
 end
 
----Adds new takes to a role's fresh ones, keeping at most MAX_FRESH per moment, newest last.
+-- drops takes from the front until the list fits, the oldest without audio first
+local function trim(list, has_audio)
+  while #list > M.MAX_FRESH do
+    local doomed = 1
+    for index, take in ipairs(list) do
+      if not has_audio(take) then
+        doomed = index
+        break
+      end
+    end
+    table.remove(list, doomed)
+  end
+  return list
+end
+
+---Adds new takes to a role's fresh ones, keeping at most MAX_FRESH per moment, newest last. The
+---oldest take nobody voiced yet leaves first, so paid audio is not thrown away while a take without
+---any could go instead.
 ---@param fresh table<string, string[]> the role's fresh takes by moment
 ---@param new table<string, string> one take per moment
+---@param has_audio? fun(take: string): boolean whether a take is voiced, none are when nil
 ---@return table<string, string[]>
-function M.merge(fresh, new)
+function M.merge(fresh, new, has_audio)
+  has_audio = has_audio or function()
+    return false
+  end
   local merged = vim.deepcopy(fresh or {})
   for moment, take in pairs(new) do
     local list = merged[moment] or {}
     if not vim.tbl_contains(list, take) then
       table.insert(list, take)
     end
-    merged[moment] = vim.list_slice(list, math.max(1, #list - M.MAX_FRESH + 1), #list)
+    merged[moment] = trim(list, has_audio)
   end
   return merged
 end
 
 ---Joins two libraries of fresh takes, by role then moment, the way an import adds to what is here.
+---A take banned here never comes back with an import.
 ---@param here table<string, table<string, string[]>>
 ---@param incoming table<string, table<string, string[]>>
+---@param banned? table<string, string[]> raw takes banned per role
 ---@return table<string, table<string, string[]>>
-function M.join(here, incoming)
+function M.join(here, incoming, banned)
   local joined = vim.deepcopy(here or {})
   for role, moments in pairs(incoming or {}) do
+    local never = studio.without(moments, (banned or {})[role])
     local merged = joined[role] or {}
-    for moment, takes in pairs(moments) do
+    for moment, takes in pairs(never) do
       for _, take in ipairs(takes) do
         merged = M.merge(merged, { [moment] = take })
       end

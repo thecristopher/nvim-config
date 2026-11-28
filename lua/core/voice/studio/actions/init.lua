@@ -14,6 +14,37 @@ M.HOLES = {
   boss_felled = { "boss" },
 }
 
+-- the holes every moment can fill, from the clock and the project (core.voice.actions.context).
+-- They change slowly, so a take with them is worth caching ahead
+M.SHARED_HOLES = { "weekday", "daypart", "repo" }
+
+---Every hole a moment's take may use: what happened at it, then the shared ones.
+---@param moment string
+---@return string[]
+function M.holes(moment)
+  return vim.list_extend(vim.deepcopy(M.HOLES[moment] or {}), M.SHARED_HOLES)
+end
+
+-- whether a take names what happened at its moment, so it only makes sense right now
+local function eventful(take, moment)
+  for _, hole in ipairs(M.HOLES[moment] or {}) do
+    if take:find("{" .. hole .. "}", 1, true) then
+      return true
+    end
+  end
+  return false
+end
+
+-- a voiced take that arrives later than this no longer plays, the moment has passed
+M.LATE_MS = 4000
+
+---Whether a take voiced on the spot arrived in time to be heard with its moment.
+---@param elapsed_ms number since the moment asked for it
+---@return boolean
+function M.on_time(elapsed_ms)
+  return elapsed_ms <= M.LATE_MS
+end
+
 -- how often a moment says a take nobody has heard yet when it has both kinds, the rest of the time
 -- it plays one already cached so most moments sound at once and cost nothing
 M.FRESH_CHANCE = 0.35
@@ -68,19 +99,52 @@ end
 ---@param takes string[]|nil the script's takes for the moment
 ---@param fresh string[]|nil takes the studio wrote later for it
 ---@param vars table<string, string>|nil values for the holes, like branch or boss
----@return string[]
-function M.pool(takes, fresh, vars)
-  local seen, lines = {}, {}
+---@param moment string|nil the moment, to tell which takes name what happened at it
+---@return string[] lines
+---@return table<string, boolean> eventful the lines that name what happened, only worth it now
+---@return table<string, string> origin each line's take as written, holes and all
+function M.pool(takes, fresh, vars, moment)
+  local lines, now, origin = {}, {}, {}
   for _, list in ipairs({ takes or {}, fresh or {} }) do
     for _, take in ipairs(list) do
       local line = voice.fill(take, vars)
-      if not line:find("{%w+}") and not seen[line] then
-        seen[line] = true
+      if not line:find("{%w+}") and not origin[line] then
+        origin[line] = take
         table.insert(lines, line)
+        now[line] = moment and eventful(take, moment) or nil
       end
     end
   end
-  return lines
+  return lines, now, origin
+end
+
+---The words a moment can show written when no voice can say it: every take of the script and the
+---studio, without direction or tags, holes filled.
+---@param takes string[]|nil
+---@param fresh string[]|nil
+---@param vars table<string, string>|nil
+---@return string[]
+function M.written(takes, fresh, vars)
+  local lines = M.pool(takes, fresh, vars)
+  return vim.tbl_map(M.plain, lines)
+end
+
+---A role's takes by moment without the ones banned.
+---@param takes table<string, string[]>
+---@param banned string[]|nil raw takes never to say again
+---@return table<string, string[]>
+function M.without(takes, banned)
+  local never = {}
+  for _, take in ipairs(banned or {}) do
+    never[take] = true
+  end
+  local kept = {}
+  for moment, list in pairs(takes or {}) do
+    kept[moment] = vim.tbl_filter(function(take)
+      return not never[take]
+    end, list)
+  end
+  return kept
 end
 
 ---The file name a take's audio is cached under, one per model so a better take can replace it.
@@ -91,31 +155,44 @@ function M.cache_name(model, text)
   return ("%s-%08x-%d.mp3"):format(model, require("core.utils").hash(text), #text)
 end
 
--- splits a moment's takes into the ones already cached and the ones nobody has heard yet
-local function split(lines, cached)
-  local ready, unheard = {}, {}
+-- splits a moment's takes into the ones already cached, the ones nobody has heard yet that only
+-- make sense now, and the ones nobody has heard yet that can wait for a later moment
+local function split(lines, cached, eventful)
+  local ready, now, later = {}, {}, {}
   for _, line in ipairs(lines) do
-    table.insert(cached[line] and ready or unheard, line)
+    local bucket = cached[line] and ready or (eventful[line] and now or later)
+    table.insert(bucket, line)
   end
-  return ready, unheard
+  return ready, now, later
 end
 
----Chooses the take a moment says and whether it has to be voiced first.
+---Chooses the take a moment says, whether it has to be voiced first, and a take to voice in the
+---background for a later moment. A take nobody has heard waits for the network only when nothing
+---is cached or it names what just happened, otherwise a cached take plays at once and the unheard
+---one is voiced behind it.
 ---@param lines string[] from pool
 ---@param cached table<string, string> take to the path of its audio
----@param opts { roll: number, fresh_roll: number, last?: string, can_voice: boolean }
+---@param opts { roll: number, fresh_roll: number, last?: string|string[], can_voice: boolean, eventful?: table<string, boolean> }
 ---@return string|nil take
 ---@return boolean voice_first true when the take has no audio yet and goes to Fish Audio
+---@return string|nil prefetch an unheard take to voice in the background, nil for none
 function M.choose(lines, cached, opts)
-  local ready, unheard = split(lines, cached)
+  local ready, now, later = split(lines, cached, opts.eventful or {})
   local wants_fresh = #ready == 0 or opts.fresh_roll < M.FRESH_CHANCE
-  if opts.can_voice and #unheard > 0 and wants_fresh then
-    return voice.pick(unheard, opts.roll, opts.last), true
+  if not (opts.can_voice and wants_fresh) then
+    return voice.pick(ready, opts.roll, opts.last), false, nil
   end
-  if #ready > 0 then
-    return voice.pick(ready, opts.roll, opts.last), false
+  if #now > 0 then
+    return voice.pick(now, opts.roll, opts.last), true, nil
   end
-  return nil, false
+  if #later == 0 then
+    return voice.pick(ready, opts.roll, opts.last), false, nil
+  end
+  local unheard = voice.pick(later, opts.roll, opts.last)
+  if #ready == 0 then
+    return unheard, true, nil
+  end
+  return voice.pick(ready, opts.roll, opts.last), false, unheard
 end
 
 ---The next take to cache ahead of time: the first one, in the script's order, without audio from

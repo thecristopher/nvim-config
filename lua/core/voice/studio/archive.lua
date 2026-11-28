@@ -15,7 +15,7 @@ function M.default_target()
   return vim.fn.expand(("~/Desktop/eldentree-voices-%s.tar.gz"):format(os.date("%Y-%m-%d")))
 end
 
----Packs every voice's audio and the fresh takes into a .tar.gz.
+---Packs every voice's audio, the fresh takes and the bans into a .tar.gz.
 ---@param target string|nil where to write it, the desktop when nil
 function M.export(target)
   target = vim.fn.expand(target and target ~= "" and target or M.default_target())
@@ -52,8 +52,27 @@ local function join_library(unpacked)
   local ok, lines = pcall(vim.fn.readfile, unpacked .. "/lines.json")
   local decoded, incoming = pcall(vim.json.decode, ok and table.concat(lines, "\n") or "")
   if decoded and type(incoming) == "table" then
-    store.save_library(writer.join(store.library(), incoming))
+    store.save_library(writer.join(store.library(), incoming, store.banned()))
   end
+end
+
+-- the bans of the export join the ones here, a take banned on either machine stays banned
+local function join_banned(unpacked)
+  local ok, lines = pcall(vim.fn.readfile, unpacked .. "/banned.json")
+  local decoded, incoming = pcall(vim.json.decode, ok and table.concat(lines, "\n") or "")
+  if not (decoded and type(incoming) == "table") then
+    return
+  end
+  local banned = store.banned()
+  for role, takes in pairs(incoming) do
+    banned[role] = banned[role] or {}
+    for _, take in ipairs(takes) do
+      if not vim.tbl_contains(banned[role], take) then
+        table.insert(banned[role], take)
+      end
+    end
+  end
+  store.save_banned(banned)
 end
 
 ---Unpacks an export here: audio not cached yet is copied in, fresh takes join the library.
@@ -72,6 +91,7 @@ function M.import(source)
       end
       vim.fn.mkdir(store.root(), "p")
       local copied = copy_missing(scratch .. "/voices", store.root())
+      join_banned(scratch .. "/voices")
       join_library(scratch .. "/voices")
       vim.fn.delete(scratch, "rf")
       notify(("Imported %d takes"):format(copied))

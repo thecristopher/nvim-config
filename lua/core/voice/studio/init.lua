@@ -8,6 +8,7 @@ local actions = require("core.voice.studio.actions")
 local budget = require("core.voice.studio.actions.budget")
 local fish = require("core.voice.studio.fish")
 local store = require("core.voice.studio.store")
+local recent = require("core.voice.recent")
 local voice_actions = require("core.voice.actions")
 
 local M = {}
@@ -17,9 +18,13 @@ local BAKE_EVERY_MS = 20000
 -- how old the known balance may get before the wallet is read again
 local BALANCE_TTL_S = 1800
 
-local last_take = nil
 local baking = false
 local timer = nil
+-- callbacks waiting on each take Fish Audio is voicing, by the file it lands in, so a take asked
+-- twice (the baker and a moment, two moments) is paid once
+local inflight = {}
+-- the take said last, for :Voice last and :Voice ban
+local last = nil
 
 local function limits()
   return budget.limits({
@@ -61,15 +66,19 @@ function M.role(region)
   if not script then
     return nil
   end
+  local key = franchise.name() .. "/" .. region.name
+  local banned = store.banned()[key] or {}
   return {
-    key = franchise.name() .. "/" .. region.name,
+    key = key,
     franchise = franchise.name(),
     character = region.character,
     world = region.title or lore.title,
     bond = lore.coach and lore.coach.bond or nil,
     voice = script.voice,
-    takes = script.takes or {},
+    takes = actions.without(script.takes, banned),
+    banned = banned,
     order = order(script.takes or {}),
+    -- found from the whole script, a clip's name is its take's place there
     recorded = recorded(region, script.takes or {}),
   }
 end
@@ -90,8 +99,17 @@ local function settle(model, text, outcome)
   store.save_ledger(ledger)
 end
 
+-- hands a voiced take to everyone waiting on it
+local function deliver(out, path)
+  local waiting = inflight[out] or {}
+  inflight[out] = nil
+  for _, cb in ipairs(waiting) do
+    cb(path)
+  end
+end
+
 ---Voices a take with the model the budget allows, falling back to the free one when the account
----has no credit, and hands the cached path over.
+---has no credit, and hands the cached path over. A take already on its way is never asked twice.
 ---@param role table
 ---@param text string
 ---@param cb fun(path: string|nil)
@@ -102,16 +120,38 @@ local function voice_take(role, text, cb)
   end
   local model = budget.model(store.ledger(), #text, limits())
   local out = store.path(role.voice, model, text)
+  if inflight[out] then
+    return table.insert(inflight[out], cb)
+  end
+  inflight[out] = { cb }
   fish.voice(
     { key = key, voice = role.voice, model = model, text = text, out = out },
     function(outcome)
       settle(model, text, outcome)
       if outcome == "broke" and model == budget.PAID then
-        return voice_take(role, text, cb)
+        local waiting = inflight[out]
+        inflight[out] = nil
+        for _, waiter in ipairs(waiting) do
+          voice_take(role, text, waiter)
+        end
+        return
       end
-      cb(outcome == "ok" and out or nil)
+      deliver(out, outcome == "ok" and out or nil)
     end
   )
+end
+
+---Whether a take is being voiced right now.
+---@param role table
+---@param text string
+---@return boolean
+local function voicing(role, text)
+  for _, model in ipairs({ budget.PAID, budget.FREE }) do
+    if inflight[store.path(role.voice, model, text)] then
+      return true
+    end
+  end
+  return false
 end
 
 local function live()
@@ -123,6 +163,36 @@ local function speakable(vars)
     return vars
   end
   return vim.tbl_extend("force", vars, { branch = actions.speakable_branch(vars.branch) })
+end
+
+-- plays a take's audio, or lets the words go at once when there is nothing to play
+local function play(path, on_done)
+  if not (path and require("core.sound").speak(path, on_done)) then
+    vim.schedule(on_done)
+  end
+end
+
+-- voices a take on the spot and plays it only if it arrives while its moment still matters, a
+-- late one stays cached for the next time and its words leave without a voice
+local function voice_now(role, take, on_done)
+  local asked_at = vim.uv.now()
+  voice_take(role, take, function(path)
+    if actions.on_time(vim.uv.now() - asked_at) then
+      return play(path, on_done)
+    end
+    vim.schedule(on_done)
+  end)
+end
+
+-- the lines a moment can say, with their audio and where each came from
+local function lines_for(role, moment, vars)
+  local fresh = (store.library()[role.key] or {})[moment]
+  local lines, eventful, origin = actions.pool(role.takes[moment], fresh, speakable(vars), moment)
+  local cached = {}
+  for _, line in ipairs(lines) do
+    cached[line] = audio(role, line)
+  end
+  return lines, eventful, origin, cached
 end
 
 ---Says a moment out loud in the role's cast voice: a cached take at once, or one nobody has heard
@@ -140,33 +210,82 @@ function M.perform(region, moment, vars, on_done)
   if not (role and role.voice and require("core.sound").audible()) then
     return nil
   end
-  local fresh = (store.library()[role.key] or {})[moment]
-  local lines = actions.pool(role.takes[moment], fresh, speakable(vars))
-  local cached = {}
-  for _, line in ipairs(lines) do
-    cached[line] = audio(role, line)
-  end
-  local take, voice_first = actions.choose(lines, cached, {
+  local lines, eventful, origin, cached = lines_for(role, moment, vars)
+  local recent_key = role.key .. "/" .. moment
+  local take, voice_first, prefetch = actions.choose(lines, cached, {
     roll = math.random(),
     fresh_roll = math.random(),
-    last = last_take,
+    last = recent.get(recent_key),
     can_voice = live(),
+    eventful = eventful,
   })
   if not take then
     return nil
   end
-  last_take = take
-  local function play(path)
-    if not (path and require("core.sound").speak(path, on_done)) then
-      vim.schedule(on_done)
-    end
+  recent.note(recent_key, take)
+  last = { role = role, moment = moment, take = origin[take], line = take }
+  if prefetch then
+    voice_take(role, prefetch, function() end)
   end
-  if not voice_first then
-    play(cached[take])
-    return actions.plain(take)
+  if voice_first then
+    voice_now(role, take, on_done)
+  else
+    play(cached[take], on_done)
   end
-  voice_take(role, take, play)
   return actions.plain(take)
+end
+
+---The words a moment can show written in the region's role when no voice says it, nil when the
+---franchise has no script for it.
+---@param region table a region from core.themes
+---@param moment string
+---@param vars table<string, string>|nil
+---@return string[]|nil
+function M.written(region, moment, vars)
+  local role = enabled() and M.role(region)
+  if not role then
+    return nil
+  end
+  local fresh = (store.library()[role.key] or {})[moment]
+  return actions.written(role.takes[moment], fresh, vars)
+end
+
+---What the studio said last: who, at which moment, the take as written and as heard.
+---@return { character: string, moment: string, take: string, line: string }|nil
+function M.last()
+  if not last then
+    return nil
+  end
+  return {
+    character = last.role.character,
+    moment = last.moment,
+    take = last.take,
+    line = last.line,
+  }
+end
+
+---Bans the take said last: it is never said or written again, its audio goes, a fresh take with
+---it leaves the library, and the writer is told to write nothing like it.
+---@return string|nil take what was banned, nil when nothing was said yet
+function M.ban_last()
+  if not last then
+    return nil
+  end
+  local key, take = last.role.key, last.take
+  local banned = store.banned()
+  banned[key] = banned[key] or {}
+  if not vim.tbl_contains(banned[key], take) then
+    table.insert(banned[key], take)
+  end
+  store.save_banned(banned)
+  local library = store.library()
+  if library[key] then
+    library[key] = actions.without(library[key], { take })
+    store.save_library(library)
+  end
+  store.forget(last.role.voice, last.line)
+  last = nil
+  return take
 end
 
 local function refresh_balance(force)
@@ -202,7 +321,7 @@ end
 local function bake_next(role)
   local fresh = store.library()[role.key] or {}
   local take = actions.next_to_bake(role.order, role.takes, fresh, function(text)
-    return role.recorded[text] ~= nil or store.has_paid(role.voice, text)
+    return role.recorded[text] ~= nil or store.has_paid(role.voice, text) or voicing(role, text)
   end)
   if not take then
     return write_more(role)
